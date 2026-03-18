@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
+import { CustomCursor } from '@/components/cursor/CustomCursor'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -21,6 +22,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={`${GeistSans.variable} ${GeistMono.variable}`}>
+        <CustomCursor />
         {children}
       </body>
     </html>
