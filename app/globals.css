@@ -1,26 +1,106 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-bg: #f2ede6;
+  --color-text: #2a2520;
+  --color-text-muted: #8a8078;
+  --color-border: #d0c8be;
+  --color-ink: #1a1510;
+  --color-video-bg: #1a1510;
+  --color-video-text: #f2ede6;
+
+  /* Typography scale — golden ratio */
+  --text-xs:  0.75rem;
+  --text-sm:  1rem;
+  --text-md:  1.618rem;
+  --text-lg:  2.618rem;
+  --text-xl:  4.236rem;
+  --text-2xl: 6.854rem;
+
+  /* Spacing — 8px grid */
+  --space-1: 0.5rem;
+  --space-2: 1rem;
+  --space-3: 1.5rem;
+  --space-4: 2rem;
+  --space-6: 3rem;
+  --space-8: 4rem;
+  --space-12: 6rem;
+  --space-16: 8rem;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: auto;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  cursor: none;
+  overflow-x: hidden;
+}
+
+input,
+textarea,
+select {
+  cursor: text;
+}
+
+canvas.webgl {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+main {
+  position: relative;
+  z-index: 1;
+}
+
+/* Cursor states */
+[data-state="hover-image"] [data-cursor-dot] {
+  width: 48px !important;
+  height: 48px !important;
+}
+
+[data-state="hover-link"] [data-cursor-dot] {
+  width: 32px !important;
+  height: 2px !important;
+  border-radius: 1px !important;
+}
+
+/* Video title hover */
+div:hover > .video-title {
+  opacity: 1 !important;
+}
+
+/* Mobile: disable WebGL canvas */
+@media (max-width: 767px) {
+  canvas.webgl {
+    display: none;
+  }
+
+  .mobile-gallery {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    padding: 2rem 1rem;
+  }
+
+  #foto {
+    height: auto !important;
+  }
 }
