@@ -1,135 +1,76 @@
 'use client'
-import { useEffect, useRef } from 'react'
-import gsap from 'gsap'
-import ScrollTrigger from 'gsap/ScrollTrigger'
 import { ParticleWordmark } from '@/components/ui/ParticleWordmark'
 
-gsap.registerPlugin(ScrollTrigger)
+interface HeroProps {
+  triggerExit: boolean
+  onExitComplete: () => void
+  onVerTrabajo: () => void
+}
 
-export function Hero() {
-  const heroRef = useRef<HTMLElement>(null)
-  const canvasWrapRef = useRef<HTMLDivElement>(null)
-  const metaRef = useRef<HTMLDivElement>(null)
-  const indicatorRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      // Particle canvas fades + translates up on scroll
-      gsap.to(canvasWrapRef.current, {
-        y: '-12vh',
-        opacity: 0.15,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: heroRef.current,
-          start: 'top top',
-          end: 'bottom top',
-          scrub: true,
-        },
-      })
-
-      // Tagline / meta fades faster
-      gsap.to(metaRef.current, {
-        y: '-8vh',
-        opacity: 0,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: heroRef.current,
-          start: 'top top',
-          end: '50% top',
-          scrub: true,
-        },
-      })
-
-      // Scroll indicator disappears on first scroll
-      gsap.to(indicatorRef.current, {
-        opacity: 0,
-        y: 10,
-        scrollTrigger: {
-          trigger: heroRef.current,
-          start: 'top top',
-          end: '5% top',
-          scrub: true,
-        },
-      })
-    }, heroRef)
-
-    return () => ctx.revert()
-  }, [])
-
+export function Hero({ triggerExit, onExitComplete, onVerTrabajo }: HeroProps) {
   return (
     <section
-      ref={heroRef}
       id="hero"
       style={{
-        position: 'relative',
-        height: '100vh',
-        overflow: 'hidden',
+        position: 'fixed',
+        inset: 0,
+        background: '#080808',
+        zIndex: 50,
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
       }}
     >
-      {/* Particle wordmark — fills the hero area */}
-      <div
-        ref={canvasWrapRef}
-        style={{
-          position: 'absolute',
-          inset: 0,
-          pointerEvents: 'auto',
-        }}
-      >
-        <ParticleWordmark />
-      </div>
-
-      {/* Tagline — overlaid at bottom of hero */}
-      <div
-        ref={metaRef}
-        style={{
-          position: 'absolute',
-          bottom: '6rem',
-          left: 0,
-          right: 0,
-          textAlign: 'center',
-          pointerEvents: 'none',
-        }}
-      >
-        <p
-          style={{
-            fontFamily: 'var(--font-geist-mono)',
-            fontWeight: 300,
-            fontSize: 'clamp(0.6rem, 1.2vw, 0.8rem)',
-            letterSpacing: '0.3em',
-            color: 'var(--color-text-muted)',
-            textTransform: 'uppercase',
-            margin: 0,
-          }}
-        >
-          Fotografía · Video · México
-        </p>
-      </div>
-
-      {/* Scroll indicator — single vertical line */}
-      <div
-        ref={indicatorRef}
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          bottom: '2rem',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          pointerEvents: 'none',
-        }}
-      >
-        <div
-          style={{
-            width: 1,
-            height: 48,
-            background: 'var(--color-border)',
-            margin: '0 auto',
-          }}
+      {/* Fish particle canvas — fills viewport */}
+      <div style={{ flex: 1, position: 'relative' }}>
+        <ParticleWordmark
+          color="#f2ede6"
+          background="#080808"
+          triggerExit={triggerExit}
+          onExitComplete={onExitComplete}
         />
       </div>
+
+      {/* Button — only visible in idle state */}
+      {!triggerExit && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '3.5rem',
+            left: 0,
+            right: 0,
+            display: 'flex',
+            justifyContent: 'center',
+            pointerEvents: 'auto',
+          }}
+        >
+          <button
+            onClick={onVerTrabajo}
+            data-cursor="link"
+            style={{
+              background: 'transparent',
+              border: '1px solid rgba(242,237,230,0.25)',
+              color: 'rgba(242,237,230,0.7)',
+              fontFamily: 'var(--font-geist-mono)',
+              fontSize: '0.65rem',
+              letterSpacing: '0.3em',
+              textTransform: 'uppercase',
+              padding: '0.9rem 2.5rem',
+              cursor: 'none',
+              transition: 'border-color 0.3s, color 0.3s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = 'rgba(242,237,230,0.7)'
+              e.currentTarget.style.color = '#f2ede6'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'rgba(242,237,230,0.25)'
+              e.currentTarget.style.color = 'rgba(242,237,230,0.7)'
+            }}
+          >
+            Ver Trabajo
+          </button>
+        </div>
+      )}
     </section>
   )
 }
