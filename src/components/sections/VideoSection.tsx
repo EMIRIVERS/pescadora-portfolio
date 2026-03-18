@@ -1,7 +1,17 @@
 'use client'
 import { useRef, useState } from 'react'
 import { registry } from '@/lib/registry'
-import type { VideoEntry } from '@/types/media'
+import type { VideoEntry, VideoCategory } from '@/types/media'
+
+const CATEGORY_LABELS: Record<VideoCategory, string> = {
+  'comercial':   'Comercial',
+  'video-clip':  'Video Clip',
+  'entrevista':  'Entrevista',
+  'podcast':     'Podcast',
+}
+
+/** Order categories appear on screen */
+const CATEGORY_ORDER: VideoCategory[] = ['comercial', 'video-clip', 'entrevista', 'podcast']
 
 function VideoTile({ video }: { video: VideoEntry }) {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -30,7 +40,7 @@ function VideoTile({ video }: { video: VideoEntry }) {
           aspectRatio: '16/9',
           overflow: 'hidden',
           cursor: 'none',
-          background: '#0a0a0a',
+          background: '#0d0d0d',
         }}
       >
         <video
@@ -39,7 +49,11 @@ function VideoTile({ video }: { video: VideoEntry }) {
           muted
           loop
           playsInline
-          preload="none"
+          preload="metadata"
+          onLoadedMetadata={() => {
+            // Seek to 0.5s so the browser renders a real frame as thumbnail
+            if (videoRef.current) videoRef.current.currentTime = 0.5
+          }}
           style={{
             width: '100%',
             height: '100%',
@@ -67,7 +81,6 @@ function VideoTile({ video }: { video: VideoEntry }) {
         </div>
       </div>
 
-      {/* Fullscreen overlay — click tile to open, click backdrop or Escape to close */}
       {isOpen && (
         <div
           role="dialog"
@@ -100,6 +113,15 @@ function VideoTile({ video }: { video: VideoEntry }) {
 }
 
 export function VideoSection() {
+  // Group videos by category, preserving CATEGORY_ORDER
+  const grouped = CATEGORY_ORDER.reduce<Record<VideoCategory, VideoEntry[]>>(
+    (acc, cat) => {
+      acc[cat] = registry.videos.filter((v) => v.category === cat)
+      return acc
+    },
+    { comercial: [], 'video-clip': [], entrevista: [], podcast: [] }
+  )
+
   return (
     <section
       id="video"
@@ -109,31 +131,45 @@ export function VideoSection() {
       }}
     >
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        <h2
-          style={{
-            fontFamily: 'var(--font-geist-sans)',
-            fontWeight: 200,
-            fontSize: 'clamp(0.75rem, 1.5vw, 1rem)',
-            letterSpacing: '0.25em',
-            textTransform: 'uppercase',
-            color: 'var(--color-video-text)',
-            opacity: 0.5,
-            marginBottom: 'var(--space-8)',
-          }}
-        >
-          Video
-        </h2>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: '1px',
-          }}
-        >
-          {registry.videos.map((video) => (
-            <VideoTile key={video.id} video={video} />
-          ))}
-        </div>
+        {CATEGORY_ORDER.map((cat) => {
+          const videos = grouped[cat]
+          if (videos.length === 0) return null
+
+          return (
+            <div
+              key={cat}
+              style={{ marginBottom: 'var(--space-16)' }}
+            >
+              {/* Category label */}
+              <p
+                style={{
+                  fontFamily: 'var(--font-geist-mono)',
+                  fontSize: '0.65rem',
+                  letterSpacing: '0.25em',
+                  textTransform: 'uppercase',
+                  color: 'var(--color-video-text)',
+                  opacity: 0.4,
+                  marginBottom: 'var(--space-4)',
+                }}
+              >
+                {CATEGORY_LABELS[cat]}
+              </p>
+
+              {/* Video grid */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
+                  gap: '1px',
+                }}
+              >
+                {videos.map((video) => (
+                  <VideoTile key={video.id} video={video} />
+                ))}
+              </div>
+            </div>
+          )
+        })}
       </div>
     </section>
   )

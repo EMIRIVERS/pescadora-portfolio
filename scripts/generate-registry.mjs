@@ -7,6 +7,32 @@ const VIDEO_EXTENSIONS = new Set(['.mov', '.mp4', '.webm'])
 const PUBLIC_MEDIA = './public/media'
 const OUTPUT = './media_registry.json'
 
+/**
+ * Category mapping — edit this to re-categorize videos.
+ * Key: substring of the filename (case-insensitive match)
+ * Value: 'comercial' | 'video-clip' | 'entrevista' | 'podcast'
+ */
+const VIDEO_CATEGORIES = {
+  'noma mezcal':        'comercial',
+  'tierra jias':        'comercial',   // TIERRA JIASÚ
+  'conade':             'comercial',
+  'itsco':              'comercial',
+  'lucky stash':        'comercial',
+  'amor de vaso':       'comercial',
+  'hipnotizado':        'video-clip',
+  'como fuego lento':   'video-clip',
+  'cotorreo':           'podcast',
+}
+
+/** Resolve category from filename — falls back to 'comercial' */
+function getCategory(filename) {
+  const lower = filename.toLowerCase()
+  for (const [fragment, category] of Object.entries(VIDEO_CATEGORIES)) {
+    if (lower.includes(fragment)) return category
+  }
+  return 'comercial'
+}
+
 async function scanPhotos() {
   const photos = []
   const contenidoDir = join(PUBLIC_MEDIA, 'contenido')
@@ -60,6 +86,7 @@ async function scanVideos() {
       title: name,
       url: `/media/videos/${encodeURIComponent(file)}`,
       poster: null,
+      category: getCategory(file),
       tags: [],
     })
   }
@@ -70,7 +97,14 @@ async function main() {
   const [photos, videos] = await Promise.all([scanPhotos(), scanVideos()])
   const registry = { photos, videos }
   await writeFile(OUTPUT, JSON.stringify(registry, null, 2))
+
+  // Summary by category
+  const byCategory = videos.reduce((acc, v) => {
+    acc[v.category] = (acc[v.category] ?? 0) + 1
+    return acc
+  }, {})
   console.log(`✓ media_registry.json — ${photos.length} photos, ${videos.length} videos`)
+  console.log('  Videos by category:', byCategory)
 }
 
 main().catch(console.error)
