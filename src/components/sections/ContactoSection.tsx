@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import Image from 'next/image'
 
 export function ContactoSection() {
   const [nombre, setNombre] = useState('')
@@ -49,23 +50,21 @@ export function ContactoSection() {
       style={{
         padding: 'var(--space-16) var(--space-4)',
         background: 'var(--color-bg)',
-        borderTop: '1px solid var(--color-border)',
       }}
     >
       <div style={{ maxWidth: '480px', margin: '0 auto' }}>
-        <span
+        <h2
           style={{
-            fontFamily: 'var(--font-geist-mono)',
-            fontSize: '0.7rem',
-            letterSpacing: '0.2em',
-            textTransform: 'uppercase',
-            color: 'var(--color-text-muted)',
-            display: 'block',
+            fontFamily: 'var(--font-geist-sans)',
+            fontSize: 'clamp(2rem, 5vw, 4rem)',
+            fontWeight: 700,
+            color: 'var(--color-text)',
+            letterSpacing: '-0.02em',
             marginBottom: 'var(--space-8)',
           }}
         >
           Contacto
-        </span>
+        </h2>
 
         <form onSubmit={handleSubmit}>
           <input
@@ -101,27 +100,31 @@ export function ContactoSection() {
             style={{
               marginTop: 'var(--space-2)',
               background: 'transparent',
-              border: 'none',
+              border: '1px solid var(--color-border)',
               fontFamily: 'var(--font-geist-mono)',
-              fontSize: '0.75rem',
-              letterSpacing: '0.2em',
+              fontSize: '0.65rem',
+              letterSpacing: '0.3em',
               textTransform: 'uppercase',
               color: 'var(--color-text)',
               cursor: 'none',
-              padding: 0,
-              transition: 'opacity 0.2s',
+              padding: '0.9rem 2.5rem',
+              transition: 'opacity 0.2s, border-color 0.3s',
               opacity: sending ? 0.5 : 1,
             }}
           >
-            {sending ? 'Abriendo WhatsApp...' : 'Enviar →'}
+            {sending ? 'Abriendo WhatsApp...' : 'Enviar'}
           </button>
         </form>
 
+        {/* Footer with fish logo */}
         <div
           style={{
             marginTop: 'var(--space-12)',
             borderTop: '1px solid var(--color-border)',
             paddingTop: 'var(--space-4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
           }}
         >
           <p
@@ -134,6 +137,13 @@ export function ContactoSection() {
           >
             @pescadora
           </p>
+          <Image
+            src="/fish_silhouette.png"
+            alt="Pescadora"
+            width={28}
+            height={16}
+            style={{ opacity: 0.4 }}
+          />
         </div>
       </div>
     </section>

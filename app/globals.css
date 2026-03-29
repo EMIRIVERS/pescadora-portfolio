@@ -1,12 +1,12 @@
 @import "tailwindcss";
 
 :root {
-  --color-bg: #f2ede6;
-  --color-text: #2a2520;
+  --color-bg: #080808;
+  --color-text: #f2ede6;
   --color-text-muted: #8a8078;
-  --color-border: #d0c8be;
-  --color-ink: #1a1510;
-  --color-video-bg: #1a1510;
+  --color-border: #2a2520;
+  --color-ink: #f2ede6;
+  --color-video-bg: #0a0a0a;
   --color-video-text: #f2ede6;
 
   /* Typography scale — golden ratio */
@@ -44,9 +44,33 @@ html {
   scroll-behavior: auto;
 }
 
+/* Custom minimalist cursor */
+.custom-cursor {
+  width: 12px;
+  height: 12px;
+  background: #f2ede6;
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s, height 0.3s, background 0.3s;
+}
+
+.custom-cursor.hover {
+  width: 40px;
+  height: 40px;
+  background: rgba(242, 237, 230, 0.2);
+  border: 1px solid #f2ede6;
+}
+
 body {
-  cursor: none;
+  cursor: none !important;
   overflow-x: hidden;
+}
+
+button, a, [role="button"] {
+  cursor: none !important;
 }
 
 input,

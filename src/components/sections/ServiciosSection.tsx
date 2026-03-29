@@ -1,10 +1,10 @@
 const SERVICIOS = [
-  'Fotografía de Marca',
-  'Dirección de Arte',
-  'Video de Campaña',
-  'Fotografía de Producto',
-  'Fotografía Gastronómica',
-  'Fotografía de Locación',
+  'Fotografia de Marca',
+  'Direccion de Arte',
+  'Video de Campana',
+  'Fotografia de Producto',
+  'Fotografia Gastronomica',
+  'Fotografia de Locacion',
 ]
 
 export function ServiciosSection() {
@@ -14,23 +14,21 @@ export function ServiciosSection() {
       style={{
         padding: 'var(--space-16) var(--space-4)',
         background: 'var(--color-bg)',
-        borderTop: '1px solid var(--color-border)',
       }}
     >
       <div style={{ maxWidth: '960px', margin: '0 auto' }}>
-        <span
+        <h2
           style={{
-            fontFamily: 'var(--font-geist-mono)',
-            fontSize: '0.7rem',
-            letterSpacing: '0.2em',
-            textTransform: 'uppercase',
-            color: 'var(--color-text-muted)',
-            display: 'block',
+            fontFamily: 'var(--font-geist-sans)',
+            fontSize: 'clamp(2rem, 5vw, 4rem)',
+            fontWeight: 700,
+            color: 'var(--color-text)',
+            letterSpacing: '-0.02em',
             marginBottom: 'var(--space-8)',
           }}
         >
           Servicios
-        </span>
+        </h2>
         <div
           style={{
             display: 'grid',

@@ -1,15 +1,15 @@
 import type { Metadata } from 'next'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
-import { CustomCursor } from '@/components/cursor/CustomCursor'
+import FishCursor from '@/components/ui/FishCursor'
 import './globals.css'
 
 export const metadata: Metadata = {
   title: 'Pescadora',
-  description: 'Fotografía y video de campaña. México.',
+  description: 'Fotografia y video de campana. Mexico.',
   openGraph: {
     title: 'Pescadora',
-    description: 'Fotografía y video de campaña. México.',
+    description: 'Fotografia y video de campana. Mexico.',
     type: 'website',
   },
 }
@@ -22,7 +22,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={`${GeistSans.variable} ${GeistMono.variable}`}>
-        <CustomCursor />
+        <FishCursor />
         {children}
       </body>
     </html>

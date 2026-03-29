@@ -42,3 +42,13 @@ next-env.d.ts
 
 .env*.local
 .superpowers/
+
+# Claude Code session memory
+.claude/
+
+# Large video/media files (use cloud storage instead)
+*.mov
+*.mp4
+*.avi
+*.zip
+Contenido/
