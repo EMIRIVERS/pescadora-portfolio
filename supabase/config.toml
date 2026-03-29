@@ -1,4 +1,4 @@
-# Supabase config — run `npx supabase link --project-ref <id>` to link
+# Supabase config — project: pescadora-platform (ywdqbynddnlxnszqzsdo)
 [api]
 enabled = true
 port = 54321
