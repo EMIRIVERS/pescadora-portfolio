@@ -3,9 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import type { Database } from '@/lib/supabase/types'
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  })
+  let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -28,48 +26,44 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Refresh session — do NOT remove, required for session persistence
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // IMPORTANT: do not remove — refreshes session and sets cookies
+  const { data: { user } } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
 
-  // ── Protect /admin/* ──────────────────────────────────────────────────────
+  // Protect /admin/*
   if (pathname.startsWith('/admin')) {
     if (!user) {
-      const loginUrl = request.nextUrl.clone()
-      loginUrl.pathname = '/login'
-      loginUrl.searchParams.set('redirectTo', pathname)
-      return NextResponse.redirect(loginUrl)
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      url.searchParams.set('redirectTo', pathname)
+      return NextResponse.redirect(url)
     }
 
-    const { data: profile } = await supabase
+    const { data: profile, error } = await supabase
       .from('profiles')
       .select('is_admin_team')
       .eq('id', user.id)
       .single()
 
-    if (!profile?.is_admin_team) {
-      // Logged in but not admin — send to portal to avoid redirect loop
-      const portalUrl = request.nextUrl.clone()
-      portalUrl.pathname = '/portal'
-      portalUrl.searchParams.delete('redirectTo')
-      return NextResponse.redirect(portalUrl)
+    if (error || !profile?.is_admin_team) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/portal'
+      url.searchParams.delete('redirectTo')
+      return NextResponse.redirect(url)
     }
   }
 
-  // ── Protect /portal/* ─────────────────────────────────────────────────────
+  // Protect /portal/*
   if (pathname.startsWith('/portal')) {
     if (!user) {
-      const loginUrl = request.nextUrl.clone()
-      loginUrl.pathname = '/login'
-      loginUrl.searchParams.delete('redirectTo')
-      return NextResponse.redirect(loginUrl)
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      return NextResponse.redirect(url)
     }
   }
 
-  // ── Post-login role-based redirect from /login ────────────────────────────
+  // Redirect logged-in users away from /login
   if (pathname === '/login' && user) {
     const { data: profile } = await supabase
       .from('profiles')
@@ -77,13 +71,13 @@ export async function middleware(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    // If profile is missing, let them stay on /login so they can sign out
+    // No profile — let them stay on /login to sign out or retry
     if (!profile) return supabaseResponse
 
-    const destination = request.nextUrl.clone()
-    destination.pathname = profile.is_admin_team ? '/admin' : '/portal'
-    destination.searchParams.delete('redirectTo')
-    return NextResponse.redirect(destination)
+    const url = request.nextUrl.clone()
+    url.pathname = profile.is_admin_team ? '/admin' : '/portal'
+    url.searchParams.delete('redirectTo')
+    return NextResponse.redirect(url)
   }
 
   return supabaseResponse
@@ -91,13 +85,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimisation)
-     * - favicon.ico, sitemap.xml, robots.txt
-     * - public folder files
-     */
     '/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp4|webm|glb|gltf)$).*)',
   ],
 }

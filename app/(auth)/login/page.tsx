@@ -1,12 +1,14 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { Suspense, useState, useTransition } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 type FormMode = 'password' | 'magic-link'
 
-export default function LoginPage() {
+function LoginPageInner() {
   const supabase = createClient()
+  const searchParams = useSearchParams()
 
   const [mode, setMode] = useState<FormMode>('password')
   const [email, setEmail] = useState('')
@@ -46,7 +48,9 @@ export default function LoginPage() {
         .eq('id', user.id)
         .single()
 
-      const destination = profile?.is_admin_team ? '/admin' : '/portal'
+      const raw = searchParams.get('redirectTo')
+      const safeRedirect = raw && raw.startsWith('/') && !raw.startsWith('//') ? raw : null
+      const destination = safeRedirect ?? (profile?.is_admin_team ? '/admin' : '/portal')
       window.location.href = destination
     })
   }
@@ -253,5 +257,13 @@ export default function LoginPage() {
         </p>
       </div>
     </main>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginPageInner />
+    </Suspense>
   )
 }
