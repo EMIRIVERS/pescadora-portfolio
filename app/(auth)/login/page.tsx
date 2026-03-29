@@ -1,84 +1,34 @@
 'use client'
 
-import { Suspense, useState, useTransition } from 'react'
+import { Suspense, useState, useActionState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { signInWithPassword, signInWithMagicLink } from '../../actions/auth'
 
 type FormMode = 'password' | 'magic-link'
 
 function LoginPageInner() {
-  const supabase = createClient()
   const searchParams = useSearchParams()
+  const redirectTo = searchParams.get('redirectTo')
 
   const [mode, setMode] = useState<FormMode>('password')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [magicLinkSent, setMagicLinkSent] = useState(false)
-  const [isPending, startTransition] = useTransition()
 
-  async function handlePasswordLogin(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setError(null)
+  const [passwordState, passwordAction, passwordPending] = useActionState(
+    signInWithPassword,
+    { error: null },
+  )
 
-    startTransition(async () => {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+  const [magicState, magicAction, magicPending] = useActionState(
+    signInWithMagicLink,
+    { error: null, sent: false },
+  )
 
-      if (signInError) {
-        setError(signInError.message)
-        return
-      }
-
-      // Fetch role and redirect
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (!user) {
-        setError('Authentication failed. Please try again.')
-        return
-      }
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('is_admin_team')
-        .eq('id', user.id)
-        .single()
-
-      const raw = searchParams.get('redirectTo')
-      const safeRedirect = raw && raw.startsWith('/') && !raw.startsWith('//') ? raw : null
-      const destination = safeRedirect ?? (profile?.is_admin_team ? '/admin' : '/portal')
-      window.location.href = destination
-    })
-  }
-
-  async function handleMagicLink(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setError(null)
-
-    startTransition(async () => {
-      const { error: otpError } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      })
-
-      if (otpError) {
-        setError(otpError.message)
-        return
-      }
-
-      setMagicLinkSent(true)
-    })
+  const switchMode = (next: FormMode) => {
+    setMode(next)
   }
 
   return (
     <main className="min-h-screen bg-[#080808] flex items-center justify-center px-4">
-      {/* Subtle grain texture overlay */}
+      {/* Grain overlay */}
       <div
         className="pointer-events-none fixed inset-0 opacity-[0.03]"
         style={{
@@ -100,11 +50,7 @@ function LoginPageInner() {
           <div className="flex gap-1 mb-8 p-1 bg-[#111] rounded-sm">
             <button
               type="button"
-              onClick={() => {
-                setMode('password')
-                setError(null)
-                setMagicLinkSent(false)
-              }}
+              onClick={() => switchMode('password')}
               className={`flex-1 py-1.5 text-xs font-mono tracking-widest uppercase transition-colors rounded-sm ${
                 mode === 'password'
                   ? 'bg-[#1c1c1c] text-[#e8e8e8]'
@@ -115,11 +61,7 @@ function LoginPageInner() {
             </button>
             <button
               type="button"
-              onClick={() => {
-                setMode('magic-link')
-                setError(null)
-                setMagicLinkSent(false)
-              }}
+              onClick={() => switchMode('magic-link')}
               className={`flex-1 py-1.5 text-xs font-mono tracking-widest uppercase transition-colors rounded-sm ${
                 mode === 'magic-link'
                   ? 'bg-[#1c1c1c] text-[#e8e8e8]'
@@ -130,10 +72,13 @@ function LoginPageInner() {
             </button>
           </div>
 
-          {/* ── Password form ─────────────────────────────────────────────── */}
+          {/* ── Password form ── */}
           {mode === 'password' && (
-            <form onSubmit={handlePasswordLogin} noValidate>
-              <fieldset disabled={isPending} className="space-y-4">
+            <form action={passwordAction} noValidate>
+              {redirectTo && (
+                <input type="hidden" name="redirectTo" value={redirectTo} />
+              )}
+              <fieldset disabled={passwordPending} className="space-y-4">
                 <div className="space-y-1">
                   <label
                     htmlFor="email"
@@ -143,11 +88,10 @@ function LoginPageInner() {
                   </label>
                   <input
                     id="email"
+                    name="email"
                     type="email"
                     autoComplete="email"
                     required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
                     className="w-full bg-[#111] border border-[#222] rounded-sm px-3 py-2.5 text-sm text-[#e8e8e8] font-mono placeholder-[#333] focus:outline-none focus:border-[#444] transition-colors"
                     placeholder="you@example.com"
                   />
@@ -162,19 +106,18 @@ function LoginPageInner() {
                   </label>
                   <input
                     id="password"
+                    name="password"
                     type="password"
                     autoComplete="current-password"
                     required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
                     className="w-full bg-[#111] border border-[#222] rounded-sm px-3 py-2.5 text-sm text-[#e8e8e8] font-mono placeholder-[#333] focus:outline-none focus:border-[#444] transition-colors"
                     placeholder="••••••••"
                   />
                 </div>
 
-                {error && (
+                {passwordState.error && (
                   <p className="text-[11px] font-mono text-red-400/80 pt-1">
-                    {error}
+                    {passwordState.error}
                   </p>
                 )}
 
@@ -182,16 +125,16 @@ function LoginPageInner() {
                   type="submit"
                   className="w-full mt-2 py-2.5 bg-[#e8e8e8] hover:bg-white text-[#080808] text-xs font-mono tracking-[0.2em] uppercase rounded-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  {isPending ? 'Signing in...' : 'Sign in'}
+                  {passwordPending ? 'Signing in...' : 'Sign in'}
                 </button>
               </fieldset>
             </form>
           )}
 
-          {/* ── Magic link form ───────────────────────────────────────────── */}
-          {mode === 'magic-link' && !magicLinkSent && (
-            <form onSubmit={handleMagicLink} noValidate>
-              <fieldset disabled={isPending} className="space-y-4">
+          {/* ── Magic link form ── */}
+          {mode === 'magic-link' && !magicState.sent && (
+            <form action={magicAction} noValidate>
+              <fieldset disabled={magicPending} className="space-y-4">
                 <div className="space-y-1">
                   <label
                     htmlFor="email-magic"
@@ -201,19 +144,18 @@ function LoginPageInner() {
                   </label>
                   <input
                     id="email-magic"
+                    name="email"
                     type="email"
                     autoComplete="email"
                     required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
                     className="w-full bg-[#111] border border-[#222] rounded-sm px-3 py-2.5 text-sm text-[#e8e8e8] font-mono placeholder-[#333] focus:outline-none focus:border-[#444] transition-colors"
                     placeholder="you@example.com"
                   />
                 </div>
 
-                {error && (
+                {magicState.error && (
                   <p className="text-[11px] font-mono text-red-400/80 pt-1">
-                    {error}
+                    {magicState.error}
                   </p>
                 )}
 
@@ -221,37 +163,30 @@ function LoginPageInner() {
                   type="submit"
                   className="w-full mt-2 py-2.5 bg-[#e8e8e8] hover:bg-white text-[#080808] text-xs font-mono tracking-[0.2em] uppercase rounded-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  {isPending ? 'Sending...' : 'Send magic link'}
+                  {magicPending ? 'Sending...' : 'Send magic link'}
                 </button>
               </fieldset>
             </form>
           )}
 
-          {/* ── Magic link sent confirmation ──────────────────────────────── */}
-          {mode === 'magic-link' && magicLinkSent && (
+          {/* ── Magic link sent ── */}
+          {mode === 'magic-link' && magicState.sent && (
             <div className="text-center space-y-3 py-2">
-              <p className="text-sm font-mono text-[#e8e8e8]">
-                Link sent.
-              </p>
+              <p className="text-sm font-mono text-[#e8e8e8]">Link sent.</p>
               <p className="text-xs font-mono text-[#555] leading-relaxed">
-                Check <span className="text-[#888]">{email}</span> for a sign-in
-                link. It expires in 60 minutes.
+                Revisa tu email. El link expira en 60 minutos.
               </p>
               <button
                 type="button"
-                onClick={() => {
-                  setMagicLinkSent(false)
-                  setEmail('')
-                }}
+                onClick={() => switchMode('magic-link')}
                 className="mt-2 text-[10px] font-mono tracking-[0.2em] uppercase text-[#444] hover:text-[#888] transition-colors"
               >
-                Use a different email
+                Usar otro email
               </button>
             </div>
           )}
         </div>
 
-        {/* Footer hint */}
         <p className="mt-6 text-center text-[10px] font-mono tracking-widest uppercase text-[#333]">
           Pescadora Platform &mdash; Private access
         </p>
