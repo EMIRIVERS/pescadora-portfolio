@@ -25,7 +25,8 @@ export default async function AdminLayout({
     .single()
 
   if (profileError || !profile || !profile.is_admin_team) {
-    redirect('/login')
+    // Authenticated but no admin access — go home to avoid redirect loops
+    redirect('/')
   }
 
   return (

@@ -35,9 +35,14 @@ export default async function PortalLayout({
     .eq('id', user.id)
     .single()
 
-  if (profileError || !profile || profile.is_admin_team) {
-    // Admins have their own portal; non-existent profiles go back to login
-    redirect('/login')
+  if (profileError || !profile) {
+    // No profile yet — go home to avoid redirect loops
+    redirect('/')
+  }
+
+  if (profile.is_admin_team) {
+    // Admins belong in /admin, not /portal
+    redirect('/admin')
   }
 
   return (

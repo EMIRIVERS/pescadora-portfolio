@@ -71,23 +71,18 @@ export async function middleware(request: NextRequest) {
 
   // ── Post-login role-based redirect from /login ────────────────────────────
   if (pathname === '/login' && user) {
-    const redirectTo = request.nextUrl.searchParams.get('redirectTo')
-
-    if (redirectTo) {
-      const target = request.nextUrl.clone()
-      target.pathname = redirectTo
-      target.searchParams.delete('redirectTo')
-      return NextResponse.redirect(target)
-    }
-
     const { data: profile } = await supabase
       .from('profiles')
       .select('is_admin_team')
       .eq('id', user.id)
       .single()
 
+    // If profile is missing, let them stay on /login so they can sign out
+    if (!profile) return supabaseResponse
+
     const destination = request.nextUrl.clone()
-    destination.pathname = profile?.is_admin_team ? '/admin' : '/portal'
+    destination.pathname = profile.is_admin_team ? '/admin' : '/portal'
+    destination.searchParams.delete('redirectTo')
     return NextResponse.redirect(destination)
   }
 
