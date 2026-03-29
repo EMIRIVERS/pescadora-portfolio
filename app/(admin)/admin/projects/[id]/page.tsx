@@ -9,9 +9,9 @@ import type {
   DeliverableStatus,
 } from '@/lib/supabase/types'
 import { DeliverableList } from '@/components/admin/deliverables/deliverable-list'
+import { ProjectAssignments } from '@/components/admin/projects/project-assignments'
 import {
   Calendar,
-  Users,
   Columns,
   Pencil,
   ChevronLeft,
@@ -187,21 +187,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
         {/* Team section */}
         <section className="space-y-4">
           <h2 className="text-lg font-semibold text-zinc-50">Team</h2>
-          <div className="rounded-xl bg-zinc-900 border border-zinc-800 px-6 py-5 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center">
-              <Users className="w-4 h-4 text-zinc-400" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-zinc-200">
-                {uniqueAssignees === 0
-                  ? 'No assignees yet'
-                  : `${uniqueAssignees} team member${uniqueAssignees !== 1 ? 's' : ''} assigned`}
-              </p>
-              <p className="text-xs text-zinc-500 mt-0.5">
-                Assignees are managed through Kanban tasks
-              </p>
-            </div>
-          </div>
+          <ProjectAssignments projectId={id} />
         </section>
 
         {/* Kanban tasks count */}

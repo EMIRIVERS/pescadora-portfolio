@@ -1,26 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 import type { Client } from '@/lib/supabase/types'
+import { InviteClientButton } from '@/components/admin/clients/invite-client-button'
 
 // ── Extended shape returned by the join ──────────────────────────────────────
 
 interface ClientRow extends Client {
   project_count: number
-}
-
-// ── Invite button (placeholder — triggers modal in future) ───────────────────
-// Extracted so we can mark it 'use client' separately when the modal is wired up.
-
-function InviteClientButton() {
-  return (
-    <button
-      type="button"
-      disabled
-      title="Proximamente: invitar cliente por email"
-      className="px-4 py-2 border border-[#2a2a2a] text-[#555] text-[11px] font-mono tracking-[0.15em] uppercase rounded-sm cursor-not-allowed opacity-50"
-    >
-      Invitar cliente
-    </button>
-  )
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────

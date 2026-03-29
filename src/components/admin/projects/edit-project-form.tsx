@@ -18,11 +18,15 @@ interface FormValues {
   status: ProjectStatus
   start_date: string
   end_date: string
+  is_public: boolean
+  portfolio_order: number
+  cover_url: string
 }
 
 interface FormErrors {
   title?: string
   end_date?: string
+  portfolio_order?: string
   general?: string
 }
 
@@ -48,6 +52,10 @@ function validate(values: FormValues): FormErrors {
     }
   }
 
+  if (values.is_public && !Number.isInteger(values.portfolio_order)) {
+    errors.portfolio_order = 'Portfolio order must be a whole number.'
+  }
+
   return errors
 }
 
@@ -62,13 +70,20 @@ export function EditProjectForm({ project, clients }: Props) {
     status: project.status,
     start_date: project.start_date ?? '',
     end_date: project.end_date ?? '',
+    is_public: project.is_public,
+    portfolio_order: project.portfolio_order,
+    cover_url: project.cover_url ?? '',
   })
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) {
-    const { name, value } = e.target
-    setValues((prev) => ({ ...prev, [name]: value }))
+    const { name, value, type } = e.target
+    const checked = type === 'checkbox' ? (e.target as HTMLInputElement).checked : undefined
+    setValues((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? (checked ?? false) : value,
+    }))
     // Clear field-level error on change
     if (name in errors) {
       setErrors((prev) => ({ ...prev, [name]: undefined }))
@@ -96,6 +111,9 @@ export function EditProjectForm({ project, clients }: Props) {
           status: values.status,
           start_date: values.start_date || null,
           end_date: values.end_date || null,
+          cover_url: values.cover_url.trim() || null,
+          is_public: values.is_public,
+          portfolio_order: values.portfolio_order,
           updated_at: new Date().toISOString(),
         })
         .eq('id', project.id)
@@ -232,6 +250,81 @@ export function EditProjectForm({ project, clients }: Props) {
             <p className="text-xs text-red-400">{errors.end_date}</p>
           )}
         </div>
+      </div>
+
+      {/* Cover URL */}
+      <div className="space-y-1.5">
+        <label htmlFor="cover_url" className="block text-sm font-medium text-zinc-300">
+          Cover image URL
+        </label>
+        <input
+          id="cover_url"
+          name="cover_url"
+          type="url"
+          value={values.cover_url}
+          onChange={handleChange}
+          disabled={isPending}
+          className="w-full rounded-lg bg-zinc-900 border border-zinc-700 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:opacity-50"
+          placeholder="https://…"
+        />
+        <p className="text-xs text-zinc-500">
+          Used as the cover card image on the public portfolio.
+        </p>
+      </div>
+
+      {/* Portfolio visibility */}
+      <div className="rounded-xl bg-zinc-900 border border-zinc-800 px-4 py-4 space-y-4">
+        <p className="text-xs font-medium text-zinc-400 uppercase tracking-widest">
+          Portfolio visibility
+        </p>
+
+        {/* is_public toggle */}
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            id="is_public"
+            name="is_public"
+            type="checkbox"
+            checked={values.is_public}
+            onChange={handleChange}
+            disabled={isPending}
+            className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-zinc-100 focus:ring-zinc-500 focus:ring-offset-zinc-950 disabled:opacity-50 accent-zinc-100"
+          />
+          <span className="text-sm text-zinc-200">Show on public portfolio</span>
+        </label>
+
+        {/* portfolio_order — only visible when public */}
+        {values.is_public && (
+          <div className="space-y-1.5">
+            <label htmlFor="portfolio_order" className="block text-sm font-medium text-zinc-300">
+              Portfolio order
+            </label>
+            <input
+              id="portfolio_order"
+              name="portfolio_order"
+              type="number"
+              min={0}
+              step={1}
+              value={values.portfolio_order}
+              onChange={(e) => {
+                setValues((prev) => ({
+                  ...prev,
+                  portfolio_order: parseInt(e.target.value, 10) || 0,
+                }))
+                if ('portfolio_order' in errors) {
+                  setErrors((prev) => ({ ...prev, portfolio_order: undefined }))
+                }
+              }}
+              disabled={isPending}
+              className="w-32 rounded-lg bg-zinc-900 border border-zinc-700 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:opacity-50"
+            />
+            <p className="text-xs text-zinc-500">
+              Lower numbers appear first. Projects with the same order are sorted by title.
+            </p>
+            {errors.portfolio_order && (
+              <p className="text-xs text-red-400">{errors.portfolio_order}</p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Actions */}

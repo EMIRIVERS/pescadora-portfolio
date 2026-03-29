@@ -14,6 +14,17 @@ interface ProjectCard {
   count: number
 }
 
+export interface CmsProjectCard {
+  id: string
+  title: string
+  description: string | null
+  cover_url: string | null
+}
+
+interface Props {
+  cmsProjects?: CmsProjectCard[]
+}
+
 function groupPhotosByProject(): ProjectCard[] {
   const projectMap = new Map<string, { urls: string[]; count: number }>()
   for (const photo of registry.photos) {
@@ -43,7 +54,7 @@ function groupVideosByCategory(): ProjectCard[] {
   return cards
 }
 
-export default function PortfolioSection() {
+export default function PortfolioSection({ cmsProjects }: Props) {
   const [activeFilter, setActiveFilter] = useState<FilterMode>('foto')
   const [openProject, setOpenProject] = useState<string | null>(null)
   const [animKey, setAnimKey] = useState(0)
@@ -240,6 +251,135 @@ export default function PortfolioSection() {
           mediaType={activeFilter}
           onClose={() => setOpenProject(null)}
         />
+      )}
+
+      {/* CMS projects — only rendered when the admin has published at least one */}
+      {cmsProjects && cmsProjects.length > 0 && (
+        <div style={{ marginTop: '5rem' }}>
+          {/* Separator */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem',
+              marginBottom: '2rem',
+            }}
+          >
+            <div
+              style={{
+                flex: 1,
+                height: '1px',
+                background: 'rgba(242,237,230,0.08)',
+              }}
+            />
+            <span
+              style={{
+                fontFamily: 'var(--font-geist-mono)',
+                fontSize: '0.65rem',
+                letterSpacing: '0.18em',
+                textTransform: 'uppercase',
+                color: '#8a8078',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Proyectos recientes
+            </span>
+            <div
+              style={{
+                flex: 1,
+                height: '1px',
+                background: 'rgba(242,237,230,0.08)',
+              }}
+            />
+          </div>
+
+          {/* CMS project grid */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+              gap: '2px',
+            }}
+          >
+            {cmsProjects.map((project) => (
+              <div
+                key={project.id}
+                style={{
+                  position: 'relative',
+                  overflow: 'hidden',
+                  cursor: 'default',
+                }}
+              >
+                <div style={{ paddingBottom: '75%', position: 'relative' }}>
+                  {project.cover_url ? (
+                    <Image
+                      src={project.cover_url}
+                      alt={project.title}
+                      fill
+                      sizes="(max-width: 800px) 100vw, 50vw"
+                      style={{ objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        backgroundColor: '#1a1816',
+                      }}
+                    />
+                  )}
+
+                  {/* Gradient overlay */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background: 'linear-gradient(transparent 40%, rgba(0,0,0,0.7))',
+                      pointerEvents: 'none',
+                    }}
+                  />
+
+                  {/* Project title */}
+                  <span
+                    style={{
+                      position: 'absolute',
+                      bottom: '1rem',
+                      left: '1rem',
+                      fontSize: 'clamp(1.2rem, 2vw, 1.8rem)',
+                      fontWeight: 600,
+                      color: '#f2ede6',
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    {project.title}
+                  </span>
+
+                  {/* Description */}
+                  {project.description && (
+                    <span
+                      style={{
+                        position: 'absolute',
+                        bottom: '3rem',
+                        left: '1rem',
+                        right: '1rem',
+                        fontFamily: 'var(--font-geist-mono)',
+                        fontSize: '0.65rem',
+                        color: 'rgba(242,237,230,0.55)',
+                        pointerEvents: 'none',
+                        overflow: 'hidden',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                      }}
+                    >
+                      {project.description}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
     </section>
   )

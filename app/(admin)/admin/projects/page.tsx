@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import type { ProjectStatus, ProjectWithClient } from '@/lib/supabase/types'
+import type { ProjectStatus, ProjectWithClient, Client } from '@/lib/supabase/types'
+import { ProjectsFilterBar } from '@/components/admin/projects/projects-filter-bar'
 
 // ── Status badge config ───────────────────────────────────────────────────────
 
@@ -53,10 +54,25 @@ function formatDate(iso: string | null): string {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export default async function AdminProjectsPage() {
+interface PageProps {
+  searchParams: Promise<{ q?: string; status?: string; client?: string }>
+}
+
+export default async function AdminProjectsPage({ searchParams }: PageProps) {
+  const { q, status, client: clientFilter } = await searchParams
+
   const supabase = await createClient()
 
-  const { data: projects, error } = await supabase
+  // Fetch all clients for the filter dropdown
+  const { data: allClients } = await supabase
+    .from('clients')
+    .select('id, name')
+    .order('name', { ascending: true })
+
+  const clients: Pick<Client, 'id' | 'name'>[] = (allClients ?? []) as Pick<Client, 'id' | 'name'>[]
+
+  // Build projects query with optional filters
+  let query = supabase
     .from('projects')
     .select(
       `
@@ -82,12 +98,31 @@ export default async function AdminProjectsPage() {
     )
     .order('created_at', { ascending: false })
 
+  if (q && q.trim().length > 0) {
+    query = query.ilike('title', `%${q.trim()}%`)
+  }
+
+  if (status && status !== 'all') {
+    query = query.eq('status', status as ProjectStatus)
+  }
+
+  if (clientFilter && clientFilter !== 'all') {
+    query = query.eq('client_id', clientFilter)
+  }
+
+  const { data: projects, error } = await query
+
   const rows = (projects ?? []) as ProjectWithClient[]
+
+  const hasFilters =
+    (q && q.trim().length > 0) ||
+    (status && status !== 'all') ||
+    (clientFilter && clientFilter !== 'all')
 
   return (
     <div className="px-8 py-10">
       {/* Page header */}
-      <div className="flex items-center justify-between mb-10">
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-lg font-mono tracking-[0.15em] text-[#e8e8e8] uppercase">
             Proyectos
@@ -95,6 +130,7 @@ export default async function AdminProjectsPage() {
           <p className="mt-1 text-xs font-mono text-[#555] tracking-wide">
             {rows.length} proyecto{rows.length !== 1 ? 's' : ''} registrado
             {rows.length !== 1 ? 's' : ''}
+            {hasFilters ? ' (filtrado)' : ''}
           </p>
         </div>
         <Link
@@ -103,6 +139,17 @@ export default async function AdminProjectsPage() {
         >
           Nuevo proyecto
         </Link>
+      </div>
+
+      {/* Filter bar */}
+      <div className="mb-6">
+        <ProjectsFilterBar
+          clients={clients}
+          currentQ={q ?? ''}
+          currentStatus={status ?? 'all'}
+          currentClient={clientFilter ?? 'all'}
+          hasFilters={Boolean(hasFilters)}
+        />
       </div>
 
       {error && (
@@ -116,7 +163,9 @@ export default async function AdminProjectsPage() {
       {rows.length === 0 && !error ? (
         <div className="py-20 text-center border border-[#1a1a1a] rounded-sm bg-[#0d0d0d]">
           <p className="text-xs font-mono text-[#444] tracking-wide">
-            No hay proyectos todavia.
+            {hasFilters
+              ? 'No hay proyectos que coincidan con los filtros.'
+              : 'No hay proyectos todavia.'}
           </p>
         </div>
       ) : (

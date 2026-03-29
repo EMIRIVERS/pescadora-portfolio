@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react'
 import type { Deliverable, DeliverableType, DeliverableStatus } from '@/lib/supabase/types'
 import { AddDeliverableForm } from '@/components/admin/deliverables/add-deliverable-form'
+import { EditDeliverableForm } from '@/components/admin/deliverables/edit-deliverable-form'
 import { ExternalLink, Pencil, Plus, ChevronDown, ChevronUp } from 'lucide-react'
 
 interface Props {
@@ -42,10 +43,33 @@ function formatDate(dateStr: string): string {
 
 interface DeliverableRowProps {
   deliverable: Deliverable
+  isEditing: boolean
+  onEdit: () => void
+  onEditSuccess: (updated: Deliverable) => void
+  onEditCancel: () => void
 }
 
-function DeliverableRow({ deliverable }: DeliverableRowProps) {
+function DeliverableRow({
+  deliverable,
+  isEditing,
+  onEdit,
+  onEditSuccess,
+  onEditCancel,
+}: DeliverableRowProps) {
   const [expanded, setExpanded] = useState(false)
+
+  if (isEditing) {
+    return (
+      <div className="rounded-xl bg-zinc-900 border border-zinc-700 p-5">
+        <h3 className="text-sm font-semibold text-zinc-200 mb-4">Edit deliverable</h3>
+        <EditDeliverableForm
+          deliverable={deliverable}
+          onSuccess={onEditSuccess}
+          onCancel={onEditCancel}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="rounded-xl bg-zinc-900 border border-zinc-800 overflow-hidden">
@@ -96,6 +120,7 @@ function DeliverableRow({ deliverable }: DeliverableRowProps) {
           )}
           <button
             type="button"
+            onClick={onEdit}
             className="p-1.5 rounded-md text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
             title="Edit deliverable"
           >
@@ -126,10 +151,18 @@ function DeliverableRow({ deliverable }: DeliverableRowProps) {
 export function DeliverableList({ projectId, initialDeliverables }: Props) {
   const [deliverables, setDeliverables] = useState<Deliverable[]>(initialDeliverables)
   const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
 
   const handleAdded = useCallback((newDeliverable: Deliverable) => {
     setDeliverables((prev) => [newDeliverable, ...prev])
     setShowForm(false)
+  }, [])
+
+  const handleEditSuccess = useCallback((updated: Deliverable) => {
+    setDeliverables((prev) =>
+      prev.map((d) => (d.id === updated.id ? updated : d))
+    )
+    setEditingId(null)
   }, [])
 
   return (
@@ -144,7 +177,17 @@ export function DeliverableList({ projectId, initialDeliverables }: Props) {
       )}
 
       {deliverables.map((d) => (
-        <DeliverableRow key={d.id} deliverable={d} />
+        <DeliverableRow
+          key={d.id}
+          deliverable={d}
+          isEditing={editingId === d.id}
+          onEdit={() => {
+            setShowForm(false)
+            setEditingId(d.id)
+          }}
+          onEditSuccess={handleEditSuccess}
+          onEditCancel={() => setEditingId(null)}
+        />
       ))}
 
       {showForm ? (
@@ -159,7 +202,10 @@ export function DeliverableList({ projectId, initialDeliverables }: Props) {
       ) : (
         <button
           type="button"
-          onClick={() => setShowForm(true)}
+          onClick={() => {
+            setEditingId(null)
+            setShowForm(true)
+          }}
           className="w-full flex items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-700 hover:border-zinc-500 px-4 py-3 text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
         >
           <Plus className="w-4 h-4" />

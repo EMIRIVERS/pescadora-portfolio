@@ -1,7 +1,9 @@
 'use client'
 
-import { ExternalLink, MessageSquare } from 'lucide-react'
+import { useState } from 'react'
+import { ExternalLink, MessageSquare, ChevronDown } from 'lucide-react'
 import type { Deliverable, DeliverableType, DeliverableStatus } from '@/lib/supabase/types'
+import DeliverableComments from '@/components/shared/deliverable-comments'
 
 // ---------------------------------------------------------------------------
 // Badge configs
@@ -45,6 +47,7 @@ export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
   const typeBadge = TYPE_BADGE[deliverable.type]
   const statusBadge = STATUS_BADGE[deliverable.status]
   const hasUrl = deliverable.url !== null && deliverable.url !== ''
+  const [commentsOpen, setCommentsOpen] = useState(false)
 
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 hover:border-zinc-700 transition-colors duration-200">
@@ -96,17 +99,26 @@ export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
         </div>
       </div>
 
-      {/* Comments placeholder */}
+      {/* Comments section */}
       <div className="mt-4 pt-4 border-t border-zinc-800/60">
         <button
           type="button"
-          disabled
-          className="inline-flex items-center gap-1.5 text-xs text-zinc-600 transition-colors cursor-not-allowed"
-          title="Comentarios disponibles pronto"
+          onClick={() => setCommentsOpen((prev) => !prev)}
+          className="inline-flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors duration-150"
         >
           <MessageSquare className="w-3.5 h-3.5" strokeWidth={1.5} />
-          Comentarios — proximo
+          Comentarios
+          <ChevronDown
+            className={`w-3 h-3 transition-transform duration-200 ${commentsOpen ? 'rotate-180' : ''}`}
+            strokeWidth={2}
+          />
         </button>
+
+        {commentsOpen && (
+          <div className="mt-3">
+            <DeliverableComments deliverableId={deliverable.id} />
+          </div>
+        )}
       </div>
     </div>
   )

@@ -17,6 +17,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import type { KanbanBoardWithTasks, KanbanTaskWithAssignee } from '@/lib/supabase/types'
 import { KanbanColumn } from './kanban-column'
 import { TaskCard } from './task-card'
+import { TaskDetailModal } from './task-detail-modal'
 import { useTaskBoards, useMoveTask, taskKeys } from '@/lib/queries/tasks'
 
 // ── Props ─────────────────────────────────────────────────────────────────────
@@ -24,44 +25,6 @@ import { useTaskBoards, useMoveTask, taskKeys } from '@/lib/queries/tasks'
 interface KanbanBoardProps {
   projectId?: string
   initialBoards: KanbanBoardWithTasks[]
-}
-
-// ── Task detail modal placeholder ─────────────────────────────────────────────
-
-function TaskDetailModal({
-  taskId,
-  onClose,
-}: {
-  taskId: string
-  onClose: () => void
-}) {
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Task detail"
-    >
-      <div
-        className="bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <p className="text-xs text-zinc-500 mb-1 uppercase tracking-widest">Task ID</p>
-        <p className="font-mono text-zinc-200 text-sm break-all mb-6">{taskId}</p>
-        <p className="text-zinc-400 text-sm">
-          Task detail panel — wire up full form here.
-        </p>
-        <button
-          type="button"
-          onClick={onClose}
-          className="mt-6 px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-sm text-zinc-200 transition-colors"
-        >
-          Close
-        </button>
-      </div>
-    </div>
-  )
 }
 
 // ── KanbanBoard ───────────────────────────────────────────────────────────────
@@ -198,6 +161,7 @@ export function KanbanBoard({ projectId, initialBoards }: KanbanBoardProps) {
       {openTaskId && (
         <TaskDetailModal
           taskId={openTaskId}
+          projectId={projectId}
           onClose={() => setOpenTaskId(null)}
         />
       )}
