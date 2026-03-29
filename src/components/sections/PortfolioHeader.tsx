@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface PortfolioHeaderProps {
   visible: boolean;
@@ -12,6 +13,16 @@ const navLinks: { label: string; targetId: string }[] = [
   { label: 'Contacto', targetId: 'contacto' },
 ];
 
+const linkStyle: React.CSSProperties = {
+  fontFamily: 'var(--font-geist-mono)',
+  fontSize: '0.65rem',
+  textTransform: 'uppercase',
+  letterSpacing: '0.2em',
+  color: '#8a8078',
+  textDecoration: 'none',
+  transition: 'color 0.3s',
+};
+
 export default function PortfolioHeader({ visible }: PortfolioHeaderProps) {
   const handleNavClick = (
     e: React.MouseEvent<HTMLAnchorElement>,
@@ -19,6 +30,13 @@ export default function PortfolioHeader({ visible }: PortfolioHeaderProps) {
   ) => {
     e.preventDefault();
     document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const onEnter = (e: React.MouseEvent<HTMLElement>) => {
+    (e.currentTarget as HTMLElement).style.color = '#f2ede6';
+  };
+  const onLeave = (e: React.MouseEvent<HTMLElement>) => {
+    (e.currentTarget as HTMLElement).style.color = '#8a8078';
   };
 
   return (
@@ -49,31 +67,33 @@ export default function PortfolioHeader({ visible }: PortfolioHeaderProps) {
         style={{ width: 36, height: 'auto' }}
       />
 
-      <nav style={{ display: 'flex', gap: '2rem' }}>
+      <nav style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
         {navLinks.map(({ label, targetId }) => (
           <a
             key={targetId}
             href={`#${targetId}`}
             onClick={(e) => handleNavClick(e, targetId)}
-            style={{
-              fontFamily: 'var(--font-geist-mono)',
-              fontSize: '0.65rem',
-              textTransform: 'uppercase',
-              letterSpacing: '0.2em',
-              color: '#8a8078',
-              textDecoration: 'none',
-              transition: 'color 0.3s',
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.color = '#f2ede6';
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.color = '#8a8078';
-            }}
+            style={linkStyle}
+            onMouseEnter={onEnter}
+            onMouseLeave={onLeave}
           >
             {label}
           </a>
         ))}
+
+        <Link
+          href="/login"
+          style={{
+            ...linkStyle,
+            border: '1px solid #2a2a2a',
+            padding: '0.35rem 0.9rem',
+            borderRadius: '2px',
+          }}
+          onMouseEnter={onEnter}
+          onMouseLeave={onLeave}
+        >
+          Iniciar sesión
+        </Link>
       </nav>
     </header>
   );
