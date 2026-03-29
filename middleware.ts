@@ -51,10 +51,11 @@ export async function middleware(request: NextRequest) {
       .single()
 
     if (!profile?.is_admin_team) {
-      const loginUrl = request.nextUrl.clone()
-      loginUrl.pathname = '/login'
-      loginUrl.searchParams.set('redirectTo', pathname)
-      return NextResponse.redirect(loginUrl)
+      // Logged in but not admin — send to portal to avoid redirect loop
+      const portalUrl = request.nextUrl.clone()
+      portalUrl.pathname = '/portal'
+      portalUrl.searchParams.delete('redirectTo')
+      return NextResponse.redirect(portalUrl)
     }
   }
 
@@ -63,7 +64,7 @@ export async function middleware(request: NextRequest) {
     if (!user) {
       const loginUrl = request.nextUrl.clone()
       loginUrl.pathname = '/login'
-      loginUrl.searchParams.set('redirectTo', pathname)
+      loginUrl.searchParams.delete('redirectTo')
       return NextResponse.redirect(loginUrl)
     }
   }
