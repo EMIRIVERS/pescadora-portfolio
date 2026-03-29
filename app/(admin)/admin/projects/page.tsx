@@ -76,8 +76,7 @@ export default async function AdminProjectsPage() {
         company,
         avatar_url,
         profile_id,
-        created_at,
-        updated_at
+        created_at
       )
     `
     )

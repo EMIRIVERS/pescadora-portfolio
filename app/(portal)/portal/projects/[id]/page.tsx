@@ -94,7 +94,7 @@ export default async function ProjectPage({ params }: PageProps) {
     .from('project_deliverables')
     .select('*')
     .eq('project_id', id)
-    .order('created_at', { ascending: true })
+    .order('sort_order', { ascending: true })
 
   const deliverables: Deliverable[] = (deliverableRows ?? []) as Deliverable[]
   const approvedCount = deliverables.filter((d) => d.status === 'approved').length

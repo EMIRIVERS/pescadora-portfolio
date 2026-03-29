@@ -225,8 +225,6 @@ export function useCreateTask(projectId?: string) {
           title: variables.title,
           priority: variables.priority,
           position: nextPosition,
-          project_id: variables.projectId ?? null,
-          status: 'todo',
         })
         .select('*, assignee:profiles(*)')
         .single()

@@ -10,12 +10,9 @@ export type {
   DeliverableStatus,
   TaskPriority,
   Tables,
-  TablesInsert,
-  TablesUpdate,
-  Enums,
-} from '@/lib/supabase/database.types'
+} from '@/lib/supabase/types'
 
-import type { Tables } from '@/lib/supabase/database.types'
+import type { Tables } from '@/lib/supabase/types'
 
 // ---------------------------------------------------------------------------
 // Base row convenience types

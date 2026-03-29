@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import Sidebar from '@/components/admin/sidebar'
-import { QueryProvider } from '@/providers/query-provider'
 
 export default async function AdminLayout({
   children,
@@ -30,17 +29,15 @@ export default async function AdminLayout({
   }
 
   return (
-    <QueryProvider>
-      <div className="flex min-h-screen bg-[#080808] text-[#e8e8e8]">
-        <Sidebar
-          profile={{
-            full_name: profile.full_name,
-            email: profile.email,
-            avatar_url: profile.avatar_url,
-          }}
-        />
-        <main className="flex-1 min-w-0 overflow-auto">{children}</main>
-      </div>
-    </QueryProvider>
+    <div className="flex min-h-screen bg-[#080808] text-[#e8e8e8]">
+      <Sidebar
+        profile={{
+          full_name: profile.full_name,
+          email: profile.email,
+          avatar_url: profile.avatar_url,
+        }}
+      />
+      <main className="flex-1 min-w-0 overflow-auto">{children}</main>
+    </div>
   )
 }
