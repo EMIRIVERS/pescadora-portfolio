@@ -1,13 +1,11 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 type FormMode = 'password' | 'magic-link'
 
 export default function LoginPage() {
-  const router = useRouter()
   const supabase = createClient()
 
   const [mode, setMode] = useState<FormMode>('password')
@@ -49,8 +47,7 @@ export default function LoginPage() {
         .single()
 
       const destination = profile?.is_admin_team ? '/admin' : '/portal'
-      router.push(destination)
-      router.refresh()
+      window.location.href = destination
     })
   }
 
