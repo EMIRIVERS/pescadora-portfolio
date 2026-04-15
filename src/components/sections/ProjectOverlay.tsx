@@ -184,7 +184,9 @@ function VideoDetail({
 
       {/* Info con stagger */}
       {(() => {
-        const story = projectStories[video.title] ?? null
+        const story = Object.entries(projectStories).find(
+          ([key]) => key.toLowerCase() === video.title.toLowerCase()
+        )?.[1] ?? null
         return (
           <div style={{ maxWidth: 900, margin: '0 auto', padding: '2.5rem 2rem 4rem' }}>
             <motion.h2
@@ -232,9 +234,10 @@ interface ProjectOverlayProps {
   projectName: string
   mediaType: 'foto' | 'video'
   onClose: () => void
+  videos?: VideoEntry[]
 }
 
-export default function ProjectOverlay({ projectName, mediaType, onClose }: ProjectOverlayProps) {
+export default function ProjectOverlay({ projectName, mediaType, onClose, videos }: ProjectOverlayProps) {
   const [selectedVideo, setSelectedVideo] = useState<VideoEntry | null>(null)
 
   useEffect(() => {
@@ -250,7 +253,8 @@ export default function ProjectOverlay({ projectName, mediaType, onClose }: Proj
 
   const story  = projectStories[projectName] ?? null
   const photos: PhotoEntry[] = mediaType === 'foto' ? registry.photos.filter((p) => p.project === projectName) : []
-  const videos: VideoEntry[] = mediaType === 'video' ? registry.videos.filter((v) => v.category === projectName) : []
+  const videoSource = videos && videos.length > 0 ? videos : registry.videos
+  const overlayVideos: VideoEntry[] = mediaType === 'video' ? videoSource.filter((v) => v.category === projectName) : []
   const heroSrc = mediaType === 'foto' && photos.length > 0 ? photos[0].url : null
 
   // Vista de detalle de video seleccionado
@@ -326,7 +330,7 @@ export default function ProjectOverlay({ projectName, mediaType, onClose }: Proj
 
       {/* Gallery videos */}
       {mediaType === 'video' && (
-        <VideoGrid videos={videos} onSelect={setSelectedVideo} />
+        <VideoGrid videos={overlayVideos} onSelect={setSelectedVideo} />
       )}
     </motion.div>
   )

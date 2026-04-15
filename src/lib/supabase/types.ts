@@ -404,6 +404,51 @@ export interface Database {
           },
         ]
       }
+      portfolio_videos: {
+        Row: {
+          id: string
+          title: string
+          vimeo_id: string
+          category: string
+          client_name: string
+          year: string
+          role: string
+          description: string
+          sort_order: number
+          is_visible: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          vimeo_id: string
+          category?: string
+          client_name?: string
+          year?: string
+          role?: string
+          description?: string
+          sort_order?: number
+          is_visible?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          vimeo_id?: string
+          category?: string
+          client_name?: string
+          year?: string
+          role?: string
+          description?: string
+          sort_order?: number
+          is_visible?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -480,3 +525,18 @@ export type KanbanBoard = TaskBoard
 export type KanbanBoardWithTasks = BoardWithTasks
 export type TaskStatus = 'todo' | 'in_progress' | 'done'
 export type TaskActivityLog = ActivityLog
+
+export interface PortfolioVideo {
+  id: string
+  title: string
+  vimeo_id: string
+  category: string
+  client_name: string
+  year: string
+  role: string
+  description: string
+  sort_order: number
+  is_visible: boolean
+  created_at: string
+  updated_at: string
+}

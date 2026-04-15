@@ -6,15 +6,17 @@ import PortfolioHeader from '@/components/sections/PortfolioHeader'
 import ManifestoSection from '@/components/sections/ManifestoSection'
 import PortfolioSection from '@/components/sections/PortfolioSection'
 import type { CmsProjectCard } from '@/components/sections/PortfolioSection'
+import type { VideoEntry } from '@/types/media'
 import { ServiciosSection } from '@/components/sections/ServiciosSection'
 import { ContactoSection } from '@/components/sections/ContactoSection'
 import { SmokeBackground } from '@/components/ui/spooky-smoke-animation'
 
 interface Props {
   cmsProjects: CmsProjectCard[]
+  videos?: VideoEntry[]
 }
 
-export default function HomeClient({ cmsProjects }: Props) {
+export default function HomeClient({ cmsProjects, videos }: Props) {
   const [headerVisible, setHeaderVisible] = useState(false)
 
   useEffect(() => {
@@ -37,7 +39,7 @@ export default function HomeClient({ cmsProjects }: Props) {
 
       <main style={{ position: 'relative', zIndex: 1 }}>
         <Hero />
-        <PortfolioSection cmsProjects={cmsProjects} />
+        <PortfolioSection cmsProjects={cmsProjects} videos={videos} />
         <ManifestoSection />
         <ServiciosSection />
         <ContactoSection />

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard,
+  Film,
   FolderKanban,
   Kanban,
   Users,
@@ -25,6 +26,11 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Dashboard',
     href: '/admin',
     icon: <LayoutDashboard size={16} strokeWidth={1.5} />,
+  },
+  {
+    label: 'Portfolio',
+    href: '/admin/portfolio',
+    icon: <Film size={16} strokeWidth={1.5} />,
   },
   {
     label: 'Proyectos',

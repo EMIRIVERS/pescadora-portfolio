@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { registry } from '@/lib/registry'
-import type { VideoCategory } from '@/types/media'
+import type { VideoCategory, VideoEntry } from '@/types/media'
 import ProjectOverlay from './ProjectOverlay'
 
 type FilterMode = 'foto' | 'video'
@@ -24,6 +24,7 @@ export interface CmsProjectCard {
 
 interface Props {
   cmsProjects?: CmsProjectCard[]
+  videos?: VideoEntry[]
 }
 
 function groupPhotosByProject(): ProjectCard[] {
@@ -50,9 +51,10 @@ const CATEGORY_LABELS: Record<VideoCategory, string> = {
   'podcast':    'Podcast',
 }
 
-function groupVideosByCategory(): ProjectCard[] {
+function groupVideosByCategory(source?: VideoEntry[]): ProjectCard[] {
+  const videoList = source && source.length > 0 ? source : registry.videos
   const categoryMap = new Map<VideoCategory, { count: number; firstVimeoId?: string }>()
-  for (const video of registry.videos) {
+  for (const video of videoList) {
     const existing = categoryMap.get(video.category)
     if (existing) {
       existing.count++
@@ -71,12 +73,12 @@ function groupVideosByCategory(): ProjectCard[] {
   return cards
 }
 
-export default function PortfolioSection({ cmsProjects }: Props) {
+export default function PortfolioSection({ cmsProjects, videos }: Props) {
   const [activeFilter, setActiveFilter] = useState<FilterMode>('video')
   const [openProject, setOpenProject] = useState<string | null>(null)
 
   const fotoCards = useMemo(() => groupPhotosByProject(), [])
-  const videoCards = useMemo(() => groupVideosByCategory(), [])
+  const videoCards = useMemo(() => groupVideosByCategory(videos), [videos])
   const cards = activeFilter === 'foto' ? fotoCards : videoCards
 
   const aspectPadding = activeFilter === 'foto' ? '75%' : '56.25%'
@@ -272,6 +274,7 @@ export default function PortfolioSection({ cmsProjects }: Props) {
           projectName={openProject}
           mediaType={activeFilter}
           onClose={() => setOpenProject(null)}
+          videos={videos}
         />
       )}
 
