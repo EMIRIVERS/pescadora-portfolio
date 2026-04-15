@@ -29,7 +29,7 @@ function ProjectCover({
         position: 'relative',
         aspectRatio: '4/3',
         overflow: 'hidden',
-        cursor: 'none',
+        cursor: 'pointer',
         background: '#d0c8be',
       }}
     >
@@ -194,7 +194,7 @@ function ProjectOverlay({
             fontSize: '0.65rem',
             letterSpacing: '0.2em',
             textTransform: 'uppercase',
-            cursor: 'none',
+            cursor: 'pointer',
             padding: 0,
           }}
         >

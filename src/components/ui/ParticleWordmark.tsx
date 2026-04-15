@@ -274,7 +274,7 @@ export function ParticleWordmark({
     <canvas
       ref={canvasRef}
       aria-label="CARAJO FILMS"
-      style={{ display: 'block', width: '100%', height: '100%', cursor: 'none' }}
+      style={{ display: 'block', width: '100%', height: '100%' }}
     />
   )
 }

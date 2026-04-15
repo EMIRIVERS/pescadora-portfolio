@@ -61,7 +61,7 @@ export function ContactoSection() {
     color: hovered ? '#ede8e0' : '#6b6560',
     textDecoration: 'none',
     transition: 'color 0.25s ease',
-    cursor: 'none',
+    cursor: 'pointer',
   })
 
   return (

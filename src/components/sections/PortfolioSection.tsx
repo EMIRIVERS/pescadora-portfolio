@@ -135,7 +135,7 @@ export default function PortfolioSection({ cmsProjects, videos }: Props) {
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLDivElement).style.outline = ''
             }}
-            style={{ position: 'relative', overflow: 'hidden', cursor: 'none' }}
+            style={{ position: 'relative', overflow: 'hidden', cursor: 'pointer' }}
           >
             <div style={{ paddingBottom: card.isPhoto ? '75%' : '56.25%', position: 'relative' }}>
               {card.coverUrl ? (
