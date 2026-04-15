@@ -14,6 +14,9 @@ export type ProjectStatus = 'pre_production' | 'production' | 'post_production' 
 export type DeliverableType = 'wip' | 'final'
 export type DeliverableStatus = 'pending' | 'review' | 'approved'
 export type TaskPriority = 'low' | 'medium' | 'high'
+export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'proposal' | 'won' | 'lost'
+export type LeadSource = 'manual' | 'referral' | 'instagram' | 'web' | 'whatsapp' | 'other'
+export type LeadActivityType = 'note' | 'email' | 'call' | 'whatsapp' | 'meeting' | 'status_change'
 
 export interface Database {
   public: {
@@ -404,6 +407,87 @@ export interface Database {
           },
         ]
       }
+      leads: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          name: string
+          email: string | null
+          phone: string | null
+          company: string | null
+          status: LeadStatus
+          source: LeadSource
+          notes: string | null
+          budget_range: string | null
+          project_type: string | null
+          assigned_to: string | null
+          last_contacted_at: string | null
+          expected_close_date: string | null
+          converted_to_client_id: string | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          name: string
+          email?: string | null
+          phone?: string | null
+          company?: string | null
+          status?: LeadStatus
+          source?: LeadSource
+          notes?: string | null
+          budget_range?: string | null
+          project_type?: string | null
+          assigned_to?: string | null
+          last_contacted_at?: string | null
+          expected_close_date?: string | null
+          converted_to_client_id?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          email?: string | null
+          phone?: string | null
+          company?: string | null
+          status?: LeadStatus
+          source?: LeadSource
+          notes?: string | null
+          budget_range?: string | null
+          project_type?: string | null
+          assigned_to?: string | null
+          last_contacted_at?: string | null
+          expected_close_date?: string | null
+          converted_to_client_id?: string | null
+        }
+        Relationships: []
+      }
+      lead_activities: {
+        Row: {
+          id: string
+          lead_id: string
+          user_id: string | null
+          created_at: string
+          type: LeadActivityType
+          content: string | null
+          old_status: string | null
+          new_status: string | null
+        }
+        Insert: {
+          id?: string
+          lead_id: string
+          user_id?: string | null
+          created_at?: string
+          type: LeadActivityType
+          content?: string | null
+          old_status?: string | null
+          new_status?: string | null
+        }
+        Update: {
+          content?: string | null
+        }
+        Relationships: []
+      }
       portfolio_videos: {
         Row: {
           id: string
@@ -525,6 +609,13 @@ export type KanbanBoard = TaskBoard
 export type KanbanBoardWithTasks = BoardWithTasks
 export type TaskStatus = 'todo' | 'in_progress' | 'done'
 export type TaskActivityLog = ActivityLog
+
+export type Lead = Tables<'leads'>
+export type LeadActivity = Tables<'lead_activities'>
+
+export interface LeadWithActivity extends Lead {
+  activities: LeadActivity[]
+}
 
 export interface PortfolioVideo {
   id: string

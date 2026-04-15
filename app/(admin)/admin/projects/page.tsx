@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import type { ProjectStatus, ProjectWithClient, Client } from '@/lib/supabase/types'
 import { ProjectsFilterBar } from '@/components/admin/projects/projects-filter-bar'
 
@@ -52,6 +52,42 @@ function formatDate(iso: string | null): string {
   })
 }
 
+// ── Days remaining column ─────────────────────────────────────────────────────
+
+function DaysRemaining({ endDate }: { endDate: string | null }) {
+  if (!endDate) return <span className="text-[11px] font-mono text-[#333]">—</span>
+
+  const now = new Date()
+  now.setHours(0, 0, 0, 0)
+  const end = new Date(endDate)
+  end.setHours(0, 0, 0, 0)
+  const diffMs = end.getTime() - now.getTime()
+  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24))
+
+  if (diffDays < 0) {
+    return <span className="text-[11px] font-mono text-[#e8341a]">Vencido</span>
+  }
+
+  let colorClass = 'text-[#5dbf8a]'
+  if (diffDays < 7) colorClass = 'text-[#e8341a]'
+  else if (diffDays < 14) colorClass = 'text-[#e8a11a]'
+
+  return (
+    <span className={`text-[11px] font-mono ${colorClass}`}>
+      {diffDays}d
+    </span>
+  )
+}
+
+// ── Stats row config ──────────────────────────────────────────────────────────
+
+const STATUSES: { key: ProjectStatus; label: string; color: string }[] = [
+  { key: 'pre_production', label: 'Pre-produccion', color: '#555' },
+  { key: 'production',     label: 'En produccion',  color: '#4ade80' },
+  { key: 'post_production',label: 'Post-produccion', color: '#fbbf24' },
+  { key: 'delivered',      label: 'Entregados',      color: '#60a5fa' },
+]
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 interface PageProps {
@@ -61,7 +97,29 @@ interface PageProps {
 export default async function AdminProjectsPage({ searchParams }: PageProps) {
   const { q, status, client: clientFilter } = await searchParams
 
-  const supabase = await createClient()
+  // Run both the auth client setup and service client counts in parallel
+  const serviceClient = createServiceClient()
+
+  const [supabase, countsResult] = await Promise.all([
+    createClient(),
+    serviceClient
+      .from('projects')
+      .select('status')
+      .then(({ data }) => {
+        const counts: Record<string, number> = {
+          pre_production: 0,
+          production: 0,
+          post_production: 0,
+          delivered: 0,
+        }
+        for (const row of data ?? []) {
+          if (row.status in counts) counts[row.status]++
+        }
+        return counts
+      }),
+  ])
+
+  const counts = countsResult
 
   // Fetch all clients for the filter dropdown
   const { data: allClients } = await supabase
@@ -135,10 +193,26 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
         </div>
         <Link
           href="/admin/projects/new"
-          className="px-4 py-2 bg-[#e8e8e8] hover:bg-white text-[#080808] text-[11px] font-mono tracking-[0.15em] uppercase rounded-sm transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-[#e8341a] text-white text-xs font-mono tracking-[0.2em] uppercase rounded-sm hover:bg-[#cc2d15] transition-colors"
         >
           Nuevo proyecto
         </Link>
+      </div>
+
+      {/* Stats row */}
+      <div className="flex gap-3 mb-6">
+        {STATUSES.map(s => (
+          <div
+            key={s.key}
+            className="flex items-center gap-2 px-3 py-1.5 bg-[#0d0d0d] border border-[#1a1a1a] rounded-sm"
+          >
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.color }} />
+            <span className="text-[10px] font-mono text-[#555] tracking-[0.1em] uppercase">
+              {s.label}
+            </span>
+            <span className="text-xs font-mono text-[#888]">{counts[s.key] ?? 0}</span>
+          </div>
+        ))}
       </div>
 
       {/* Filter bar */}
@@ -171,8 +245,8 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
       ) : (
         <div className="border border-[#1a1a1a] rounded-sm overflow-hidden">
           {/* Table header */}
-          <div className="grid grid-cols-[1fr_180px_140px_110px_110px_32px] gap-4 px-5 py-3 border-b border-[#1a1a1a] bg-[#0d0d0d]">
-            {['Proyecto', 'Cliente', 'Estado', 'Inicio', 'Entrega', ''].map(
+          <div className="grid grid-cols-[1fr_180px_140px_110px_110px_90px_32px] gap-4 px-5 py-3 border-b border-[#1a1a1a] bg-[#0d0d0d]">
+            {['Proyecto', 'Cliente', 'Estado', 'Inicio', 'Entrega', 'Dias rest.', ''].map(
               (col) => (
                 <span
                   key={col}
@@ -189,7 +263,7 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
             {rows.map((project) => (
               <div
                 key={project.id}
-                className="grid grid-cols-[1fr_180px_140px_110px_110px_32px] gap-4 items-center px-5 py-4 hover:bg-[#0d0d0d] transition-colors"
+                className="grid grid-cols-[1fr_180px_140px_110px_110px_90px_32px] gap-4 items-center px-5 py-4 hover:bg-[#0d0d0d] transition-colors"
               >
                 {/* Title + description */}
                 <div className="min-w-0">
@@ -228,6 +302,11 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
                 <p className="text-[11px] font-mono text-[#555]">
                   {formatDate(project.end_date)}
                 </p>
+
+                {/* Days remaining */}
+                <div>
+                  <DaysRemaining endDate={project.end_date} />
+                </div>
 
                 {/* Link arrow */}
                 <Link

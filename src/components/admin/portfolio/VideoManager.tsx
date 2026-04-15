@@ -9,6 +9,7 @@ import {
   deletePortfolioVideo,
   togglePortfolioVideoVisibility,
 } from '@/lib/actions/portfolio'
+import { createClient } from '@/lib/supabase/client'
 
 interface PortfolioVideo {
   id: string
@@ -26,23 +27,33 @@ interface PortfolioVideo {
 }
 
 interface VideoManagerProps {
-  videos: PortfolioVideo[]
+  initialVideos?: PortfolioVideo[]
 }
 
 type FormMode = 'create' | 'edit'
 
+type CategoryFilter = 'todos' | 'videoclips' | 'corporativos' | 'restaurantes' | 'comerciales'
+
 const CATEGORY_BADGES: Record<string, string> = {
-  comercial: 'bg-blue-900/40 text-blue-300',
-  'video-clip': 'bg-purple-900/40 text-purple-300',
-  entrevista: 'bg-amber-900/40 text-amber-300',
-  podcast: 'bg-green-900/40 text-green-300',
+  videoclips: 'bg-purple-900/40 text-purple-300',
+  corporativos: 'bg-blue-900/40 text-blue-300',
+  restaurantes: 'bg-amber-900/40 text-amber-300',
+  comerciales: 'bg-green-900/40 text-green-300',
 }
 
 const CATEGORIES = [
-  { value: 'comercial', label: 'Comercial' },
-  { value: 'video-clip', label: 'Video Clip' },
-  { value: 'entrevista', label: 'Entrevista' },
-  { value: 'podcast', label: 'Podcast' },
+  { value: 'videoclips', label: 'Videoclips' },
+  { value: 'corporativos', label: 'Corporativos' },
+  { value: 'restaurantes', label: 'Restaurantes' },
+  { value: 'comerciales', label: 'Comerciales' },
+]
+
+const FILTER_PILLS: { value: CategoryFilter; label: string }[] = [
+  { value: 'todos', label: 'Todos' },
+  { value: 'videoclips', label: 'Videoclips' },
+  { value: 'corporativos', label: 'Corporativos' },
+  { value: 'restaurantes', label: 'Restaurantes' },
+  { value: 'comerciales', label: 'Comerciales' },
 ]
 
 const INPUT_CLASS =
@@ -50,14 +61,24 @@ const INPUT_CLASS =
 
 const LABEL_CLASS = 'block text-[10px] font-mono tracking-widest uppercase text-[#555] mb-1'
 
-export default function VideoManager({ videos }: VideoManagerProps) {
+export default function VideoManager({ initialVideos = [] }: VideoManagerProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [localVideos, setLocalVideos] = useState<PortfolioVideo[]>(initialVideos)
   const [showForm, setShowForm] = useState(false)
   const [formMode, setFormMode] = useState<FormMode>('create')
   const [editingVideo, setEditingVideo] = useState<PortfolioVideo | null>(null)
   const [togglingId, setTogglingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [reorderingId, setReorderingId] = useState<string | null>(null)
+  const [activeFilter, setActiveFilter] = useState<CategoryFilter>('todos')
+
+  const sortedVideos = [...localVideos].sort((a, b) => a.sort_order - b.sort_order)
+
+  const filteredVideos =
+    activeFilter === 'todos'
+      ? sortedVideos
+      : sortedVideos.filter((v) => v.category === activeFilter)
 
   function openCreateForm() {
     setEditingVideo(null)
@@ -110,12 +131,53 @@ export default function VideoManager({ videos }: VideoManagerProps) {
     })
   }
 
+  async function reorderVideo(id: string, direction: 'up' | 'down') {
+    const sorted = [...localVideos].sort((a, b) => a.sort_order - b.sort_order)
+    const idx = sorted.findIndex((v) => v.id === id)
+    if (idx === -1) return
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1
+    if (swapIdx < 0 || swapIdx >= sorted.length) return
+
+    const current = sorted[idx]
+    const adjacent = sorted[swapIdx]
+
+    // Optimistic local update
+    const snapshot = localVideos
+    setLocalVideos(
+      localVideos.map((v) => {
+        if (v.id === current.id) return { ...v, sort_order: adjacent.sort_order }
+        if (v.id === adjacent.id) return { ...v, sort_order: current.sort_order }
+        return v
+      }),
+    )
+    setReorderingId(id)
+
+    try {
+      const supabase = createClient()
+      await Promise.all([
+        supabase
+          .from('portfolio_videos')
+          .update({ sort_order: adjacent.sort_order })
+          .eq('id', current.id),
+        supabase
+          .from('portfolio_videos')
+          .update({ sort_order: current.sort_order })
+          .eq('id', adjacent.id),
+      ])
+    } catch {
+      // Rollback optimistic update on error
+      setLocalVideos(snapshot)
+    } finally {
+      setReorderingId(null)
+    }
+  }
+
   return (
     <div className="space-y-4">
       {/* Top bar */}
       <div className="flex items-center justify-between">
         <span className="text-[10px] font-mono text-[#444] tracking-wide">
-          {videos.length} {videos.length === 1 ? 'video' : 'videos'}
+          {localVideos.length} {localVideos.length === 1 ? 'video' : 'videos'}
         </span>
         <button
           type="button"
@@ -125,6 +187,25 @@ export default function VideoManager({ videos }: VideoManagerProps) {
           <Plus size={13} strokeWidth={1.5} />
           Agregar video
         </button>
+      </div>
+
+      {/* Category filter pills */}
+      <div className="flex items-center gap-1 flex-wrap">
+        {FILTER_PILLS.map((pill) => {
+          const active = activeFilter === pill.value
+          return (
+            <button
+              key={pill.value}
+              type="button"
+              onClick={() => setActiveFilter(pill.value)}
+              className={`px-3 py-1 rounded-sm text-[10px] font-mono tracking-[0.15em] uppercase transition-colors ${
+                active ? 'bg-[#1c1c1c] text-[#e8e8e8]' : 'text-[#444] hover:text-[#888]'
+              }`}
+            >
+              {pill.label}
+            </button>
+          )
+        })}
       </div>
 
       {/* Inline form panel */}
@@ -185,7 +266,7 @@ export default function VideoManager({ videos }: VideoManagerProps) {
                 <select
                   id="category"
                   name="category"
-                  defaultValue={editingVideo?.category ?? 'comercial'}
+                  defaultValue={editingVideo?.category ?? 'videoclips'}
                   className={INPUT_CLASS}
                 >
                   {CATEGORIES.map((c) => (
@@ -309,7 +390,7 @@ export default function VideoManager({ videos }: VideoManagerProps) {
       )}
 
       {/* Video table */}
-      {videos.length === 0 ? (
+      {filteredVideos.length === 0 ? (
         <div className="border border-[#1a1a1a] rounded-sm p-12 text-center">
           <p className="text-xs font-mono text-[#444]">No hay videos todavia</p>
           <p className="text-[10px] font-mono text-[#333] mt-1">
@@ -339,11 +420,11 @@ export default function VideoManager({ videos }: VideoManagerProps) {
                 <th className="px-4 py-3 text-center text-[10px] font-mono tracking-widest uppercase text-[#444] w-20">
                   Visible
                 </th>
-                <th className="px-4 py-3 w-20" />
+                <th className="px-4 py-3 w-28" />
               </tr>
             </thead>
             <tbody className="divide-y divide-[#111]">
-              {videos.map((video) => (
+              {filteredVideos.map((video, idx) => (
                 <tr
                   key={video.id}
                   className="group hover:bg-[#0d0d0d] transition-colors"
@@ -425,9 +506,33 @@ export default function VideoManager({ videos }: VideoManagerProps) {
                     </button>
                   </td>
 
-                  {/* Edit / Delete */}
+                  {/* Reorder + Edit + Delete */}
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {/* Up arrow */}
+                      <button
+                        type="button"
+                        onClick={() => reorderVideo(video.id, 'up')}
+                        disabled={idx === 0 || reorderingId === video.id || isPending}
+                        title="Mover arriba"
+                        className="inline-flex items-center justify-center w-6 h-6 rounded-sm text-[#444] hover:text-[#ccc] hover:bg-[#1a1a1a] transition-colors text-xs disabled:opacity-20 disabled:cursor-not-allowed"
+                      >
+                        &#9650;
+                      </button>
+                      {/* Down arrow */}
+                      <button
+                        type="button"
+                        onClick={() => reorderVideo(video.id, 'down')}
+                        disabled={
+                          idx === filteredVideos.length - 1 ||
+                          reorderingId === video.id ||
+                          isPending
+                        }
+                        title="Mover abajo"
+                        className="inline-flex items-center justify-center w-6 h-6 rounded-sm text-[#444] hover:text-[#ccc] hover:bg-[#1a1a1a] transition-colors text-xs disabled:opacity-20 disabled:cursor-not-allowed"
+                      >
+                        &#9660;
+                      </button>
                       <button
                         type="button"
                         onClick={() => openEditForm(video)}

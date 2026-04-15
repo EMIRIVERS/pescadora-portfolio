@@ -10,6 +10,7 @@ import {
   Kanban,
   Users,
   UserCircle,
+  Target,
   LogOut,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -46,6 +47,11 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Clientes',
     href: '/admin/clients',
     icon: <Users size={16} strokeWidth={1.5} />,
+  },
+  {
+    label: 'Leads',
+    href: '/admin/leads',
+    icon: <Target size={16} strokeWidth={1.5} />,
   },
   {
     label: 'Equipo',
