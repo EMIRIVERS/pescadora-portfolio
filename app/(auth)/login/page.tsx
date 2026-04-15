@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState, useActionState } from 'react'
+import { Suspense, useState, useEffect, useActionState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { signInWithPassword, signInWithMagicLink } from '../../actions/auth'
 
@@ -16,6 +16,14 @@ function LoginPageInner() {
     signInWithPassword,
     { error: null },
   )
+
+  // When server action returns a redirectTo URL, navigate via full HTTP redirect
+  // so the browser sends session cookies on the next request
+  useEffect(() => {
+    if (passwordState.redirectTo) {
+      window.location.href = passwordState.redirectTo
+    }
+  }, [passwordState.redirectTo])
 
   const [magicState, magicAction, magicPending] = useActionState(
     signInWithMagicLink,

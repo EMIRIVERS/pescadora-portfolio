@@ -1,12 +1,11 @@
 'use server'
 
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 
 export async function signInWithPassword(
-  _prevState: { error: string | null },
+  _prevState: { error: string | null; redirectTo?: string },
   formData: FormData,
-): Promise<{ error: string | null }> {
+): Promise<{ error: string | null; redirectTo?: string }> {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
 
@@ -26,13 +25,15 @@ export async function signInWithPassword(
     return { error: 'Authentication failed. Please try again.' }
   }
 
-  const { data: profile } = await supabase
+  // Use service client to bypass RLS — identity already verified above
+  const service = createServiceClient()
+  const { data: profile } = await service
     .from('profiles')
     .select('is_admin_team')
     .eq('id', user.id)
     .single()
 
-  redirect(profile?.is_admin_team ? '/admin' : '/portal')
+  return { error: null, redirectTo: profile?.is_admin_team ? '/admin' : '/portal' }
 }
 
 export async function signInWithMagicLink(
