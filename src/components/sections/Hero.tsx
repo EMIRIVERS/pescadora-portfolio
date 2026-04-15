@@ -7,7 +7,7 @@ export function Hero() {
       style={{
         position: 'relative',
         minHeight: '100vh',
-        background: '#050505',
+        background: 'transparent',
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
