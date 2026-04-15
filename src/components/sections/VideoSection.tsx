@@ -4,13 +4,13 @@ import { registry } from '@/lib/registry'
 import type { VideoEntry, VideoCategory } from '@/types/media'
 
 const CATEGORY_LABELS: Record<VideoCategory, string> = {
-  'comercial':  'Comercial',
-  'video-clip': 'Video Clip',
-  'entrevista': 'Entrevista',
-  'podcast':    'Podcast',
+  'videoclips':   'Videoclips',
+  'corporativos': 'Corporativos',
+  'restaurantes': 'Restaurantes',
+  'comerciales':  'Comerciales',
 }
 
-const CATEGORY_ORDER: VideoCategory[] = ['comercial', 'video-clip', 'entrevista', 'podcast']
+const CATEGORY_ORDER: VideoCategory[] = ['videoclips', 'corporativos', 'restaurantes', 'comerciales']
 
 const VIMEO_PARAMS = 'title=0&byline=0&portrait=0&badge=0&autopause=0&player_id=0&app_id=58479'
 
@@ -184,7 +184,7 @@ export function VideoSection() {
       acc[cat] = registry.videos.filter((v) => v.category === cat)
       return acc
     },
-    { comercial: [], 'video-clip': [], entrevista: [], podcast: [] }
+    { videoclips: [], corporativos: [], restaurantes: [], comerciales: [] }
   )
 
   const activeCategories = CATEGORY_ORDER.filter((cat) => grouped[cat].length > 0)

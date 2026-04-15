@@ -539,7 +539,7 @@
       "title": "COMO FUEGO LENTO",
       "url": "",
       "poster": null,
-      "category": "video-clip",
+      "category": "videoclips",
       "tags": [],
       "vimeoId": "1183459299"
     },
@@ -548,7 +548,7 @@
       "title": "HIPNOTIZADO",
       "url": "",
       "poster": null,
-      "category": "video-clip",
+      "category": "videoclips",
       "tags": [],
       "vimeoId": "1183458974"
     },
@@ -557,7 +557,7 @@
       "title": "AMOR CLASICO",
       "url": "",
       "poster": null,
-      "category": "video-clip",
+      "category": "videoclips",
       "tags": [],
       "vimeoId": "1183463808"
     },
@@ -566,7 +566,7 @@
       "title": "CONADE",
       "url": "",
       "poster": null,
-      "category": "comercial",
+      "category": "corporativos",
       "tags": [],
       "vimeoId": "1183458842"
     },
@@ -575,7 +575,7 @@
       "title": "AMOR DE VASO",
       "url": "",
       "poster": null,
-      "category": "comercial",
+      "category": "restaurantes",
       "tags": [],
       "vimeoId": "1183459373"
     },
@@ -584,7 +584,7 @@
       "title": "NOMA MEZCAL",
       "url": "",
       "poster": null,
-      "category": "comercial",
+      "category": "restaurantes",
       "tags": [],
       "vimeoId": "1183457806"
     },
@@ -593,7 +593,7 @@
       "title": "ITSCO",
       "url": "",
       "poster": null,
-      "category": "comercial",
+      "category": "corporativos",
       "tags": [],
       "vimeoId": "1183459324"
     },
@@ -602,7 +602,7 @@
       "title": "LUCKY STASH CORPORATIVO",
       "url": "",
       "poster": null,
-      "category": "comercial",
+      "category": "corporativos",
       "tags": [],
       "vimeoId": "1183459479"
     },
@@ -611,7 +611,7 @@
       "title": "LUCKY STASH",
       "url": "",
       "poster": null,
-      "category": "comercial",
+      "category": "comerciales",
       "tags": [],
       "vimeoId": "1183458425"
     },
@@ -620,7 +620,7 @@
       "title": "C3 GALLERY",
       "url": "",
       "poster": null,
-      "category": "comercial",
+      "category": "comerciales",
       "tags": [],
       "vimeoId": "1183457572"
     },
@@ -629,7 +629,7 @@
       "title": "COTORREO + CACAO",
       "url": "",
       "poster": null,
-      "category": "podcast",
+      "category": "comerciales",
       "tags": [],
       "vimeoId": "1183464086"
     }

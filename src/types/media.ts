@@ -6,7 +6,7 @@ export interface PhotoEntry {
   tags: string[]
 }
 
-export type VideoCategory = 'comercial' | 'video-clip' | 'entrevista' | 'podcast'
+export type VideoCategory = 'videoclips' | 'corporativos' | 'restaurantes' | 'comerciales'
 
 export interface VideoEntry {
   id: string
