@@ -1,19 +1,14 @@
 'use client'
 import { Waves } from '@/components/ui/wave-background'
 
-interface HeroProps {
-  onVerTrabajo: () => void
-}
-
-export function Hero({ onVerTrabajo }: HeroProps) {
+export function Hero() {
   return (
     <section
       id="hero"
       style={{
-        position: 'fixed',
-        inset: 0,
+        position: 'relative',
+        minHeight: '100vh',
         background: '#000000',
-        zIndex: 50,
         display: 'flex',
         flexDirection: 'column',
       }}
@@ -63,48 +58,40 @@ export function Hero({ onVerTrabajo }: HeroProps) {
         </p>
       </div>
 
-      {/* Button */}
-      {true && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '3.5rem',
-            left: 0,
-            right: 0,
-            zIndex: 10,
-            display: 'flex',
-            justifyContent: 'center',
-            pointerEvents: 'auto',
-          }}
-        >
-          <button
-            onClick={onVerTrabajo}
-            data-cursor="link"
-            style={{
-              background: 'transparent',
-              border: '1px solid rgba(242,237,230,0.25)',
-              color: 'rgba(242,237,230,0.7)',
-              fontFamily: 'var(--font-geist-mono)',
-              fontSize: '0.65rem',
-              letterSpacing: '0.3em',
-              textTransform: 'uppercase',
-              padding: '0.9rem 2.5rem',
-              cursor: 'pointer',
-              transition: 'border-color 0.3s, color 0.3s',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(242,237,230,0.7)'
-              e.currentTarget.style.color = '#f2ede6'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(242,237,230,0.25)'
-              e.currentTarget.style.color = 'rgba(242,237,230,0.7)'
-            }}
-          >
-            Ver Trabajo
-          </button>
-        </div>
-      )}
+      {/* Scroll hint */}
+      <div style={{
+        position: 'absolute',
+        bottom: '2.5rem',
+        left: 0,
+        right: 0,
+        zIndex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '0.5rem',
+        opacity: 0.4,
+        animation: 'scrollHint 2.2s ease-in-out infinite',
+      }}>
+        <span style={{
+          fontFamily: 'var(--font-geist-mono)',
+          fontSize: '0.55rem',
+          letterSpacing: '0.3em',
+          textTransform: 'uppercase',
+          color: '#f2ede6',
+        }}>
+          Scroll
+        </span>
+        <svg width="12" height="20" viewBox="0 0 12 20" fill="none">
+          <path d="M6 0v16M1 11l5 5 5-5" stroke="#f2ede6" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </div>
+
+      <style>{`
+        @keyframes scrollHint {
+          0%, 100% { transform: translateY(0); opacity: 0.4; }
+          50% { transform: translateY(6px); opacity: 0.7; }
+        }
+      `}</style>
     </section>
   )
 }

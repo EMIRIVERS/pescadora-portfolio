@@ -72,7 +72,7 @@ function groupVideosByCategory(): ProjectCard[] {
 }
 
 export default function PortfolioSection({ cmsProjects }: Props) {
-  const [activeFilter, setActiveFilter] = useState<FilterMode>('foto')
+  const [activeFilter, setActiveFilter] = useState<FilterMode>('video')
   const [openProject, setOpenProject] = useState<string | null>(null)
 
   const fotoCards = useMemo(() => groupPhotosByProject(), [])
