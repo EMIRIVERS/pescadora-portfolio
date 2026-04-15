@@ -84,16 +84,26 @@ export default function PortfolioSection({ cmsProjects, videos }: Props) {
   const aspectPadding = activeFilter === 'foto' ? '75%' : '56.25%'
 
   return (
-    <section id="portfolio" style={{ padding: '6rem 2rem 3rem' }}>
+    <section id="portfolio" style={{ padding: '0 0 4rem' }}>
       {/* FOTO / VIDEO Toggle */}
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'baseline', gap: 0 }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'baseline',
+          gap: 0,
+          paddingTop: '4rem',
+          paddingBottom: '2rem',
+        }}
+      >
         <span
           onClick={() => setActiveFilter('foto')}
           style={{
-            fontSize: 'clamp(3rem, 8vw, 7rem)',
-            fontWeight: 700,
+            fontSize: 'clamp(3.5rem, 10vw, 8rem)',
+            fontWeight: 900,
             fontFamily: 'var(--font-geist-sans)',
-            color: activeFilter === 'foto' ? '#f2ede6' : 'rgba(242,237,230,0.12)',
+            color: activeFilter === 'foto' ? '#ede8e0' : 'rgba(237,232,224,0.08)',
+            letterSpacing: '-0.02em',
             transition: 'color 0.6s ease',
             cursor: 'none',
             userSelect: 'none',
@@ -103,10 +113,11 @@ export default function PortfolioSection({ cmsProjects, videos }: Props) {
         </span>
         <span
           style={{
-            fontSize: 'clamp(3rem, 8vw, 7rem)',
-            fontWeight: 700,
+            fontSize: 'clamp(3.5rem, 10vw, 8rem)',
+            fontWeight: 900,
             fontFamily: 'var(--font-geist-sans)',
-            color: '#8a8078',
+            color: '#e8341a',
+            letterSpacing: '-0.02em',
             userSelect: 'none',
           }}
         >
@@ -115,10 +126,11 @@ export default function PortfolioSection({ cmsProjects, videos }: Props) {
         <span
           onClick={() => setActiveFilter('video')}
           style={{
-            fontSize: 'clamp(3rem, 8vw, 7rem)',
-            fontWeight: 700,
+            fontSize: 'clamp(3.5rem, 10vw, 8rem)',
+            fontWeight: 900,
             fontFamily: 'var(--font-geist-sans)',
-            color: activeFilter === 'video' ? '#f2ede6' : 'rgba(242,237,230,0.12)',
+            color: activeFilter === 'video' ? '#ede8e0' : 'rgba(237,232,224,0.08)',
+            letterSpacing: '-0.02em',
             transition: 'color 0.6s ease',
             cursor: 'none',
             userSelect: 'none',
@@ -157,6 +169,12 @@ export default function PortfolioSection({ cmsProjects, videos }: Props) {
                 transition: { duration: 0.25 },
               }}
               onClick={() => setOpenProject(card.name)}
+              onMouseEnter={(e) => {
+                ;(e.currentTarget as HTMLDivElement).style.border = '1px solid rgba(237,232,224,0.15)'
+              }}
+              onMouseLeave={(e) => {
+                ;(e.currentTarget as HTMLDivElement).style.border = ''
+              }}
               style={{
                 position: 'relative',
                 overflow: 'hidden',
@@ -226,7 +244,7 @@ export default function PortfolioSection({ cmsProjects, videos }: Props) {
                   style={{
                     position: 'absolute',
                     inset: 0,
-                    background: 'linear-gradient(transparent 40%, rgba(0,0,0,0.7))',
+                    background: 'linear-gradient(transparent 30%, rgba(0,0,0,0.85))',
                     pointerEvents: 'none',
                   }}
                 />
@@ -237,8 +255,10 @@ export default function PortfolioSection({ cmsProjects, videos }: Props) {
                     position: 'absolute',
                     bottom: '1rem',
                     left: '1rem',
-                    fontSize: 'clamp(1.2rem, 2vw, 1.8rem)',
-                    fontWeight: 600,
+                    fontSize: 'clamp(1rem, 2vw, 1.6rem)',
+                    fontWeight: 700,
+                    letterSpacing: '0.02em',
+                    textTransform: 'uppercase',
                     color: '#f2ede6',
                     pointerEvents: 'none',
                   }}
@@ -255,8 +275,10 @@ export default function PortfolioSection({ cmsProjects, videos }: Props) {
                     bottom: '1rem',
                     right: '1rem',
                     fontFamily: 'var(--font-geist-mono)',
-                    fontSize: '0.7rem',
-                    color: '#8a8078',
+                    fontSize: '0.6rem',
+                    color: '#6b6560',
+                    letterSpacing: '0.15em',
+                    textTransform: 'uppercase',
                     pointerEvents: 'none',
                   }}
                 >
@@ -301,13 +323,13 @@ export default function PortfolioSection({ cmsProjects, videos }: Props) {
               style={{
                 fontFamily: 'var(--font-geist-mono)',
                 fontSize: '0.65rem',
-                letterSpacing: '0.18em',
+                letterSpacing: '0.2em',
                 textTransform: 'uppercase',
                 color: '#8a8078',
                 whiteSpace: 'nowrap',
               }}
             >
-              Proyectos recientes
+              PROYECTOS RECIENTES
             </span>
             <div
               style={{
@@ -359,7 +381,7 @@ export default function PortfolioSection({ cmsProjects, videos }: Props) {
                     style={{
                       position: 'absolute',
                       inset: 0,
-                      background: 'linear-gradient(transparent 40%, rgba(0,0,0,0.7))',
+                      background: 'linear-gradient(transparent 30%, rgba(0,0,0,0.85))',
                       pointerEvents: 'none',
                     }}
                   />
@@ -370,8 +392,10 @@ export default function PortfolioSection({ cmsProjects, videos }: Props) {
                       position: 'absolute',
                       bottom: '1rem',
                       left: '1rem',
-                      fontSize: 'clamp(1.2rem, 2vw, 1.8rem)',
-                      fontWeight: 600,
+                      fontSize: 'clamp(1rem, 2vw, 1.6rem)',
+                      fontWeight: 700,
+                      letterSpacing: '0.02em',
+                      textTransform: 'uppercase',
                       color: '#f2ede6',
                       pointerEvents: 'none',
                     }}

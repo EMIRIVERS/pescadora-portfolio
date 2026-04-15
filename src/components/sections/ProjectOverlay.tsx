@@ -11,10 +11,10 @@ function InfoCell({ label, value }: { label: string; value: string }) {
   if (!value) return null
   return (
     <div>
-      <span style={{ fontFamily: 'var(--font-geist-mono)', fontSize: '0.65rem', textTransform: 'uppercase', color: '#8a8078', letterSpacing: '0.08em', display: 'block', marginBottom: '0.3rem' }}>
+      <span style={{ fontFamily: 'var(--font-geist-mono)', fontSize: '0.55rem', textTransform: 'uppercase', color: '#6b6560', letterSpacing: '0.15em', display: 'block', marginBottom: '0.3rem' }}>
         {label}
       </span>
-      <span style={{ fontFamily: 'var(--font-geist-sans)', fontSize: '0.95rem', color: '#f2ede6' }}>
+      <span style={{ fontFamily: 'var(--font-geist-sans)', fontWeight: 600, fontSize: '0.85rem', color: '#ede8e0', letterSpacing: '0.05em' }}>
         {value}
       </span>
     </div>
@@ -39,7 +39,7 @@ function VideoGrid({
     <div style={{
       display: 'grid',
       gridTemplateColumns: 'repeat(2, 1fr)',
-      gap: 2,
+      gap: 1,
       padding: '0 0 4rem',
     }}>
       {videos.map((video) => {
@@ -113,13 +113,13 @@ function VideoTile({
 
       {/* Play */}
       <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: hovered ? 1 : 0, transition: 'opacity 0.3s', zIndex: 2 }}>
-        <div style={{ width: 52, height: 52, borderRadius: '50%', border: '1px solid rgba(242,237,230,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 44, height: 44, borderRadius: 0, border: '1px solid rgba(237,232,224,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <span style={{ color: '#f2ede6', fontSize: '1rem', marginLeft: 4 }}>&#9654;</span>
         </div>
       </div>
 
       {/* Titulo */}
-      <div style={{ position: 'absolute', bottom: '0.85rem', left: '1rem', fontFamily: 'var(--font-geist-mono)', fontSize: '0.6rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#f2ede6', opacity: hovered ? 1 : 0.55, transition: 'opacity 0.3s', pointerEvents: 'none', zIndex: 3 }}>
+      <div style={{ position: 'absolute', bottom: '0.85rem', left: '1rem', fontFamily: 'var(--font-geist-mono)', fontWeight: 700, fontSize: '0.55rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#f2ede6', opacity: hovered ? 1 : 0.55, transition: 'opacity 0.3s', pointerEvents: 'none', zIndex: 3 }}>
         {video.title}
       </div>
     </div>
@@ -143,12 +143,12 @@ function VideoDetail({
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-      style={{ position: 'fixed', inset: 0, zIndex: 300, background: '#080808', overflowY: 'auto' }}
+      style={{ position: 'fixed', inset: 0, zIndex: 300, background: '#050505', overflowY: 'auto' }}
     >
       {/* Header */}
       <header style={{
         position: 'sticky', top: 0, zIndex: 10,
-        background: 'rgba(8,8,8,0.95)',
+        background: 'rgba(5,5,5,0.95)',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -157,14 +157,14 @@ function VideoDetail({
       }}>
         <button
           onClick={onBack}
-          style={{ background: 'none', border: 'none', color: 'rgba(242,237,230,0.6)', fontFamily: 'var(--font-geist-mono)', fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', cursor: 'pointer', padding: 0 }}
+          style={{ background: 'none', border: 'none', color: 'rgba(242,237,230,0.6)', fontFamily: 'var(--font-geist-mono)', fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.25em', textTransform: 'uppercase', cursor: 'pointer', padding: 0 }}
         >
           &larr; Volver
         </button>
         <button
           onClick={onClose}
           aria-label="Cerrar"
-          style={{ background: 'none', border: 'none', color: '#f2ede6', fontSize: '1.4rem', cursor: 'pointer', padding: '0.25rem 0.5rem', lineHeight: 1 }}
+          style={{ background: 'none', border: 'none', color: '#ede8e0', fontSize: '1rem', cursor: 'pointer', padding: '0.25rem 0.5rem', lineHeight: 1 }}
         >
           &#10005;
         </button>
@@ -195,9 +195,9 @@ function VideoDetail({
               transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.15 }}
               style={{
                 fontFamily: 'var(--font-geist-sans)',
-                fontWeight: 300,
-                fontSize: 'clamp(1.4rem, 3vw, 2.2rem)',
-                letterSpacing: '0.06em',
+                fontWeight: 800,
+                fontSize: 'clamp(1.2rem, 3vw, 2rem)',
+                letterSpacing: '-0.01em',
                 color: '#f2ede6',
                 margin: '0 0 2rem',
               }}
@@ -208,7 +208,7 @@ function VideoDetail({
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.25 }}
-              style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1.5rem' }}
+              style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '1.5rem', marginTop: '2rem' }}
             >
               <InfoCell label="Cliente" value={story?.client ?? ''} />
               <InfoCell label="Categoria" value={story?.category ?? ''} />
@@ -274,21 +274,22 @@ export default function ProjectOverlay({ projectName, mediaType, onClose, videos
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
       style={{
-        position: 'fixed', inset: 0, zIndex: 200, background: '#080808', overflowY: 'auto',
+        position: 'fixed', inset: 0, zIndex: 200, background: '#050505', overflowY: 'auto',
       }}
     >
       {/* Header */}
       <header style={{
         position: 'sticky', top: 0, zIndex: 10,
-        background: 'rgba(8,8,8,0.9)',
+        background: 'rgba(5,5,5,0.95)',
         backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '1rem 2rem',
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
       }}>
-        <span style={{ fontSize: 'clamp(1rem, 1.5vw, 1.4rem)', fontWeight: 600, color: '#f2ede6' }}>
+        <span style={{ fontFamily: 'var(--font-geist-sans)', fontWeight: 700, fontSize: 'clamp(0.8rem, 1.5vw, 1rem)', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#f2ede6' }}>
           {projectName}
         </span>
-        <button onClick={onClose} aria-label="Cerrar" style={{ background: 'none', border: 'none', color: '#f2ede6', fontSize: '1.4rem', cursor: 'pointer', padding: '0.25rem 0.5rem', lineHeight: 1 }}>
+        <button onClick={onClose} aria-label="Cerrar" style={{ background: 'none', border: 'none', color: '#ede8e0', fontSize: '1rem', cursor: 'pointer', padding: '0.25rem 0.5rem', lineHeight: 1 }}>
           &#10005;
         </button>
       </header>

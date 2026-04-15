@@ -1,9 +1,9 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/server'
 import VideoManager from '@/components/admin/portfolio/VideoManager'
 import type { PortfolioVideo } from '@/lib/supabase/types'
 
 export default async function PortfolioAdminPage() {
-  const supabase = await createClient()
+  const supabase = createServiceClient()
   const { data: videos } = await supabase
     .from('portfolio_videos')
     .select('*')

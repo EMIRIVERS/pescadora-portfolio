@@ -1,18 +1,43 @@
 @import "tailwindcss";
 
+/* ─── Keyframes ────────────────────────────────────────────────────────────── */
+
 @keyframes shimmer {
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
 
+@keyframes scrollHint {
+  0%   { opacity: 1; transform: translateY(0); }
+  60%  { opacity: 0; transform: translateY(10px); }
+  61%  { opacity: 0; transform: translateY(-10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes grain {
+  0%, 100% { transform: translate(0, 0); }
+  10%  { transform: translate(-2%, -3%); }
+  20%  { transform: translate(3%, 2%); }
+  30%  { transform: translate(-1%, 4%); }
+  40%  { transform: translate(2%, -1%); }
+  50%  { transform: translate(-3%, 3%); }
+  60%  { transform: translate(4%, -2%); }
+  70%  { transform: translate(-2%, 1%); }
+  80%  { transform: translate(1%, -4%); }
+  90%  { transform: translate(3%, 2%); }
+}
+
+/* ─── Design Tokens ────────────────────────────────────────────────────────── */
+
 :root {
-  --color-bg: #080808;
-  --color-text: #f2ede6;
-  --color-text-muted: #8a8078;
-  --color-border: #2a2520;
-  --color-ink: #f2ede6;
-  --color-video-bg: #0a0a0a;
-  --color-video-text: #f2ede6;
+  --color-bg:         #050505;
+  --color-text:       #ede8e0;
+  --color-text-muted: #6b6560;
+  --color-border:     #1e1e1e;
+  --color-accent:     #e8341a;
+  --color-ink:        #ede8e0;
+  --color-video-bg:   #0a0a0a;
+  --color-video-text: #ede8e0;
 
   /* Typography scale — golden ratio */
   --text-xs:  0.75rem;
@@ -23,15 +48,17 @@
   --text-2xl: 6.854rem;
 
   /* Spacing — 8px grid */
-  --space-1: 0.5rem;
-  --space-2: 1rem;
-  --space-3: 1.5rem;
-  --space-4: 2rem;
-  --space-6: 3rem;
-  --space-8: 4rem;
+  --space-1:  0.5rem;
+  --space-2:  1rem;
+  --space-3:  1.5rem;
+  --space-4:  2rem;
+  --space-6:  3rem;
+  --space-8:  4rem;
   --space-12: 6rem;
   --space-16: 8rem;
 }
+
+/* ─── Reset ────────────────────────────────────────────────────────────────── */
 
 *,
 *::before,
@@ -41,32 +68,14 @@
   padding: 0;
 }
 
+/* ─── Base ─────────────────────────────────────────────────────────────────── */
+
 html {
   background: var(--color-bg);
   color: var(--color-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   scroll-behavior: auto;
-}
-
-/* Custom minimalist cursor */
-.custom-cursor {
-  width: 12px;
-  height: 12px;
-  background: #f2ede6;
-  border-radius: 50%;
-  position: fixed;
-  pointer-events: none;
-  z-index: 9999;
-  transform: translate(-50%, -50%);
-  transition: width 0.3s, height 0.3s, background 0.3s;
-}
-
-.custom-cursor.hover {
-  width: 40px;
-  height: 40px;
-  background: rgba(242, 237, 230, 0.2);
-  border: 1px solid #f2ede6;
 }
 
 body {
@@ -83,6 +92,8 @@ select {
   cursor: text;
 }
 
+/* ─── WebGL Canvas ─────────────────────────────────────────────────────────── */
+
 canvas.webgl {
   position: fixed;
   top: 0;
@@ -98,7 +109,8 @@ main {
   z-index: 1;
 }
 
-/* Cursor states */
+/* ─── Cursor States ────────────────────────────────────────────────────────── */
+
 [data-state="hover-image"] [data-cursor-dot] {
   width: 48px !important;
   height: 48px !important;
@@ -110,12 +122,30 @@ main {
   border-radius: 1px !important;
 }
 
-/* Video title hover */
+/* ─── Video Title Hover ────────────────────────────────────────────────────── */
+
 div:hover > .video-title {
   opacity: 1 !important;
 }
 
-/* Mobile: disable WebGL canvas */
+/* ─── Film Grain Overlay ───────────────────────────────────────────────────── */
+
+.noise-overlay::after {
+  content: '';
+  position: fixed;
+  inset: -50%;
+  width: 200%;
+  height: 200%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+  opacity: 0.04;
+  pointer-events: none;
+  z-index: 9998;
+  animation: grain 0.8s steps(1) infinite;
+}
+
+/* ─── Mobile ───────────────────────────────────────────────────────────────── */
+
 @media (max-width: 767px) {
   canvas.webgl {
     display: none;
