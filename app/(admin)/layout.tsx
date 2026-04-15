@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import Sidebar from '@/components/admin/sidebar'
 
 export default async function AdminLayout({
@@ -18,15 +18,16 @@ export default async function AdminLayout({
     redirect('/login')
   }
 
-  const { data: profile, error: profileError } = await supabase
+  // Use service client to bypass RLS — auth.getUser() already verified identity
+  const service = createServiceClient()
+  const { data: profile, error: profileError } = await service
     .from('profiles')
     .select('id, full_name, email, avatar_url, is_admin_team')
     .eq('id', user.id)
     .single()
 
   if (profileError || !profile || !profile.is_admin_team) {
-    // Authenticated but no admin access — go home to avoid redirect loops
-    redirect('/')
+    redirect('/login')
   }
 
   return (
