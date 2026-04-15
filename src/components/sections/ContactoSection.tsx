@@ -1,6 +1,9 @@
 'use client'
-import { useState } from 'react'
-import Image from 'next/image'
+import { useState, useEffect, useRef } from 'react'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+gsap.registerPlugin(ScrollTrigger)
 
 export function ContactoSection() {
   const [nombre, setNombre] = useState('')
@@ -8,7 +11,47 @@ export function ContactoSection() {
   const [mensaje, setMensaje] = useState('')
   const [sending, setSending] = useState(false)
 
+  const sectionRef = useRef<HTMLElement>(null)
+  const h2Ref = useRef<HTMLHeadingElement>(null)
+  const formRef = useRef<HTMLFormElement>(null)
+  const footerRef = useRef<HTMLDivElement>(null)
+
   const WA_NUMBER = process.env.NEXT_PUBLIC_WA_NUMBER ?? ''
+
+  useEffect(() => {
+    const section = sectionRef.current
+    const h2 = h2Ref.current
+    const form = formRef.current
+    const footer = footerRef.current
+
+    if (!section || !h2 || !form || !footer) return
+
+    const triggers: ScrollTrigger[] = []
+
+    gsap.set(h2, { y: 30, opacity: 0 })
+    gsap.set(form, { y: 20, opacity: 0 })
+    gsap.set(footer, { opacity: 0 })
+
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: section,
+        start: 'top 80%',
+        once: true,
+      },
+    })
+
+    tl.to(h2, { y: 0, opacity: 1, duration: 0.6, ease: 'power2.out' })
+      .to(form, { y: 0, opacity: 1, duration: 0.6, ease: 'power2.out' }, '+=0.15')
+      .to(footer, { opacity: 1, duration: 0.6, ease: 'power2.out' }, '+=0.3')
+
+    const st = tl.scrollTrigger
+    if (st) triggers.push(st)
+
+    return () => {
+      triggers.forEach((t) => t.kill())
+      tl.kill()
+    }
+  }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -46,6 +89,7 @@ export function ContactoSection() {
 
   return (
     <section
+      ref={sectionRef}
       id="contacto"
       style={{
         padding: 'var(--space-16) var(--space-4)',
@@ -54,6 +98,7 @@ export function ContactoSection() {
     >
       <div style={{ maxWidth: '480px', margin: '0 auto' }}>
         <h2
+          ref={h2Ref}
           style={{
             fontFamily: 'var(--font-geist-sans)',
             fontSize: 'clamp(2rem, 5vw, 4rem)',
@@ -66,7 +111,7 @@ export function ContactoSection() {
           Contacto
         </h2>
 
-        <form onSubmit={handleSubmit}>
+        <form ref={formRef} onSubmit={handleSubmit}>
           <input
             style={inputStyle}
             placeholder="Nombre"
@@ -116,8 +161,9 @@ export function ContactoSection() {
           </button>
         </form>
 
-        {/* Footer with fish logo */}
+        {/* Footer */}
         <div
+          ref={footerRef}
           style={{
             marginTop: 'var(--space-12)',
             borderTop: '1px solid var(--color-border)',
@@ -137,13 +183,17 @@ export function ContactoSection() {
           >
             @pescadora
           </p>
-          <Image
-            src="/fish_silhouette.png"
-            alt="Pescadora"
-            width={28}
-            height={16}
-            style={{ opacity: 0.4 }}
-          />
+          <span
+            style={{
+              fontFamily: 'var(--font-geist-mono)',
+              fontSize: '0.6rem',
+              letterSpacing: '0.3em',
+              color: 'rgba(242,237,230,0.3)',
+              textTransform: 'uppercase',
+            }}
+          >
+            Carajo Films
+          </span>
         </div>
       </div>
     </section>

@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo } from 'react'
 import Image from 'next/image'
+import { motion, AnimatePresence } from 'framer-motion'
 import { registry } from '@/lib/registry'
 import type { VideoCategory } from '@/types/media'
 import ProjectOverlay from './ProjectOverlay'
@@ -42,14 +43,30 @@ function groupPhotosByProject(): ProjectCard[] {
   return cards
 }
 
+const CATEGORY_LABELS: Record<VideoCategory, string> = {
+  'comercial':  'Comercial',
+  'video-clip': 'Video Clip',
+  'entrevista': 'Entrevista',
+  'podcast':    'Podcast',
+}
+
 function groupVideosByCategory(): ProjectCard[] {
-  const categoryMap = new Map<VideoCategory, number>()
+  const categoryMap = new Map<VideoCategory, { count: number; firstVimeoId?: string }>()
   for (const video of registry.videos) {
-    categoryMap.set(video.category, (categoryMap.get(video.category) ?? 0) + 1)
+    const existing = categoryMap.get(video.category)
+    if (existing) {
+      existing.count++
+    } else {
+      categoryMap.set(video.category, { count: 1, firstVimeoId: video.vimeoId })
+    }
   }
   const cards: ProjectCard[] = []
-  for (const [category, count] of categoryMap) {
-    cards.push({ name: category, coverUrl: null, count })
+  for (const [category, data] of categoryMap) {
+    cards.push({
+      name: category,
+      coverUrl: data.firstVimeoId ? `/api/vimeo-thumb?id=${data.firstVimeoId}` : null,
+      count: data.count,
+    })
   }
   return cards
 }
@@ -57,41 +74,10 @@ function groupVideosByCategory(): ProjectCard[] {
 export default function PortfolioSection({ cmsProjects }: Props) {
   const [activeFilter, setActiveFilter] = useState<FilterMode>('foto')
   const [openProject, setOpenProject] = useState<string | null>(null)
-  const [animKey, setAnimKey] = useState(0)
-  const cardRefs = useRef<(HTMLDivElement | null)[]>([])
 
   const fotoCards = useMemo(() => groupPhotosByProject(), [])
   const videoCards = useMemo(() => groupVideosByCategory(), [])
   const cards = activeFilter === 'foto' ? fotoCards : videoCards
-
-  useEffect(() => {
-    setAnimKey((prev) => prev + 1)
-  }, [activeFilter])
-
-  useEffect(() => {
-    const elements = cardRefs.current
-    for (let i = 0; i < elements.length; i++) {
-      const el = elements[i]
-      if (!el) continue
-      el.style.opacity = '0'
-      el.style.transform = 'translateY(20px)'
-      const delay = i * 80
-      const timeout = setTimeout(() => {
-        el.style.transition = 'opacity 0.5s ease, transform 0.5s ease'
-        el.style.opacity = '1'
-        el.style.transform = 'translateY(0)'
-      }, delay)
-      // store timeout id for cleanup
-      el.dataset.timeout = String(timeout)
-    }
-    return () => {
-      for (const el of elements) {
-        if (el?.dataset.timeout) {
-          clearTimeout(Number(el.dataset.timeout))
-        }
-      }
-    }
-  }, [animKey, cards.length])
 
   const aspectPadding = activeFilter === 'foto' ? '75%' : '56.25%'
 
@@ -149,99 +135,135 @@ export default function PortfolioSection({ cmsProjects }: Props) {
           marginTop: '2rem',
         }}
       >
-        {cards.map((card, index) => (
-          <div
-            key={`${activeFilter}-${card.name}`}
-            ref={(el) => {
-              cardRefs.current[index] = el
-            }}
-            onClick={() => setOpenProject(card.name)}
-            style={{
-              position: 'relative',
-              overflow: 'hidden',
-              cursor: 'none',
-              opacity: 0,
-              transform: 'translateY(20px)',
-            }}
-          >
-            {/* Aspect ratio box */}
-            <div style={{ paddingBottom: aspectPadding, position: 'relative' }}>
-              {card.coverUrl ? (
-                <Image
-                  src={card.coverUrl}
-                  alt={card.name}
-                  fill
-                  sizes="(max-width: 800px) 100vw, 50vw"
-                  style={{
-                    objectFit: 'cover',
-                    transition: 'transform 0.7s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    ;(e.currentTarget as HTMLImageElement).style.transform = 'scale(1.03)'
-                  }}
-                  onMouseLeave={(e) => {
-                    ;(e.currentTarget as HTMLImageElement).style.transform = 'scale(1)'
-                  }}
-                />
-              ) : (
+        <AnimatePresence mode="sync">
+          {cards.map((card, index) => (
+            <motion.div
+              key={`${activeFilter}-${card.name}`}
+              initial={{ opacity: 0, y: 24 }}
+              animate={{
+                opacity: 1,
+                y: 0,
+                transition: {
+                  duration: 0.5,
+                  ease: [0.25, 0.46, 0.45, 0.94],
+                  delay: index * 0.05,
+                },
+              }}
+              exit={{
+                opacity: 0,
+                y: -12,
+                transition: { duration: 0.25 },
+              }}
+              onClick={() => setOpenProject(card.name)}
+              style={{
+                position: 'relative',
+                overflow: 'hidden',
+                cursor: 'none',
+              }}
+            >
+              {/* Aspect ratio box */}
+              <div style={{ paddingBottom: aspectPadding, position: 'relative' }}>
+                {card.coverUrl ? (
+                  activeFilter === 'video' ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={card.coverUrl}
+                      alt={card.name}
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        transition: 'transform 0.7s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        ;(e.currentTarget as HTMLImageElement).style.transform = 'scale(1.03)'
+                      }}
+                      onMouseLeave={(e) => {
+                        ;(e.currentTarget as HTMLImageElement).style.transform = 'scale(1)'
+                      }}
+                    />
+                  ) : (
+                    <Image
+                      src={card.coverUrl}
+                      alt={card.name}
+                      fill
+                      sizes="(max-width: 800px) 100vw, 50vw"
+                      style={{
+                        objectFit: 'cover',
+                        transition: 'transform 0.7s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        ;(e.currentTarget as HTMLImageElement).style.transform = 'scale(1.03)'
+                      }}
+                      onMouseLeave={(e) => {
+                        ;(e.currentTarget as HTMLImageElement).style.transform = 'scale(1)'
+                      }}
+                    />
+                  )
+                ) : (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      backgroundColor: '#1a1816',
+                      transition: 'transform 0.7s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      ;(e.currentTarget as HTMLDivElement).style.transform = 'scale(1.03)'
+                    }}
+                    onMouseLeave={(e) => {
+                      ;(e.currentTarget as HTMLDivElement).style.transform = 'scale(1)'
+                    }}
+                  />
+                )}
+
+                {/* Gradient overlay */}
                 <div
                   style={{
                     position: 'absolute',
                     inset: 0,
-                    backgroundColor: '#1a1816',
-                    transition: 'transform 0.7s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    ;(e.currentTarget as HTMLDivElement).style.transform = 'scale(1.03)'
-                  }}
-                  onMouseLeave={(e) => {
-                    ;(e.currentTarget as HTMLDivElement).style.transform = 'scale(1)'
+                    background: 'linear-gradient(transparent 40%, rgba(0,0,0,0.7))',
+                    pointerEvents: 'none',
                   }}
                 />
-              )}
 
-              {/* Gradient overlay */}
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: 'linear-gradient(transparent 40%, rgba(0,0,0,0.7))',
-                  pointerEvents: 'none',
-                }}
-              />
+                {/* Project name */}
+                <span
+                  style={{
+                    position: 'absolute',
+                    bottom: '1rem',
+                    left: '1rem',
+                    fontSize: 'clamp(1.2rem, 2vw, 1.8rem)',
+                    fontWeight: 600,
+                    color: '#f2ede6',
+                    pointerEvents: 'none',
+                  }}
+                >
+                  {activeFilter === 'video'
+                    ? CATEGORY_LABELS[card.name as VideoCategory] ?? card.name
+                    : card.name}
+                </span>
 
-              {/* Project name */}
-              <span
-                style={{
-                  position: 'absolute',
-                  bottom: '1rem',
-                  left: '1rem',
-                  fontSize: 'clamp(1.2rem, 2vw, 1.8rem)',
-                  fontWeight: 600,
-                  color: '#f2ede6',
-                  pointerEvents: 'none',
-                }}
-              >
-                {card.name}
-              </span>
-
-              {/* Count */}
-              <span
-                style={{
-                  position: 'absolute',
-                  bottom: '1rem',
-                  right: '1rem',
-                  fontFamily: 'var(--font-geist-mono)',
-                  fontSize: '0.7rem',
-                  color: '#8a8078',
-                  pointerEvents: 'none',
-                }}
-              >
-                {card.count} {activeFilter === 'foto' ? 'fotos' : 'videos'}
-              </span>
-            </div>
-          </div>
-        ))}
+                {/* Count */}
+                <span
+                  style={{
+                    position: 'absolute',
+                    bottom: '1rem',
+                    right: '1rem',
+                    fontFamily: 'var(--font-geist-mono)',
+                    fontSize: '0.7rem',
+                    color: '#8a8078',
+                    pointerEvents: 'none',
+                  }}
+                >
+                  {card.count} {activeFilter === 'foto' ? 'fotos' : 'videos'}
+                </span>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
 
       {/* Project Overlay */}

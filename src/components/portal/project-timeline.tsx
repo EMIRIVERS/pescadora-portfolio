@@ -98,7 +98,6 @@ export default function ProjectTimeline({ currentStatus }: ProjectTimelineProps)
         {PHASES.map((phase, index) => {
           const isDone = index < currentIndex
           const isCurrent = index === currentIndex
-          const isUpcoming = index > currentIndex
           const isLast = index === PHASES.length - 1
 
           return (

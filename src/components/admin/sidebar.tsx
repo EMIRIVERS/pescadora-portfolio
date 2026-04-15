@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
@@ -80,7 +81,7 @@ export default function Sidebar({ profile }: SidebarProps) {
       {/* Wordmark */}
       <div className="px-5 pt-6 pb-5 border-b border-[#1a1a1a]">
         <span className="font-mono text-[10px] tracking-[0.4em] text-[#888] uppercase">
-          Pescadora
+          Carajo Films
         </span>
         <p className="font-mono text-[9px] tracking-[0.2em] text-[#444] uppercase mt-0.5">
           Admin
@@ -118,10 +119,12 @@ export default function Sidebar({ profile }: SidebarProps) {
       <div className="px-3 pb-4 border-t border-[#1a1a1a] pt-4">
         <div className="flex items-center gap-3 px-3 py-2 mb-1">
           {profile.avatar_url ? (
-            <img
+            <Image
               src={profile.avatar_url}
               alt={profile.full_name ?? 'User avatar'}
-              className="w-7 h-7 rounded-full object-cover flex-shrink-0"
+              width={28}
+              height={28}
+              className="rounded-full object-cover flex-shrink-0"
             />
           ) : (
             <div className="w-7 h-7 rounded-full bg-[#1c1c1c] border border-[#2a2a2a] flex items-center justify-center flex-shrink-0">

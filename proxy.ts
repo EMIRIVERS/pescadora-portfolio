@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import type { Database } from '@/lib/supabase/types'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient<Database>(
@@ -26,10 +26,13 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // IMPORTANT: do not remove — refreshes session and sets cookies
-  const { data: { user } } = await supabase.auth.getUser()
-
   const { pathname } = request.nextUrl
+
+  // Public portfolio — skip auth entirely, no Supabase call needed
+  if (pathname === '/') return supabaseResponse
+
+  // IMPORTANT: refreshes session and sets cookies
+  const { data: { user } } = await supabase.auth.getUser()
 
   // Protect /admin/*
   if (pathname.startsWith('/admin')) {

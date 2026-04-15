@@ -535,124 +535,103 @@
   ],
   "videos": [
     {
-      "id": "72496f56-8e18-41de-84ad-547e7f81cf68",
-      "title": "COTORREO + CACAO T1 - E2 ",
-      "url": "/media/videos/COTORREO%20%2B%20CACAO%20T1%20-%20E2%20.mov",
-      "poster": null,
-      "category": "podcast",
-      "tags": []
-    },
-    {
       "id": "f14a4823-2389-4b82-9ee4-e109e556c02d",
-      "title": "H1 - COMO FUEGO LENTO",
-      "url": "/media/videos/H1%20-%20COMO%20FUEGO%20LENTO.mov",
+      "title": "COMO FUEGO LENTO",
+      "url": "",
       "poster": null,
       "category": "video-clip",
-      "tags": []
-    },
-    {
-      "id": "484a254e-e329-40ad-b976-724a9dc5fb29",
-      "title": "H1 - NOMA MEZCAL",
-      "url": "/media/videos/H1%20-%20NOMA%20MEZCAL.mov",
-      "poster": null,
-      "category": "comercial",
-      "tags": []
-    },
-    {
-      "id": "9ad5ccbd-9f5c-4d61-9ac8-7ffd7b972b93",
-      "title": "H1 - TIERRA JIASÚ",
-      "url": "/media/videos/H1%20-%20TIERRA%20JIAS%C3%9A.mov",
-      "poster": null,
-      "category": "comercial",
-      "tags": []
-    },
-    {
-      "id": "428fddfd-6dad-486e-9a8e-5b8076c39dab",
-      "title": "H1 Conade - C2",
-      "url": "/media/videos/H1%20Conade%20-%20C2.mov",
-      "poster": null,
-      "category": "comercial",
-      "tags": []
-    },
-    {
-      "id": "c1424656-6da0-4617-a7a8-a9074d4fe985",
-      "title": "H2 - COMO FUEGO LENTO",
-      "url": "/media/videos/H2%20-%20COMO%20FUEGO%20LENTO.mov",
-      "poster": null,
-      "category": "video-clip",
-      "tags": []
-    },
-    {
-      "id": "98d64c65-f83e-49ba-b4aa-78a7ceeca998",
-      "title": "H2 - TIERRA JIASÚ",
-      "url": "/media/videos/H2%20-%20TIERRA%20JIAS%C3%9A.mov",
-      "poster": null,
-      "category": "comercial",
-      "tags": []
-    },
-    {
-      "id": "a425dd38-19ec-44cc-aad5-970ad4b3b666",
-      "title": "H3 - AMOR DE VASO ",
-      "url": "/media/videos/H3%20-%20AMOR%20DE%20VASO%20.mov",
-      "poster": null,
-      "category": "comercial",
-      "tags": []
-    },
-    {
-      "id": "a76e31fd-0612-4a3e-b6f6-1709991e4b56",
-      "title": "H3 - COMO FUEGO LENTO",
-      "url": "/media/videos/H3%20-%20COMO%20FUEGO%20LENTO.mov",
-      "poster": null,
-      "category": "video-clip",
-      "tags": []
-    },
-    {
-      "id": "93703828-b59a-442a-8ea4-58286321f118",
-      "title": "H3 - Conade - C2",
-      "url": "/media/videos/H3%20-%20Conade%20-%20C2.mov",
-      "poster": null,
-      "category": "comercial",
-      "tags": []
-    },
-    {
-      "id": "bc3b32af-2466-4569-9ab7-78cfc76b330b",
-      "title": "H4 - NOMA MEZCAL",
-      "url": "/media/videos/H4%20-%20NOMA%20MEZCAL.mov",
-      "poster": null,
-      "category": "comercial",
-      "tags": []
-    },
-    {
-      "id": "0b115fbc-d322-4751-a011-394a722d0c03",
-      "title": "ITSCO H1.6",
-      "url": "/media/videos/ITSCO%20H1.6.mov",
-      "poster": null,
-      "category": "comercial",
-      "tags": []
-    },
-    {
-      "id": "1d7eca21-125e-46d9-80bb-09a2aaeadbef",
-      "title": "LUCKY STASH CORPORATIVO - REDES ",
-      "url": "/media/videos/LUCKY%20STASH%20CORPORATIVO%20-%20REDES%20.mov",
-      "poster": null,
-      "category": "comercial",
-      "tags": []
+      "tags": [],
+      "vimeoId": "1183459299"
     },
     {
       "id": "c367dd54-e194-4824-bbb4-412c787b8828",
-      "title": "R1 - HIPNOTIZADO 1920",
-      "url": "/media/videos/R1%20-%20HIPNOTIZADO%201920.mov",
+      "title": "HIPNOTIZADO",
+      "url": "",
       "poster": null,
       "category": "video-clip",
-      "tags": []
+      "tags": [],
+      "vimeoId": "1183458974"
     },
     {
-      "id": "2bf80455-5172-4488-93c3-0c5146af0dd3",
-      "title": "R2 - HIPNOTIZADO 1910",
-      "url": "/media/videos/R2%20-%20HIPNOTIZADO%201910.mov",
+      "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+      "title": "AMOR CLASICO",
+      "url": "",
       "poster": null,
       "category": "video-clip",
-      "tags": []
+      "tags": [],
+      "vimeoId": "1183463808"
+    },
+    {
+      "id": "428fddfd-6dad-486e-9a8e-5b8076c39dab",
+      "title": "CONADE",
+      "url": "",
+      "poster": null,
+      "category": "comercial",
+      "tags": [],
+      "vimeoId": "1183458842"
+    },
+    {
+      "id": "a425dd38-19ec-44cc-aad5-970ad4b3b666",
+      "title": "AMOR DE VASO",
+      "url": "",
+      "poster": null,
+      "category": "comercial",
+      "tags": [],
+      "vimeoId": "1183459373"
+    },
+    {
+      "id": "484a254e-e329-40ad-b976-724a9dc5fb29",
+      "title": "NOMA MEZCAL",
+      "url": "",
+      "poster": null,
+      "category": "comercial",
+      "tags": [],
+      "vimeoId": "1183457806"
+    },
+    {
+      "id": "0b115fbc-d322-4751-a011-394a722d0c03",
+      "title": "ITSCO",
+      "url": "",
+      "poster": null,
+      "category": "comercial",
+      "tags": [],
+      "vimeoId": "1183459324"
+    },
+    {
+      "id": "1d7eca21-125e-46d9-80bb-09a2aaeadbef",
+      "title": "LUCKY STASH CORPORATIVO",
+      "url": "",
+      "poster": null,
+      "category": "comercial",
+      "tags": [],
+      "vimeoId": "1183459479"
+    },
+    {
+      "id": "e4a1b2c3-d456-7890-abcd-ef1234567890",
+      "title": "LUCKY STASH",
+      "url": "",
+      "poster": null,
+      "category": "comercial",
+      "tags": [],
+      "vimeoId": "1183458425"
+    },
+    {
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef0987654321",
+      "title": "C3 GALLERY",
+      "url": "",
+      "poster": null,
+      "category": "comercial",
+      "tags": [],
+      "vimeoId": "1183457572"
+    },
+    {
+      "id": "72496f56-8e18-41de-84ad-547e7f81cf68",
+      "title": "COTORREO + CACAO",
+      "url": "",
+      "poster": null,
+      "category": "podcast",
+      "tags": [],
+      "vimeoId": "1183464086"
     }
   ]
 }

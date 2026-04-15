@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import type { Client } from '@/lib/supabase/types'
 import { InviteClientButton } from '@/components/admin/clients/invite-client-button'
@@ -110,10 +111,12 @@ export default async function AdminClientsPage() {
                 {/* Avatar + name + company */}
                 <div className="flex items-center gap-3 min-w-0">
                   {client.avatar_url ? (
-                    <img
+                    <Image
                       src={client.avatar_url}
                       alt={client.name}
-                      className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                      width={32}
+                      height={32}
+                      className="rounded-full object-cover flex-shrink-0"
                     />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-[#1c1c1c] border border-[#2a2a2a] flex items-center justify-center flex-shrink-0">

@@ -114,7 +114,8 @@ export default function DeliverableComments({ deliverableId }: DeliverableCommen
 
     void fetchComments()
     return () => { cancelled = true }
-  }, [deliverableId]) // supabase client is stable
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deliverableId])
 
   // ── Realtime subscription ──────────────────────────────────────────────────
   useEffect(() => {
@@ -148,7 +149,8 @@ export default function DeliverableComments({ deliverableId }: DeliverableCommen
       .subscribe()
 
     return () => { void supabase.removeChannel(channel) }
-  }, [deliverableId]) // supabase client is stable
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deliverableId])
 
   // ── Auto-scroll to bottom on new comment ──────────────────────────────────
   useEffect(() => {

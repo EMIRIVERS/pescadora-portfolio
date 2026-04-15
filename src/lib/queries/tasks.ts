@@ -10,7 +10,6 @@ import { createClient } from '@/lib/supabase/client'
 import type {
   KanbanBoardWithTasks,
   KanbanTaskWithAssignee,
-  TaskActivityLog,
 } from '@/lib/supabase/types'
 
 // ── Query keys ────────────────────────────────────────────────────────────────

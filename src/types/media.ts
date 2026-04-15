@@ -15,6 +15,7 @@ export interface VideoEntry {
   poster: string | null
   category: VideoCategory
   tags: string[]
+  vimeoId?: string
 }
 
 export interface MediaRegistry {

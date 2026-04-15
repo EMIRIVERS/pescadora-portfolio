@@ -1,8 +1,5 @@
 'use client';
 
-import Image from 'next/image';
-import Link from 'next/link';
-
 interface PortfolioHeaderProps {
   visible: boolean;
 }
@@ -59,13 +56,28 @@ export default function PortfolioHeader({ visible }: PortfolioHeaderProps) {
         transition: 'opacity 0.6s',
       }}
     >
-      <Image
-        src="/fish_silhouette.png"
-        alt="Pescadora"
-        width={36}
-        height={36}
-        style={{ width: 36, height: 'auto' }}
-      />
+      <div style={{ lineHeight: 1 }}>
+        <div style={{
+          fontFamily: 'var(--font-geist-sans)',
+          fontWeight: 200,
+          fontSize: '1rem',
+          letterSpacing: '0.25em',
+          textTransform: 'uppercase',
+          color: '#f2ede6',
+        }}>
+          Carajo
+        </div>
+        <div style={{
+          fontFamily: 'var(--font-geist-mono)',
+          fontSize: '0.45rem',
+          letterSpacing: '0.35em',
+          textTransform: 'uppercase',
+          color: 'rgba(242,237,230,0.45)',
+          marginTop: '0.15rem',
+        }}>
+          Films
+        </div>
+      </div>
 
       <nav style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
         {navLinks.map(({ label, targetId }) => (
@@ -81,19 +93,6 @@ export default function PortfolioHeader({ visible }: PortfolioHeaderProps) {
           </a>
         ))}
 
-        <Link
-          href="/login"
-          style={{
-            ...linkStyle,
-            border: '1px solid #2a2a2a',
-            padding: '0.35rem 0.9rem',
-            borderRadius: '2px',
-          }}
-          onMouseEnter={onEnter}
-          onMouseLeave={onLeave}
-        >
-          Iniciar sesión
-        </Link>
       </nav>
     </header>
   );

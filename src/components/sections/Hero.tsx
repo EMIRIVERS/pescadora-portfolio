@@ -1,69 +1,70 @@
 'use client'
-import { ParticleWordmark } from '@/components/ui/ParticleWordmark'
-import { EtheralShadow } from '@/components/ui/etheral-shadow'
+import { Waves } from '@/components/ui/wave-background'
 
 interface HeroProps {
-  triggerExit: boolean
-  onExitComplete: () => void
   onVerTrabajo: () => void
 }
 
-export function Hero({ triggerExit, onExitComplete, onVerTrabajo }: HeroProps) {
+export function Hero({ onVerTrabajo }: HeroProps) {
   return (
     <section
       id="hero"
       style={{
         position: 'fixed',
         inset: 0,
-        background: '#04080f',
+        background: '#000000',
         zIndex: 50,
         display: 'flex',
         flexDirection: 'column',
       }}
     >
-      {/* Ocean background */}
+      {/* Wave background */}
       <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: '#04080f',
-          }}
-        />
-        <EtheralShadow
-          color="rgba(15, 90, 190, 0.9)"
-          animation={{ scale: 60, speed: 20 }}
-          noise={{ opacity: 0.4, scale: 1.0 }}
-          sizing="fill"
-          style={{ position: 'absolute', inset: 0 }}
-        />
-        <EtheralShadow
-          color="rgba(0, 170, 200, 0.55)"
-          animation={{ scale: 45, speed: 14 }}
-          sizing="fill"
-          style={{ position: 'absolute', inset: 0 }}
-        />
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(to top, #020b14 0%, transparent 45%)',
-          }}
+        <Waves
+          backgroundColor="#000000"
+          strokeColor="rgba(255,255,255,0.18)"
+          pointerSize={0.5}
         />
       </div>
 
-      {/* Fish particle canvas */}
-      <div style={{ flex: 1, position: 'relative', zIndex: 1 }}>
-        <ParticleWordmark
-          color="#f2ede6"
-          background="transparent"
-          triggerExit={triggerExit}
-          onExitComplete={onExitComplete}
-        />
+      {/* Wordmark */}
+      <div style={{
+        flex: 1,
+        position: 'relative',
+        zIndex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <p style={{
+          fontFamily: 'var(--font-geist-sans)',
+          fontWeight: 200,
+          fontSize: 'clamp(3.5rem, 14vw, 10rem)',
+          letterSpacing: '0.15em',
+          textTransform: 'uppercase',
+          color: '#f2ede6',
+          margin: 0,
+          lineHeight: 1,
+        }}>
+          Carajo
+        </p>
+        <p style={{
+          fontFamily: 'var(--font-geist-mono)',
+          fontWeight: 400,
+          fontSize: 'clamp(0.8rem, 3vw, 2rem)',
+          letterSpacing: '0.55em',
+          textTransform: 'uppercase',
+          color: 'rgba(242,237,230,0.45)',
+          margin: '0.4em 0 0',
+          lineHeight: 1,
+        }}>
+          Films
+        </p>
       </div>
 
       {/* Button */}
-      {!triggerExit && (
+      {true && (
         <div
           style={{
             position: 'absolute',
@@ -88,7 +89,7 @@ export function Hero({ triggerExit, onExitComplete, onVerTrabajo }: HeroProps) {
               letterSpacing: '0.3em',
               textTransform: 'uppercase',
               padding: '0.9rem 2.5rem',
-              cursor: 'none',
+              cursor: 'pointer',
               transition: 'border-color 0.3s, color 0.3s',
             }}
             onMouseEnter={(e) => {

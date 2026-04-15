@@ -221,7 +221,7 @@ function EmptyState({ message }: { message: string }) {
         href="mailto:hola@pescadora.mx"
         className="inline-block mt-4 text-sky-400 hover:text-sky-300 text-sm transition-colors"
       >
-        Contactar a Pescadora
+        Contactar a Carajo Films
       </a>
     </div>
   )

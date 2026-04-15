@@ -1,6 +1,7 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
+  transpilePackages: ['simplex-noise'],
   turbopack: {
     rules: {
       '*.glsl': {

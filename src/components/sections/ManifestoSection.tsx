@@ -42,11 +42,6 @@ const hiddenStyle: CSSProperties = {
   transition: 'opacity 0.8s ease, transform 0.8s ease',
 }
 
-const visibleStyle: CSSProperties = {
-  opacity: 1,
-  transform: 'translateY(0)',
-  transition: 'opacity 0.8s ease, transform 0.8s ease',
-}
 
 export default function ManifestoSection() {
   const blockRefs = useRef<(HTMLParagraphElement | null)[]>([])

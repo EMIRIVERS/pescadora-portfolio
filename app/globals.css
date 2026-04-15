@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 :root {
   --color-bg: #080808;
   --color-text: #f2ede6;
@@ -65,12 +70,11 @@ html {
 }
 
 body {
-  cursor: none !important;
   overflow-x: hidden;
 }
 
 button, a, [role="button"] {
-  cursor: none !important;
+  cursor: pointer;
 }
 
 input,

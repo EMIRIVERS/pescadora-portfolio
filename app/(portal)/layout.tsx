@@ -47,14 +47,14 @@ export default async function PortalLayout({
             <div className="w-5 h-5 relative opacity-80 group-hover:opacity-100 transition-opacity">
               <Image
                 src="/favicon.ico"
-                alt="Pescadora"
+                alt="Carajo Films"
                 fill
                 className="object-contain"
                 sizes="20px"
               />
             </div>
             <span className="text-white/70 group-hover:text-white text-xs font-medium tracking-widest uppercase transition-colors">
-              Pescadora
+              Carajo Films
             </span>
           </a>
 

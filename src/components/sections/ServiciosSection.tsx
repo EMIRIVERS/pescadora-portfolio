@@ -1,3 +1,11 @@
+'use client'
+
+import { useEffect, useRef } from 'react'
+import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+gsap.registerPlugin(ScrollTrigger)
+
 const SERVICIOS = [
   'Fotografia de Marca',
   'Direccion de Arte',
@@ -8,8 +16,62 @@ const SERVICIOS = [
 ]
 
 export function ServiciosSection() {
+  const sectionRef = useRef<HTMLElement>(null)
+  const titleRef = useRef<HTMLHeadingElement>(null)
+  const itemsRef = useRef<HTMLDivElement[]>([])
+
+  useEffect(() => {
+    const section = sectionRef.current
+    const title = titleRef.current
+    const items = itemsRef.current
+
+    if (!section || !title) return
+
+    const triggers: ScrollTrigger[] = []
+
+    // Title animation
+    gsap.set(title, { opacity: 0, y: 40 })
+    const titleTrigger = ScrollTrigger.create({
+      trigger: section,
+      start: 'top 80%',
+      onEnter: () => {
+        gsap.to(title, {
+          opacity: 1,
+          y: 0,
+          duration: 0.7,
+          ease: 'power2.out',
+        })
+      },
+    })
+    triggers.push(titleTrigger)
+
+    // Grid items stagger animation
+    if (items.length > 0) {
+      gsap.set(items, { opacity: 0, y: 20 })
+      const itemsTrigger = ScrollTrigger.create({
+        trigger: section,
+        start: 'top 80%',
+        onEnter: () => {
+          gsap.to(items, {
+            opacity: 1,
+            y: 0,
+            duration: 0.6,
+            ease: 'power2.out',
+            stagger: 0.08,
+          })
+        },
+      })
+      triggers.push(itemsTrigger)
+    }
+
+    return () => {
+      triggers.forEach((trigger) => trigger.kill())
+    }
+  }, [])
+
   return (
     <section
+      ref={sectionRef}
       id="servicios"
       style={{
         padding: 'var(--space-16) var(--space-4)',
@@ -18,6 +80,7 @@ export function ServiciosSection() {
     >
       <div style={{ maxWidth: '960px', margin: '0 auto' }}>
         <h2
+          ref={titleRef}
           style={{
             fontFamily: 'var(--font-geist-sans)',
             fontSize: 'clamp(2rem, 5vw, 4rem)',
@@ -39,6 +102,9 @@ export function ServiciosSection() {
           {SERVICIOS.map((servicio, i) => (
             <div
               key={servicio}
+              ref={(el) => {
+                if (el) itemsRef.current[i] = el
+              }}
               style={{
                 padding: 'var(--space-3) 0',
                 borderTop: '1px solid var(--color-border)',
