@@ -12,6 +12,7 @@ import {
   X,
   Check,
   FolderOpen,
+  Pencil,
 } from 'lucide-react'
 
 const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
@@ -50,6 +51,8 @@ export default function MediaBrowser() {
   const [preview, setPreview] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [renamingItem, setRenamingItem] = useState<string | null>(null)
+  const [renameValue, setRenameValue] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const currentPrefix = path.length > 0 ? path.join('/') + '/' : ''
@@ -157,6 +160,31 @@ export default function MediaBrowser() {
     void navigator.clipboard.writeText(url)
     setCopied(name)
     setTimeout(() => setCopied(null), 2000)
+  }
+
+  async function handleRename(oldName: string, newName: string) {
+    if (!newName.trim() || newName === oldName) { setRenamingItem(null); return }
+    const safeName = newName.trim().replace(/[^a-zA-Z0-9._-]/g, '_')
+
+    const item = items.find((i) => i.name === oldName)
+    if (item?.isFolder) {
+      const oldPath = currentPrefix + oldName + '/.keep'
+      const newPath = currentPrefix + safeName + '/.keep'
+      const { data } = await supabase.storage.from(BUCKET).download(oldPath)
+      if (data) {
+        await supabase.storage.from(BUCKET).upload(newPath, data, { upsert: true })
+        await supabase.storage.from(BUCKET).remove([oldPath])
+      }
+    } else {
+      const oldPath = currentPrefix + oldName
+      const newPath = currentPrefix + safeName
+      await supabase.storage.from(BUCKET).copy(oldPath, newPath)
+      await supabase.storage.from(BUCKET).remove([oldPath])
+    }
+
+    setRenamingItem(null)
+    setRenameValue('')
+    await loadItems()
   }
 
   function handleDrop(e: React.DragEvent) {
@@ -347,16 +375,31 @@ export default function MediaBrowser() {
 
                   {/* Info */}
                   <div style={{ padding: '8px 10px' }}>
-                    <p style={{ margin: 0, fontSize: 12, fontWeight: 500, color: '#F5F5F7', fontFamily: FONT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={item.name}>
-                      {item.name === '.keep' ? '(carpeta vacía)' : item.name}
-                    </p>
+                    {renamingItem === item.name ? (
+                      <input
+                        autoFocus
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') void handleRename(item.name, renameValue)
+                          if (e.key === 'Escape') setRenamingItem(null)
+                        }}
+                        onBlur={() => void handleRename(item.name, renameValue)}
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ width: '100%', boxSizing: 'border-box', margin: 0, fontSize: 12, fontWeight: 500, color: '#F5F5F7', fontFamily: FONT, backgroundColor: 'transparent', border: '1px solid #0071E3', borderRadius: 4, padding: '1px 4px', outline: 'none' }}
+                      />
+                    ) : (
+                      <p style={{ margin: 0, fontSize: 12, fontWeight: 500, color: '#F5F5F7', fontFamily: FONT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={item.name}>
+                        {item.name === '.keep' ? '(carpeta vac\u00eda)' : item.name}
+                      </p>
+                    )}
                     {!item.isFolder && item.metadata?.size && (
                       <p style={{ margin: '2px 0 0', fontSize: 11, color: '#48484A', fontFamily: FONT }}>{formatBytes(item.metadata.size)}</p>
                     )}
                   </div>
 
                   {/* Action buttons (visible on hover) */}
-                  {!item.isFolder && item.name !== '.keep' && (
+                  {item.name !== '.keep' && (
                     <div
                       className="media-item-actions"
                       style={{ position: 'absolute', top: 6, right: 6, display: 'flex', gap: 4 }}
@@ -364,12 +407,22 @@ export default function MediaBrowser() {
                     >
                       <button
                         type="button"
-                        onClick={() => copyUrl(item.name)}
-                        title="Copiar URL"
-                        style={{ width: 26, height: 26, borderRadius: 6, border: 'none', backgroundColor: 'rgba(0,0,0,0.6)', color: copied === item.name ? '#30D158' : '#F5F5F7', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}
+                        onClick={() => { setRenamingItem(item.name); setRenameValue(item.name) }}
+                        title="Renombrar"
+                        style={{ width: 26, height: 26, borderRadius: 6, border: 'none', backgroundColor: 'rgba(0,0,0,0.6)', color: '#F5F5F7', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}
                       >
-                        {copied === item.name ? <Check size={12} strokeWidth={2} /> : <Copy size={12} strokeWidth={1.5} />}
+                        <Pencil size={12} strokeWidth={1.5} />
                       </button>
+                      {!item.isFolder && (
+                        <button
+                          type="button"
+                          onClick={() => copyUrl(item.name)}
+                          title="Copiar URL"
+                          style={{ width: 26, height: 26, borderRadius: 6, border: 'none', backgroundColor: 'rgba(0,0,0,0.6)', color: copied === item.name ? '#30D158' : '#F5F5F7', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}
+                        >
+                          {copied === item.name ? <Check size={12} strokeWidth={2} /> : <Copy size={12} strokeWidth={1.5} />}
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => { if (window.confirm(`Eliminar "${item.name}"?`)) void handleDelete([item.name]) }}

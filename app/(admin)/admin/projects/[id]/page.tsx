@@ -11,6 +11,9 @@ import type {
 import { DeliverableList } from '@/components/admin/deliverables/deliverable-list'
 import { ProjectAssignments } from '@/components/admin/projects/project-assignments'
 import { StatusChanger } from '@/components/admin/projects/StatusChanger'
+import { InternalNotesEditor } from '@/components/admin/projects/InternalNotesEditor'
+import { ProjectComments } from '@/components/admin/projects/ProjectComments'
+import { getProjectComments } from '@/lib/actions/projects'
 import {
   Calendar,
   Columns,
@@ -86,7 +89,9 @@ export default async function ProjectDetailPage({ params }: PageProps) {
 
   const typedProject = project as unknown as TypedProject
 
-  const [{ data: deliverables }, { data: tasks }] = await Promise.all([
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const [{ data: deliverables }, { data: tasks }, comments] = await Promise.all([
     supabase
       .from('project_deliverables')
       .select('*')
@@ -96,6 +101,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
       .from('tasks')
       .select('id, assignee_id')
       .eq('board_id', id),
+    getProjectComments(id),
   ])
 
   const safeDeliverables: Deliverable[] = (deliverables ?? []) as Deliverable[]
@@ -398,28 +404,18 @@ export default async function ProjectDetailPage({ params }: PageProps) {
           <DeliverableList projectId={id} initialDeliverables={safeDeliverables} />
         </section>
 
-        {/* Notas internas */}
-        {typedProject.internal_notes && (
-          <section className="space-y-4">
-            <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#F5F5F7' }}>
-              Notas internas
-            </h2>
-            <div
-              style={{
-                backgroundColor: '#1C1C1E',
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: '16px',
-                padding: '20px 24px',
-                fontSize: '14px',
-                color: '#86868B',
-                lineHeight: 1.6,
-                whiteSpace: 'pre-wrap',
-              }}
-            >
-              {typedProject.internal_notes}
-            </div>
-          </section>
-        )}
+        {/* Notas internas — editable */}
+        <InternalNotesEditor
+          projectId={id}
+          initialNotes={typedProject.internal_notes}
+        />
+
+        {/* Comentarios internos */}
+        <ProjectComments
+          projectId={id}
+          initialComments={comments}
+          currentUserId={user?.id ?? ''}
+        />
 
         {/* Team section */}
         <section className="space-y-5">

@@ -369,6 +369,23 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                     <span style={{ fontSize: 14, fontWeight: 600, color: '#F5F5F7' }}>{cat.label}</span>
+                    {/* Tipo: Foto vs Video */}
+                    <span
+                      style={{
+                        fontSize: 10,
+                        fontWeight: 600,
+                        letterSpacing: '0.06em',
+                        textTransform: 'uppercase',
+                        color: cat.slug === 'fotografia' ? '#BF5AF2' : '#0071E3',
+                        backgroundColor: cat.slug === 'fotografia' ? 'rgba(191,90,242,0.12)' : 'rgba(0,113,227,0.12)',
+                        borderRadius: 20,
+                        padding: '1px 8px',
+                        lineHeight: '18px',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {cat.slug === 'fotografia' ? 'Foto' : 'Video'}
+                    </span>
                     <span
                       style={{
                         fontSize: 11,
