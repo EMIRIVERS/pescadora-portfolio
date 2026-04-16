@@ -17,6 +17,8 @@ interface FormValues {
   status: ProjectStatus
   start_date: string
   end_date: string
+  budget: string
+  currency: string
 }
 
 interface FormErrors {
@@ -39,6 +41,8 @@ const DEFAULT_VALUES: FormValues = {
   status: 'pre_production',
   start_date: '',
   end_date: '',
+  budget: '',
+  currency: 'MXN',
 }
 
 function validate(values: FormValues): FormErrors {
@@ -125,6 +129,8 @@ export function NewProjectForm({ clients }: Props) {
           status: values.status,
           start_date: values.start_date || null,
           end_date: values.end_date || null,
+          budget: values.budget ? parseFloat(values.budget) : null,
+          currency: values.currency || 'MXN',
         })
         .select('id')
         .single()
@@ -294,6 +300,47 @@ export function NewProjectForm({ clients }: Props) {
           {errors.end_date && (
             <p style={{ fontSize: '12px', color: '#FF453A', marginTop: '5px' }}>{errors.end_date}</p>
           )}
+        </div>
+      </div>
+
+      {/* Presupuesto */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="budget" style={fieldLabel}>
+            Presupuesto
+          </label>
+          <input
+            id="budget"
+            name="budget"
+            type="number"
+            min="0"
+            step="100"
+            value={values.budget}
+            onChange={handleChange}
+            disabled={isPending}
+            placeholder="0.00"
+            onFocus={() => setFocusedField('budget')}
+            onBlur={() => setFocusedField(null)}
+            style={getInputStyle('budget')}
+          />
+        </div>
+        <div>
+          <label htmlFor="currency" style={fieldLabel}>
+            Moneda
+          </label>
+          <select
+            id="currency"
+            name="currency"
+            value={values.currency}
+            onChange={handleChange}
+            disabled={isPending}
+            onFocus={() => setFocusedField('currency')}
+            onBlur={() => setFocusedField(null)}
+            style={getInputStyle('currency')}
+          >
+            <option value="MXN">MXN — Peso mexicano</option>
+            <option value="USD">USD — Dolar</option>
+          </select>
         </div>
       </div>
 

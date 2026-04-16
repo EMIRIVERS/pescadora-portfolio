@@ -21,6 +21,12 @@ interface PageProps {
   params: Promise<{ id: string }>
 }
 
+type TypedProject = ProjectWithClient & {
+  budget?: number | null
+  currency?: string | null
+  internal_notes?: string | null
+}
+
 const STATUS_STYLES: Record<ProjectStatus, { pill: string; dot: string }> = {
   pre_production: {
     pill: 'bg-[#48484A]/40 text-[#86868B] ring-1 ring-white/8',
@@ -56,6 +62,16 @@ function formatDate(dateStr: string | null): string {
   })
 }
 
+function formatBudget(budget: number | null | undefined, currency: string | null | undefined): string {
+  if (budget === null || budget === undefined) return '\u2014'
+  const c = currency ?? 'MXN'
+  return new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency: c,
+    maximumFractionDigits: 0,
+  }).format(budget)
+}
+
 function countByStatus(deliverables: Deliverable[]): Record<DeliverableStatus, number> {
   const counts: Record<DeliverableStatus, number> = {
     pending: 0,
@@ -82,7 +98,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
     notFound()
   }
 
-  const typedProject = project as unknown as ProjectWithClient
+  const typedProject = project as unknown as TypedProject
 
   const [{ data: deliverables }, { data: tasks }] = await Promise.all([
     supabase
@@ -108,6 +124,40 @@ export default async function ProjectDetailPage({ params }: PageProps) {
 
   const statusStyle = STATUS_STYLES[typedProject.status]
   const statusLabel = STATUS_LABELS[typedProject.status]
+
+  const statsCards = [
+    {
+      label: 'Cliente',
+      value: typedProject.client?.name ?? (
+        <span style={{ color: '#48484A' }}>Sin asignar</span>
+      ),
+      icon: null,
+    },
+    {
+      label: 'Inicio',
+      value: formatDate(typedProject.start_date),
+      icon: <Calendar className="w-3.5 h-3.5" style={{ color: '#48484A' }} />,
+    },
+    {
+      label: 'Cierre',
+      value: formatDate(typedProject.end_date),
+      icon: <Calendar className="w-3.5 h-3.5" style={{ color: '#48484A' }} />,
+    },
+    {
+      label: 'Entregables',
+      value: safeDeliverables.length,
+      icon: null,
+    },
+    ...(typedProject.budget != null
+      ? [
+          {
+            label: `Presupuesto (${typedProject.currency ?? 'MXN'})`,
+            value: formatBudget(typedProject.budget, typedProject.currency),
+            icon: null,
+          },
+        ]
+      : []),
+  ]
 
   return (
     <>
@@ -199,30 +249,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
 
           {/* Stats cards */}
           <dl className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              {
-                label: 'Cliente',
-                value: typedProject.client?.name ?? (
-                  <span style={{ color: '#48484A' }}>Sin asignar</span>
-                ),
-                icon: null,
-              },
-              {
-                label: 'Inicio',
-                value: formatDate(typedProject.start_date),
-                icon: <Calendar className="w-3.5 h-3.5" style={{ color: '#48484A' }} />,
-              },
-              {
-                label: 'Cierre',
-                value: formatDate(typedProject.end_date),
-                icon: <Calendar className="w-3.5 h-3.5" style={{ color: '#48484A' }} />,
-              },
-              {
-                label: 'Entregables',
-                value: safeDeliverables.length,
-                icon: null,
-              },
-            ].map((card) => (
+            {statsCards.map((card) => (
               <div
                 key={card.label}
                 style={{
@@ -279,6 +306,29 @@ export default async function ProjectDetailPage({ params }: PageProps) {
           </div>
           <DeliverableList projectId={id} initialDeliverables={safeDeliverables} />
         </section>
+
+        {/* Notas internas */}
+        {typedProject.internal_notes && (
+          <section className="space-y-4">
+            <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#F5F5F7' }}>
+              Notas internas
+            </h2>
+            <div
+              style={{
+                backgroundColor: '#1C1C1E',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '16px',
+                padding: '20px 24px',
+                fontSize: '14px',
+                color: '#86868B',
+                lineHeight: 1.6,
+                whiteSpace: 'pre-wrap',
+              }}
+            >
+              {typedProject.internal_notes}
+            </div>
+          </section>
+        )}
 
         {/* Team section */}
         <section className="space-y-5">

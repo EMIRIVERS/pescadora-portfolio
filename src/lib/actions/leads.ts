@@ -3,6 +3,13 @@
 import { revalidatePath } from 'next/cache'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import type { Lead, LeadStatus, LeadSource, LeadActivityType } from '@/lib/supabase/types'
+import { sendEmail, ADMIN_EMAIL } from '@/lib/email'
+import {
+  leadWelcomeTemplate,
+  leadAdminNotifyTemplate,
+  leadStatusUpdateTemplate,
+  projectStartedTemplate,
+} from '@/lib/email/templates'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -69,6 +76,34 @@ export async function createLead(
     old_status: null,
     new_status: lead.status,
   })
+
+  // Send emails — fire-and-forget, errors are swallowed inside sendEmail
+  const emailTasks: Promise<void>[] = [
+    sendEmail({
+      to: ADMIN_EMAIL,
+      subject: `Nuevo lead: ${lead.name}`,
+      html: leadAdminNotifyTemplate({
+        name: lead.name,
+        email: lead.email,
+        phone: lead.phone,
+        company: lead.company,
+        project_type: lead.project_type,
+        budget_range: lead.budget_range,
+        notes: lead.notes,
+        source: lead.source,
+      }),
+    }),
+  ]
+  if (lead.email) {
+    emailTasks.push(
+      sendEmail({
+        to: lead.email,
+        subject: 'Recibimos tu solicitud — XICO Films',
+        html: leadWelcomeTemplate(lead.name, lead.project_type),
+      })
+    )
+  }
+  await Promise.allSettled(emailTasks)
 
   revalidateLeads()
   return { lead }
@@ -181,10 +216,10 @@ export async function updateLeadStatus(
   const userId = await getCurrentUserId()
   const db = createServiceClient()
 
-  // Fetch current status for the activity log
+  // Fetch current status + contact info for activity log and email
   const { data: existing, error: fetchError } = await db
     .from('leads')
-    .select('status')
+    .select('status, name, email')
     .eq('id', id)
     .single()
 
@@ -209,6 +244,17 @@ export async function updateLeadStatus(
     old_status: existing.status,
     new_status: status,
   })
+
+  // Notify lead by email when status reaches a significant milestone
+  if ((status === 'qualified' || status === 'proposal') && existing.email) {
+    await Promise.allSettled([
+      sendEmail({
+        to: existing.email,
+        subject: 'Actualizacion sobre tu solicitud — XICO Films',
+        html: leadStatusUpdateTemplate(existing.name, status),
+      }),
+    ])
+  }
 
   revalidateLeads()
   return {}
@@ -299,6 +345,17 @@ export async function convertLeadToClient(
     old_status: lead.status,
     new_status: 'won',
   })
+
+  // Notify the new client that their project has started
+  if (lead.email) {
+    await Promise.allSettled([
+      sendEmail({
+        to: lead.email,
+        subject: 'Tu proyecto comenzo — XICO Films',
+        html: projectStartedTemplate(lead.name, 'tu proyecto'),
+      }),
+    ])
+  }
 
   revalidateLeads()
   return { clientId: client.id }

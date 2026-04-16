@@ -12,6 +12,7 @@ import {
   Users,
   UserCircle,
   Target,
+  Zap,
   LogOut,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -74,6 +75,11 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Leads',
     href: '/admin/leads',
     icon: <Target size={16} strokeWidth={1.5} />,
+  },
+  {
+    label: 'Automatizaciones',
+    href: '/admin/automatizaciones',
+    icon: <Zap size={16} strokeWidth={1.5} />,
   },
   {
     label: 'Equipo',
