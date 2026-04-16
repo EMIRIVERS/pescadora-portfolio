@@ -369,7 +369,6 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                     <span style={{ fontSize: 14, fontWeight: 600, color: '#F5F5F7' }}>{cat.label}</span>
-                    <span style={{ fontSize: 11, color: '#48484A', fontFamily: 'monospace' }}>{cat.slug}</span>
                     <span
                       style={{
                         fontSize: 11,
