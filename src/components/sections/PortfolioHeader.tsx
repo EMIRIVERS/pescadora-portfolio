@@ -64,7 +64,7 @@ export default function PortfolioHeader({ visible }: PortfolioHeaderProps) {
             lineHeight: 1,
           }}
         >
-          CARAJO FILMS
+          XICO FILMS
         </span>
 
         {/* Vertical separator */}

@@ -9,7 +9,7 @@ import type { CmsProjectCard } from '@/components/sections/PortfolioSection'
 import type { VideoEntry } from '@/types/media'
 import { ServiciosSection } from '@/components/sections/ServiciosSection'
 import { ContactoSection } from '@/components/sections/ContactoSection'
-import { SmokeBackground } from '@/components/ui/spooky-smoke-animation'
+import { AnimatedDots } from '@/components/ui/animated-dots'
 
 interface Props {
   cmsProjects: CmsProjectCard[]
@@ -47,9 +47,16 @@ export default function HomeClient({ cmsProjects, videos }: Props) {
       {/* Fixed nav — appears after scrolling past hero */}
       <PortfolioHeader visible={headerVisible} />
 
-      {/* Smoke background — always present behind content */}
-      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', opacity: 0.3 }}>
-        <SmokeBackground smokeColor="#cc0000" />
+      {/* Animated dots background */}
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
+        <AnimatedDots
+          backgroundColor="#080808"
+          dotsNum={48}
+          dotRadius={5}
+          dotSpacing={2}
+          speedRange={[0.6, 2.2]}
+          opacity={0.72}
+        />
       </div>
 
       {/* Film grain texture */}

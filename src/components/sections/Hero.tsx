@@ -57,7 +57,7 @@ export function Hero() {
           color: '#ffffff',
           margin: 0,
         }}>
-          CARAJO
+          XICO
         </p>
 
         {/* Divider */}

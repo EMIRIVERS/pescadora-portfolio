@@ -12,7 +12,7 @@ export function Wordmark({ className }: { className?: string }) {
         lineHeight: 1,
       }}
     >
-      Carajo Films
+      XICO Films
     </span>
   )
 }

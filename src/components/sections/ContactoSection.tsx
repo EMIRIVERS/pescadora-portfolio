@@ -5,7 +5,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 gsap.registerPlugin(ScrollTrigger)
 
-const CONTACT_EMAIL = 'hola@carajofilms.com'
+const CONTACT_EMAIL = 'hola@xicofilms.com'
 
 export function ContactoSection() {
   const sectionRef = useRef<HTMLElement>(null)
@@ -152,7 +152,7 @@ export function ContactoSection() {
               color: '#6b6560',
             }}
           >
-            Carajo Films
+            XICO Films
           </span>
           <span
             style={{
@@ -163,7 +163,7 @@ export function ContactoSection() {
               color: '#6b6560',
             }}
           >
-            @carajofilms
+            @xicofilms
           </span>
         </div>
 

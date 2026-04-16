@@ -5,10 +5,10 @@ import Providers from './providers'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Carajo Films',
+  title: 'XICO Films',
   description: 'Fotografia y video de campana. Mexico.',
   openGraph: {
-    title: 'Carajo Films',
+    title: 'XICO Films',
     description: 'Fotografia y video de campana. Mexico.',
     type: 'website',
   },

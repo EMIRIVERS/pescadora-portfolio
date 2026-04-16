@@ -41,7 +41,7 @@ function LoginPageInner() {
         {/* Wordmark */}
         <div className="mb-12 text-center">
           <span className="font-mono text-xs tracking-[0.4em] text-[#888] uppercase">
-            Carajo Films
+            XICO Films
           </span>
         </div>
 
@@ -109,7 +109,7 @@ function LoginPageInner() {
         </div>
 
         <p className="mt-6 text-center text-[10px] font-mono tracking-widest uppercase text-[#333]">
-          Carajo Films Platform &mdash; Private access
+          XICO Films Platform &mdash; Private access
         </p>
       </div>
     </main>
