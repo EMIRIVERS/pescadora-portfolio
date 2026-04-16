@@ -5,11 +5,11 @@ import type {
   ProjectWithClient,
   Deliverable,
   KanbanTask,
-  ProjectStatus,
   DeliverableStatus,
 } from '@/lib/supabase/types'
 import { DeliverableList } from '@/components/admin/deliverables/deliverable-list'
 import { ProjectAssignments } from '@/components/admin/projects/project-assignments'
+import { StatusChanger } from '@/components/admin/projects/StatusChanger'
 import {
   Calendar,
   Columns,
@@ -25,32 +25,6 @@ type TypedProject = ProjectWithClient & {
   budget?: number | null
   currency?: string | null
   internal_notes?: string | null
-}
-
-const STATUS_STYLES: Record<ProjectStatus, { pill: string; dot: string }> = {
-  pre_production: {
-    pill: 'bg-[#48484A]/40 text-[#86868B] ring-1 ring-white/8',
-    dot: 'bg-[#636366]',
-  },
-  production: {
-    pill: 'bg-[#0071E3]/15 text-[#409CFF] ring-1 ring-[#0071E3]/30',
-    dot: 'bg-[#0071E3]',
-  },
-  post_production: {
-    pill: 'bg-[#BF5AF2]/15 text-[#BF5AF2] ring-1 ring-[#BF5AF2]/30',
-    dot: 'bg-[#BF5AF2]',
-  },
-  delivered: {
-    pill: 'bg-[#30D158]/15 text-[#30D158] ring-1 ring-[#30D158]/30',
-    dot: 'bg-[#30D158]',
-  },
-}
-
-const STATUS_LABELS: Record<ProjectStatus, string> = {
-  pre_production: 'Pre-produccion',
-  production: 'Produccion',
-  post_production: 'Post-produccion',
-  delivered: 'Entregado',
 }
 
 function formatDate(dateStr: string | null): string {
@@ -122,13 +96,17 @@ export default async function ProjectDetailPage({ params }: PageProps) {
     safeTasks.map((t) => t.assignee_id).filter(Boolean)
   ).size
 
-  const statusStyle = STATUS_STYLES[typedProject.status]
-  const statusLabel = STATUS_LABELS[typedProject.status]
-
   const statsCards = [
     {
       label: 'Cliente',
-      value: typedProject.client?.name ?? (
+      value: typedProject.client ? (
+        <Link
+          href={`/admin/clients/${typedProject.client.id}`}
+          style={{ color: '#0071E3', textDecoration: 'none', fontWeight: 500 }}
+        >
+          {typedProject.client.name}
+        </Link>
+      ) : (
         <span style={{ color: '#48484A' }}>Sin asignar</span>
       ),
       icon: null,
@@ -218,24 +196,9 @@ export default async function ProjectDetailPage({ params }: PageProps) {
             >
               {typedProject.title}
             </h1>
-            <span
-              className="mt-1 inline-flex items-center gap-1.5 flex-shrink-0"
-              style={{
-                fontSize: '12px',
-                fontWeight: 500,
-                borderRadius: '20px',
-                padding: '4px 10px',
-              }}
-            >
-              <span
-                className={[statusStyle.pill, 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium'].join(' ')}
-              >
-                <span
-                  className={[statusStyle.dot, 'w-1.5 h-1.5 rounded-full flex-shrink-0'].join(' ')}
-                />
-                {statusLabel}
-              </span>
-            </span>
+            <div className="mt-1 flex-shrink-0">
+              <StatusChanger projectId={id} currentStatus={typedProject.status} />
+            </div>
           </div>
 
           {typedProject.description && (

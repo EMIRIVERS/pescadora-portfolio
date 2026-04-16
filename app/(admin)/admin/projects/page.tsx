@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import type { ProjectStatus, ProjectWithClient, Client } from '@/lib/supabase/types'
 import { ProjectsFilterBar } from '@/components/admin/projects/projects-filter-bar'
+import { StatusChanger } from '@/components/admin/projects/StatusChanger'
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
@@ -476,7 +477,7 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
 
                 {/* Status */}
                 <div>
-                  <StatusPill status={project.status} />
+                  <StatusChanger projectId={project.id} currentStatus={project.status} />
                 </div>
 
                 {/* Start date */}

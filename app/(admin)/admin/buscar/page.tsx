@@ -1,0 +1,653 @@
+import Link from 'next/link'
+import { createServiceClient } from '@/lib/supabase/server'
+import type { ProjectStatus, LeadStatus } from '@/lib/supabase/types'
+
+// ── Design tokens ─────────────────────────────────────────────────────────────
+
+const T = {
+  bg:            '#000000',
+  surface1:      '#111111',
+  surface2:      '#1C1C1E',
+  surface3:      '#2C2C2E',
+  border:        'rgba(255,255,255,0.08)',
+  borderSubtle:  'rgba(255,255,255,0.04)',
+  borderHeader:  'rgba(255,255,255,0.06)',
+  textPrimary:   '#F5F5F7',
+  textSecondary: '#86868B',
+  textTertiary:  '#48484A',
+  accent:        '#0071E3',
+  font:          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+} as const
+
+// ── Status configs ─────────────────────────────────────────────────────────────
+
+const PROJECT_STATUS_CONFIG: Record<ProjectStatus, { label: string; color: string }> = {
+  pre_production:  { label: 'Pre-produccion',  color: '#FF9F0A' },
+  production:      { label: 'Produccion',       color: '#0071E3' },
+  post_production: { label: 'Post-produccion',  color: '#BF5AF2' },
+  delivered:       { label: 'Entregado',        color: '#30D158' },
+}
+
+const LEAD_STATUS_CONFIG: Record<LeadStatus, { label: string; color: string }> = {
+  new:       { label: 'Nuevo',      color: '#0071E3' },
+  contacted: { label: 'Contactado', color: '#FF9F0A' },
+  qualified: { label: 'Calificado', color: '#BF5AF2' },
+  proposal:  { label: 'Propuesta',  color: '#30D158' },
+  won:       { label: 'Ganado',     color: '#30D158' },
+  lost:      { label: 'Perdido',    color: '#FF453A' },
+}
+
+// ── Result row shapes ──────────────────────────────────────────────────────────
+
+interface ProjectResult {
+  id: string
+  title: string
+  status: ProjectStatus
+  created_at: string
+}
+
+interface ClientResult {
+  id: string
+  name: string
+  email: string | null
+  company: string | null
+}
+
+interface LeadResult {
+  id: string
+  name: string
+  email: string | null
+  company: string | null
+  status: LeadStatus
+}
+
+// ── Status pill ───────────────────────────────────────────────────────────────
+
+function StatusPill({ label, color }: { label: string; color: string }) {
+  return (
+    <span
+      style={{
+        display: 'inline-block',
+        padding: '3px 10px',
+        borderRadius: '20px',
+        fontSize: '12px',
+        fontWeight: 600,
+        background: `${color}26`,
+        color,
+        fontFamily: T.font,
+        whiteSpace: 'nowrap',
+        flexShrink: 0,
+      }}
+    >
+      {label}
+    </span>
+  )
+}
+
+// ── Chevron icon ──────────────────────────────────────────────────────────────
+
+function ChevronIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 12 12"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M2 6h8M6 2l4 4-4 4" />
+    </svg>
+  )
+}
+
+// ── Section wrapper ───────────────────────────────────────────────────────────
+
+function ResultSection({
+  title,
+  count,
+  children,
+}: {
+  title: string
+  count: number
+  children: React.ReactNode
+}) {
+  return (
+    <div style={{ marginBottom: '28px' }}>
+      <p
+        style={{
+          fontSize: '11px',
+          fontWeight: 600,
+          textTransform: 'uppercase',
+          letterSpacing: '0.07em',
+          color: T.textTertiary,
+          margin: '0 0 10px 0',
+          fontFamily: T.font,
+        }}
+      >
+        {title} ({count})
+      </p>
+      <div
+        style={{
+          background: T.surface1,
+          borderRadius: '14px',
+          overflow: 'hidden',
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  )
+}
+
+// ── Date formatting ───────────────────────────────────────────────────────────
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('es-MX', {
+    day:   '2-digit',
+    month: 'short',
+    year:  'numeric',
+  })
+}
+
+// ── Search form (plain HTML — works without JS) ───────────────────────────────
+
+function SearchForm({ q }: { q: string }) {
+  return (
+    <form
+      action="/admin/buscar"
+      method="GET"
+      style={{
+        display: 'flex',
+        gap: '10px',
+        alignItems: 'stretch',
+      }}
+    >
+      <input
+        name="q"
+        type="search"
+        defaultValue={q}
+        autoFocus
+        autoComplete="off"
+        placeholder="Busca proyectos, clientes o leads..."
+        style={{
+          flex: 1,
+          background: '#111111',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: '12px',
+          padding: '16px 20px',
+          fontSize: '18px',
+          color: '#F5F5F7',
+          fontFamily: T.font,
+          outline: 'none',
+          caretColor: T.accent,
+          minWidth: 0,
+        }}
+      />
+      <button
+        type="submit"
+        style={{
+          background: T.accent,
+          color: '#fff',
+          border: 'none',
+          borderRadius: '12px',
+          padding: '16px 24px',
+          fontSize: '15px',
+          fontWeight: 600,
+          fontFamily: T.font,
+          cursor: 'pointer',
+          whiteSpace: 'nowrap',
+          letterSpacing: '-0.01em',
+          flexShrink: 0,
+        }}
+      >
+        Buscar &rarr;
+      </button>
+    </form>
+  )
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+
+interface PageProps {
+  searchParams: Promise<{ q?: string }>
+}
+
+export default async function AdminBuscarPage({ searchParams }: PageProps) {
+  const { q: rawQ } = await searchParams
+  const q = rawQ?.trim() ?? ''
+
+  let projects: ProjectResult[] = []
+  let clients: ClientResult[] = []
+  let leads: LeadResult[] = []
+  let searched = false
+
+  if (q.length > 0) {
+    searched = true
+    const supabase = createServiceClient()
+
+    const [projectsRes, clientsRes, leadsRes] = await Promise.all([
+      supabase
+        .from('projects')
+        .select('id, title, status, created_at')
+        .ilike('title', `%${q}%`)
+        .limit(10),
+      supabase
+        .from('clients')
+        .select('id, name, email, company')
+        .or(`name.ilike.%${q}%,email.ilike.%${q}%,company.ilike.%${q}%`)
+        .limit(10),
+      supabase
+        .from('leads')
+        .select('id, name, email, company, status')
+        .or(`name.ilike.%${q}%,email.ilike.%${q}%`)
+        .limit(10),
+    ])
+
+    projects = (projectsRes.data ?? []) as ProjectResult[]
+    clients  = (clientsRes.data ?? [])  as ClientResult[]
+    leads    = (leadsRes.data ?? [])    as LeadResult[]
+  }
+
+  const totalResults = projects.length + clients.length + leads.length
+  const hasResults   = totalResults > 0
+
+  return (
+    <>
+      <style>{`
+        .buscar-input:focus { border-color: rgba(0,113,227,0.6) !important; box-shadow: 0 0 0 3px rgba(0,113,227,0.15); }
+        .buscar-submit:hover { opacity: 0.88 !important; }
+        .result-row { transition: background 0.1s ease; }
+        .result-row:hover { background: #1C1C1E !important; }
+        .result-link { color: #F5F5F7; text-decoration: none; display: flex; align-items: center; gap: 12px; padding: 14px 20px; width: 100%; }
+        .result-arrow { color: #48484A; transition: color 0.15s; flex-shrink: 0; }
+        .result-row:hover .result-arrow { color: #F5F5F7 !important; }
+      `}</style>
+
+      <div
+        style={{
+          padding: '60px 32px',
+          background: T.bg,
+          minHeight: '100vh',
+          fontFamily: T.font,
+        }}
+      >
+        {/* ── Centered container ── */}
+        <div style={{ maxWidth: '720px', margin: '0 auto' }}>
+
+          {/* Header */}
+          <div style={{ marginBottom: '36px', textAlign: 'center' }}>
+            <h1
+              style={{
+                fontSize: '34px',
+                fontWeight: 700,
+                color: T.textPrimary,
+                letterSpacing: '-0.03em',
+                margin: '0 0 6px 0',
+                lineHeight: 1.1,
+              }}
+            >
+              Buscar
+            </h1>
+            <p
+              style={{
+                fontSize: '14px',
+                color: T.textSecondary,
+                margin: 0,
+              }}
+            >
+              Proyectos, clientes y leads en un solo lugar
+            </p>
+          </div>
+
+          {/* Search form */}
+          <div style={{ marginBottom: '48px' }}>
+            <SearchForm q={q} />
+          </div>
+
+          {/* ── States ── */}
+
+          {/* No query yet */}
+          {!searched && (
+            <div
+              style={{
+                textAlign: 'center',
+                padding: '60px 20px',
+              }}
+            >
+              <div
+                style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '16px',
+                  background: T.surface1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 16px',
+                }}
+              >
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke={T.textTertiary}
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="M21 21l-4.35-4.35" />
+                </svg>
+              </div>
+              <p style={{ fontSize: '15px', color: T.textSecondary, margin: '0 0 6px 0', fontWeight: 500 }}>
+                Escribe algo para comenzar
+              </p>
+              <p style={{ fontSize: '13px', color: T.textTertiary, margin: 0 }}>
+                Busca por nombre, email o empresa
+              </p>
+            </div>
+          )}
+
+          {/* Searched but no results */}
+          {searched && !hasResults && (
+            <div
+              style={{
+                textAlign: 'center',
+                padding: '60px 20px',
+                background: T.surface1,
+                borderRadius: '16px',
+              }}
+            >
+              <p
+                style={{
+                  fontSize: '15px',
+                  color: T.textSecondary,
+                  margin: '0 0 6px 0',
+                  fontWeight: 500,
+                }}
+              >
+                Sin resultados para &ldquo;{q}&rdquo;
+              </p>
+              <p style={{ fontSize: '13px', color: T.textTertiary, margin: 0 }}>
+                Intenta con otro termino de busqueda
+              </p>
+            </div>
+          )}
+
+          {/* Results */}
+          {searched && hasResults && (
+            <div>
+              {/* Summary */}
+              <p
+                style={{
+                  fontSize: '13px',
+                  color: T.textSecondary,
+                  margin: '0 0 24px 0',
+                }}
+              >
+                {totalResults} resultado{totalResults !== 1 ? 's' : ''} para &ldquo;{q}&rdquo;
+              </p>
+
+              {/* ── Proyectos ── */}
+              {projects.length > 0 && (
+                <ResultSection title="Proyectos" count={projects.length}>
+                  {projects.map((project, idx) => {
+                    const { label, color } = PROJECT_STATUS_CONFIG[project.status]
+                    return (
+                      <div
+                        key={project.id}
+                        className="result-row"
+                        style={{
+                          borderBottom:
+                            idx < projects.length - 1
+                              ? `1px solid ${T.borderSubtle}`
+                              : undefined,
+                        }}
+                      >
+                        <Link
+                          href={`/admin/projects/${project.id}`}
+                          className="result-link"
+                        >
+                          {/* Icon */}
+                          <span
+                            style={{
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '8px',
+                              background: T.surface2,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0,
+                            }}
+                          >
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke={T.textSecondary}
+                              strokeWidth="1.8"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              aria-hidden="true"
+                            >
+                              <rect x="2" y="3" width="20" height="14" rx="2" />
+                              <path d="M8 21h8M12 17v4" />
+                            </svg>
+                          </span>
+
+                          {/* Text */}
+                          <span style={{ flex: 1, minWidth: 0 }}>
+                            <span
+                              style={{
+                                display: 'block',
+                                fontSize: '14px',
+                                fontWeight: 600,
+                                color: T.textPrimary,
+                                letterSpacing: '-0.01em',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {project.title}
+                            </span>
+                            <span
+                              style={{
+                                display: 'block',
+                                fontSize: '12px',
+                                color: T.textTertiary,
+                                marginTop: '2px',
+                              }}
+                            >
+                              {formatDate(project.created_at)}
+                            </span>
+                          </span>
+
+                          <StatusPill label={label} color={color} />
+                          <span className="result-arrow"><ChevronIcon /></span>
+                        </Link>
+                      </div>
+                    )
+                  })}
+                </ResultSection>
+              )}
+
+              {/* ── Clientes ── */}
+              {clients.length > 0 && (
+                <ResultSection title="Clientes" count={clients.length}>
+                  {clients.map((client, idx) => (
+                    <div
+                      key={client.id}
+                      className="result-row"
+                      style={{
+                        borderBottom:
+                          idx < clients.length - 1
+                            ? `1px solid ${T.borderSubtle}`
+                            : undefined,
+                      }}
+                    >
+                      <Link
+                        href={`/admin/clients/${client.id}`}
+                        className="result-link"
+                      >
+                        {/* Avatar placeholder */}
+                        <span
+                          style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '50%',
+                            background: T.surface3,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            color: T.textSecondary,
+                            letterSpacing: '-0.01em',
+                          }}
+                        >
+                          {client.name.charAt(0).toUpperCase()}
+                        </span>
+
+                        {/* Text */}
+                        <span style={{ flex: 1, minWidth: 0 }}>
+                          <span
+                            style={{
+                              display: 'block',
+                              fontSize: '14px',
+                              fontWeight: 600,
+                              color: T.textPrimary,
+                              letterSpacing: '-0.01em',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {client.name}
+                          </span>
+                          <span
+                            style={{
+                              display: 'block',
+                              fontSize: '12px',
+                              color: T.textTertiary,
+                              marginTop: '2px',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {[client.email, client.company].filter(Boolean).join(' · ')}
+                          </span>
+                        </span>
+
+                        <span className="result-arrow"><ChevronIcon /></span>
+                      </Link>
+                    </div>
+                  ))}
+                </ResultSection>
+              )}
+
+              {/* ── Leads ── */}
+              {leads.length > 0 && (
+                <ResultSection title="Leads" count={leads.length}>
+                  {leads.map((lead, idx) => {
+                    const { label, color } = LEAD_STATUS_CONFIG[lead.status]
+                    return (
+                      <div
+                        key={lead.id}
+                        className="result-row"
+                        style={{
+                          borderBottom:
+                            idx < leads.length - 1
+                              ? `1px solid ${T.borderSubtle}`
+                              : undefined,
+                        }}
+                      >
+                        <Link
+                          href="/admin/leads"
+                          className="result-link"
+                        >
+                          {/* Icon */}
+                          <span
+                            style={{
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '8px',
+                              background: T.surface2,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0,
+                            }}
+                          >
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke={T.textSecondary}
+                              strokeWidth="1.8"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              aria-hidden="true"
+                            >
+                              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                              <circle cx="12" cy="7" r="4" />
+                            </svg>
+                          </span>
+
+                          {/* Text */}
+                          <span style={{ flex: 1, minWidth: 0 }}>
+                            <span
+                              style={{
+                                display: 'block',
+                                fontSize: '14px',
+                                fontWeight: 600,
+                                color: T.textPrimary,
+                                letterSpacing: '-0.01em',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {lead.name}
+                            </span>
+                            <span
+                              style={{
+                                display: 'block',
+                                fontSize: '12px',
+                                color: T.textTertiary,
+                                marginTop: '2px',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {[lead.email, lead.company].filter(Boolean).join(' · ')}
+                            </span>
+                          </span>
+
+                          <StatusPill label={label} color={color} />
+                          <span className="result-arrow"><ChevronIcon /></span>
+                        </Link>
+                      </div>
+                    )
+                  })}
+                </ResultSection>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  )
+}

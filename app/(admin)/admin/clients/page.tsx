@@ -198,6 +198,8 @@ export default async function AdminClientsPage() {
       .client-card:hover { background-color: #1C1C1E !important; border-color: rgba(255,255,255,0.1) !important; }
       .client-email-link { color: #86868B; transition: color 0.15s ease; }
       .client-email-link:hover { color: #0071E3 !important; }
+      .client-detail-link { color: #F5F5F7; transition: color 0.15s ease; }
+      .client-detail-link:hover { color: #0071E3 !important; }
     `}</style>
     <div
       style={{
@@ -520,14 +522,30 @@ function ClientCardItem({ client, color }: ClientCardItemProps) {
         )}
       </div>
 
-      {/* Footer link */}
+      {/* Footer links */}
       <div
         style={{
           marginTop: 'auto',
           paddingTop: '12px',
           borderTop: '1px solid rgba(255,255,255,0.06)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '12px',
         }}
       >
+        <Link
+          href={`/admin/clients/${client.id}`}
+          className="client-detail-link"
+          style={{
+            fontSize: '13px',
+            fontWeight: 600,
+            textDecoration: 'none',
+            letterSpacing: '-0.01em',
+          }}
+        >
+          Ver detalle
+        </Link>
         <Link
           href={`/admin/projects?client=${client.id}`}
           style={{

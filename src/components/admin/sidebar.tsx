@@ -3,16 +3,19 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   LayoutDashboard,
   Film,
   FolderKanban,
   Kanban,
   Users,
-  UserCircle,
+  Users2,
   Target,
   Zap,
+  Search,
+  BarChart2,
+  Activity,
   LogOut,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -77,14 +80,32 @@ const NAV_ITEMS: NavItem[] = [
     icon: <Target size={16} strokeWidth={1.5} />,
   },
   {
+    label: 'Equipo',
+    href: '/admin/team',
+    icon: <Users2 size={16} strokeWidth={1.5} />,
+  },
+  {
     label: 'Automatizaciones',
     href: '/admin/automatizaciones',
     icon: <Zap size={16} strokeWidth={1.5} />,
   },
+]
+
+const NAV_ITEMS_SECONDARY: NavItem[] = [
   {
-    label: 'Equipo',
-    href: '/admin/team',
-    icon: <UserCircle size={16} strokeWidth={1.5} />,
+    label: 'Buscar',
+    href: '/admin/buscar',
+    icon: <Search size={16} strokeWidth={1.5} />,
+  },
+  {
+    label: 'Reportes',
+    href: '/admin/reportes',
+    icon: <BarChart2 size={16} strokeWidth={1.5} />,
+  },
+  {
+    label: 'Actividad',
+    href: '/admin/actividad',
+    icon: <Activity size={16} strokeWidth={1.5} />,
   },
 ]
 
@@ -99,6 +120,16 @@ export default function Sidebar({ profile }: SidebarProps) {
   const router = useRouter()
   const supabase = createClient()
   const [logoutHovered, setLogoutHovered] = useState(false)
+  const [newLeadsCount, setNewLeadsCount] = useState(0)
+
+  useEffect(() => {
+    const leadsClient = createClient()
+    leadsClient
+      .from('leads')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'new')
+      .then(({ count }) => setNewLeadsCount(count ?? 0))
+  }, [])
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -177,6 +208,27 @@ export default function Sidebar({ profile }: SidebarProps) {
         }}
       >
         {NAV_ITEMS.map((item) => {
+          const active = isActive(item.href)
+          return (
+            <NavLink
+              key={item.href}
+              item={item}
+              active={active}
+              badge={item.label === 'Leads' && newLeadsCount > 0 ? newLeadsCount : undefined}
+            />
+          )
+        })}
+
+        {/* Separator before secondary tools */}
+        <div
+          style={{
+            height: '1px',
+            background: 'rgba(255,255,255,0.06)',
+            margin: '6px 12px',
+          }}
+        />
+
+        {NAV_ITEMS_SECONDARY.map((item) => {
           const active = isActive(item.href)
           return (
             <NavLink key={item.href} item={item} active={active} />
@@ -313,7 +365,15 @@ export default function Sidebar({ profile }: SidebarProps) {
 }
 
 // ─── NavLink sub-component ───────────────────────────────────────────────────
-function NavLink({ item, active }: { item: NavItem; active: boolean }) {
+function NavLink({
+  item,
+  active,
+  badge,
+}: {
+  item: NavItem
+  active: boolean
+  badge?: number
+}) {
   const [hovered, setHovered] = useState(false)
 
   const bg = active
@@ -362,6 +422,23 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
         {item.icon}
       </span>
       {item.label}
+      {badge !== undefined && (
+        <span
+          style={{
+            backgroundColor: '#FF453A',
+            color: '#fff',
+            fontSize: 10,
+            fontWeight: 700,
+            padding: '1px 6px',
+            borderRadius: 10,
+            marginLeft: 'auto',
+            minWidth: 18,
+            textAlign: 'center',
+          }}
+        >
+          {badge}
+        </span>
+      )}
     </Link>
   )
 }

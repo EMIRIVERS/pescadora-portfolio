@@ -8,6 +8,7 @@ import {
   deleteLead,
   convertLeadToClient,
 } from '@/lib/actions/leads'
+import { sendLeadEmail } from '../../../../app/actions/send-lead-email'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -247,10 +248,17 @@ export default function LeadDetailModal({
   const [convertConfirm, setConvertConfirm] = useState(false)
   const [globalError, setGlobalError] = useState<string | null>(null)
 
+  const [emailComposeOpen, setEmailComposeOpen] = useState(false)
+  const [emailSubject, setEmailSubject] = useState('')
+  const [emailBody, setEmailBody] = useState('')
+  const [emailStatus, setEmailStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [emailError, setEmailError] = useState<string | null>(null)
+
   const [statusPending, startStatusTransition] = useTransition()
   const [activityPending, startActivityTransition] = useTransition()
   const [deletePending, startDeleteTransition] = useTransition()
   const [convertPending, startConvertTransition] = useTransition()
+  const [emailPending, startEmailTransition] = useTransition()
 
   const panelRef = useRef<HTMLDivElement>(null)
 
@@ -372,6 +380,40 @@ export default function LeadDetailModal({
     })
   }
 
+  function handleSendEmail() {
+    const trimmedSubject = emailSubject.trim()
+    const trimmedBody = emailBody.trim()
+    if (!trimmedSubject || !trimmedBody) {
+      setEmailError('El asunto y el mensaje no pueden estar vacios.')
+      return
+    }
+    setEmailError(null)
+    startEmailTransition(async () => {
+      const result = await sendLeadEmail(lead.id, trimmedSubject, trimmedBody)
+      if (result.error) {
+        setEmailStatus('error')
+        setEmailError(result.error)
+      } else {
+        setEmailStatus('success')
+        setEmailSubject('')
+        setEmailBody('')
+        // Refresh activities to show the logged email entry
+        const supabase = createClient()
+        const { data } = await supabase
+          .from('lead_activities')
+          .select('*')
+          .eq('lead_id', lead.id)
+          .order('created_at', { ascending: false })
+        if (data) setActivities(data as LeadActivity[])
+        // Auto-close compose after a short moment
+        setTimeout(() => {
+          setEmailComposeOpen(false)
+          setEmailStatus('idle')
+        }, 2000)
+      }
+    })
+  }
+
   const statusColor = STATUS_COLORS[currentStatus]
 
   return (
@@ -399,6 +441,19 @@ export default function LeadDetailModal({
         }
         .ldm-cancel-btn:hover:not(:disabled) {
           background: ${T.surface3} !important;
+        }
+        .ldm-email-input:focus {
+          outline: none;
+          border-color: rgba(255,255,255,0.2) !important;
+        }
+        .ldm-email-input::placeholder {
+          color: ${T.textTertiary};
+        }
+        .ldm-email-send-btn:hover:not(:disabled) {
+          background: #0077ED !important;
+        }
+        .ldm-compose-toggle:hover {
+          color: ${T.textPrimary} !important;
         }
       `}</style>
 
@@ -754,6 +809,196 @@ export default function LeadDetailModal({
             >
               {activityPending ? 'Guardando...' : 'Guardar nota'}
             </button>
+          </div>
+
+          {/* ---------------------------------------------------------------- */}
+          {/* Section 3b — Redactar email                                      */}
+          {/* ---------------------------------------------------------------- */}
+          <SectionDivider />
+          <div style={{ padding: '20px 24px' }}>
+            <SectionHeader>Redactar email</SectionHeader>
+
+            {!lead.email ? (
+              <p
+                style={{
+                  fontFamily: T.font,
+                  fontSize: 13,
+                  color: T.textTertiary,
+                  margin: 0,
+                }}
+              >
+                Sin email registrado
+              </p>
+            ) : !emailComposeOpen ? (
+              <button
+                type="button"
+                className="ldm-compose-toggle"
+                onClick={() => {
+                  setEmailComposeOpen(true)
+                  setEmailStatus('idle')
+                  setEmailError(null)
+                }}
+                style={{
+                  fontFamily: T.font,
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: T.textSecondary,
+                  background: 'transparent',
+                  border: `1px solid ${T.border}`,
+                  borderRadius: 8,
+                  padding: '7px 16px',
+                  cursor: 'pointer',
+                  transition: 'color 0.15s',
+                }}
+              >
+                Redactar email &rarr;
+              </button>
+            ) : (
+              <div
+                style={{
+                  background: T.surface3,
+                  borderRadius: 12,
+                  padding: 16,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 10,
+                }}
+              >
+                {/* Subject */}
+                <input
+                  type="text"
+                  value={emailSubject}
+                  onChange={(e) => setEmailSubject(e.target.value)}
+                  placeholder="Asunto"
+                  className="ldm-email-input"
+                  style={{
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    background: T.surface2,
+                    border: `1px solid rgba(255,255,255,0.1)`,
+                    borderRadius: 8,
+                    color: T.textPrimary,
+                    fontFamily: T.font,
+                    fontSize: 14,
+                    padding: '9px 12px',
+                    outline: 'none',
+                    transition: 'border-color 0.15s',
+                  }}
+                />
+
+                {/* Body */}
+                <textarea
+                  value={emailBody}
+                  onChange={(e) => setEmailBody(e.target.value)}
+                  placeholder="Mensaje..."
+                  rows={4}
+                  className="ldm-email-input ldm-textarea"
+                  style={{
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    background: T.surface2,
+                    border: `1px solid rgba(255,255,255,0.1)`,
+                    borderRadius: 8,
+                    color: T.textPrimary,
+                    fontFamily: T.font,
+                    fontSize: 14,
+                    padding: '9px 12px',
+                    resize: 'none',
+                    outline: 'none',
+                    lineHeight: 1.5,
+                    transition: 'border-color 0.15s',
+                  }}
+                />
+
+                {/* Feedback */}
+                {emailStatus === 'success' && (
+                  <p
+                    style={{
+                      margin: 0,
+                      fontFamily: T.font,
+                      fontSize: 13,
+                      color: T.accentGreen,
+                    }}
+                  >
+                    Email enviado correctamente
+                  </p>
+                )}
+                {emailStatus === 'error' && emailError && (
+                  <p
+                    style={{
+                      margin: 0,
+                      fontFamily: T.font,
+                      fontSize: 13,
+                      color: T.accentRed,
+                    }}
+                  >
+                    {emailError}
+                  </p>
+                )}
+                {emailStatus === 'idle' && emailError && (
+                  <p
+                    style={{
+                      margin: 0,
+                      fontFamily: T.font,
+                      fontSize: 13,
+                      color: T.accentRed,
+                    }}
+                  >
+                    {emailError}
+                  </p>
+                )}
+
+                {/* Actions */}
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    type="button"
+                    onClick={handleSendEmail}
+                    disabled={emailPending || emailStatus === 'success'}
+                    className="ldm-email-send-btn"
+                    style={{
+                      fontFamily: T.font,
+                      fontSize: 13,
+                      fontWeight: 500,
+                      color: '#ffffff',
+                      background: T.accent,
+                      border: 'none',
+                      borderRadius: 8,
+                      padding: '8px 18px',
+                      cursor: emailPending || emailStatus === 'success' ? 'not-allowed' : 'pointer',
+                      opacity: emailPending || emailStatus === 'success' ? 0.6 : 1,
+                      transition: 'background 0.15s, opacity 0.15s',
+                    }}
+                  >
+                    {emailPending ? 'Enviando...' : 'Enviar'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmailComposeOpen(false)
+                      setEmailSubject('')
+                      setEmailBody('')
+                      setEmailStatus('idle')
+                      setEmailError(null)
+                    }}
+                    disabled={emailPending}
+                    className="ldm-cancel-btn"
+                    style={{
+                      fontFamily: T.font,
+                      fontSize: 13,
+                      color: T.textSecondary,
+                      background: 'transparent',
+                      border: `1px solid ${T.border}`,
+                      borderRadius: 8,
+                      padding: '8px 14px',
+                      cursor: emailPending ? 'not-allowed' : 'pointer',
+                      transition: 'background 0.15s',
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* ---------------------------------------------------------------- */}

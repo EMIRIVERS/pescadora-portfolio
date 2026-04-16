@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react'
 import type { Deliverable, DeliverableType, DeliverableStatus } from '@/lib/supabase/types'
 import { AddDeliverableForm } from '@/components/admin/deliverables/add-deliverable-form'
 import { EditDeliverableForm } from '@/components/admin/deliverables/edit-deliverable-form'
-import { ExternalLink, Pencil, Plus, ChevronDown, ChevronUp } from 'lucide-react'
+import { ExternalLink, Pencil, Plus, ChevronDown, ChevronUp, Play } from 'lucide-react'
 
 interface Props {
   projectId: string
@@ -55,6 +55,118 @@ function formatDate(dateStr: string): string {
     day: 'numeric',
     year: 'numeric',
   })
+}
+
+// ─── Media helpers ────────────────────────────────────────────────────────────
+function getMediaType(url: string | null): 'image' | 'video' | 'link' | null {
+  if (!url) return null
+  const lower = url.toLowerCase()
+  if (/\.(jpg|jpeg|png|gif|webp|avif)(\?|$)/.test(lower)) return 'image'
+  if (
+    /\.(mp4|mov|webm)(\?|$)/.test(lower) ||
+    lower.includes('vimeo.com') ||
+    lower.includes('youtube.com') ||
+    lower.includes('youtu.be')
+  ) return 'video'
+  return 'link'
+}
+
+function safeHostname(url: string): string {
+  try {
+    return new URL(url).hostname
+  } catch {
+    return url
+  }
+}
+
+function MediaPreview({ url }: { url: string }) {
+  const type = getMediaType(url)
+
+  if (type === 'image') {
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{ display: 'block', marginTop: 8 }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={url}
+          alt="Preview"
+          style={{
+            maxHeight: 120,
+            width: 'auto',
+            maxWidth: '100%',
+            objectFit: 'contain',
+            borderRadius: 8,
+            background: S.surface3,
+            display: 'block',
+          }}
+        />
+      </a>
+    )
+  }
+
+  if (type === 'video') {
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          gap: 6,
+          marginTop: 8,
+          height: 80,
+          borderRadius: 8,
+          background: S.surface2,
+          textDecoration: 'none',
+          border: `1px solid ${S.borderSubtle}`,
+          cursor: 'pointer',
+        }}
+      >
+        <Play size={20} style={{ color: S.textSecondary }} />
+        <span
+          style={{
+            fontSize: 11,
+            color: S.textSecondary,
+            fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+          }}
+        >
+          {safeHostname(url)}
+        </span>
+      </a>
+    )
+  }
+
+  if (type === 'link') {
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 4,
+          marginTop: 6,
+          fontSize: 12,
+          color: S.accent,
+          textDecoration: 'none',
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+        }}
+      >
+        <ExternalLink size={12} />
+        {safeHostname(url)}
+      </a>
+    )
+  }
+
+  return null
 }
 
 // ─── Pill component ───────────────────────────────────────────────────────────
@@ -285,6 +397,7 @@ function DeliverableRow({
               {deliverable.description}
             </p>
           )}
+          {deliverable.url && <MediaPreview url={deliverable.url} />}
           {deliverable.url && (
             <a
               href={deliverable.url}
