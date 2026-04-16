@@ -64,60 +64,48 @@ export const AnimatedDots: React.FC<AnimatedDotsProps> = ({
       ranVelocity: number;
       ranColor: number;
       radius: number;
+      barLength: number;
       x: number;
       y: number;
 
       constructor(i: number) {
         this.i = i;
-        this.velocity = 0;
         this.radius = dotRadius;
+        this.barLength = 80 + Math.random() * 160;
         this.ranVelocity =
           Math.random() * (speedRange[1] - speedRange[0]) + speedRange[0];
         this.ranColor = Math.round(Math.random() * (colors.length - 1));
         this.x = this.radius + i * (this.radius * 2 + dotSpacing);
-        this.y = -this.radius;
+        // randomize start position so bars fill the screen immediately
+        this.velocity = Math.random() * (height + this.barLength);
+        this.y = -this.barLength + this.velocity;
       }
 
       draw() {
         this.velocity += this.ranVelocity;
-        const colorIncrement =
-          255 - Math.round(this.velocity * (255 / (height + this.radius)));
-        const color = this.updateColors(colors[this.ranColor], colorIncrement);
-        ctx.globalAlpha = opacity;
-        ctx.globalCompositeOperation = blendMode as GlobalCompositeOperation;
 
-        if (this.velocity >= height + this.radius) {
+        if (this.velocity >= height + this.barLength) {
           this.velocity = 0;
           this.ranColor = Math.round(Math.random() * (colors.length - 1));
           this.ranVelocity =
             Math.random() * (speedRange[1] - speedRange[0]) + speedRange[0];
+          this.barLength = 80 + Math.random() * 160;
         }
 
-        this.y = -this.radius + this.velocity;
+        this.y = -this.barLength + this.velocity;
 
         const x = this.x % width;
-        const trailLen = 60 + this.radius * 8;
-        const grad = ctx.createLinearGradient(x, this.y - trailLen, x, this.y);
-        grad.addColorStop(0, "rgba(0,0,0,0)");
-        grad.addColorStop(1, color);
+        const [, r, g, b] = colors[this.ranColor];
 
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = this.radius * 1.6;
+        ctx.globalAlpha = opacity;
+        ctx.globalCompositeOperation = blendMode as GlobalCompositeOperation;
+        ctx.strokeStyle = `rgb(${r}, ${g}, ${b})`;
+        ctx.lineWidth = this.radius * 2;
         ctx.lineCap = "round";
         ctx.beginPath();
-        ctx.moveTo(x, this.y - trailLen);
-        ctx.lineTo(x, this.y);
+        ctx.moveTo(x, this.y);
+        ctx.lineTo(x, this.y + this.barLength);
         ctx.stroke();
-      }
-
-      updateColors(selectedColor: ColorEntry, increment: number) {
-        let [type, r, g, b] = selectedColor;
-
-        if (type === "red") r = increment;
-        else if (type === "green") g = increment;
-        else if (type === "blue") b = increment;
-
-        return `rgba(${r}, ${g}, ${b}, 1)`;
       }
     }
 
