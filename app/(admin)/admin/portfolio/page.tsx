@@ -1,6 +1,7 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import VideoManager from '@/components/admin/portfolio/VideoManager'
 import CategoryManager from '@/components/admin/portfolio/CategoryManager'
+import { registry } from '@/lib/registry'
 
 interface PortfolioVideo {
   id: string
@@ -137,6 +138,15 @@ export default async function PortfolioAdminPage() {
   const visibleCount = allVideos.filter((v) => v.is_visible).length
   const hiddenCount  = allVideos.length - visibleCount
 
+  // ── Registry photos grouped by project ──────────────────────────────────────
+  const photosByProject = new Map<string, { url: string; alt: string }[]>()
+  for (const photo of registry.photos) {
+    const arr = photosByProject.get(photo.project) ?? []
+    arr.push({ url: photo.url, alt: photo.alt })
+    photosByProject.set(photo.project, arr)
+  }
+  const photoProjects = [...photosByProject.entries()]
+
   return (
     <div
       style={{
@@ -200,6 +210,138 @@ export default async function PortfolioAdminPage() {
 
       {/* ── Video manager ─────────────────────────────────────────────────── */}
       <VideoManager initialVideos={allVideos} />
+
+      {/* ── Fotografías del registro ──────────────────────────────────────── */}
+      {photoProjects.length > 0 && (
+        <div style={{ marginTop: 48 }}>
+          {/* Section header */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              marginBottom: 20,
+              paddingBottom: 16,
+              borderBottom: '1px solid rgba(255,255,255,0.06)',
+            }}
+          >
+            <div>
+              <h2
+                style={{
+                  margin: 0,
+                  fontSize: 18,
+                  fontWeight: 600,
+                  color: '#F5F5F7',
+                  fontFamily: FONT,
+                  letterSpacing: '-0.01em',
+                }}
+              >
+                Fotografías
+              </h2>
+              <p style={{ margin: '4px 0 0', fontSize: 13, color: '#48484A', fontFamily: FONT }}>
+                {registry.photos.length} fotos · {photoProjects.length} proyectos — desde el registro local
+              </p>
+            </div>
+          </div>
+
+          {/* Projects grid */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gap: 16,
+            }}
+          >
+            {photoProjects.map(([project, photos]) => (
+              <div
+                key={project}
+                style={{
+                  backgroundColor: '#1C1C1E',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  borderRadius: 12,
+                  overflow: 'hidden',
+                }}
+              >
+                {/* Cover photo (first) */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={photos[0].url}
+                  alt={photos[0].alt}
+                  style={{
+                    width: '100%',
+                    height: 160,
+                    objectFit: 'cover',
+                    display: 'block',
+                    backgroundColor: '#2C2C2E',
+                  }}
+                />
+                {/* Project info */}
+                <div style={{ padding: '12px 16px' }}>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: 14,
+                      fontWeight: 600,
+                      color: '#F5F5F7',
+                      fontFamily: FONT,
+                      letterSpacing: '-0.01em',
+                      textTransform: 'capitalize',
+                    }}
+                  >
+                    {project.toLowerCase()}
+                  </p>
+                  <p style={{ margin: '4px 0 0', fontSize: 12, color: '#48484A', fontFamily: FONT }}>
+                    {photos.length} foto{photos.length !== 1 ? 's' : ''}
+                  </p>
+                </div>
+                {/* Thumbnail strip (up to 5 additional) */}
+                {photos.length > 1 && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: 2,
+                      padding: '0 0 0 0',
+                      overflowX: 'hidden',
+                    }}
+                  >
+                    {photos.slice(1, 6).map((photo, i) => (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        key={i}
+                        src={photo.url}
+                        alt={photo.alt}
+                        style={{
+                          flex: '1 1 0',
+                          height: 48,
+                          objectFit: 'cover',
+                          backgroundColor: '#2C2C2E',
+                        }}
+                      />
+                    ))}
+                    {photos.length > 6 && (
+                      <div
+                        style={{
+                          flex: '1 1 0',
+                          height: 48,
+                          backgroundColor: '#2C2C2E',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 11,
+                          fontFamily: FONT,
+                          color: '#48484A',
+                        }}
+                      >
+                        +{photos.length - 6}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

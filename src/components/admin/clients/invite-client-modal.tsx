@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useEffect, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { X, Loader2, CheckCircle2 } from 'lucide-react'
 import { inviteClientByEmail, createClient } from '../../../../app/actions/clients'
 
@@ -359,9 +360,14 @@ export function InviteClientModal({ onClose }: Props) {
   }
 
   return (
-    <div
+    <AnimatePresence>
+    <motion.div
       ref={overlayRef}
       onClick={handleOverlayClick}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
       style={{
         position: 'fixed', inset: 0, zIndex: 50,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -374,7 +380,11 @@ export function InviteClientModal({ onClose }: Props) {
       role="dialog"
       aria-label="Nuevo cliente"
     >
-      <div
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.96 }}
+        transition={{ duration: 0.15 }}
         style={{
           position: 'relative', width: '100%', maxWidth: '460px',
           backgroundColor: '#1C1C1E',
@@ -437,7 +447,8 @@ export function InviteClientModal({ onClose }: Props) {
             <ManualTab onClose={onClose} />
           )}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
+    </AnimatePresence>
   )
 }

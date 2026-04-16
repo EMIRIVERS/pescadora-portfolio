@@ -12,6 +12,8 @@ import {
 } from 'lucide-react'
 import { createServiceClient } from '@/lib/supabase/server'
 import type { ProjectStatus, LeadStatus, LeadSource, DeliverableStatus } from '@/lib/supabase/types'
+import { StatCardsGrid } from '@/components/admin/dashboard/StatCardsGrid'
+import type { StatCardData } from '@/components/admin/dashboard/StatCardsGrid'
 
 // ─── Local types ────────────────────────────────────────────────────────────
 
@@ -427,6 +429,15 @@ export default async function AdminDashboardPage() {
     },
   ] as const
 
+  // Serializable version for the animated client component
+  const statCardData: StatCardData[] = [
+    { label: statCards[0].label, sublabel: statCards[0].sublabel, value: statCards[0].value, iconKey: 'FolderKanban', accent: statCards[0].accent, href: statCards[0].href },
+    { label: statCards[1].label, sublabel: statCards[1].sublabel, value: statCards[1].value, iconKey: 'Users',        accent: statCards[1].accent, href: statCards[1].href },
+    { label: statCards[2].label, sublabel: statCards[2].sublabel, value: statCards[2].value, iconKey: 'Target',       accent: statCards[2].accent, href: statCards[2].href },
+    { label: statCards[3].label, sublabel: statCards[3].sublabel, value: statCards[3].value, iconKey: 'CheckCircle2', accent: statCards[3].accent, href: statCards[3].href },
+    { label: statCards[4].label, sublabel: statCards[4].sublabel, value: statCards[4].value, iconKey: 'Film',         accent: statCards[4].accent, href: statCards[4].href },
+  ]
+
   const quickActions = [
     {
       label: 'Nuevo proyecto',
@@ -642,70 +653,8 @@ export default async function AdminDashboardPage() {
           </p>
         </div>
 
-        {/* ── Stat cards row — now clickable Links ── */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(5, 1fr)',
-            gap: '12px',
-            marginBottom: '28px',
-          }}
-        >
-          {statCards.map(({ label, sublabel, value, icon: Icon, accent, href }) => (
-            <Link key={label} href={href} className="apd-stat-card">
-              <div
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '10px',
-                  background: `${accent}1A`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <Icon size={18} color={accent} strokeWidth={1.8} />
-              </div>
-              <p
-                style={{
-                  fontSize: '32px',
-                  fontWeight: 700,
-                  color: '#F5F5F7',
-                  margin: 0,
-                  lineHeight: 1,
-                  letterSpacing: '-0.03em',
-                }}
-              >
-                {value}
-              </p>
-              <div>
-                <p
-                  style={{
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    color: '#86868B',
-                    margin: '0 0 2px 0',
-                    letterSpacing: '0.05em',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  {label}
-                </p>
-                <p
-                  style={{
-                    fontSize: '11px',
-                    color: '#48484A',
-                    margin: 0,
-                  }}
-                >
-                  {/* Revenue card gets a sparkline below the sublabel */}
-                  {sublabel}
-                </p>
-              </div>
-            </Link>
-          ))}
-        </div>
+        {/* ── Stat cards row — animated client component ── */}
+        <StatCardsGrid cards={statCardData} />
 
         {/* ── Revenue sparkline card (standalone, full-width accent) ── */}
         <div

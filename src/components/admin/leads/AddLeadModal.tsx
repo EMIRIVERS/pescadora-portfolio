@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { createLead } from '@/lib/actions/leads'
 
 type LeadStatus = 'new' | 'contacted' | 'qualified' | 'proposal' | 'won' | 'lost'
@@ -122,7 +123,12 @@ export default function AddLeadModal({ onClose, onCreated, defaultStatus = 'new'
   }
 
   return (
-    <div
+    <AnimatePresence>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
       style={{
         position: 'fixed',
         inset: 0,
@@ -136,7 +142,11 @@ export default function AddLeadModal({ onClose, onCreated, defaultStatus = 'new'
       }}
       onClick={onClose}
     >
-      <div
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.96 }}
+        transition={{ duration: 0.15 }}
         style={{
           width: '520px',
           maxWidth: 'calc(100vw - 32px)',
@@ -465,7 +475,8 @@ export default function AddLeadModal({ onClose, onCreated, defaultStatus = 'new'
             {submitting ? 'Creando...' : 'Crear Lead'}
           </button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
+    </AnimatePresence>
   )
 }
