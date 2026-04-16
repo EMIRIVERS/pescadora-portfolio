@@ -1,9 +1,9 @@
-import React from 'react'
 import Link from 'next/link'
 import { createServiceClient } from '@/lib/supabase/server'
 import type { Client, ProjectStatus } from '@/lib/supabase/types'
 import { InviteClientButton } from '@/components/admin/clients/invite-client-button'
-import { PROJECT_STATUS_STYLES } from '@/lib/status-colors'
+import { ClientCardItem } from '@/components/admin/clients/ClientCardItem'
+import type { ClientCard as ClientCardType } from '@/components/admin/clients/ClientCardItem'
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 
@@ -32,6 +32,7 @@ interface ProjectRow {
   client_id: string | null
 }
 
+// LeadRow used only to count converted leads
 interface LeadRow {
   converted_to_client_id: string | null
 }
@@ -52,23 +53,6 @@ function avatarColor(name: string): string {
     hash = (hash * 31 + name.charCodeAt(i)) >>> 0
   }
   return AVATAR_PALETTE[hash % AVATAR_PALETTE.length]
-}
-
-function initials(name: string): string {
-  return name
-    .split(' ')
-    .map((n) => n[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase()
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('es-ES', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -119,7 +103,7 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
 
   // Index converted lead counts by client_id
   const convertedLeadsByClient = new Map<string, number>()
-  for (const lead of leadsData ?? []) {
+  for (const lead of (leadsData ?? []) as LeadRow[]) {
     const cid = lead.converted_to_client_id
     if (cid === null) continue
     convertedLeadsByClient.set(cid, (convertedLeadsByClient.get(cid) ?? 0) + 1)
@@ -340,82 +324,13 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
           }}
         >
           {q ? (
-            <>
-              {/* Search empty — magnifying glass */}
-              <svg
-                width="80"
-                height="80"
-                viewBox="0 0 80 80"
-                fill="none"
-                aria-hidden="true"
-                style={{ display: 'block', margin: '0 auto 20px' }}
-              >
-                <circle cx="34" cy="34" r="18" fill="#2C2C2E" stroke="#3A3A3C" strokeWidth="1.5" />
-                <line x1="47" y1="47" x2="62" y2="62" stroke="#3A3A3C" strokeWidth="2.5" strokeLinecap="round" />
-                <line x1="28" y1="34" x2="40" y2="34" stroke="#48484A" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-              <h3
-                style={{
-                  fontSize: '16px',
-                  fontWeight: 600,
-                  color: '#86868B',
-                  margin: '0 0 8px',
-                  letterSpacing: '-0.01em',
-                }}
-              >
-                Sin resultados
-              </h3>
-              <p style={{ fontSize: '13px', color: '#48484A', margin: '0 0 20px' }}>
-                No se encontraron clientes para &ldquo;{q}&rdquo;.
-              </p>
-              <Link
-                href="/admin/clients"
-                style={{ color: '#0071E3', textDecoration: 'none', fontSize: '13px', fontWeight: 500 }}
-              >
-                Ver todos los clientes
-              </Link>
-            </>
+            <p style={{ fontSize: '14px', color: '#48484A', margin: 0 }}>
+              No se encontraron clientes para &ldquo;{q}&rdquo;.
+            </p>
           ) : (
-            <>
-              {/* True empty — person with + */}
-              <svg
-                width="80"
-                height="80"
-                viewBox="0 0 80 80"
-                fill="none"
-                aria-hidden="true"
-                style={{ display: 'block', margin: '0 auto 20px' }}
-              >
-                {/* Person silhouette */}
-                <circle cx="36" cy="28" r="12" fill="#2C2C2E" stroke="#3A3A3C" strokeWidth="1.5" />
-                <path
-                  d="M14 62c0-12.15 9.85-22 22-22s22 9.85 22 22"
-                  stroke="#3A3A3C"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  fill="none"
-                />
-                {/* Plus badge */}
-                <circle cx="60" cy="56" r="12" fill="#1C1C1E" stroke="#3A3A3C" strokeWidth="1.5" />
-                <line x1="60" y1="50" x2="60" y2="62" stroke="#48484A" strokeWidth="1.5" strokeLinecap="round" />
-                <line x1="54" y1="56" x2="66" y2="56" stroke="#48484A" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-              <h3
-                style={{
-                  fontSize: '17px',
-                  fontWeight: 600,
-                  color: '#F5F5F7',
-                  margin: '0 0 8px',
-                  letterSpacing: '-0.02em',
-                }}
-              >
-                Sin clientes registrados
-              </h3>
-              <p style={{ fontSize: '13px', color: '#86868B', margin: '0 0 24px', lineHeight: 1.5 }}>
-                Invita a tu primer cliente para empezar a gestionar proyectos juntos.
-              </p>
-              <InviteClientButton />
-            </>
+            <p style={{ fontSize: '14px', color: '#48484A', margin: 0 }}>
+              No hay clientes todavia. Invita al primer cliente usando el boton de arriba.
+            </p>
           )}
         </div>
       ) : (
@@ -432,8 +347,9 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
             return (
               <ClientCardItem
                 key={client.id}
-                client={client}
+                client={client as ClientCardType}
                 color={color}
+                index={index}
               />
             )
           })}
@@ -441,264 +357,5 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
       )}
     </div>
     </>
-  )
-}
-
-// ── Client card (separate component for hover state) ──────────────────────────
-
-function statusStyle(status: string): React.CSSProperties {
-  const s = PROJECT_STATUS_STYLES[status as keyof typeof PROJECT_STATUS_STYLES]
-  return s ?? { color: '#86868B', backgroundColor: 'rgba(134,134,139,0.1)', border: '1px solid rgba(134,134,139,0.2)' }
-}
-
-function statusLabel(status: string): string {
-  const labels: Record<string, string> = {
-    active: 'Activo',
-    completed: 'Completado',
-    paused: 'Pausado',
-    cancelled: 'Cancelado',
-    draft: 'Borrador',
-  }
-  return labels[status] ?? status
-}
-
-interface ClientCardItemProps {
-  client: ClientCard
-  color: string
-}
-
-function ClientCardItem({ client, color }: ClientCardItemProps) {
-  const sStyle = client.most_recent_project_status !== null
-    ? statusStyle(client.most_recent_project_status)
-    : null
-
-  return (
-    <div
-      className="client-card"
-      style={{
-        borderRadius: '16px',
-        padding: '20px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '14px',
-        cursor: 'default',
-      }}
-    >
-      {/* Top: avatar + name + company */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <div
-          style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '50%',
-            backgroundColor: `${color}22`,
-            border: `1.5px solid ${color}44`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          <span
-            style={{
-              fontSize: '13px',
-              fontWeight: 700,
-              color,
-              letterSpacing: '-0.02em',
-              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
-            }}
-          >
-            {initials(client.name)}
-          </span>
-        </div>
-        <div style={{ minWidth: 0 }}>
-          <p
-            style={{
-              fontSize: '15px',
-              fontWeight: 600,
-              color: '#F5F5F7',
-              letterSpacing: '-0.01em',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {client.name}
-          </p>
-          {client.company && (
-            <p
-              style={{
-                fontSize: '12px',
-                color: '#86868B',
-                marginTop: '2px',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {client.company}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Email */}
-      {client.email ? (
-        <a
-          href={`mailto:${client.email}`}
-          className="client-email-link"
-          style={{
-            fontSize: '13px',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            textDecoration: 'none',
-          }}
-        >
-          {client.email}
-        </a>
-      ) : (
-        <span style={{ fontSize: '13px', color: '#2C2C2E' }}>Sin email</span>
-      )}
-
-      {/* Metadata row */}
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap' as const,
-          gap: '6px',
-          alignItems: 'center',
-        }}
-      >
-        {/* Fecha de registro */}
-        <span
-          style={{
-            fontSize: '12px',
-            color: '#48484A',
-          }}
-        >
-          Desde {formatDate(client.created_at)}
-        </span>
-        <span style={{ fontSize: '12px', color: '#2C2C2E' }}>·</span>
-        {/* Numero de proyectos */}
-        <span
-          style={{
-            fontSize: '12px',
-            color: client.project_count > 0 ? '#86868B' : '#48484A',
-          }}
-        >
-          {client.project_count} proyecto{client.project_count !== 1 ? 's' : ''}
-        </span>
-      </div>
-
-      {/* Badges row */}
-      <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '6px' }}>
-        {/* Most recent project status */}
-        {client.most_recent_project_status !== null && sStyle !== null && (
-          <span
-            style={{
-              display: 'inline-block',
-              padding: '3px 9px',
-              borderRadius: '20px',
-              fontSize: '11px',
-              fontWeight: 500,
-              letterSpacing: '0.01em',
-              ...sStyle,
-            }}
-          >
-            {statusLabel(client.most_recent_project_status)}
-          </span>
-        )}
-
-        {/* Converted from lead */}
-        {client.converted_lead_count > 0 && (
-          <span
-            style={{
-              display: 'inline-block',
-              padding: '3px 9px',
-              borderRadius: '20px',
-              fontSize: '11px',
-              fontWeight: 500,
-              color: '#FF9F0A',
-              backgroundColor: 'rgba(255,159,10,0.1)',
-              border: '1px solid rgba(255,159,10,0.2)',
-            }}
-          >
-            Lead convertido
-          </span>
-        )}
-
-        {/* Portal access badge */}
-        {client.profile_id !== null ? (
-          <span
-            style={{
-              display: 'inline-block',
-              padding: '3px 9px',
-              borderRadius: '20px',
-              fontSize: '11px',
-              fontWeight: 500,
-              color: '#30D158',
-              backgroundColor: 'rgba(48,209,88,0.1)',
-              border: '1px solid rgba(48,209,88,0.2)',
-            }}
-          >
-            Tiene acceso
-          </span>
-        ) : (
-          <span
-            style={{
-              display: 'inline-block',
-              padding: '3px 9px',
-              borderRadius: '20px',
-              fontSize: '11px',
-              fontWeight: 500,
-              color: '#48484A',
-              backgroundColor: 'rgba(72,72,74,0.1)',
-              border: '1px solid rgba(72,72,74,0.2)',
-            }}
-          >
-            Sin acceso
-          </span>
-        )}
-      </div>
-
-      {/* Footer links */}
-      <div
-        style={{
-          marginTop: 'auto',
-          paddingTop: '12px',
-          borderTop: '1px solid rgba(255,255,255,0.06)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '12px',
-        }}
-      >
-        <Link
-          href={`/admin/clients/${client.id}`}
-          className="client-detail-link"
-          style={{
-            fontSize: '13px',
-            fontWeight: 600,
-            textDecoration: 'none',
-            letterSpacing: '-0.01em',
-          }}
-        >
-          Ver detalle
-        </Link>
-        <Link
-          href={`/admin/projects?client=${client.id}`}
-          style={{
-            fontSize: '13px',
-            fontWeight: 500,
-            color: '#0071E3',
-            textDecoration: 'none',
-            letterSpacing: '-0.01em',
-          }}
-        >
-          Ver proyectos
-        </Link>
-      </div>
-    </div>
   )
 }
