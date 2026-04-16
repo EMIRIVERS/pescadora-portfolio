@@ -1,6 +1,8 @@
 "use client";
 import React, { useEffect, useRef } from "react";
 
+type ColorEntry = [string, number, number, number];
+
 interface AnimatedDotsProps {
   dotsNum?: number;
   dotRadius?: number;
@@ -11,7 +13,7 @@ interface AnimatedDotsProps {
   blendMode?: GlobalCompositeOperation;
   fullScreen?: boolean;
   className?: string;
-  colors?: [string, number, number, number][];
+  colors?: ColorEntry[];
 }
 
 export const AnimatedDots: React.FC<AnimatedDotsProps> = ({
@@ -44,7 +46,7 @@ export const AnimatedDots: React.FC<AnimatedDotsProps> = ({
   ],
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const dotsRef = useRef<unknown[]>([]);
+  const dotsRef = useRef<object[]>([]);
   const animationRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -98,7 +100,7 @@ export const AnimatedDots: React.FC<AnimatedDotsProps> = ({
         ctx.fill();
       }
 
-      updateColors(selectedColor: [string, number, number, number], increment: number) {
+      updateColors(selectedColor: ColorEntry, increment: number) {
         let [type, r, g, b] = selectedColor;
 
         if (type === "red") r = increment;
