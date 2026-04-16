@@ -1,5 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import VideoManager from '@/components/admin/portfolio/VideoManager'
+import CategoryManager from '@/components/admin/portfolio/CategoryManager'
 
 interface PortfolioVideo {
   id: string
@@ -98,15 +99,25 @@ function StatCard({ label, count, categoryKey }: StatCardProps) {
   )
 }
 
+interface PortfolioCategory {
+  id: string
+  slug: string
+  label: string
+  sort_order: number
+  is_visible: boolean
+}
+
 export default async function PortfolioAdminPage() {
   const supabase = createServiceClient()
 
-  const { data: videos } = await supabase
-    .from('portfolio_videos')
-    .select('*')
-    .order('sort_order', { ascending: true })
+  const [{ data: videos }, { data: categoriesData }] = await Promise.all([
+    supabase.from('portfolio_videos').select('*').order('sort_order', { ascending: true }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any).from('portfolio_categories').select('*').order('sort_order', { ascending: true }),
+  ])
 
   const allVideos: PortfolioVideo[] = (videos ?? []) as PortfolioVideo[]
+  const allCategories: PortfolioCategory[] = (categoriesData ?? []) as PortfolioCategory[]
 
   const categoryCounts = STAT_CATEGORIES.reduce<Record<string, number>>(
     (acc, { key }) => {
@@ -173,6 +184,11 @@ export default async function PortfolioAdminPage() {
         ))}
         <StatCard label="Visibles" count={visibleCount} categoryKey="visibles" />
         <StatCard label="Ocultos"  count={hiddenCount}  categoryKey="ocultos" />
+      </div>
+
+      {/* ── Category manager ──────────────────────────────────────────────── */}
+      <div style={{ marginBottom: 32 }}>
+        <CategoryManager initialCategories={allCategories} />
       </div>
 
       {/* ── Video manager ─────────────────────────────────────────────────── */}

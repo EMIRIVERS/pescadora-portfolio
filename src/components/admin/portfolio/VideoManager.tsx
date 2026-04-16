@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import React, { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Pencil, Trash2, Eye, EyeOff, X } from 'lucide-react'
 import {
@@ -162,6 +162,15 @@ export default function VideoManager({ initialVideos = [] }: VideoManagerProps) 
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [localVideos, setLocalVideos] = useState<PortfolioVideo[]>(initialVideos)
+
+  // Sync local state when server refreshes with new data
+  const prevInitialRef = React.useRef(initialVideos)
+  React.useEffect(() => {
+    if (prevInitialRef.current !== initialVideos) {
+      prevInitialRef.current = initialVideos
+      setLocalVideos(initialVideos)
+    }
+  }, [initialVideos])
   const [showForm, setShowForm] = useState(false)
   const [formMode, setFormMode] = useState<FormMode>('create')
   const [editingVideo, setEditingVideo] = useState<PortfolioVideo | null>(null)

@@ -3,9 +3,10 @@ import type { CmsProjectCard } from '@/components/sections/PortfolioSection'
 import HomeClient from '@/components/sections/HomeClient'
 import type { VideoEntry, VideoCategory } from '@/types/media'
 
-// ISR: revalidate every hour so newly published projects appear without a
-// full rebuild.
 export const revalidate = 3600
+
+import type { PortfolioCategory } from '@/types/media'
+export type { PortfolioCategory }
 
 interface DbVideo {
   id: string
@@ -31,34 +32,28 @@ function dbToVideoEntry(row: DbVideo): VideoEntry {
 export default async function Home() {
   let cmsProjects: CmsProjectCard[] = []
   let videos: VideoEntry[] = []
+  let categories: PortfolioCategory[] = []
 
   try {
     const supabase = await createClient()
 
-    const timeout2s = new Promise<{ data: null }>((resolve) =>
-      setTimeout(() => resolve({ data: null }), 2000)
-    )
-
-    const projectsQuery = supabase
-      .from('projects')
-      .select('id, title, description, cover_url')
-      .eq('is_public', true)
-      .order('portfolio_order', { ascending: true })
-
-    const videosQuery = supabase
-      .from('portfolio_videos')
-      .select('id, title, vimeo_id, category, sort_order, is_visible')
-      .eq('is_visible', true)
-      .order('sort_order', { ascending: true })
-
-    const [projectsResult, videosResult] = await Promise.all([
-      Promise.race([projectsQuery, timeout2s]),
-      Promise.race([
-        videosQuery,
-        new Promise<{ data: null }>((resolve) =>
-          setTimeout(() => resolve({ data: null }), 2000)
-        ),
-      ]),
+    const [projectsResult, videosResult, categoriesResult] = await Promise.all([
+      supabase
+        .from('projects')
+        .select('id, title, description, cover_url')
+        .eq('is_public', true)
+        .order('portfolio_order', { ascending: true }),
+      supabase
+        .from('portfolio_videos')
+        .select('id, title, vimeo_id, category, sort_order, is_visible')
+        .eq('is_visible', true)
+        .order('sort_order', { ascending: true }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any)
+        .from('portfolio_categories')
+        .select('slug, label, sort_order')
+        .eq('is_visible', true)
+        .order('sort_order', { ascending: true }),
     ])
 
     cmsProjects = (projectsResult.data ?? []).map((row) => ({
@@ -69,9 +64,11 @@ export default async function Home() {
     }))
 
     videos = (videosResult.data ?? []).map((row) => dbToVideoEntry(row as DbVideo))
+
+    categories = (categoriesResult.data ?? []) as PortfolioCategory[]
   } catch {
     // Supabase unavailable — render portfolio with registry fallback
   }
 
-  return <HomeClient cmsProjects={cmsProjects} videos={videos} />
+  return <HomeClient cmsProjects={cmsProjects} videos={videos} categories={categories} />
 }

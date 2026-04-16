@@ -5,12 +5,14 @@ import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { registry } from '@/lib/registry'
 import type { VideoCategory, VideoEntry } from '@/types/media'
+import type { PortfolioCategory } from '@/types/media'
 import ProjectOverlay from './ProjectOverlay'
 
 type OverlayMediaType = 'video' | 'fotografia'
 
 interface ProjectCard {
   name: string
+  label: string
   coverUrl: string | null
   count: number
   isPhoto: boolean
@@ -26,68 +28,49 @@ export interface CmsProjectCard {
 interface Props {
   cmsProjects?: CmsProjectCard[]
   videos?: VideoEntry[]
+  categories?: PortfolioCategory[]
 }
 
-const VIDEO_CATEGORIES: VideoCategory[] = ['videoclips', 'corporativos', 'restaurantes', 'comerciales']
+const FALLBACK_CATEGORIES: PortfolioCategory[] = [
+  { slug: 'videoclips',   label: 'Videoclips',   sort_order: 0 },
+  { slug: 'corporativos', label: 'Corporativos', sort_order: 1 },
+  { slug: 'restaurantes', label: 'Restaurantes', sort_order: 2 },
+  { slug: 'comerciales',  label: 'Comerciales',  sort_order: 3 },
+  { slug: 'fotografia',   label: 'Fotografía',   sort_order: 4 },
+]
 
-const CATEGORY_LABELS: Record<string, string> = {
-  'videoclips':   'Videoclips',
-  'corporativos': 'Corporativos',
-  'restaurantes': 'Restaurantes',
-  'comerciales':  'Comerciales',
-  'fotografia':   'Fotografía',
-}
+function buildAllCards(videos: VideoEntry[], cats: PortfolioCategory[]): ProjectCard[] {
+  const videoList = videos.length > 0 ? videos : registry.videos
+  const cards: ProjectCard[] = []
 
-function groupPhotosByProject(): ProjectCard[] {
-  const projectMap = new Map<string, { url: string; count: number }>()
-  for (const photo of registry.photos) {
-    const existing = projectMap.get(photo.project)
-    if (existing) {
-      existing.count++
+  for (const cat of cats) {
+    const isPhoto = cat.slug === 'fotografia'
+
+    if (isPhoto) {
+      // DB fotografia: vimeoId = image URL
+      const dbFotos = videoList.filter((v) => (v.category as string) === 'fotografia')
+      if (dbFotos.length > 0) {
+        cards.push({ name: cat.slug, label: cat.label, coverUrl: dbFotos[0]?.vimeoId ?? null, count: dbFotos.length, isPhoto: true })
+      } else {
+        // Fallback: static registry grouped by project
+        const projectMap = new Map<string, string>()
+        for (const photo of registry.photos) {
+          if (!projectMap.has(photo.project)) projectMap.set(photo.project, photo.url)
+        }
+        if (projectMap.size > 0) {
+          const [, url] = [...projectMap.entries()][0]
+          cards.push({ name: cat.slug, label: cat.label, coverUrl: url, count: projectMap.size, isPhoto: true })
+        }
+      }
     } else {
-      projectMap.set(photo.project, { url: photo.url, count: 1 })
-    }
-  }
-  const cards: ProjectCard[] = []
-  for (const [name, data] of projectMap) {
-    cards.push({ name, coverUrl: data.url, count: data.count, isPhoto: true })
-  }
-  return cards
-}
-
-function buildAllCards(videos?: VideoEntry[]): ProjectCard[] {
-  const videoList = videos && videos.length > 0 ? videos : registry.videos
-  const cards: ProjectCard[] = []
-
-  for (const cat of VIDEO_CATEGORIES) {
-    const catVideos = videoList.filter((v) => v.category === cat)
-    if (catVideos.length === 0) continue
-    cards.push({
-      name: cat,
-      coverUrl: catVideos[0]?.vimeoId ? `/api/vimeo-thumb?id=${catVideos[0].vimeoId}` : null,
-      count: catVideos.length,
-      isPhoto: false,
-    })
-  }
-
-  // Fotografía: preferir entradas de DB (category='fotografia', vimeoId = URL de imagen)
-  const dbFotos = videoList.filter((v) => (v.category as string) === 'fotografia')
-  if (dbFotos.length > 0) {
-    cards.push({
-      name: 'fotografia',
-      coverUrl: dbFotos[0]?.vimeoId ?? null,
-      count: dbFotos.length,
-      isPhoto: true,
-    })
-  } else {
-    // Fallback al registro estático
-    const photoProjects = groupPhotosByProject()
-    if (photoProjects.length > 0) {
+      const catVideos = videoList.filter((v) => v.category === cat.slug)
+      if (catVideos.length === 0) continue
       cards.push({
-        name: 'fotografia',
-        coverUrl: photoProjects[0].coverUrl,
-        count: photoProjects.length,
-        isPhoto: true,
+        name: cat.slug,
+        label: cat.label,
+        coverUrl: catVideos[0]?.vimeoId ? `/api/vimeo-thumb?id=${catVideos[0].vimeoId}` : null,
+        count: catVideos.length,
+        isPhoto: false,
       })
     }
   }
@@ -95,10 +78,11 @@ function buildAllCards(videos?: VideoEntry[]): ProjectCard[] {
   return cards
 }
 
-export default function PortfolioSection({ cmsProjects, videos }: Props) {
+export default function PortfolioSection({ cmsProjects, videos, categories }: Props) {
   const [openState, setOpenState] = useState<{ project: string; mediaType: OverlayMediaType } | null>(null)
 
-  const allCards = useMemo(() => buildAllCards(videos), [videos])
+  const activeCats = categories && categories.length > 0 ? categories : FALLBACK_CATEGORIES
+  const allCards = useMemo(() => buildAllCards(videos ?? [], activeCats), [videos, activeCats])
   const fotoEntries = useMemo(
     () => (videos ?? []).filter((v) => (v.category as string) === 'fotografia'),
     [videos]
@@ -197,7 +181,7 @@ export default function PortfolioSection({ cmsProjects, videos }: Props) {
                 textTransform: 'uppercase', color: '#ede8e0',
                 pointerEvents: 'none',
               }}>
-                {CATEGORY_LABELS[card.name] ?? card.name}
+                {card.label}
               </span>
 
               {/* Count */}

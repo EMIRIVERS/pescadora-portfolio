@@ -6,6 +6,7 @@ import PortfolioHeader from '@/components/sections/PortfolioHeader'
 import ManifestoSection from '@/components/sections/ManifestoSection'
 import PortfolioSection from '@/components/sections/PortfolioSection'
 import type { CmsProjectCard } from '@/components/sections/PortfolioSection'
+import type { PortfolioCategory } from '@/types/media'
 import type { VideoEntry } from '@/types/media'
 import { ServiciosSection } from '@/components/sections/ServiciosSection'
 import { ContactoSection } from '@/components/sections/ContactoSection'
@@ -14,9 +15,10 @@ import { AnimatedDots } from '@/components/ui/animated-dots'
 interface Props {
   cmsProjects: CmsProjectCard[]
   videos?: VideoEntry[]
+  categories?: PortfolioCategory[]
 }
 
-export default function HomeClient({ cmsProjects, videos }: Props) {
+export default function HomeClient({ cmsProjects, videos, categories }: Props) {
   const [headerVisible, setHeaderVisible] = useState(false)
 
   useEffect(() => {
@@ -80,7 +82,7 @@ export default function HomeClient({ cmsProjects, videos }: Props) {
         <Hero />
         {/* Fondo sólido para las secciones de contenido — oculta los dots */}
         <div style={{ backgroundColor: '#050505' }}>
-          <PortfolioSection cmsProjects={cmsProjects} videos={videos} />
+          <PortfolioSection cmsProjects={cmsProjects} videos={videos} categories={categories} />
           <ManifestoSection />
           <ServiciosSection />
           <ContactoSection />

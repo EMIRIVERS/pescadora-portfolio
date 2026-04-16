@@ -18,6 +18,12 @@ export interface VideoEntry {
   vimeoId?: string
 }
 
+export interface PortfolioCategory {
+  slug: string
+  label: string
+  sort_order: number
+}
+
 export interface MediaRegistry {
   photos: PhotoEntry[]
   videos: VideoEntry[]
