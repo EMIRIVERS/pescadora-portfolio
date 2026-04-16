@@ -7,12 +7,13 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 gsap.registerPlugin(ScrollTrigger)
 
 const SERVICIOS = [
-  'Fotografia de Marca',
-  'Direccion de Arte',
-  'Video de Campana',
-  'Fotografia de Producto',
-  'Fotografia Gastronomica',
-  'Fotografia de Locacion',
+  'Produccion Audiovisual',
+  'Servicio de Fotografia',
+  'Direccion Creativa',
+  'Bodas',
+  'Podcast',
+  'Comerciales',
+  'Redes y Parilla de Contenido',
 ]
 
 export function ServiciosSection() {

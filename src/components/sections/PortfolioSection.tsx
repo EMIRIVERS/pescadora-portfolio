@@ -70,15 +70,26 @@ function buildAllCards(videos?: VideoEntry[]): ProjectCard[] {
     })
   }
 
-  // Fotografía al final
-  const photoProjects = groupPhotosByProject()
-  if (photoProjects.length > 0) {
+  // Fotografía: preferir entradas de DB (category='fotografia', vimeoId = URL de imagen)
+  const dbFotos = videoList.filter((v) => (v.category as string) === 'fotografia')
+  if (dbFotos.length > 0) {
     cards.push({
       name: 'fotografia',
-      coverUrl: photoProjects[0].coverUrl,
-      count: photoProjects.length,
+      coverUrl: dbFotos[0]?.vimeoId ?? null,
+      count: dbFotos.length,
       isPhoto: true,
     })
+  } else {
+    // Fallback al registro estático
+    const photoProjects = groupPhotosByProject()
+    if (photoProjects.length > 0) {
+      cards.push({
+        name: 'fotografia',
+        coverUrl: photoProjects[0].coverUrl,
+        count: photoProjects.length,
+        isPhoto: true,
+      })
+    }
   }
 
   return cards
@@ -88,6 +99,10 @@ export default function PortfolioSection({ cmsProjects, videos }: Props) {
   const [openState, setOpenState] = useState<{ project: string; mediaType: OverlayMediaType } | null>(null)
 
   const allCards = useMemo(() => buildAllCards(videos), [videos])
+  const fotoEntries = useMemo(
+    () => (videos ?? []).filter((v) => (v.category as string) === 'fotografia'),
+    [videos]
+  )
 
   return (
     <section id="portfolio" style={{ padding: '0 0 4rem' }}>
@@ -206,6 +221,7 @@ export default function PortfolioSection({ cmsProjects, videos }: Props) {
           mediaType={openState.mediaType}
           onClose={() => setOpenState(null)}
           videos={videos}
+          fotoEntries={fotoEntries.length > 0 ? fotoEntries : undefined}
         />
       )}
 

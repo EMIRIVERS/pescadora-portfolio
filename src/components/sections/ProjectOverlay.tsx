@@ -234,9 +234,10 @@ interface ProjectOverlayProps {
   mediaType: 'video' | 'fotografia'
   onClose: () => void
   videos?: VideoEntry[]
+  fotoEntries?: VideoEntry[]  // DB fotografia entries (vimeoId = image URL)
 }
 
-export default function ProjectOverlay({ projectName, mediaType, onClose, videos }: ProjectOverlayProps) {
+export default function ProjectOverlay({ projectName, mediaType, onClose, videos, fotoEntries }: ProjectOverlayProps) {
   const [selectedVideo, setSelectedVideo] = useState<VideoEntry | null>(null)
   const [selectedPhotoProject, setSelectedPhotoProject] = useState<string | null>(null)
 
@@ -289,12 +290,34 @@ export default function ProjectOverlay({ projectName, mediaType, onClose, videos
         <VideoGrid videos={overlayVideos} onSelect={setSelectedVideo} />
       )}
 
-      {/* FOTOGRAFÍA: proyectos → fotos */}
-      {mediaType === 'fotografia' && !selectedPhotoProject && (
+      {/* FOTOGRAFÍA: DB entries (grilla plana de imágenes) */}
+      {mediaType === 'fotografia' && fotoEntries && fotoEntries.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2, padding: '0 0 4rem' }}>
+          {fotoEntries.map((foto) => (
+            <div key={foto.id} style={{ position: 'relative', width: '100%', paddingBottom: '75%', overflow: 'hidden' }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={foto.vimeoId ?? ''}
+                alt={foto.title}
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.6s ease' }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1.04)' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1)' }}
+              />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(transparent 50%, rgba(0,0,0,0.75))', pointerEvents: 'none' }} />
+              <span style={{ position: 'absolute', bottom: '0.85rem', left: '1rem', fontFamily: 'var(--font-geist-mono)', fontWeight: 700, fontSize: '0.55rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#ede8e0', pointerEvents: 'none' }}>
+                {foto.title}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* FOTOGRAFÍA: registro estático (fallback) */}
+      {mediaType === 'fotografia' && (!fotoEntries || fotoEntries.length === 0) && !selectedPhotoProject && (
         <PhotoProjectsGrid onSelect={setSelectedPhotoProject} />
       )}
 
-      {mediaType === 'fotografia' && selectedPhotoProject && (
+      {mediaType === 'fotografia' && (!fotoEntries || fotoEntries.length === 0) && selectedPhotoProject && (
         <PhotoProjectDetail
           projectName={selectedPhotoProject}
           onBack={() => setSelectedPhotoProject(null)}
