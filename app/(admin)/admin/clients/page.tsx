@@ -192,6 +192,13 @@ export default async function AdminClientsPage() {
   ]
 
   return (
+    <>
+    <style>{`
+      .client-card { background-color: #111111; border: 1px solid rgba(255,255,255,0.06); transition: background-color 0.15s ease, border-color 0.15s ease; }
+      .client-card:hover { background-color: #1C1C1E !important; border-color: rgba(255,255,255,0.1) !important; }
+      .client-email-link { color: #86868B; transition: color 0.15s ease; }
+      .client-email-link:hover { color: #0071E3 !important; }
+    `}</style>
     <div
       style={{
         padding: '40px 32px',
@@ -340,6 +347,7 @@ export default async function AdminClientsPage() {
         </div>
       )}
     </div>
+    </>
   )
 }
 
@@ -357,27 +365,14 @@ function ClientCardItem({ client, color }: ClientCardItemProps) {
 
   return (
     <div
-      className="group"
+      className="client-card"
       style={{
-        backgroundColor: '#111111',
-        border: '1px solid rgba(255,255,255,0.06)',
         borderRadius: '16px',
         padding: '20px',
         display: 'flex',
         flexDirection: 'column',
         gap: '14px',
-        transition: 'background-color 0.15s ease, border-color 0.15s ease',
         cursor: 'default',
-      }}
-      onMouseEnter={(e) => {
-        const el = e.currentTarget as HTMLDivElement
-        el.style.backgroundColor = '#1C1C1E'
-        el.style.borderColor = 'rgba(255,255,255,0.1)'
-      }}
-      onMouseLeave={(e) => {
-        const el = e.currentTarget as HTMLDivElement
-        el.style.backgroundColor = '#111111'
-        el.style.borderColor = 'rgba(255,255,255,0.06)'
       }}
     >
       {/* Top: avatar + name + company */}
@@ -442,20 +437,13 @@ function ClientCardItem({ client, color }: ClientCardItemProps) {
       {client.email ? (
         <a
           href={`mailto:${client.email}`}
+          className="client-email-link"
           style={{
             fontSize: '13px',
-            color: '#86868B',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
             textDecoration: 'none',
-            transition: 'color 0.15s ease',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = '#0071E3'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = '#86868B'
           }}
         >
           {client.email}

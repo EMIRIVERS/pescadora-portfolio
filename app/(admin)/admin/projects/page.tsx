@@ -201,6 +201,15 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
   const TABLE_COLS = 'grid-cols-[1fr_160px_160px_110px_110px_80px_36px]'
 
   return (
+    <>
+    <style>{`
+      .proj-row { transition: background 0.1s ease; }
+      .proj-row:hover { background: #1C1C1E !important; }
+      .proj-title-link { color: #F5F5F7; text-decoration: none; transition: color 0.15s; }
+      .proj-title-link:hover { color: #0071E3 !important; }
+      .proj-arrow-btn { color: #48484A; background: transparent; transition: color 0.15s, background 0.15s; }
+      .proj-arrow-btn:hover { color: #F5F5F7 !important; background: #2C2C2E !important; }
+    `}</style>
     <div
       style={{
         padding: '40px 32px',
@@ -405,43 +414,29 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
             {rows.map((project, idx) => (
               <div
                 key={project.id}
-                className={`grid ${TABLE_COLS} gap-4 items-center group`}
+                className={`proj-row grid ${TABLE_COLS} gap-4 items-center`}
                 style={{
                   padding: '16px 20px',
                   borderBottom:
                     idx < rows.length - 1
                       ? `1px solid ${T.borderSubtle}`
                       : undefined,
-                  transition: 'background 0.1s ease',
                   cursor: 'default',
-                }}
-                onMouseEnter={(e) => {
-                  ;(e.currentTarget as HTMLDivElement).style.background = T.surface2
-                }}
-                onMouseLeave={(e) => {
-                  ;(e.currentTarget as HTMLDivElement).style.background = 'transparent'
                 }}
               >
                 {/* Title + client */}
                 <div className="min-w-0">
                   <Link
                     href={`/admin/projects/${project.id}`}
+                    className="proj-title-link"
                     style={{
                       display: 'block',
                       fontSize: '14px',
                       fontWeight: 600,
-                      color: T.textPrimary,
-                      textDecoration: 'none',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
                       letterSpacing: '-0.01em',
-                    }}
-                    onMouseEnter={(e) => {
-                      ;(e.currentTarget as HTMLAnchorElement).style.color = T.accent
-                    }}
-                    onMouseLeave={(e) => {
-                      ;(e.currentTarget as HTMLAnchorElement).style.color = T.textPrimary
                     }}
                   >
                     {project.title}
@@ -520,6 +515,7 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
                 {/* Chevron link */}
                 <Link
                   href={`/admin/projects/${project.id}`}
+                  className="proj-arrow-btn"
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -527,22 +523,10 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
                     width: '28px',
                     height: '28px',
                     borderRadius: '8px',
-                    color: T.textTertiary,
                     textDecoration: 'none',
-                    transition: 'all 0.15s ease',
                     flexShrink: 0,
                   }}
                   aria-label={`Ver proyecto ${project.title}`}
-                  onMouseEnter={(e) => {
-                    const el = e.currentTarget as HTMLAnchorElement
-                    el.style.color = T.textPrimary
-                    el.style.background = T.surface3
-                  }}
-                  onMouseLeave={(e) => {
-                    const el = e.currentTarget as HTMLAnchorElement
-                    el.style.color = T.textTertiary
-                    el.style.background = 'transparent'
-                  }}
                 >
                   <svg
                     width="13"
@@ -564,5 +548,6 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
         </div>
       )}
     </div>
+    </>
   )
 }

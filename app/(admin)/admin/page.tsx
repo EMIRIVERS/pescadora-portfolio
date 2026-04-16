@@ -582,7 +582,7 @@ export default async function AdminDashboardPage() {
                 {/* Left: name + source */}
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <Link
-                    href={`/admin/leads/${lead.id}`}
+                    href="/admin/leads"
                     className="apd-project-link"
                     style={{ display: 'block' }}
                   >
