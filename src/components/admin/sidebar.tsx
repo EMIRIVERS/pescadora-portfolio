@@ -19,6 +19,7 @@ import {
   Activity,
   LogOut,
   Receipt,
+  ImageIcon,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/lib/supabase/types'
@@ -62,6 +63,11 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Portfolio',
     href: '/admin/portfolio',
     icon: <Film size={16} strokeWidth={1.5} />,
+  },
+  {
+    label: 'Media',
+    href: '/admin/media',
+    icon: <ImageIcon size={16} strokeWidth={1.5} />,
   },
   {
     label: 'Proyectos',
