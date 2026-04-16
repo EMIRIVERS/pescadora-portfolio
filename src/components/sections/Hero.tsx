@@ -48,12 +48,11 @@ export function Hero() {
         padding: '0 1.5rem',
       }}>
         <p style={{
-          fontFamily: 'var(--font-cormorant)',
-          fontWeight: 300,
-          fontStyle: 'italic',
-          fontSize: 'clamp(5.5rem, 22vw, 18rem)',
-          letterSpacing: '0.01em',
-          lineHeight: 0.85,
+          fontFamily: 'var(--font-geist-sans)',
+          fontWeight: 900,
+          fontSize: 'clamp(5rem, 20vw, 16rem)',
+          letterSpacing: '-0.02em',
+          lineHeight: 0.9,
           textTransform: 'uppercase',
           color: '#ffffff',
           margin: 0,
