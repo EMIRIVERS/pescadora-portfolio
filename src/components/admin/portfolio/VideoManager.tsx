@@ -32,7 +32,7 @@ interface VideoManagerProps {
 
 type FormMode = 'create' | 'edit'
 
-type CategoryFilter = 'todos' | 'videoclips' | 'corporativos' | 'restaurantes' | 'comerciales'
+type CategoryFilter = 'todos' | 'videoclips' | 'corporativos' | 'restaurantes' | 'comerciales' | 'fotografia'
 
 // Apple-style category pill colours (bg + text as inline style objects)
 const CATEGORY_STYLES: Record<string, { background: string; color: string }> = {
@@ -40,6 +40,7 @@ const CATEGORY_STYLES: Record<string, { background: string; color: string }> = {
   corporativos: { background: 'rgba(0,113,227,0.15)',  color: '#0A84FF' },
   restaurantes: { background: 'rgba(255,159,10,0.15)', color: '#FF9F0A' },
   comerciales:  { background: 'rgba(48,209,88,0.15)',  color: '#30D158' },
+  fotografia:   { background: 'rgba(255,69,58,0.15)',  color: '#FF453A' },
 }
 
 const DEFAULT_CATEGORY_STYLE: { background: string; color: string } = {
@@ -52,6 +53,7 @@ const CATEGORIES = [
   { value: 'corporativos', label: 'Corporativos' },
   { value: 'restaurantes', label: 'Restaurantes' },
   { value: 'comerciales',  label: 'Comerciales' },
+  { value: 'fotografia',   label: 'Fotografía' },
 ]
 
 const FILTER_PILLS: { value: CategoryFilter; label: string }[] = [
@@ -60,6 +62,7 @@ const FILTER_PILLS: { value: CategoryFilter; label: string }[] = [
   { value: 'corporativos', label: 'Corporativos' },
   { value: 'restaurantes', label: 'Restaurantes' },
   { value: 'comerciales',  label: 'Comerciales' },
+  { value: 'fotografia',   label: 'Fotografía' },
 ]
 
 // ─── shared style constants ────────────────────────────────────────────────
@@ -168,6 +171,9 @@ export default function VideoManager({ initialVideos = [] }: VideoManagerProps) 
   const [activeFilter, setActiveFilter] = useState<CategoryFilter>('todos')
   const [hoveredRow, setHoveredRow] = useState<string | null>(null)
 
+  const [formCategory, setFormCategory] = useState<string>('videoclips')
+  const isPhoto = formCategory === 'fotografia'
+
   const sortedVideos = [...localVideos].sort((a, b) => a.sort_order - b.sort_order)
 
   const filteredVideos =
@@ -178,12 +184,14 @@ export default function VideoManager({ initialVideos = [] }: VideoManagerProps) 
   function openCreateForm() {
     setEditingVideo(null)
     setFormMode('create')
+    setFormCategory('videoclips')
     setShowForm(true)
   }
 
   function openEditForm(video: PortfolioVideo) {
     setEditingVideo(video)
     setFormMode('edit')
+    setFormCategory(video.category)
     setShowForm(true)
   }
 
@@ -394,31 +402,33 @@ export default function VideoManager({ initialVideos = [] }: VideoManagerProps) 
           </div>
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {/* Row 1: Titulo + Vimeo ID */}
+            {/* Row 1: Titulo + Vimeo ID / URL imagen */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
-                <label htmlFor="title" style={LABEL_STYLE}>Titulo *</label>
+                <label htmlFor="title" style={LABEL_STYLE}>{isPhoto ? 'Título de la foto *' : 'Titulo del video *'}</label>
                 <input
                   id="title"
                   name="title"
                   type="text"
                   required
                   defaultValue={editingVideo?.title ?? ''}
-                  placeholder="Nombre del video"
+                  placeholder={isPhoto ? 'Nombre de la foto' : 'Nombre del video'}
                   style={INPUT_STYLE}
                   onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
                   onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
                 />
               </div>
               <div>
-                <label htmlFor="vimeo_id" style={LABEL_STYLE}>ID de Vimeo *</label>
+                <label htmlFor="vimeo_id" style={LABEL_STYLE}>
+                  {isPhoto ? 'URL de imagen *' : 'ID de Vimeo *'}
+                </label>
                 <input
                   id="vimeo_id"
                   name="vimeo_id"
-                  type="text"
+                  type={isPhoto ? 'url' : 'text'}
                   required
                   defaultValue={editingVideo?.vimeo_id ?? ''}
-                  placeholder="123456789"
+                  placeholder={isPhoto ? 'https://...' : '123456789'}
                   style={INPUT_STYLE}
                   onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
                   onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
@@ -433,7 +443,8 @@ export default function VideoManager({ initialVideos = [] }: VideoManagerProps) 
                 <select
                   id="category"
                   name="category"
-                  defaultValue={editingVideo?.category ?? 'videoclips'}
+                  value={formCategory}
+                  onChange={(e) => setFormCategory(e.target.value)}
                   style={{ ...INPUT_STYLE, appearance: 'none' }}
                   onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
                   onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
@@ -703,7 +714,11 @@ export default function VideoManager({ initialVideos = [] }: VideoManagerProps) 
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src={`/api/vimeo-thumb?id=${video.vimeo_id}`}
+                          src={
+                            video.category === 'fotografia'
+                              ? video.vimeo_id
+                              : `/api/vimeo-thumb?id=${video.vimeo_id}`
+                          }
                           alt={video.title}
                           width={60}
                           height={40}

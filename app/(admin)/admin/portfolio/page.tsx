@@ -21,6 +21,7 @@ const STAT_CATEGORIES = [
   { key: 'corporativos', label: 'Corporativos' },
   { key: 'restaurantes', label: 'Restaurantes' },
   { key: 'comerciales',  label: 'Comerciales' },
+  { key: 'fotografia',   label: 'Fotografía' },
 ] as const
 
 const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
@@ -31,6 +32,7 @@ const CATEGORY_ACCENT: Record<string, string> = {
   corporativos: '#0A84FF',
   restaurantes: '#FF9F0A',
   comerciales:  '#30D158',
+  fotografia:   '#FF453A',
   visibles:     '#30D158',
   ocultos:      '#FF453A',
 }
