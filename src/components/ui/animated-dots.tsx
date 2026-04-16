@@ -82,7 +82,7 @@ export const AnimatedDots: React.FC<AnimatedDotsProps> = ({
         this.velocity += this.ranVelocity;
         const colorIncrement =
           255 - Math.round(this.velocity * (255 / (height + this.radius)));
-        ctx.fillStyle = this.updateColors(colors[this.ranColor], colorIncrement);
+        const color = this.updateColors(colors[this.ranColor], colorIncrement);
         ctx.globalAlpha = opacity;
         ctx.globalCompositeOperation = blendMode as GlobalCompositeOperation;
 
@@ -95,9 +95,19 @@ export const AnimatedDots: React.FC<AnimatedDotsProps> = ({
 
         this.y = -this.radius + this.velocity;
 
+        const x = this.x % width;
+        const trailLen = 60 + this.radius * 8;
+        const grad = ctx.createLinearGradient(x, this.y - trailLen, x, this.y);
+        grad.addColorStop(0, "rgba(0,0,0,0)");
+        grad.addColorStop(1, color);
+
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = this.radius * 1.6;
+        ctx.lineCap = "round";
         ctx.beginPath();
-        ctx.arc(this.x % width, this.y, this.radius, 0, TWO_PI, false);
-        ctx.fill();
+        ctx.moveTo(x, this.y - trailLen);
+        ctx.lineTo(x, this.y);
+        ctx.stroke();
       }
 
       updateColors(selectedColor: ColorEntry, increment: number) {

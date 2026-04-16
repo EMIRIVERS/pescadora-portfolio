@@ -50,12 +50,12 @@ export default function HomeClient({ cmsProjects, videos }: Props) {
       {/* Animated dots background */}
       <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
         <AnimatedDots
-          backgroundColor="#080808"
-          dotsNum={48}
-          dotRadius={5}
-          dotSpacing={2}
-          speedRange={[0.6, 2.2]}
-          opacity={0.72}
+          backgroundColor="rgba(8,8,8,0.25)"
+          dotsNum={40}
+          dotRadius={2}
+          dotSpacing={4}
+          speedRange={[3, 8]}
+          opacity={0.85}
         />
       </div>
 
