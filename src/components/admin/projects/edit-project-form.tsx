@@ -41,28 +41,57 @@ function validate(values: FormValues): FormErrors {
   const errors: FormErrors = {}
 
   if (!values.title.trim()) {
-    errors.title = 'Title is required.'
+    errors.title = 'El titulo es obligatorio.'
   }
 
   if (values.start_date && values.end_date) {
     const start = new Date(values.start_date)
     const end = new Date(values.end_date)
     if (end <= start) {
-      errors.end_date = 'End date must be after start date.'
+      errors.end_date = 'La fecha de cierre debe ser posterior a la de inicio.'
     }
   }
 
   if (values.is_public && !Number.isInteger(values.portfolio_order)) {
-    errors.portfolio_order = 'Portfolio order must be a whole number.'
+    errors.portfolio_order = 'El orden debe ser un numero entero.'
   }
 
   return errors
+}
+
+// Shared style helpers
+const fieldLabel: React.CSSProperties = {
+  display: 'block',
+  fontSize: '11px',
+  fontWeight: 600,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  color: '#86868B',
+  marginBottom: '6px',
+}
+
+const inputBase: React.CSSProperties = {
+  width: '100%',
+  backgroundColor: '#1C1C1E',
+  border: '1px solid rgba(255,255,255,0.1)',
+  borderRadius: '8px',
+  padding: '10px 14px',
+  color: '#F5F5F7',
+  fontSize: '14px',
+  outline: 'none',
+  boxSizing: 'border-box',
+}
+
+const inputDisabled: React.CSSProperties = {
+  opacity: 0.45,
+  cursor: 'not-allowed',
 }
 
 export function EditProjectForm({ project, clients }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [errors, setErrors] = useState<FormErrors>({})
+  const [focusedField, setFocusedField] = useState<string | null>(null)
   const [values, setValues] = useState<FormValues>({
     title: project.title,
     description: project.description ?? '',
@@ -84,7 +113,6 @@ export function EditProjectForm({ project, clients }: Props) {
       ...prev,
       [name]: type === 'checkbox' ? (checked ?? false) : value,
     }))
-    // Clear field-level error on change
     if (name in errors) {
       setErrors((prev) => ({ ...prev, [name]: undefined }))
     }
@@ -128,18 +156,36 @@ export function EditProjectForm({ project, clients }: Props) {
     })
   }
 
+  function getInputStyle(fieldName: string, extra?: React.CSSProperties): React.CSSProperties {
+    return {
+      ...inputBase,
+      ...(isPending ? inputDisabled : {}),
+      ...(focusedField === fieldName ? { border: '1px solid #0071E3', boxShadow: '0 0 0 3px rgba(0,113,227,0.15)' } : {}),
+      ...extra,
+    }
+  }
+
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
       {errors.general && (
-        <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
+        <div
+          style={{
+            backgroundColor: 'rgba(255,69,58,0.1)',
+            border: '1px solid rgba(255,69,58,0.25)',
+            borderRadius: '8px',
+            padding: '12px 14px',
+            fontSize: '13px',
+            color: '#FF453A',
+          }}
+        >
           {errors.general}
         </div>
       )}
 
       {/* Title */}
-      <div className="space-y-1.5">
-        <label htmlFor="title" className="block text-sm font-medium text-zinc-300">
-          Title <span className="text-red-400">*</span>
+      <div>
+        <label htmlFor="title" style={fieldLabel}>
+          Titulo <span style={{ color: '#FF453A' }}>*</span>
         </label>
         <input
           id="title"
@@ -148,18 +194,20 @@ export function EditProjectForm({ project, clients }: Props) {
           value={values.title}
           onChange={handleChange}
           disabled={isPending}
-          className="w-full rounded-lg bg-zinc-900 border border-zinc-700 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:opacity-50"
-          placeholder="Project title"
+          placeholder="Titulo del proyecto"
+          onFocus={() => setFocusedField('title')}
+          onBlur={() => setFocusedField(null)}
+          style={getInputStyle('title')}
         />
         {errors.title && (
-          <p className="text-xs text-red-400">{errors.title}</p>
+          <p style={{ fontSize: '12px', color: '#FF453A', marginTop: '5px' }}>{errors.title}</p>
         )}
       </div>
 
       {/* Description */}
-      <div className="space-y-1.5">
-        <label htmlFor="description" className="block text-sm font-medium text-zinc-300">
-          Description
+      <div>
+        <label htmlFor="description" style={fieldLabel}>
+          Descripcion
         </label>
         <textarea
           id="description"
@@ -168,60 +216,71 @@ export function EditProjectForm({ project, clients }: Props) {
           value={values.description}
           onChange={handleChange}
           disabled={isPending}
-          className="w-full rounded-lg bg-zinc-900 border border-zinc-700 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:opacity-50 resize-none"
-          placeholder="Brief description of this project…"
+          placeholder="Breve descripcion del proyecto..."
+          onFocus={() => setFocusedField('description')}
+          onBlur={() => setFocusedField(null)}
+          style={{
+            ...getInputStyle('description'),
+            resize: 'none',
+            minHeight: '100px',
+          }}
         />
       </div>
 
-      {/* Client */}
-      <div className="space-y-1.5">
-        <label htmlFor="client_id" className="block text-sm font-medium text-zinc-300">
-          Client
-        </label>
-        <select
-          id="client_id"
-          name="client_id"
-          value={values.client_id}
-          onChange={handleChange}
-          disabled={isPending}
-          className="w-full rounded-lg bg-zinc-900 border border-zinc-700 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:opacity-50"
-        >
-          <option value="">— No client —</option>
-          {clients.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-              {c.company ? ` · ${c.company}` : ''}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Status */}
-      <div className="space-y-1.5">
-        <label htmlFor="status" className="block text-sm font-medium text-zinc-300">
-          Status
-        </label>
-        <select
-          id="status"
-          name="status"
-          value={values.status}
-          onChange={handleChange}
-          disabled={isPending}
-          className="w-full rounded-lg bg-zinc-900 border border-zinc-700 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:opacity-50"
-        >
-          {STATUS_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Dates */}
+      {/* Client + Status grid */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-1.5">
-          <label htmlFor="start_date" className="block text-sm font-medium text-zinc-300">
-            Start date
+        <div>
+          <label htmlFor="client_id" style={fieldLabel}>
+            Cliente
+          </label>
+          <select
+            id="client_id"
+            name="client_id"
+            value={values.client_id}
+            onChange={handleChange}
+            disabled={isPending}
+            onFocus={() => setFocusedField('client_id')}
+            onBlur={() => setFocusedField(null)}
+            style={getInputStyle('client_id')}
+          >
+            <option value="">Sin cliente</option>
+            {clients.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+                {c.company ? ` · ${c.company}` : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="status" style={fieldLabel}>
+            Estado
+          </label>
+          <select
+            id="status"
+            name="status"
+            value={values.status}
+            onChange={handleChange}
+            disabled={isPending}
+            onFocus={() => setFocusedField('status')}
+            onBlur={() => setFocusedField(null)}
+            style={getInputStyle('status')}
+          >
+            {STATUS_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Dates grid */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="start_date" style={fieldLabel}>
+            Fecha de inicio
           </label>
           <input
             id="start_date"
@@ -230,12 +289,14 @@ export function EditProjectForm({ project, clients }: Props) {
             value={values.start_date}
             onChange={handleChange}
             disabled={isPending}
-            className="w-full rounded-lg bg-zinc-900 border border-zinc-700 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:opacity-50 [color-scheme:dark]"
+            onFocus={() => setFocusedField('start_date')}
+            onBlur={() => setFocusedField(null)}
+            style={{ ...getInputStyle('start_date'), colorScheme: 'dark' }}
           />
         </div>
-        <div className="space-y-1.5">
-          <label htmlFor="end_date" className="block text-sm font-medium text-zinc-300">
-            End date
+        <div>
+          <label htmlFor="end_date" style={fieldLabel}>
+            Fecha de cierre
           </label>
           <input
             id="end_date"
@@ -244,18 +305,20 @@ export function EditProjectForm({ project, clients }: Props) {
             value={values.end_date}
             onChange={handleChange}
             disabled={isPending}
-            className="w-full rounded-lg bg-zinc-900 border border-zinc-700 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:opacity-50 [color-scheme:dark]"
+            onFocus={() => setFocusedField('end_date')}
+            onBlur={() => setFocusedField(null)}
+            style={{ ...getInputStyle('end_date'), colorScheme: 'dark' }}
           />
           {errors.end_date && (
-            <p className="text-xs text-red-400">{errors.end_date}</p>
+            <p style={{ fontSize: '12px', color: '#FF453A', marginTop: '5px' }}>{errors.end_date}</p>
           )}
         </div>
       </div>
 
       {/* Cover URL */}
-      <div className="space-y-1.5">
-        <label htmlFor="cover_url" className="block text-sm font-medium text-zinc-300">
-          Cover image URL
+      <div>
+        <label htmlFor="cover_url" style={fieldLabel}>
+          URL de portada
         </label>
         <input
           id="cover_url"
@@ -264,22 +327,39 @@ export function EditProjectForm({ project, clients }: Props) {
           value={values.cover_url}
           onChange={handleChange}
           disabled={isPending}
-          className="w-full rounded-lg bg-zinc-900 border border-zinc-700 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:opacity-50"
-          placeholder="https://…"
+          placeholder="https://..."
+          onFocus={() => setFocusedField('cover_url')}
+          onBlur={() => setFocusedField(null)}
+          style={getInputStyle('cover_url')}
         />
-        <p className="text-xs text-zinc-500">
-          Used as the cover card image on the public portfolio.
+        <p style={{ fontSize: '12px', color: '#48484A', marginTop: '5px' }}>
+          Se usa como imagen en la tarjeta del portfolio publico.
         </p>
       </div>
 
       {/* Portfolio visibility */}
-      <div className="rounded-xl bg-zinc-900 border border-zinc-800 px-4 py-4 space-y-4">
-        <p className="text-xs font-medium text-zinc-400 uppercase tracking-widest">
-          Portfolio visibility
+      <div
+        style={{
+          backgroundColor: '#1C1C1E',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: '12px',
+          padding: '18px 20px',
+        }}
+      >
+        <p
+          style={{
+            fontSize: '11px',
+            fontWeight: 600,
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
+            color: '#48484A',
+            marginBottom: '14px',
+          }}
+        >
+          Visibilidad en portfolio
         </p>
 
-        {/* is_public toggle */}
-        <label className="flex items-center gap-3 cursor-pointer">
+        <label className="flex items-center gap-3 cursor-pointer" style={{ userSelect: 'none' }}>
           <input
             id="is_public"
             name="is_public"
@@ -287,16 +367,23 @@ export function EditProjectForm({ project, clients }: Props) {
             checked={values.is_public}
             onChange={handleChange}
             disabled={isPending}
-            className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-zinc-100 focus:ring-zinc-500 focus:ring-offset-zinc-950 disabled:opacity-50 accent-zinc-100"
+            style={{
+              width: '16px',
+              height: '16px',
+              borderRadius: '4px',
+              accentColor: '#0071E3',
+              cursor: isPending ? 'not-allowed' : 'pointer',
+            }}
           />
-          <span className="text-sm text-zinc-200">Show on public portfolio</span>
+          <span style={{ fontSize: '14px', color: '#F5F5F7' }}>
+            Mostrar en el portfolio publico
+          </span>
         </label>
 
-        {/* portfolio_order — only visible when public */}
         {values.is_public && (
-          <div className="space-y-1.5">
-            <label htmlFor="portfolio_order" className="block text-sm font-medium text-zinc-300">
-              Portfolio order
+          <div style={{ marginTop: '16px' }}>
+            <label htmlFor="portfolio_order" style={fieldLabel}>
+              Orden en portfolio
             </label>
             <input
               id="portfolio_order"
@@ -315,13 +402,18 @@ export function EditProjectForm({ project, clients }: Props) {
                 }
               }}
               disabled={isPending}
-              className="w-32 rounded-lg bg-zinc-900 border border-zinc-700 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:opacity-50"
+              onFocus={() => setFocusedField('portfolio_order')}
+              onBlur={() => setFocusedField(null)}
+              style={{
+                ...getInputStyle('portfolio_order'),
+                width: '120px',
+              }}
             />
-            <p className="text-xs text-zinc-500">
-              Lower numbers appear first. Projects with the same order are sorted by title.
+            <p style={{ fontSize: '12px', color: '#48484A', marginTop: '5px' }}>
+              Los numeros menores aparecen primero.
             </p>
             {errors.portfolio_order && (
-              <p className="text-xs text-red-400">{errors.portfolio_order}</p>
+              <p style={{ fontSize: '12px', color: '#FF453A', marginTop: '5px' }}>{errors.portfolio_order}</p>
             )}
           </div>
         )}
@@ -333,17 +425,40 @@ export function EditProjectForm({ project, clients }: Props) {
           type="button"
           onClick={() => router.back()}
           disabled={isPending}
-          className="px-4 py-2 text-sm rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors disabled:opacity-50"
+          style={{
+            padding: '10px 18px',
+            fontSize: '14px',
+            fontWeight: 500,
+            borderRadius: '8px',
+            backgroundColor: 'transparent',
+            border: '1px solid rgba(255,255,255,0.12)',
+            color: '#86868B',
+            cursor: isPending ? 'not-allowed' : 'pointer',
+            opacity: isPending ? 0.45 : 1,
+            transition: 'all 0.15s ease',
+          }}
         >
-          Cancel
+          Cancelar
         </button>
         <button
           type="submit"
           disabled={isPending}
-          className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-zinc-100 hover:bg-white text-zinc-900 font-medium transition-colors disabled:opacity-50"
+          className="flex items-center gap-2"
+          style={{
+            padding: '10px 20px',
+            fontSize: '14px',
+            fontWeight: 500,
+            borderRadius: '8px',
+            backgroundColor: '#0071E3',
+            border: 'none',
+            color: '#FFFFFF',
+            cursor: isPending ? 'not-allowed' : 'pointer',
+            opacity: isPending ? 0.65 : 1,
+            transition: 'all 0.15s ease',
+          }}
         >
           {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-          Save changes
+          Guardar cambios
         </button>
       </div>
     </form>

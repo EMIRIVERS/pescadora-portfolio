@@ -45,24 +45,53 @@ function validate(values: FormValues): FormErrors {
   const errors: FormErrors = {}
 
   if (!values.title.trim()) {
-    errors.title = 'Title is required.'
+    errors.title = 'El titulo es obligatorio.'
   }
 
   if (values.start_date && values.end_date) {
     const start = new Date(values.start_date)
     const end = new Date(values.end_date)
     if (end <= start) {
-      errors.end_date = 'End date must be after start date.'
+      errors.end_date = 'La fecha de cierre debe ser posterior a la de inicio.'
     }
   }
 
   return errors
 }
 
+// Shared style helpers
+const fieldLabel: React.CSSProperties = {
+  display: 'block',
+  fontSize: '11px',
+  fontWeight: 600,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  color: '#86868B',
+  marginBottom: '6px',
+}
+
+const inputBase: React.CSSProperties = {
+  width: '100%',
+  backgroundColor: '#1C1C1E',
+  border: '1px solid rgba(255,255,255,0.1)',
+  borderRadius: '8px',
+  padding: '10px 14px',
+  color: '#F5F5F7',
+  fontSize: '14px',
+  outline: 'none',
+  boxSizing: 'border-box',
+}
+
+const inputDisabled: React.CSSProperties = {
+  opacity: 0.45,
+  cursor: 'not-allowed',
+}
+
 export function NewProjectForm({ clients }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [errors, setErrors] = useState<FormErrors>({})
+  const [focusedField, setFocusedField] = useState<string | null>(null)
   const [values, setValues] = useState<FormValues>(DEFAULT_VALUES)
 
   function handleChange(
@@ -101,7 +130,7 @@ export function NewProjectForm({ clients }: Props) {
         .single()
 
       if (error || !data) {
-        setErrors({ general: error?.message ?? 'Failed to create project.' })
+        setErrors({ general: error?.message ?? 'No se pudo crear el proyecto.' })
         return
       }
 
@@ -109,18 +138,36 @@ export function NewProjectForm({ clients }: Props) {
     })
   }
 
+  function getInputStyle(fieldName: string, extra?: React.CSSProperties): React.CSSProperties {
+    return {
+      ...inputBase,
+      ...(isPending ? inputDisabled : {}),
+      ...(focusedField === fieldName ? { border: '1px solid #0071E3', boxShadow: '0 0 0 3px rgba(0,113,227,0.15)' } : {}),
+      ...extra,
+    }
+  }
+
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
       {errors.general && (
-        <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
+        <div
+          style={{
+            backgroundColor: 'rgba(255,69,58,0.1)',
+            border: '1px solid rgba(255,69,58,0.25)',
+            borderRadius: '8px',
+            padding: '12px 14px',
+            fontSize: '13px',
+            color: '#FF453A',
+          }}
+        >
           {errors.general}
         </div>
       )}
 
       {/* Title */}
-      <div className="space-y-1.5">
-        <label htmlFor="title" className="block text-sm font-medium text-zinc-300">
-          Title <span className="text-red-400">*</span>
+      <div>
+        <label htmlFor="title" style={fieldLabel}>
+          Titulo <span style={{ color: '#FF453A' }}>*</span>
         </label>
         <input
           id="title"
@@ -129,18 +176,20 @@ export function NewProjectForm({ clients }: Props) {
           value={values.title}
           onChange={handleChange}
           disabled={isPending}
-          className="w-full rounded-lg bg-zinc-900 border border-zinc-700 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:opacity-50"
-          placeholder="Project title"
+          placeholder="Titulo del proyecto"
+          onFocus={() => setFocusedField('title')}
+          onBlur={() => setFocusedField(null)}
+          style={getInputStyle('title')}
         />
         {errors.title && (
-          <p className="text-xs text-red-400">{errors.title}</p>
+          <p style={{ fontSize: '12px', color: '#FF453A', marginTop: '5px' }}>{errors.title}</p>
         )}
       </div>
 
       {/* Description */}
-      <div className="space-y-1.5">
-        <label htmlFor="description" className="block text-sm font-medium text-zinc-300">
-          Description
+      <div>
+        <label htmlFor="description" style={fieldLabel}>
+          Descripcion
         </label>
         <textarea
           id="description"
@@ -149,60 +198,71 @@ export function NewProjectForm({ clients }: Props) {
           value={values.description}
           onChange={handleChange}
           disabled={isPending}
-          className="w-full rounded-lg bg-zinc-900 border border-zinc-700 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:opacity-50 resize-none"
-          placeholder="Brief description of this project…"
+          placeholder="Breve descripcion del proyecto..."
+          onFocus={() => setFocusedField('description')}
+          onBlur={() => setFocusedField(null)}
+          style={{
+            ...getInputStyle('description'),
+            resize: 'none',
+            minHeight: '100px',
+          }}
         />
       </div>
 
-      {/* Client */}
-      <div className="space-y-1.5">
-        <label htmlFor="client_id" className="block text-sm font-medium text-zinc-300">
-          Client
-        </label>
-        <select
-          id="client_id"
-          name="client_id"
-          value={values.client_id}
-          onChange={handleChange}
-          disabled={isPending}
-          className="w-full rounded-lg bg-zinc-900 border border-zinc-700 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:opacity-50"
-        >
-          <option value="">— No client —</option>
-          {clients.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-              {c.company ? ` · ${c.company}` : ''}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Status */}
-      <div className="space-y-1.5">
-        <label htmlFor="status" className="block text-sm font-medium text-zinc-300">
-          Status
-        </label>
-        <select
-          id="status"
-          name="status"
-          value={values.status}
-          onChange={handleChange}
-          disabled={isPending}
-          className="w-full rounded-lg bg-zinc-900 border border-zinc-700 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:opacity-50"
-        >
-          {STATUS_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Dates */}
+      {/* Client + Status grid */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-1.5">
-          <label htmlFor="start_date" className="block text-sm font-medium text-zinc-300">
-            Start date
+        <div>
+          <label htmlFor="client_id" style={fieldLabel}>
+            Cliente
+          </label>
+          <select
+            id="client_id"
+            name="client_id"
+            value={values.client_id}
+            onChange={handleChange}
+            disabled={isPending}
+            onFocus={() => setFocusedField('client_id')}
+            onBlur={() => setFocusedField(null)}
+            style={getInputStyle('client_id')}
+          >
+            <option value="">Sin cliente</option>
+            {clients.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+                {c.company ? ` · ${c.company}` : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="status" style={fieldLabel}>
+            Estado
+          </label>
+          <select
+            id="status"
+            name="status"
+            value={values.status}
+            onChange={handleChange}
+            disabled={isPending}
+            onFocus={() => setFocusedField('status')}
+            onBlur={() => setFocusedField(null)}
+            style={getInputStyle('status')}
+          >
+            {STATUS_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Dates grid */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="start_date" style={fieldLabel}>
+            Fecha de inicio
           </label>
           <input
             id="start_date"
@@ -211,12 +271,14 @@ export function NewProjectForm({ clients }: Props) {
             value={values.start_date}
             onChange={handleChange}
             disabled={isPending}
-            className="w-full rounded-lg bg-zinc-900 border border-zinc-700 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:opacity-50 [color-scheme:dark]"
+            onFocus={() => setFocusedField('start_date')}
+            onBlur={() => setFocusedField(null)}
+            style={{ ...getInputStyle('start_date'), colorScheme: 'dark' }}
           />
         </div>
-        <div className="space-y-1.5">
-          <label htmlFor="end_date" className="block text-sm font-medium text-zinc-300">
-            End date
+        <div>
+          <label htmlFor="end_date" style={fieldLabel}>
+            Fecha de cierre
           </label>
           <input
             id="end_date"
@@ -225,10 +287,12 @@ export function NewProjectForm({ clients }: Props) {
             value={values.end_date}
             onChange={handleChange}
             disabled={isPending}
-            className="w-full rounded-lg bg-zinc-900 border border-zinc-700 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:opacity-50 [color-scheme:dark]"
+            onFocus={() => setFocusedField('end_date')}
+            onBlur={() => setFocusedField(null)}
+            style={{ ...getInputStyle('end_date'), colorScheme: 'dark' }}
           />
           {errors.end_date && (
-            <p className="text-xs text-red-400">{errors.end_date}</p>
+            <p style={{ fontSize: '12px', color: '#FF453A', marginTop: '5px' }}>{errors.end_date}</p>
           )}
         </div>
       </div>
@@ -239,17 +303,40 @@ export function NewProjectForm({ clients }: Props) {
           type="button"
           onClick={() => router.back()}
           disabled={isPending}
-          className="px-4 py-2 text-sm rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors disabled:opacity-50"
+          style={{
+            padding: '10px 18px',
+            fontSize: '14px',
+            fontWeight: 500,
+            borderRadius: '8px',
+            backgroundColor: 'transparent',
+            border: '1px solid rgba(255,255,255,0.12)',
+            color: '#86868B',
+            cursor: isPending ? 'not-allowed' : 'pointer',
+            opacity: isPending ? 0.45 : 1,
+            transition: 'all 0.15s ease',
+          }}
         >
-          Cancel
+          Cancelar
         </button>
         <button
           type="submit"
           disabled={isPending}
-          className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-zinc-100 hover:bg-white text-zinc-900 font-medium transition-colors disabled:opacity-50"
+          className="flex items-center gap-2"
+          style={{
+            padding: '10px 20px',
+            fontSize: '14px',
+            fontWeight: 500,
+            borderRadius: '8px',
+            backgroundColor: '#0071E3',
+            border: 'none',
+            color: '#FFFFFF',
+            cursor: isPending ? 'not-allowed' : 'pointer',
+            opacity: isPending ? 0.65 : 1,
+            transition: 'all 0.15s ease',
+          }}
         >
           {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-          Create project
+          Crear proyecto
         </button>
       </div>
     </form>

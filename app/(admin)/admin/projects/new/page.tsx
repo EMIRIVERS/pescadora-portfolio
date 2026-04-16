@@ -16,31 +16,58 @@ export default async function NewProjectPage() {
     (clients ?? []) as Pick<Client, 'id' | 'name' | 'company'>[]
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+    <div
+      className="min-h-screen"
+      style={{
+        backgroundColor: '#111111',
+        color: '#F5F5F7',
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+      }}
+    >
       {/* Top bar */}
-      <div className="border-b border-zinc-800 bg-zinc-900/60 backdrop-blur-sm sticky top-0 z-10">
+      <div
+        className="sticky top-0 z-10 backdrop-blur-md"
+        style={{
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          backgroundColor: 'rgba(17,17,17,0.85)',
+        }}
+      >
         <div className="mx-auto max-w-2xl px-6 h-14 flex items-center">
           <Link
             href="/admin/projects"
-            className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-zinc-100 transition-colors"
+            className="flex items-center gap-1.5 transition-colors"
+            style={{ fontSize: '14px', color: '#86868B' }}
           >
             <ChevronLeft className="w-4 h-4" />
-            Projects
+            Proyectos
           </Link>
         </div>
       </div>
 
       <div className="mx-auto max-w-2xl px-6 py-10 space-y-8">
+        {/* Page heading */}
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">
-            New project
+          <h1
+            style={{ fontSize: '24px', fontWeight: 600, color: '#F5F5F7', letterSpacing: '-0.01em' }}
+          >
+            Nuevo proyecto
           </h1>
-          <p className="text-sm text-zinc-400">
-            Create a project to track deliverables and tasks.
+          <p style={{ fontSize: '14px', color: '#86868B' }}>
+            Crea un proyecto para gestionar entregables y tareas.
           </p>
         </div>
 
-        <NewProjectForm clients={safeClients} />
+        {/* Form card */}
+        <div
+          style={{
+            backgroundColor: '#111111',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '16px',
+            padding: '32px',
+          }}
+        >
+          <NewProjectForm clients={safeClients} />
+        </div>
       </div>
     </div>
   )

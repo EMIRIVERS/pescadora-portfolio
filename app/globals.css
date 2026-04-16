@@ -162,3 +162,101 @@ div:hover > .video-title {
     height: auto !important;
   }
 }
+
+/* Admin Apple Dark Design System */
+.admin-root {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  background: #000000;
+  color: #F5F5F7;
+  min-height: 100vh;
+}
+
+.apple-card {
+  background: #111111;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+}
+
+.apple-input {
+  background: #1C1C1E;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #F5F5F7;
+  font-size: 14px;
+  font-family: inherit;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.apple-input:focus {
+  border-color: #0071E3;
+}
+
+.apple-btn-primary {
+  background: #0071E3;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.apple-btn-primary:hover {
+  background: #0077ED;
+}
+
+.apple-btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.apple-btn-ghost {
+  background: transparent;
+  color: #86868B;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+
+.apple-btn-ghost:hover {
+  background: #1C1C1E;
+  color: #F5F5F7;
+}
+
+.apple-table-row:hover {
+  background: #1C1C1E;
+}
+
+.apple-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.admin-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.admin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-scrollbar::-webkit-scrollbar-thumb {
+  background: #2C2C2E;
+  border-radius: 3px;
+}

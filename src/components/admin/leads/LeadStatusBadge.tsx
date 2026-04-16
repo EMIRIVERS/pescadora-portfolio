@@ -6,12 +6,12 @@ interface Props {
 }
 
 const STATUS_CONFIG: Record<LeadStatus, { label: string; color: string }> = {
-  new:       { label: 'Nuevo',      color: '#3b82f6' },
-  contacted: { label: 'Contactado', color: '#8b5cf6' },
-  qualified: { label: 'Calificado', color: '#f59e0b' },
-  proposal:  { label: 'Propuesta',  color: '#e8341a' },
-  won:       { label: 'Ganado',     color: '#10b981' },
-  lost:      { label: 'Perdido',    color: '#6b7280' },
+  new:       { label: 'Nuevo',      color: '#0071E3' },
+  contacted: { label: 'Contactado', color: '#BF5AF2' },
+  qualified: { label: 'Calificado', color: '#FF9F0A' },
+  proposal:  { label: 'Propuesta',  color: '#FF453A' },
+  won:       { label: 'Ganado',     color: '#30D158' },
+  lost:      { label: 'Perdido',    color: '#636366' },
 }
 
 export default function LeadStatusBadge({ status, size = 'md' }: Props) {
@@ -20,13 +20,14 @@ export default function LeadStatusBadge({ status, size = 'md' }: Props) {
   return (
     <span
       style={{
-        fontSize: size === 'sm' ? '0.55rem' : '0.6rem',
-        letterSpacing: '0.15em',
-        textTransform: 'uppercase',
-        fontFamily: 'var(--font-geist-mono)',
-        padding: size === 'sm' ? '0.15rem 0.5rem' : '0.2rem 0.6rem',
-        borderRadius: '2px',
-        background: color + '20',
+        display: 'inline-block',
+        fontSize: 11,
+        fontWeight: 600,
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+        letterSpacing: '0.02em',
+        padding: size === 'sm' ? '2px 8px' : '3px 10px',
+        borderRadius: 20,
+        background: color + '26', // 0.15 opacity hex = 26
         color,
       }}
     >

@@ -52,16 +52,36 @@ interface Props {
 }
 
 // ---------------------------------------------------------------------------
+// Design tokens
+// ---------------------------------------------------------------------------
+
+const T = {
+  bg: '#000000',
+  surface1: '#111111',
+  surface2: '#1C1C1E',
+  surface3: '#2C2C2E',
+  surface3Hover: '#3A3A3C',
+  border: 'rgba(255,255,255,0.08)',
+  textPrimary: '#F5F5F7',
+  textSecondary: '#86868B',
+  textTertiary: '#48484A',
+  accent: '#0071E3',
+  accentRed: '#FF453A',
+  accentGreen: '#30D158',
+  font: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+} as const
+
+// ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
 const STATUS_COLORS: Record<Lead['status'], string> = {
   new: '#3b82f6',
-  contacted: '#8b5cf6',
+  contacted: '#a855f7',
   qualified: '#f59e0b',
-  proposal: '#e8341a',
-  won: '#10b981',
-  lost: '#6b7280',
+  proposal: '#f97316',
+  won: '#30D158',
+  lost: '#86868B',
 }
 
 const STATUS_LABELS: Record<Lead['status'], string> = {
@@ -89,15 +109,6 @@ const ACTIVITY_TYPE_LABELS: Record<LeadActivity['type'], string> = {
   whatsapp: 'WhatsApp',
   meeting: 'Reunion',
   status_change: 'Cambio de estado',
-}
-
-const ACTIVITY_TYPE_ICONS: Record<LeadActivity['type'], string> = {
-  note: 'N',
-  email: 'E',
-  call: 'T',
-  whatsapp: 'W',
-  meeting: 'R',
-  status_change: 'C',
 }
 
 const ACTIVITY_TYPES: LeadActivity['type'][] = [
@@ -134,18 +145,25 @@ function formatDate(dateStr: string): string {
 // Sub-components
 // ---------------------------------------------------------------------------
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
+function SectionDivider() {
   return (
     <div
       style={{
-        fontSize: 9,
-        fontFamily: 'monospace',
-        letterSpacing: '0.15em',
-        textTransform: 'uppercase',
-        color: '#444',
-        marginBottom: 10,
-        paddingBottom: 6,
-        borderBottom: '1px solid #1a1a1a',
+        height: 1,
+        background: T.border,
+        margin: 0,
+      }}
+    />
+  )
+}
+
+function InfoGrid({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '12px 16px',
       }}
     >
       {children}
@@ -153,7 +171,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-function InfoRow({
+function InfoCell({
   label,
   value,
 }: {
@@ -162,38 +180,48 @@ function InfoRow({
 }) {
   if (!value) return null
   return (
-    <div
-      style={{
-        display: 'flex',
-        gap: 12,
-        marginBottom: 8,
-        alignItems: 'flex-start',
-      }}
-    >
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
       <span
         style={{
-          fontFamily: 'monospace',
+          fontFamily: T.font,
           fontSize: 11,
-          color: '#555',
-          width: 120,
-          flexShrink: 0,
-          paddingTop: 1,
+          fontWeight: 500,
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
+          color: T.textSecondary,
         }}
       >
         {label}
       </span>
       <span
         style={{
-          fontFamily: 'monospace',
-          fontSize: 12,
-          color: '#e8e8e8',
-          flex: 1,
+          fontFamily: T.font,
+          fontSize: 14,
+          color: T.textPrimary,
           wordBreak: 'break-all',
+          lineHeight: 1.4,
         }}
       >
         {value}
       </span>
     </div>
+  )
+}
+
+function SectionHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <p
+      style={{
+        fontFamily: T.font,
+        fontSize: 13,
+        fontWeight: 600,
+        color: T.textSecondary,
+        margin: '0 0 14px 0',
+        letterSpacing: '-0.01em',
+      }}
+    >
+      {children}
+    </p>
   )
 }
 
@@ -272,7 +300,6 @@ export default function LeadDetailModal({
       } else {
         onStatusChange(lead.id, status)
         setGlobalError(null)
-        // Refresh activities to include the new status_change entry
         const supabase = createClient()
         const { data } = await supabase
           .from('lead_activities')
@@ -297,7 +324,6 @@ export default function LeadDetailModal({
         setActivityError(result.error)
       } else {
         setActivityContent('')
-        // Refresh activities
         const supabase = createClient()
         const { data } = await supabase
           .from('lead_activities')
@@ -339,7 +365,6 @@ export default function LeadDetailModal({
       } else {
         setGlobalError(null)
         setConvertConfirm(false)
-        // Optimistically update status label
         setCurrentStatus('won')
         onStatusChange(lead.id, 'won')
         onClose()
@@ -350,196 +375,239 @@ export default function LeadDetailModal({
   const statusColor = STATUS_COLORS[currentStatus]
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 50,
-        display: 'flex',
-        justifyContent: 'flex-end',
-      }}
-    >
-      {/* Backdrop */}
-      <div
-        onClick={onClose}
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: 'rgba(0,0,0,0.7)',
-        }}
-      />
+    <>
+      {/* Global style overrides for this modal */}
+      <style>{`
+        .ldm-close-btn:hover {
+          background: ${T.surface3Hover} !important;
+        }
+        .ldm-textarea:focus {
+          outline: none;
+          border-color: rgba(255,255,255,0.2) !important;
+        }
+        .ldm-textarea::placeholder {
+          color: ${T.textTertiary};
+        }
+        .ldm-save-btn:hover:not(:disabled) {
+          background: #0077ED !important;
+        }
+        .ldm-convert-btn:hover:not(:disabled) {
+          background: rgba(48,209,88,0.15) !important;
+        }
+        .ldm-delete-btn:hover:not(:disabled) {
+          background: rgba(255,69,58,0.1) !important;
+        }
+        .ldm-cancel-btn:hover:not(:disabled) {
+          background: ${T.surface3} !important;
+        }
+      `}</style>
 
-      {/* Panel */}
       <div
-        ref={panelRef}
         style={{
-          position: 'relative',
-          width: 520,
-          height: '100%',
-          background: '#0a0a0a',
-          borderLeft: '1px solid #1a1a1a',
-          overflow: 'auto',
+          position: 'fixed',
+          inset: 0,
+          zIndex: 1000,
           display: 'flex',
-          flexDirection: 'column',
+          justifyContent: 'flex-end',
         }}
       >
-        {/* ----------------------------------------------------------------- */}
-        {/* Header                                                             */}
-        {/* ----------------------------------------------------------------- */}
+        {/* Overlay */}
         <div
+          onClick={onClose}
           style={{
-            padding: '20px 24px 16px',
-            borderBottom: '1px solid #1a1a1a',
-            flexShrink: 0,
+            position: 'absolute',
+            inset: 0,
+            background: 'rgba(0,0,0,0.6)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+          }}
+        />
+
+        {/* Panel */}
+        <div
+          ref={panelRef}
+          style={{
+            position: 'fixed',
+            right: 0,
+            top: 0,
+            bottom: 0,
+            width: 480,
+            background: T.surface1,
+            borderLeft: `1px solid ${T.border}`,
+            overflowY: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            fontFamily: T.font,
           }}
         >
+          {/* ---------------------------------------------------------------- */}
+          {/* Header                                                           */}
+          {/* ---------------------------------------------------------------- */}
           <div
             style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              justifyContent: 'space-between',
-              gap: 12,
-              marginBottom: 12,
+              padding: 24,
+              borderBottom: `1px solid ${T.border}`,
+              flexShrink: 0,
             }}
           >
-            <h2
+            <div
               style={{
-                fontFamily: 'monospace',
-                fontWeight: 700,
-                fontSize: 20,
-                color: '#e8e8e8',
-                margin: 0,
-                lineHeight: 1.2,
-                flex: 1,
+                display: 'flex',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between',
+                gap: 12,
+                marginBottom: 12,
               }}
             >
-              {lead.name}
-            </h2>
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Cerrar"
-              style={{
-                flexShrink: 0,
-                background: 'none',
-                border: 'none',
-                color: '#555',
-                fontSize: 20,
-                cursor: 'pointer',
-                lineHeight: 1,
-                padding: '0 2px',
-                fontFamily: 'monospace',
-              }}
-            >
-              x
-            </button>
-          </div>
-
-          {/* Current status badge */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span
-              style={{
-                fontFamily: 'monospace',
-                fontSize: 10,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                color: statusColor,
-                background: `${statusColor}1a`,
-                border: `1px solid ${statusColor}40`,
-                padding: '3px 8px',
-                borderRadius: 3,
-              }}
-            >
-              {STATUS_LABELS[currentStatus]}
-            </span>
-            {statusPending && (
-              <span
+              <h2
                 style={{
-                  fontFamily: 'monospace',
-                  fontSize: 10,
-                  color: '#555',
+                  fontFamily: T.font,
+                  fontWeight: 600,
+                  fontSize: 22,
+                  color: T.textPrimary,
+                  margin: 0,
+                  lineHeight: 1.2,
+                  flex: 1,
+                  letterSpacing: '-0.02em',
                 }}
               >
-                guardando...
+                {lead.name}
+              </h2>
+
+              {/* Close button */}
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Cerrar"
+                className="ldm-close-btn"
+                style={{
+                  flexShrink: 0,
+                  width: 32,
+                  height: 32,
+                  borderRadius: '50%',
+                  background: T.surface3,
+                  border: 'none',
+                  color: T.textSecondary,
+                  fontSize: 16,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  lineHeight: 1,
+                  transition: 'background 0.15s',
+                  fontFamily: T.font,
+                }}
+              >
+                &#x2715;
+              </button>
+            </div>
+
+            {/* Status badge + pending indicator */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span
+                style={{
+                  fontFamily: T.font,
+                  fontSize: 12,
+                  fontWeight: 500,
+                  letterSpacing: '-0.01em',
+                  color: statusColor,
+                  background: `${statusColor}26`,
+                  padding: '4px 12px',
+                  borderRadius: 20,
+                }}
+              >
+                {STATUS_LABELS[currentStatus]}
               </span>
+              {statusPending && (
+                <span
+                  style={{
+                    fontFamily: T.font,
+                    fontSize: 12,
+                    color: T.textTertiary,
+                  }}
+                >
+                  Guardando...
+                </span>
+              )}
+            </div>
+
+            {/* Global error */}
+            {globalError && (
+              <div
+                style={{
+                  marginTop: 12,
+                  fontFamily: T.font,
+                  fontSize: 13,
+                  color: T.accentRed,
+                  background: 'rgba(255,69,58,0.1)',
+                  border: `1px solid rgba(255,69,58,0.2)`,
+                  borderRadius: 8,
+                  padding: '8px 12px',
+                }}
+              >
+                {globalError}
+              </div>
             )}
           </div>
 
-          {/* Global error */}
-          {globalError && (
-            <div
-              style={{
-                marginTop: 10,
-                fontFamily: 'monospace',
-                fontSize: 11,
-                color: '#e8341a',
-              }}
-            >
-              {globalError}
-            </div>
-          )}
-        </div>
+          {/* ---------------------------------------------------------------- */}
+          {/* Section 1 — Info basica                                          */}
+          {/* ---------------------------------------------------------------- */}
+          <div style={{ padding: '20px 24px' }}>
+            <InfoGrid>
+              <InfoCell label="Email" value={lead.email} />
+              <InfoCell label="Telefono" value={lead.phone} />
+              <InfoCell label="Empresa" value={lead.company} />
+              <InfoCell label="Fuente" value={lead.source} />
+              <InfoCell label="Presupuesto" value={lead.budget_range} />
+              <InfoCell label="Tipo de proyecto" value={lead.project_type} />
+              <InfoCell
+                label="Creado"
+                value={formatDateTime(lead.created_at)}
+              />
+              <InfoCell
+                label="Ultimo contacto"
+                value={
+                  lead.last_contacted_at
+                    ? formatDate(lead.last_contacted_at)
+                    : null
+                }
+              />
+              <InfoCell
+                label="Cierre estimado"
+                value={
+                  lead.expected_close_date
+                    ? formatDate(lead.expected_close_date)
+                    : null
+                }
+              />
+            </InfoGrid>
 
-        {/* ----------------------------------------------------------------- */}
-        {/* Scrollable body                                                    */}
-        {/* ----------------------------------------------------------------- */}
-        <div style={{ flex: 1, padding: '20px 24px', overflow: 'auto' }}>
-
-          {/* ------ Contact info ------------------------------------------ */}
-          <section style={{ marginBottom: 24 }}>
-            <SectionLabel>Contacto</SectionLabel>
-            <InfoRow label="Email" value={lead.email} />
-            <InfoRow label="Telefono" value={lead.phone} />
-            <InfoRow label="Empresa" value={lead.company} />
-            <InfoRow label="Fuente" value={lead.source} />
-            <InfoRow
-              label="Ultimo contacto"
-              value={
-                lead.last_contacted_at
-                  ? formatDate(lead.last_contacted_at)
-                  : null
-              }
-            />
-            <InfoRow
-              label="Creado"
-              value={formatDateTime(lead.created_at)}
-            />
-          </section>
-
-          {/* ------ Details ----------------------------------------------- */}
-          <section style={{ marginBottom: 24 }}>
-            <SectionLabel>Proyecto</SectionLabel>
-            <InfoRow label="Tipo de proyecto" value={lead.project_type} />
-            <InfoRow label="Presupuesto" value={lead.budget_range} />
-            <InfoRow
-              label="Cierre estimado"
-              value={
-                lead.expected_close_date
-                  ? formatDate(lead.expected_close_date)
-                  : null
-              }
-            />
             {lead.notes && (
-              <div style={{ marginTop: 8 }}>
-                <div
+              <div style={{ marginTop: 16 }}>
+                <span
                   style={{
-                    fontFamily: 'monospace',
+                    fontFamily: T.font,
                     fontSize: 11,
-                    color: '#555',
-                    marginBottom: 6,
+                    fontWeight: 500,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    color: T.textSecondary,
+                    display: 'block',
+                    marginBottom: 8,
                   }}
                 >
                   Notas
-                </div>
+                </span>
                 <div
                   style={{
-                    fontFamily: 'monospace',
-                    fontSize: 12,
-                    color: '#e8e8e8',
-                    background: '#111',
-                    border: '1px solid #1a1a1a',
-                    borderRadius: 4,
-                    padding: '10px 12px',
+                    fontFamily: T.font,
+                    fontSize: 14,
+                    color: T.textPrimary,
+                    background: T.surface2,
+                    border: `1px solid ${T.border}`,
+                    borderRadius: 8,
+                    padding: '10px 14px',
                     whiteSpace: 'pre-wrap',
                     lineHeight: 1.6,
                   }}
@@ -548,12 +616,15 @@ export default function LeadDetailModal({
                 </div>
               </div>
             )}
-          </section>
+          </div>
 
-          {/* ------ Status pills ------------------------------------------ */}
-          <section style={{ marginBottom: 24 }}>
-            <SectionLabel>Cambiar estado</SectionLabel>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {/* ---------------------------------------------------------------- */}
+          {/* Section 2 — Cambiar estado                                       */}
+          {/* ---------------------------------------------------------------- */}
+          <SectionDivider />
+          <div style={{ padding: '20px 24px' }}>
+            <SectionHeader>Cambiar estado</SectionHeader>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {ALL_STATUSES.map((s) => {
                 const active = s === currentStatus
                 const color = STATUS_COLORS[s]
@@ -564,18 +635,22 @@ export default function LeadDetailModal({
                     onClick={() => handleStatusClick(s)}
                     disabled={statusPending}
                     style={{
-                      fontFamily: 'monospace',
-                      fontSize: 10,
-                      letterSpacing: '0.1em',
-                      textTransform: 'uppercase',
-                      color: active ? color : '#555',
-                      background: active ? `${color}20` : 'transparent',
-                      border: `1px solid ${active ? color : '#2a2a2a'}`,
-                      borderRadius: 3,
-                      padding: '4px 10px',
+                      fontFamily: T.font,
+                      fontSize: 12,
+                      fontWeight: 500,
+                      letterSpacing: '-0.01em',
+                      color: color,
+                      background: active
+                        ? `${color}4D`
+                        : `${color}26`,
+                      border: active
+                        ? `1px solid ${color}`
+                        : '1px solid transparent',
+                      borderRadius: 20,
+                      padding: '5px 14px',
                       cursor: statusPending ? 'not-allowed' : 'pointer',
                       transition: 'all 0.15s',
-                      opacity: statusPending ? 0.5 : 1,
+                      opacity: statusPending && !active ? 0.5 : 1,
                     }}
                   >
                     {STATUS_LABELS[s]}
@@ -583,144 +658,41 @@ export default function LeadDetailModal({
                 )
               })}
             </div>
-          </section>
+          </div>
 
-          {/* ------ Activity log ------------------------------------------ */}
-          <section style={{ marginBottom: 24 }}>
-            <SectionLabel>Actividad</SectionLabel>
-            {activitiesLoading ? (
-              <div
-                style={{
-                  fontFamily: 'monospace',
-                  fontSize: 11,
-                  color: '#555',
-                  paddingTop: 4,
-                }}
-              >
-                Cargando...
-              </div>
-            ) : activities.length === 0 ? (
-              <div
-                style={{
-                  fontFamily: 'monospace',
-                  fontSize: 11,
-                  color: '#444',
-                  paddingTop: 4,
-                }}
-              >
-                Sin actividad registrada.
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {activities.map((act) => (
-                  <div
-                    key={act.id}
+          {/* ---------------------------------------------------------------- */}
+          {/* Section 3 — Agregar nota / actividad                             */}
+          {/* ---------------------------------------------------------------- */}
+          <SectionDivider />
+          <div style={{ padding: '20px 24px' }}>
+            <SectionHeader>Agregar actividad</SectionHeader>
+
+            {/* Activity type selector */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+              {ACTIVITY_TYPES.map((t) => {
+                const active = activityType === t
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setActivityType(t)}
                     style={{
-                      display: 'flex',
-                      gap: 10,
-                      padding: '8px 0',
-                      borderBottom: '1px solid #111',
-                      alignItems: 'flex-start',
+                      fontFamily: T.font,
+                      fontSize: 12,
+                      fontWeight: 500,
+                      color: active ? T.textPrimary : T.textSecondary,
+                      background: active ? T.surface3 : 'transparent',
+                      border: `1px solid ${active ? T.surface3Hover : T.border}`,
+                      borderRadius: 20,
+                      padding: '4px 12px',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s',
                     }}
                   >
-                    {/* Icon */}
-                    <div
-                      style={{
-                        flexShrink: 0,
-                        width: 22,
-                        height: 22,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        background: '#111',
-                        border: '1px solid #1a1a1a',
-                        borderRadius: 3,
-                        fontFamily: 'monospace',
-                        fontSize: 10,
-                        color: '#555',
-                        userSelect: 'none',
-                      }}
-                    >
-                      {ACTIVITY_TYPE_ICONS[act.type]}
-                    </div>
-
-                    {/* Body */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 8,
-                          marginBottom: 3,
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontFamily: 'monospace',
-                            fontSize: 10,
-                            color: '#555',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.08em',
-                          }}
-                        >
-                          {ACTIVITY_TYPE_LABELS[act.type]}
-                        </span>
-                        <span
-                          style={{
-                            fontFamily: 'monospace',
-                            fontSize: 10,
-                            color: '#333',
-                          }}
-                        >
-                          {formatDateTime(act.created_at)}
-                        </span>
-                      </div>
-                      <p
-                        style={{
-                          margin: 0,
-                          fontFamily: 'monospace',
-                          fontSize: 12,
-                          color: '#e8e8e8',
-                          lineHeight: 1.5,
-                          wordBreak: 'break-word',
-                        }}
-                      >
-                        {act.content}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* ------ Add activity form ------------------------------------- */}
-          <section style={{ marginBottom: 28 }}>
-            <SectionLabel>Agregar actividad</SectionLabel>
-
-            {/* Type selector */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 10 }}>
-              {ACTIVITY_TYPES.map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setActivityType(t)}
-                  style={{
-                    fontFamily: 'monospace',
-                    fontSize: 10,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    color: activityType === t ? '#e8e8e8' : '#555',
-                    background: activityType === t ? '#1a1a1a' : 'transparent',
-                    border: `1px solid ${activityType === t ? '#2a2a2a' : '#1a1a1a'}`,
-                    borderRadius: 3,
-                    padding: '3px 8px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {ACTIVITY_TYPE_LABELS[t]}
-                </button>
-              ))}
+                    {ACTIVITY_TYPE_LABELS[t]}
+                  </button>
+                )
+              })}
             </div>
 
             {/* Textarea */}
@@ -729,29 +701,32 @@ export default function LeadDetailModal({
               onChange={(e) => setActivityContent(e.target.value)}
               placeholder="Describe la actividad..."
               rows={3}
+              className="ldm-textarea"
               style={{
                 width: '100%',
                 boxSizing: 'border-box',
-                background: '#0d0d0d',
-                border: '1px solid #1a1a1a',
-                borderRadius: 4,
-                color: '#e8e8e8',
-                fontFamily: 'monospace',
-                fontSize: 12,
-                padding: '8px 10px',
-                resize: 'vertical',
+                background: T.surface2,
+                border: `1px solid rgba(255,255,255,0.1)`,
+                borderRadius: 8,
+                color: T.textPrimary,
+                fontFamily: T.font,
+                fontSize: 14,
+                padding: '10px 12px',
+                resize: 'none',
                 outline: 'none',
                 marginBottom: 8,
+                lineHeight: 1.5,
+                transition: 'border-color 0.15s',
               }}
             />
 
             {activityError && (
               <div
                 style={{
-                  fontFamily: 'monospace',
-                  fontSize: 11,
-                  color: '#e8341a',
-                  marginBottom: 8,
+                  fontFamily: T.font,
+                  fontSize: 13,
+                  color: T.accentRed,
+                  marginBottom: 10,
                 }}
               >
                 {activityError}
@@ -762,27 +737,148 @@ export default function LeadDetailModal({
               type="button"
               onClick={handleAddActivity}
               disabled={activityPending}
+              className="ldm-save-btn"
               style={{
-                fontFamily: 'monospace',
-                fontSize: 11,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                color: activityPending ? '#444' : '#e8e8e8',
-                background: '#1a1a1a',
-                border: '1px solid #2a2a2a',
-                borderRadius: 3,
-                padding: '6px 14px',
+                fontFamily: T.font,
+                fontSize: 13,
+                fontWeight: 500,
+                color: '#ffffff',
+                background: T.accent,
+                border: 'none',
+                borderRadius: 8,
+                padding: '8px 18px',
                 cursor: activityPending ? 'not-allowed' : 'pointer',
+                opacity: activityPending ? 0.6 : 1,
+                transition: 'background 0.15s, opacity 0.15s',
               }}
             >
-              {activityPending ? 'Guardando...' : 'Guardar actividad'}
+              {activityPending ? 'Guardando...' : 'Guardar nota'}
             </button>
-          </section>
+          </div>
 
-          {/* ------ Actions ----------------------------------------------- */}
-          <section>
-            <SectionLabel>Acciones</SectionLabel>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {/* ---------------------------------------------------------------- */}
+          {/* Section 4 — Feed de actividad                                    */}
+          {/* ---------------------------------------------------------------- */}
+          <SectionDivider />
+          <div style={{ padding: '20px 24px' }}>
+            <SectionHeader>Actividad</SectionHeader>
+
+            {activitiesLoading ? (
+              <p
+                style={{
+                  fontFamily: T.font,
+                  fontSize: 13,
+                  color: T.textTertiary,
+                  margin: 0,
+                }}
+              >
+                Cargando...
+              </p>
+            ) : activities.length === 0 ? (
+              <p
+                style={{
+                  fontFamily: T.font,
+                  fontSize: 13,
+                  color: T.textTertiary,
+                  margin: 0,
+                }}
+              >
+                Sin actividad registrada.
+              </p>
+            ) : (
+              <div
+                style={{
+                  position: 'relative',
+                  paddingLeft: 20,
+                }}
+              >
+                {/* Vertical timeline line */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: 3,
+                    top: 8,
+                    bottom: 8,
+                    width: 1,
+                    background: T.surface3,
+                  }}
+                />
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                  {activities.map((act) => (
+                    <div
+                      key={act.id}
+                      style={{
+                        position: 'relative',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 3,
+                      }}
+                    >
+                      {/* Timeline dot */}
+                      <div
+                        style={{
+                          position: 'absolute',
+                          left: -21,
+                          top: 4,
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          background: T.surface3Hover,
+                          flexShrink: 0,
+                        }}
+                      />
+
+                      {/* Date */}
+                      <span
+                        style={{
+                          fontFamily: T.font,
+                          fontSize: 11,
+                          color: T.textTertiary,
+                        }}
+                      >
+                        {formatDateTime(act.created_at)}
+                      </span>
+
+                      {/* Type label */}
+                      <span
+                        style={{
+                          fontFamily: T.font,
+                          fontSize: 12,
+                          color: T.textSecondary,
+                          fontWeight: 500,
+                        }}
+                      >
+                        {ACTIVITY_TYPE_LABELS[act.type]}
+                      </span>
+
+                      {/* Content */}
+                      <p
+                        style={{
+                          margin: 0,
+                          fontFamily: T.font,
+                          fontSize: 13,
+                          color: T.textPrimary,
+                          lineHeight: 1.5,
+                          wordBreak: 'break-word',
+                        }}
+                      >
+                        {act.content}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ---------------------------------------------------------------- */}
+          {/* Section 5 — Acciones peligrosas                                  */}
+          {/* ---------------------------------------------------------------- */}
+          <SectionDivider />
+          <div style={{ padding: '20px 24px' }}>
+            <SectionHeader>Acciones</SectionHeader>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
               {/* Convert to client */}
               {!lead.converted_to_client_id && (
@@ -792,15 +888,15 @@ export default function LeadDetailModal({
                       style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 8,
+                        gap: 10,
                         flexWrap: 'wrap',
                       }}
                     >
                       <span
                         style={{
-                          fontFamily: 'monospace',
-                          fontSize: 11,
-                          color: '#e8e8e8',
+                          fontFamily: T.font,
+                          fontSize: 13,
+                          color: T.textPrimary,
                         }}
                       >
                         Confirmar conversion a cliente?
@@ -809,17 +905,19 @@ export default function LeadDetailModal({
                         type="button"
                         onClick={handleConvert}
                         disabled={convertPending}
+                        className="ldm-convert-btn"
                         style={{
-                          fontFamily: 'monospace',
-                          fontSize: 11,
-                          letterSpacing: '0.08em',
-                          textTransform: 'uppercase',
-                          color: convertPending ? '#444' : '#10b981',
-                          background: 'transparent',
-                          border: '1px solid #10b981',
-                          borderRadius: 3,
-                          padding: '4px 10px',
+                          fontFamily: T.font,
+                          fontSize: 13,
+                          fontWeight: 500,
+                          color: T.accentGreen,
+                          background: 'rgba(48,209,88,0.1)',
+                          border: `1px solid rgba(48,209,88,0.4)`,
+                          borderRadius: 8,
+                          padding: '6px 14px',
                           cursor: convertPending ? 'not-allowed' : 'pointer',
+                          opacity: convertPending ? 0.6 : 1,
+                          transition: 'background 0.15s',
                         }}
                       >
                         {convertPending ? 'Procesando...' : 'Confirmar'}
@@ -828,15 +926,17 @@ export default function LeadDetailModal({
                         type="button"
                         onClick={() => setConvertConfirm(false)}
                         disabled={convertPending}
+                        className="ldm-cancel-btn"
                         style={{
-                          fontFamily: 'monospace',
-                          fontSize: 11,
-                          color: '#555',
+                          fontFamily: T.font,
+                          fontSize: 13,
+                          color: T.textSecondary,
                           background: 'transparent',
-                          border: '1px solid #2a2a2a',
-                          borderRadius: 3,
-                          padding: '4px 10px',
+                          border: `1px solid ${T.border}`,
+                          borderRadius: 8,
+                          padding: '6px 14px',
                           cursor: 'pointer',
+                          transition: 'background 0.15s',
                         }}
                       >
                         Cancelar
@@ -846,17 +946,18 @@ export default function LeadDetailModal({
                     <button
                       type="button"
                       onClick={handleConvert}
+                      className="ldm-convert-btn"
                       style={{
-                        fontFamily: 'monospace',
-                        fontSize: 11,
-                        letterSpacing: '0.08em',
-                        textTransform: 'uppercase',
-                        color: '#10b981',
-                        background: 'transparent',
-                        border: '1px solid #10b98150',
-                        borderRadius: 3,
-                        padding: '6px 14px',
+                        fontFamily: T.font,
+                        fontSize: 13,
+                        fontWeight: 500,
+                        color: T.accentGreen,
+                        background: 'rgba(48,209,88,0.08)',
+                        border: `1px solid rgba(48,209,88,0.25)`,
+                        borderRadius: 8,
+                        padding: '7px 16px',
                         cursor: 'pointer',
+                        transition: 'background 0.15s',
                       }}
                     >
                       Convertir a cliente
@@ -866,16 +967,16 @@ export default function LeadDetailModal({
               )}
 
               {lead.converted_to_client_id && (
-                <div
+                <p
                   style={{
-                    fontFamily: 'monospace',
-                    fontSize: 11,
-                    color: '#10b981',
-                    padding: '6px 0',
+                    fontFamily: T.font,
+                    fontSize: 13,
+                    color: T.accentGreen,
+                    margin: 0,
                   }}
                 >
                   Lead convertido a cliente.
-                </div>
+                </p>
               )}
 
               {/* Delete lead */}
@@ -885,15 +986,15 @@ export default function LeadDetailModal({
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 8,
+                      gap: 10,
                       flexWrap: 'wrap',
                     }}
                   >
                     <span
                       style={{
-                        fontFamily: 'monospace',
-                        fontSize: 11,
-                        color: '#e8e8e8',
+                        fontFamily: T.font,
+                        fontSize: 13,
+                        color: T.textPrimary,
                       }}
                     >
                       Eliminar este lead definitivamente?
@@ -902,17 +1003,19 @@ export default function LeadDetailModal({
                       type="button"
                       onClick={handleDelete}
                       disabled={deletePending}
+                      className="ldm-delete-btn"
                       style={{
-                        fontFamily: 'monospace',
-                        fontSize: 11,
-                        letterSpacing: '0.08em',
-                        textTransform: 'uppercase',
-                        color: deletePending ? '#444' : '#e8341a',
-                        background: 'transparent',
-                        border: '1px solid #e8341a',
-                        borderRadius: 3,
-                        padding: '4px 10px',
+                        fontFamily: T.font,
+                        fontSize: 13,
+                        fontWeight: 500,
+                        color: T.accentRed,
+                        background: 'rgba(255,69,58,0.08)',
+                        border: `1px solid ${T.accentRed}`,
+                        borderRadius: 8,
+                        padding: '6px 14px',
                         cursor: deletePending ? 'not-allowed' : 'pointer',
+                        opacity: deletePending ? 0.6 : 1,
+                        transition: 'background 0.15s',
                       }}
                     >
                       {deletePending ? 'Eliminando...' : 'Eliminar'}
@@ -921,15 +1024,17 @@ export default function LeadDetailModal({
                       type="button"
                       onClick={() => setDeleteConfirm(false)}
                       disabled={deletePending}
+                      className="ldm-cancel-btn"
                       style={{
-                        fontFamily: 'monospace',
-                        fontSize: 11,
-                        color: '#555',
+                        fontFamily: T.font,
+                        fontSize: 13,
+                        color: T.textSecondary,
                         background: 'transparent',
-                        border: '1px solid #2a2a2a',
-                        borderRadius: 3,
-                        padding: '4px 10px',
+                        border: `1px solid ${T.border}`,
+                        borderRadius: 8,
+                        padding: '6px 14px',
                         cursor: 'pointer',
+                        transition: 'background 0.15s',
                       }}
                     >
                       Cancelar
@@ -939,17 +1044,18 @@ export default function LeadDetailModal({
                   <button
                     type="button"
                     onClick={handleDelete}
+                    className="ldm-delete-btn"
                     style={{
-                      fontFamily: 'monospace',
-                      fontSize: 11,
-                      letterSpacing: '0.08em',
-                      textTransform: 'uppercase',
-                      color: '#e8341a',
+                      fontFamily: T.font,
+                      fontSize: 13,
+                      fontWeight: 500,
+                      color: T.accentRed,
                       background: 'transparent',
-                      border: '1px solid #e8341a50',
-                      borderRadius: 3,
-                      padding: '6px 14px',
+                      border: `1px solid rgba(255,69,58,0.3)`,
+                      borderRadius: 8,
+                      padding: '7px 16px',
                       cursor: 'pointer',
+                      transition: 'background 0.15s',
                     }}
                   >
                     Eliminar lead
@@ -957,12 +1063,12 @@ export default function LeadDetailModal({
                 )}
               </div>
             </div>
-          </section>
+          </div>
 
           {/* Bottom spacer */}
-          <div style={{ height: 32 }} />
+          <div style={{ height: 32, flexShrink: 0 }} />
         </div>
       </div>
-    </div>
+    </>
   )
 }

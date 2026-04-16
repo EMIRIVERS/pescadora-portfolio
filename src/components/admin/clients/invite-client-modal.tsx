@@ -3,7 +3,7 @@
 import { useState, useTransition, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { inviteClient } from '../../../../app/actions/invite-client'
-import { X, Loader2 } from 'lucide-react'
+import { X, Loader2, CheckCircle2 } from 'lucide-react'
 
 interface Props {
   onClose: () => void
@@ -25,13 +25,13 @@ function validate(values: FormValues): FormErrors {
   const errors: FormErrors = {}
 
   if (!values.name.trim()) {
-    errors.name = 'Name is required.'
+    errors.name = 'El nombre es obligatorio.'
   }
 
   if (!values.email.trim()) {
-    errors.email = 'Email is required.'
+    errors.email = 'El email es obligatorio.'
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) {
-    errors.email = 'Enter a valid email address.'
+    errors.email = 'Introduce una direccion de email valida.'
   }
 
   return errors
@@ -41,6 +41,98 @@ const DEFAULT_VALUES: FormValues = {
   name: '',
   email: '',
   company: '',
+}
+
+const SF = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+
+interface LabeledFieldProps {
+  id: string
+  label: string
+  required?: boolean
+  name: keyof FormValues
+  type: string
+  value: string
+  placeholder: string
+  disabled: boolean
+  error?: string
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+}
+
+function LabeledField({
+  id,
+  label,
+  required,
+  name,
+  type,
+  value,
+  placeholder,
+  disabled,
+  error,
+  onChange,
+}: LabeledFieldProps) {
+  const [focused, setFocused] = useState(false)
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label
+        htmlFor={id}
+        style={{
+          fontFamily: SF,
+          fontSize: '12px',
+          fontWeight: 500,
+          color: '#86868B',
+          letterSpacing: '0.01em',
+        }}
+      >
+        {label}
+        {required && (
+          <span style={{ color: '#FF453A', marginLeft: '3px' }}>*</span>
+        )}
+      </label>
+      <input
+        id={id}
+        name={name}
+        type={type}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        autoComplete="off"
+        placeholder={placeholder}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        style={{
+          fontFamily: SF,
+          fontSize: '15px',
+          color: '#F5F5F7',
+          backgroundColor: '#2C2C2E',
+          border: focused
+            ? '1px solid rgba(0,113,227,0.7)'
+            : error
+            ? '1px solid rgba(255,69,58,0.6)'
+            : '1px solid rgba(255,255,255,0.08)',
+          borderRadius: '10px',
+          padding: '10px 14px',
+          outline: 'none',
+          width: '100%',
+          transition: 'border-color 0.15s ease',
+          opacity: disabled ? 0.5 : 1,
+          boxShadow: focused ? '0 0 0 3px rgba(0,113,227,0.12)' : 'none',
+        }}
+      />
+      {error && (
+        <p
+          style={{
+            fontFamily: SF,
+            fontSize: '12px',
+            color: '#FF453A',
+            marginTop: '2px',
+          }}
+        >
+          {error}
+        </p>
+      )}
+    </div>
+  )
 }
 
 export function InviteClientModal({ onClose }: Props) {
@@ -126,145 +218,285 @@ export function InviteClientModal({ onClose }: Props) {
     <div
       ref={overlayRef}
       onClick={handleOverlayClick}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 50,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(0,0,0,0.65)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        padding: '16px',
+      }}
       aria-modal="true"
       role="dialog"
-      aria-label="Invite client"
+      aria-label="Invitar cliente"
     >
-      <div className="relative w-full max-w-md mx-4 bg-[#0d0d0d] border border-[#2a2a2a] rounded-sm shadow-2xl">
+      <div
+        style={{
+          position: 'relative',
+          width: '100%',
+          maxWidth: '460px',
+          backgroundColor: '#1C1C1E',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: '20px',
+          boxShadow:
+            '0 32px 80px rgba(0,0,0,0.6), 0 8px 24px rgba(0,0,0,0.4)',
+          overflow: 'hidden',
+        }}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-[#1a1a1a]">
-          <h2 className="text-xs font-mono tracking-[0.2em] uppercase text-[#e8e8e8]">
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '20px 24px',
+            borderBottom: '1px solid rgba(255,255,255,0.06)',
+          }}
+        >
+          <h2
+            style={{
+              fontFamily: SF,
+              fontSize: '17px',
+              fontWeight: 600,
+              color: '#F5F5F7',
+              margin: 0,
+              letterSpacing: '-0.01em',
+            }}
+          >
             Invitar cliente
           </h2>
           <button
             type="button"
             onClick={onClose}
             disabled={isPending}
-            className="p-1.5 rounded-sm text-[#555] hover:text-[#aaa] hover:bg-[#1a1a1a] transition-colors disabled:opacity-50"
-            aria-label="Close"
+            aria-label="Cerrar"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '28px',
+              height: '28px',
+              borderRadius: '50%',
+              border: 'none',
+              backgroundColor: 'rgba(255,255,255,0.08)',
+              color: '#86868B',
+              cursor: isPending ? 'not-allowed' : 'pointer',
+              opacity: isPending ? 0.5 : 1,
+              transition: 'background-color 0.15s ease',
+              flexShrink: 0,
+            }}
+            onMouseEnter={(e) => {
+              if (!isPending) {
+                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.14)'
+                e.currentTarget.style.color = '#F5F5F7'
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'
+              e.currentTarget.style.color = '#86868B'
+            }}
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5" strokeWidth={2.5} />
           </button>
         </div>
 
         {/* Body */}
-        <div className="px-6 py-6">
+        <div style={{ padding: '24px' }}>
           {successEmail ? (
-            <div className="space-y-4">
-              <div className="rounded-sm bg-emerald-950/30 border border-emerald-900/40 px-4 py-4">
-                <p className="text-xs font-mono text-emerald-400 leading-relaxed">
-                  Invitacion enviada a{' '}
-                  <span className="text-emerald-300">{successEmail}</span>
-                </p>
-                <p className="text-[10px] font-mono text-[#555] mt-1.5">
-                  El cliente recibira un enlace para acceder al portal.
-                </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '28px 20px',
+                  backgroundColor: 'rgba(52,199,89,0.08)',
+                  border: '1px solid rgba(52,199,89,0.2)',
+                  borderRadius: '12px',
+                  textAlign: 'center',
+                }}
+              >
+                <CheckCircle2
+                  className="w-8 h-8"
+                  style={{ color: '#34C759' }}
+                  strokeWidth={1.5}
+                />
+                <div>
+                  <p
+                    style={{
+                      fontFamily: SF,
+                      fontSize: '15px',
+                      fontWeight: 600,
+                      color: '#F5F5F7',
+                      marginBottom: '4px',
+                    }}
+                  >
+                    Invitacion enviada
+                  </p>
+                  <p
+                    style={{
+                      fontFamily: SF,
+                      fontSize: '13px',
+                      color: '#86868B',
+                    }}
+                  >
+                    {successEmail}
+                  </p>
+                  <p
+                    style={{
+                      fontFamily: SF,
+                      fontSize: '13px',
+                      color: '#48484A',
+                      marginTop: '6px',
+                    }}
+                  >
+                    El cliente recibira un enlace para acceder al portal.
+                  </p>
+                </div>
               </div>
-              <div className="flex justify-end">
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 text-xs font-mono tracking-[0.1em] rounded-sm bg-[#1a1a1a] hover:bg-[#222] text-[#aaa] hover:text-[#e8e8e8] border border-[#2a2a2a] transition-colors"
+                  style={{
+                    fontFamily: SF,
+                    fontSize: '15px',
+                    fontWeight: 500,
+                    color: '#0071E3',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '8px 16px',
+                  }}
                 >
                   Cerrar
                 </button>
               </div>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} noValidate className="space-y-5">
+            <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               {errors.general && (
-                <div className="rounded-sm bg-red-950/30 border border-red-900/40 px-4 py-3 text-xs font-mono text-red-400">
+                <div
+                  style={{
+                    backgroundColor: 'rgba(255,69,58,0.08)',
+                    border: '1px solid rgba(255,69,58,0.2)',
+                    borderRadius: '10px',
+                    padding: '12px 14px',
+                    fontFamily: SF,
+                    fontSize: '13px',
+                    color: '#FF453A',
+                  }}
+                >
                   {errors.general}
                 </div>
               )}
 
-              {/* Name */}
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="ic-name"
-                  className="block text-[10px] font-mono tracking-[0.15em] uppercase text-[#555]"
-                >
-                  Nombre <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="ic-name"
-                  name="name"
-                  type="text"
-                  value={values.name}
-                  onChange={handleChange}
-                  disabled={isPending}
-                  autoComplete="off"
-                  className="w-full rounded-sm bg-[#111] border border-[#2a2a2a] px-3 py-2.5 text-sm font-mono text-[#e8e8e8] placeholder-[#333] focus:outline-none focus:border-[#555] focus:ring-1 focus:ring-[#555]/30 disabled:opacity-50 transition-colors"
-                  placeholder="Ana Garcia"
-                />
-                {errors.name && (
-                  <p className="text-[10px] font-mono text-red-400">{errors.name}</p>
-                )}
-              </div>
+              <LabeledField
+                id="ic-name"
+                label="Nombre"
+                required
+                name="name"
+                type="text"
+                value={values.name}
+                placeholder="Ana Garcia"
+                disabled={isPending}
+                error={errors.name}
+                onChange={handleChange}
+              />
 
-              {/* Email */}
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="ic-email"
-                  className="block text-[10px] font-mono tracking-[0.15em] uppercase text-[#555]"
-                >
-                  Email <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="ic-email"
-                  name="email"
-                  type="email"
-                  value={values.email}
-                  onChange={handleChange}
-                  disabled={isPending}
-                  autoComplete="off"
-                  className="w-full rounded-sm bg-[#111] border border-[#2a2a2a] px-3 py-2.5 text-sm font-mono text-[#e8e8e8] placeholder-[#333] focus:outline-none focus:border-[#555] focus:ring-1 focus:ring-[#555]/30 disabled:opacity-50 transition-colors"
-                  placeholder="ana@cliente.com"
-                />
-                {errors.email && (
-                  <p className="text-[10px] font-mono text-red-400">{errors.email}</p>
-                )}
-              </div>
+              <LabeledField
+                id="ic-email"
+                label="Email"
+                required
+                name="email"
+                type="email"
+                value={values.email}
+                placeholder="ana@cliente.com"
+                disabled={isPending}
+                error={errors.email}
+                onChange={handleChange}
+              />
 
-              {/* Company */}
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="ic-company"
-                  className="block text-[10px] font-mono tracking-[0.15em] uppercase text-[#555]"
-                >
-                  Empresa
-                </label>
-                <input
-                  id="ic-company"
-                  name="company"
-                  type="text"
-                  value={values.company}
-                  onChange={handleChange}
-                  disabled={isPending}
-                  autoComplete="off"
-                  className="w-full rounded-sm bg-[#111] border border-[#2a2a2a] px-3 py-2.5 text-sm font-mono text-[#e8e8e8] placeholder-[#333] focus:outline-none focus:border-[#555] focus:ring-1 focus:ring-[#555]/30 disabled:opacity-50 transition-colors"
-                  placeholder="Opcional"
-                />
-              </div>
+              <LabeledField
+                id="ic-company"
+                label="Empresa"
+                name="company"
+                type="text"
+                value={values.company}
+                placeholder="Opcional"
+                disabled={isPending}
+                onChange={handleChange}
+              />
 
               {/* Actions */}
-              <div className="flex items-center justify-end gap-3 pt-2">
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end',
+                  gap: '10px',
+                  paddingTop: '4px',
+                }}
+              >
                 <button
                   type="button"
                   onClick={onClose}
                   disabled={isPending}
-                  className="px-4 py-2 text-xs font-mono tracking-[0.1em] rounded-sm bg-[#111] hover:bg-[#1a1a1a] text-[#666] hover:text-[#aaa] border border-[#1a1a1a] hover:border-[#2a2a2a] transition-colors disabled:opacity-50"
+                  style={{
+                    fontFamily: SF,
+                    fontSize: '15px',
+                    fontWeight: 500,
+                    color: '#86868B',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    cursor: isPending ? 'not-allowed' : 'pointer',
+                    opacity: isPending ? 0.5 : 1,
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    transition: 'color 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isPending) e.currentTarget.style.color = '#F5F5F7'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = '#86868B'
+                  }}
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="flex items-center gap-2 px-4 py-2 text-xs font-mono tracking-[0.1em] uppercase rounded-sm bg-[#e8e8e8] hover:bg-white text-[#0d0d0d] font-medium transition-colors disabled:opacity-50"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    fontFamily: SF,
+                    fontSize: '15px',
+                    fontWeight: 500,
+                    color: '#ffffff',
+                    backgroundColor: isPending ? '#0058b3' : '#0071E3',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '9px 20px',
+                    cursor: isPending ? 'not-allowed' : 'pointer',
+                    opacity: isPending ? 0.8 : 1,
+                    transition: 'background-color 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isPending) e.currentTarget.style.backgroundColor = '#0077ED'
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isPending) e.currentTarget.style.backgroundColor = '#0071E3'
+                  }}
                 >
-                  {isPending && <Loader2 className="w-3 h-3 animate-spin" />}
-                  Enviar invitacion
+                  {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {isPending ? 'Enviando...' : 'Enviar invitacion'}
                 </button>
               </div>
             </form>

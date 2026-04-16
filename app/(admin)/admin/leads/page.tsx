@@ -34,17 +34,52 @@ export default async function AdminLeadsPage() {
   const total = leads.length
 
   return (
-    <div className="min-h-screen bg-[#0d0d0d]">
-      <div className="px-8 py-10 max-w-[1400px] w-full">
-
+    <div
+      style={{
+        minHeight: '100vh',
+        backgroundColor: '#000000',
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: '1400px',
+          width: '100%',
+          padding: '48px 40px 64px',
+        }}
+      >
         {/* Page header */}
-        <div className="flex items-start justify-between mb-10">
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            marginBottom: '40px',
+          }}
+        >
           <div>
-            <h1 className="text-lg font-mono tracking-[0.2em] text-[#e8e8e8] uppercase">
-              OUTBOUND
+            <h1
+              style={{
+                fontSize: '28px',
+                fontWeight: 600,
+                color: '#F5F5F7',
+                letterSpacing: '-0.02em',
+                lineHeight: 1.1,
+                margin: 0,
+              }}
+            >
+              Pipeline de Leads
             </h1>
-            <p className="mt-1 text-xs font-mono text-[#555] tracking-wide">
-              Pipeline de ventas
+            <p
+              style={{
+                marginTop: '8px',
+                fontSize: '14px',
+                fontWeight: 400,
+                color: '#86868B',
+                lineHeight: 1.5,
+              }}
+            >
+              Gestiona y da seguimiento a los prospectos del proyecto.
             </p>
           </div>
 
@@ -54,15 +89,43 @@ export default async function AdminLeadsPage() {
           */}
           <Link
             href="/admin/leads?showAdd=1"
-            className="flex items-center gap-2 px-4 py-2 bg-[#e8341a] text-white text-xs font-mono tracking-[0.2em] uppercase rounded-sm hover:bg-[#cc2d15] transition-colors"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '10px 20px',
+              backgroundColor: '#0071E3',
+              color: '#FFFFFF',
+              fontSize: '14px',
+              fontWeight: 500,
+              letterSpacing: '-0.01em',
+              borderRadius: '980px',
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+              transition: 'background-color 0.15s ease',
+            }}
           >
             Nuevo lead
           </Link>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 border border-red-900/40 bg-red-950/20 rounded-sm">
-            <p className="text-xs font-mono text-red-400/80">
+          <div
+            style={{
+              marginBottom: '24px',
+              padding: '16px 20px',
+              backgroundColor: '#1C0A0A',
+              border: '1px solid rgba(255, 69, 58, 0.25)',
+              borderRadius: '12px',
+            }}
+          >
+            <p
+              style={{
+                fontSize: '13px',
+                color: 'rgba(255, 69, 58, 0.85)',
+                margin: 0,
+              }}
+            >
               Error al cargar leads: {error.message}
             </p>
           </div>
@@ -73,7 +136,6 @@ export default async function AdminLeadsPage() {
 
         {/* Pipeline kanban board */}
         <LeadsPipeline leads={leads} />
-
       </div>
     </div>
   )

@@ -3,77 +3,102 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import type { ProjectStatus, ProjectWithClient, Client } from '@/lib/supabase/types'
 import { ProjectsFilterBar } from '@/components/admin/projects/projects-filter-bar'
 
-// ── Status badge config ───────────────────────────────────────────────────────
+// ── Design tokens ─────────────────────────────────────────────────────────────
 
-type BadgeConfig = {
+const T = {
+  bg:            '#000000',
+  surface1:      '#111111',
+  surface2:      '#1C1C1E',
+  surface3:      '#2C2C2E',
+  border:        'rgba(255,255,255,0.08)',
+  borderSubtle:  'rgba(255,255,255,0.04)',
+  borderHeader:  'rgba(255,255,255,0.06)',
+  textPrimary:   '#F5F5F7',
+  textSecondary: '#86868B',
+  textTertiary:  '#48484A',
+  accent:        '#0071E3',
+  font:          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+} as const
+
+// ── Status config ─────────────────────────────────────────────────────────────
+
+type StatusConfig = {
   label: string
-  classes: string
+  color: string
 }
 
-const STATUS_BADGE: Record<ProjectStatus, BadgeConfig> = {
-  pre_production: {
-    label: 'Pre-produccion',
-    classes: 'bg-[#1c1c1c] text-[#888] border border-[#2a2a2a]',
-  },
-  production: {
-    label: 'Produccion',
-    classes: 'bg-[#0d1a2e] text-[#6fa3e0] border border-[#1a3050]',
-  },
-  post_production: {
-    label: 'Post-produccion',
-    classes: 'bg-[#1a0d2e] text-[#a87fdc] border border-[#2e1a50]',
-  },
-  delivered: {
-    label: 'Entregado',
-    classes: 'bg-[#0d1e15] text-[#5dbf8a] border border-[#1a3828]',
-  },
+const STATUS_CONFIG: Record<ProjectStatus, StatusConfig> = {
+  pre_production:  { label: 'Pre-produccion',  color: '#FF9F0A' },
+  production:      { label: 'Produccion',       color: '#0071E3' },
+  post_production: { label: 'Post-produccion',  color: '#BF5AF2' },
+  delivered:       { label: 'Entregado',        color: '#30D158' },
 }
 
-function StatusBadge({ status }: { status: ProjectStatus }) {
-  const cfg = STATUS_BADGE[status]
+// ── Status pill ───────────────────────────────────────────────────────────────
+
+function StatusPill({ status }: { status: ProjectStatus }) {
+  const { label, color } = STATUS_CONFIG[status]
   return (
     <span
-      className={[
-        'inline-block px-2 py-0.5 rounded-sm text-[10px] font-mono tracking-wide',
-        cfg.classes,
-      ].join(' ')}
+      style={{
+        display: 'inline-block',
+        padding: '3px 10px',
+        borderRadius: '20px',
+        fontSize: '12px',
+        fontWeight: 600,
+        background: `${color}26`,
+        color,
+        fontFamily: T.font,
+        whiteSpace: 'nowrap',
+      }}
     >
-      {cfg.label}
+      {label}
     </span>
   )
 }
 
+// ── Date formatting ───────────────────────────────────────────────────────────
+
 function formatDate(iso: string | null): string {
   if (!iso) return '—'
   return new Date(iso).toLocaleDateString('es-MX', {
-    day: '2-digit',
+    day:   '2-digit',
     month: 'short',
-    year: 'numeric',
+    year:  'numeric',
   })
 }
 
-// ── Days remaining column ─────────────────────────────────────────────────────
+// ── Days remaining ────────────────────────────────────────────────────────────
 
 function DaysRemaining({ endDate }: { endDate: string | null }) {
-  if (!endDate) return <span className="text-[11px] font-mono text-[#333]">—</span>
+  if (!endDate) {
+    return (
+      <span style={{ fontSize: '12px', color: T.textTertiary, fontFamily: T.font }}>
+        —
+      </span>
+    )
+  }
 
   const now = new Date()
   now.setHours(0, 0, 0, 0)
   const end = new Date(endDate)
   end.setHours(0, 0, 0, 0)
-  const diffMs = end.getTime() - now.getTime()
-  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24))
+  const diffDays = Math.round((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
 
   if (diffDays < 0) {
-    return <span className="text-[11px] font-mono text-[#e8341a]">Vencido</span>
+    return (
+      <span style={{ fontSize: '12px', fontWeight: 600, color: '#FF453A', fontFamily: T.font }}>
+        Vencido
+      </span>
+    )
   }
 
-  let colorClass = 'text-[#5dbf8a]'
-  if (diffDays < 7) colorClass = 'text-[#e8341a]'
-  else if (diffDays < 14) colorClass = 'text-[#e8a11a]'
+  let color = '#30D158'
+  if (diffDays < 7)  color = '#FF453A'
+  else if (diffDays < 14) color = '#FF9F0A'
 
   return (
-    <span className={`text-[11px] font-mono ${colorClass}`}>
+    <span style={{ fontSize: '12px', fontWeight: 600, color, fontFamily: T.font }}>
       {diffDays}d
     </span>
   )
@@ -81,11 +106,11 @@ function DaysRemaining({ endDate }: { endDate: string | null }) {
 
 // ── Stats row config ──────────────────────────────────────────────────────────
 
-const STATUSES: { key: ProjectStatus; label: string; color: string }[] = [
-  { key: 'pre_production', label: 'Pre-produccion', color: '#555' },
-  { key: 'production',     label: 'En produccion',  color: '#4ade80' },
-  { key: 'post_production',label: 'Post-produccion', color: '#fbbf24' },
-  { key: 'delivered',      label: 'Entregados',      color: '#60a5fa' },
+const STAT_CARDS: { key: ProjectStatus; label: string }[] = [
+  { key: 'pre_production',  label: 'Pre-produccion'  },
+  { key: 'production',      label: 'En produccion'   },
+  { key: 'post_production', label: 'Post-produccion' },
+  { key: 'delivered',       label: 'Entregados'      },
 ]
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -97,31 +122,29 @@ interface PageProps {
 export default async function AdminProjectsPage({ searchParams }: PageProps) {
   const { q, status, client: clientFilter } = await searchParams
 
-  // Run both the auth client setup and service client counts in parallel
   const serviceClient = createServiceClient()
 
-  const [supabase, countsResult] = await Promise.all([
+  const [supabase, counts] = await Promise.all([
     createClient(),
     serviceClient
       .from('projects')
       .select('status')
       .then(({ data }) => {
-        const counts: Record<string, number> = {
-          pre_production: 0,
-          production: 0,
+        const c: Record<string, number> = {
+          pre_production:  0,
+          production:      0,
           post_production: 0,
-          delivered: 0,
+          delivered:       0,
         }
         for (const row of data ?? []) {
-          if (row.status in counts) counts[row.status]++
+          if (row.status in c) c[row.status]++
         }
-        return counts
+        return c
       }),
   ])
 
-  const counts = countsResult
+  const total = Object.values(counts).reduce((a, b) => a + b, 0)
 
-  // Fetch all clients for the filter dropdown
   const { data: allClients } = await supabase
     .from('clients')
     .select('id, name')
@@ -129,7 +152,6 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
 
   const clients: Pick<Client, 'id' | 'name'>[] = (allClients ?? []) as Pick<Client, 'id' | 'name'>[]
 
-  // Build projects query with optional filters
   let query = supabase
     .from('projects')
     .select(
@@ -169,7 +191,6 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
   }
 
   const { data: projects, error } = await query
-
   const rows = (projects ?? []) as ProjectWithClient[]
 
   const hasFilters =
@@ -177,46 +198,132 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
     (status && status !== 'all') ||
     (clientFilter && clientFilter !== 'all')
 
+  const TABLE_COLS = 'grid-cols-[1fr_160px_160px_110px_110px_80px_36px]'
+
   return (
-    <div className="px-8 py-10">
+    <div
+      style={{
+        padding: '40px 32px',
+        background: T.bg,
+        minHeight: '100vh',
+        fontFamily: T.font,
+      }}
+    >
       {/* Page header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-start justify-between" style={{ marginBottom: '28px' }}>
         <div>
-          <h1 className="text-lg font-mono tracking-[0.15em] text-[#e8e8e8] uppercase">
+          <h1
+            style={{
+              fontSize: '28px',
+              fontWeight: 600,
+              color: T.textPrimary,
+              letterSpacing: '-0.02em',
+              lineHeight: 1.1,
+              margin: 0,
+            }}
+          >
             Proyectos
           </h1>
-          <p className="mt-1 text-xs font-mono text-[#555] tracking-wide">
-            {rows.length} proyecto{rows.length !== 1 ? 's' : ''} registrado
-            {rows.length !== 1 ? 's' : ''}
+          <p
+            style={{
+              marginTop: '6px',
+              fontSize: '13px',
+              color: T.textSecondary,
+              margin: '6px 0 0',
+            }}
+          >
+            {rows.length} proyecto{rows.length !== 1 ? 's' : ''}
             {hasFilters ? ' (filtrado)' : ''}
           </p>
         </div>
         <Link
           href="/admin/projects/new"
-          className="flex items-center gap-2 px-4 py-2 bg-[#e8341a] text-white text-xs font-mono tracking-[0.2em] uppercase rounded-sm hover:bg-[#cc2d15] transition-colors"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '9px 18px',
+            background: T.accent,
+            color: '#fff',
+            fontSize: '14px',
+            fontWeight: 600,
+            borderRadius: '8px',
+            textDecoration: 'none',
+            letterSpacing: '-0.01em',
+            transition: 'opacity 0.15s ease',
+          }}
+          onMouseOver={(e) => {
+            ;(e.currentTarget as HTMLAnchorElement).style.opacity = '0.88'
+          }}
+          onMouseOut={(e) => {
+            ;(e.currentTarget as HTMLAnchorElement).style.opacity = '1'
+          }}
         >
-          Nuevo proyecto
+          + Nuevo proyecto
         </Link>
       </div>
 
       {/* Stats row */}
-      <div className="flex gap-3 mb-6">
-        {STATUSES.map(s => (
-          <div
-            key={s.key}
-            className="flex items-center gap-2 px-3 py-1.5 bg-[#0d0d0d] border border-[#1a1a1a] rounded-sm"
-          >
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.color }} />
-            <span className="text-[10px] font-mono text-[#555] tracking-[0.1em] uppercase">
-              {s.label}
-            </span>
-            <span className="text-xs font-mono text-[#888]">{counts[s.key] ?? 0}</span>
-          </div>
-        ))}
+      <div className="flex gap-3 flex-wrap" style={{ marginBottom: '24px' }}>
+        {/* Total card */}
+        <div
+          style={{
+            background: T.surface1,
+            borderRadius: '12px',
+            padding: '14px 20px',
+            minWidth: '100px',
+          }}
+        >
+          <p style={{ fontSize: '11px', color: T.textTertiary, fontWeight: 500, margin: 0, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            Total
+          </p>
+          <p style={{ fontSize: '22px', fontWeight: 700, color: T.textPrimary, margin: '4px 0 0', letterSpacing: '-0.02em' }}>
+            {total}
+          </p>
+        </div>
+
+        {STAT_CARDS.map((s) => {
+          const { color } = STATUS_CONFIG[s.key]
+          return (
+            <div
+              key={s.key}
+              style={{
+                background: T.surface1,
+                borderRadius: '12px',
+                padding: '14px 20px',
+                minWidth: '120px',
+              }}
+            >
+              <p
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 500,
+                  margin: 0,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  color: T.textTertiary,
+                }}
+              >
+                {s.label}
+              </p>
+              <p
+                style={{
+                  fontSize: '22px',
+                  fontWeight: 700,
+                  color,
+                  margin: '4px 0 0',
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                {counts[s.key] ?? 0}
+              </p>
+            </div>
+          )
+        })}
       </div>
 
       {/* Filter bar */}
-      <div className="mb-6">
+      <div style={{ marginBottom: '20px' }}>
         <ProjectsFilterBar
           clients={clients}
           currentQ={q ?? ''}
@@ -226,31 +333,66 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
         />
       </div>
 
+      {/* Error state */}
       {error && (
-        <div className="mb-6 p-4 border border-red-900/40 bg-red-950/20 rounded-sm">
-          <p className="text-xs font-mono text-red-400/80">
+        <div
+          style={{
+            marginBottom: '20px',
+            padding: '14px 18px',
+            border: '1px solid rgba(255,69,58,0.25)',
+            background: 'rgba(255,69,58,0.08)',
+            borderRadius: '12px',
+          }}
+        >
+          <p style={{ fontSize: '13px', color: '#FF453A', margin: 0 }}>
             Error al cargar proyectos: {error.message}
           </p>
         </div>
       )}
 
+      {/* Empty state */}
       {rows.length === 0 && !error ? (
-        <div className="py-20 text-center border border-[#1a1a1a] rounded-sm bg-[#0d0d0d]">
-          <p className="text-xs font-mono text-[#444] tracking-wide">
+        <div
+          style={{
+            padding: '80px 20px',
+            textAlign: 'center',
+            background: T.surface1,
+            borderRadius: '16px',
+          }}
+        >
+          <p style={{ fontSize: '14px', color: T.textTertiary, margin: 0 }}>
             {hasFilters
               ? 'No hay proyectos que coincidan con los filtros.'
               : 'No hay proyectos todavia.'}
           </p>
         </div>
       ) : (
-        <div className="border border-[#1a1a1a] rounded-sm overflow-hidden">
+        <div
+          style={{
+            background: T.surface1,
+            borderRadius: '16px',
+            overflow: 'hidden',
+          }}
+        >
           {/* Table header */}
-          <div className="grid grid-cols-[1fr_180px_140px_110px_110px_90px_32px] gap-4 px-5 py-3 border-b border-[#1a1a1a] bg-[#0d0d0d]">
+          <div
+            className={`grid ${TABLE_COLS} gap-4`}
+            style={{
+              padding: '12px 20px',
+              borderBottom: `1px solid ${T.borderHeader}`,
+            }}
+          >
             {['Proyecto', 'Cliente', 'Estado', 'Inicio', 'Entrega', 'Dias rest.', ''].map(
               (col) => (
                 <span
                   key={col}
-                  className="text-[9px] font-mono tracking-[0.25em] uppercase text-[#444]"
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.07em',
+                    color: T.textTertiary,
+                  }}
                 >
                   {col}
                 </span>
@@ -259,19 +401,63 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
           </div>
 
           {/* Table rows */}
-          <div className="divide-y divide-[#111]">
-            {rows.map((project) => (
+          <div>
+            {rows.map((project, idx) => (
               <div
                 key={project.id}
-                className="grid grid-cols-[1fr_180px_140px_110px_110px_90px_32px] gap-4 items-center px-5 py-4 hover:bg-[#0d0d0d] transition-colors"
+                className={`grid ${TABLE_COLS} gap-4 items-center group`}
+                style={{
+                  padding: '16px 20px',
+                  borderBottom:
+                    idx < rows.length - 1
+                      ? `1px solid ${T.borderSubtle}`
+                      : undefined,
+                  transition: 'background 0.1s ease',
+                  cursor: 'default',
+                }}
+                onMouseEnter={(e) => {
+                  ;(e.currentTarget as HTMLDivElement).style.background = T.surface2
+                }}
+                onMouseLeave={(e) => {
+                  ;(e.currentTarget as HTMLDivElement).style.background = 'transparent'
+                }}
               >
-                {/* Title + description */}
+                {/* Title + client */}
                 <div className="min-w-0">
-                  <p className="text-sm font-mono text-[#ccc] truncate">
+                  <Link
+                    href={`/admin/projects/${project.id}`}
+                    style={{
+                      display: 'block',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      color: T.textPrimary,
+                      textDecoration: 'none',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      letterSpacing: '-0.01em',
+                    }}
+                    onMouseEnter={(e) => {
+                      ;(e.currentTarget as HTMLAnchorElement).style.color = T.accent
+                    }}
+                    onMouseLeave={(e) => {
+                      ;(e.currentTarget as HTMLAnchorElement).style.color = T.textPrimary
+                    }}
+                  >
                     {project.title}
-                  </p>
+                  </Link>
                   {project.description && (
-                    <p className="mt-0.5 text-[11px] font-mono text-[#444] truncate">
+                    <p
+                      style={{
+                        marginTop: '2px',
+                        fontSize: '12px',
+                        color: T.textSecondary,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        margin: '2px 0 0',
+                      }}
+                    >
                       {project.description}
                     </p>
                   )}
@@ -280,26 +466,49 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
                 {/* Client */}
                 <div className="min-w-0">
                   {project.client ? (
-                    <p className="text-xs font-mono text-[#888] truncate">
+                    <p
+                      style={{
+                        fontSize: '13px',
+                        color: T.textSecondary,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        margin: 0,
+                      }}
+                    >
                       {project.client.name}
                     </p>
                   ) : (
-                    <span className="text-xs font-mono text-[#333]">—</span>
+                    <span style={{ fontSize: '13px', color: T.textTertiary }}>—</span>
                   )}
                 </div>
 
-                {/* Status badge */}
+                {/* Status */}
                 <div>
-                  <StatusBadge status={project.status} />
+                  <StatusPill status={project.status} />
                 </div>
 
                 {/* Start date */}
-                <p className="text-[11px] font-mono text-[#555]">
+                <p
+                  style={{
+                    fontSize: '12px',
+                    color: T.textSecondary,
+                    margin: 0,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
                   {formatDate(project.start_date)}
                 </p>
 
                 {/* End date */}
-                <p className="text-[11px] font-mono text-[#555]">
+                <p
+                  style={{
+                    fontSize: '12px',
+                    color: T.textSecondary,
+                    margin: 0,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
                   {formatDate(project.end_date)}
                 </p>
 
@@ -308,19 +517,40 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
                   <DaysRemaining endDate={project.end_date} />
                 </div>
 
-                {/* Link arrow */}
+                {/* Chevron link */}
                 <Link
                   href={`/admin/projects/${project.id}`}
-                  className="flex items-center justify-center w-7 h-7 rounded-sm text-[#333] hover:text-[#888] hover:bg-[#111] transition-colors"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '8px',
+                    color: T.textTertiary,
+                    textDecoration: 'none',
+                    transition: 'all 0.15s ease',
+                    flexShrink: 0,
+                  }}
                   aria-label={`Ver proyecto ${project.title}`}
+                  onMouseEnter={(e) => {
+                    const el = e.currentTarget as HTMLAnchorElement
+                    el.style.color = T.textPrimary
+                    el.style.background = T.surface3
+                  }}
+                  onMouseLeave={(e) => {
+                    const el = e.currentTarget as HTMLAnchorElement
+                    el.style.color = T.textTertiary
+                    el.style.background = 'transparent'
+                  }}
                 >
                   <svg
-                    width="12"
-                    height="12"
+                    width="13"
+                    height="13"
                     viewBox="0 0 12 12"
                     fill="none"
                     stroke="currentColor"
-                    strokeWidth="1.5"
+                    strokeWidth="1.8"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     aria-hidden="true"

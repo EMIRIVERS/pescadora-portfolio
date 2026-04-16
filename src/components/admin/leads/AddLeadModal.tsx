@@ -40,18 +40,44 @@ const STATUS_LABELS: Record<LeadStatus, string> = {
   lost: 'Perdido',
 }
 
-const inputClass =
-  'w-full bg-[#111] border border-[#222] rounded-sm px-3 py-2 text-sm text-[#e8e8e8] font-mono placeholder-[#333] focus:outline-none focus:border-[#333] transition-colors'
+const fieldLabel: React.CSSProperties = {
+  display: 'block',
+  fontSize: '11px',
+  fontWeight: 500,
+  letterSpacing: '0.05em',
+  textTransform: 'uppercase',
+  color: '#86868B',
+  marginBottom: '6px',
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+}
 
-const labelClass =
-  'block text-[10px] font-mono tracking-[0.2em] uppercase text-[#555] mb-1'
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  background: '#1C1C1E',
+  border: '1px solid rgba(255,255,255,0.1)',
+  borderRadius: '8px',
+  padding: '10px 14px',
+  color: '#F5F5F7',
+  fontSize: '14px',
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+  outline: 'none',
+  boxSizing: 'border-box',
+  transition: 'border-color 0.15s ease',
+}
+
+const selectStyle: React.CSSProperties = {
+  ...inputStyle,
+  appearance: 'none',
+  WebkitAppearance: 'none',
+  cursor: 'pointer',
+}
 
 export default function AddLeadModal({ onClose, onCreated, defaultStatus = 'new' }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [focusedField, setFocusedField] = useState<string | null>(null)
   const formRef = useRef<HTMLFormElement>(null)
 
-  // Close on Escape key
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -76,57 +102,157 @@ export default function AddLeadModal({ onClose, onCreated, defaultStatus = 'new'
       } else if (result.error) {
         setError(result.error as string)
       }
-    } catch (err) {
-      setError('Ocurrió un error inesperado.')
+    } catch {
+      setError('Ocurrio un error inesperado.')
     } finally {
       setSubmitting(false)
     }
   }
 
+  function getFocusStyle(fieldId: string): React.CSSProperties {
+    return focusedField === fieldId
+      ? { ...inputStyle, borderColor: '#0071E3' }
+      : inputStyle
+  }
+
+  function getFocusStyleSelect(fieldId: string): React.CSSProperties {
+    return focusedField === fieldId
+      ? { ...selectStyle, borderColor: '#0071E3' }
+      : selectStyle
+  }
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 1000,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'rgba(0,0,0,0.7)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+      }}
       onClick={onClose}
     >
       <div
-        className="max-w-lg w-full mx-4 bg-[#0a0a0a] border border-[#1a1a1a] rounded-sm"
+        style={{
+          width: '520px',
+          maxWidth: 'calc(100vw - 32px)',
+          maxHeight: '90vh',
+          background: '#111111',
+          borderRadius: '20px',
+          border: '1px solid rgba(255,255,255,0.1)',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#1a1a1a]">
-          <span className="text-[10px] font-mono tracking-[0.2em] uppercase text-[#555]">
-            Nuevo lead
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '24px 28px',
+            borderBottom: '1px solid rgba(255,255,255,0.08)',
+            flexShrink: 0,
+          }}
+        >
+          <span
+            style={{
+              fontSize: '18px',
+              fontWeight: 600,
+              color: '#F5F5F7',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Nuevo Lead
           </span>
           <button
             type="button"
             onClick={onClose}
-            className="text-[#333] hover:text-[#666] transition-colors font-mono text-sm"
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              background: '#1C1C1E',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#86868B',
+              fontSize: '16px',
+              lineHeight: 1,
+              transition: 'background 0.15s ease',
+              flexShrink: 0,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#2C2C2E'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#1C1C1E'
+            }}
+            aria-label="Cerrar modal"
           >
-            esc
+            x
           </button>
         </div>
 
         {/* Form */}
-        <form ref={formRef} onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
-          {/* Nombre */}
-          <div>
-            <label htmlFor="add-name" className={labelClass}>
-              Nombre <span className="text-[#e8341a]">*</span>
-            </label>
-            <input
-              id="add-name"
-              name="name"
-              type="text"
-              required
-              placeholder="Juan García"
-              className={inputClass}
-            />
+        <form
+          ref={formRef}
+          onSubmit={handleSubmit}
+          style={{
+            overflowY: 'auto',
+            padding: '24px 28px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+            flex: 1,
+          }}
+        >
+          {/* Nombre + Empresa — grid 2 col */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div>
+              <label htmlFor="add-name" style={fieldLabel}>
+                Nombre <span style={{ color: '#FF453A' }}>*</span>
+              </label>
+              <input
+                id="add-name"
+                name="name"
+                type="text"
+                required
+                placeholder="Juan Garcia"
+                style={getFocusStyle('add-name')}
+                onFocus={() => setFocusedField('add-name')}
+                onBlur={() => setFocusedField(null)}
+              />
+            </div>
+            <div>
+              <label htmlFor="add-company" style={fieldLabel}>
+                Empresa
+              </label>
+              <input
+                id="add-company"
+                name="company"
+                type="text"
+                placeholder="Nombre de la empresa"
+                style={getFocusStyle('add-company')}
+                onFocus={() => setFocusedField('add-company')}
+                onBlur={() => setFocusedField(null)}
+              />
+            </div>
           </div>
 
-          {/* Email + Teléfono */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Email + Telefono */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
-              <label htmlFor="add-email" className={labelClass}>
+              <label htmlFor="add-email" style={fieldLabel}>
                 Email
               </label>
               <input
@@ -134,93 +260,59 @@ export default function AddLeadModal({ onClose, onCreated, defaultStatus = 'new'
                 name="email"
                 type="email"
                 placeholder="juan@ejemplo.com"
-                className={inputClass}
+                style={getFocusStyle('add-email')}
+                onFocus={() => setFocusedField('add-email')}
+                onBlur={() => setFocusedField(null)}
               />
             </div>
             <div>
-              <label htmlFor="add-phone" className={labelClass}>
-                Teléfono
+              <label htmlFor="add-phone" style={fieldLabel}>
+                Telefono
               </label>
               <input
                 id="add-phone"
                 name="phone"
                 type="tel"
                 placeholder="+54 9 11 0000-0000"
-                className={inputClass}
+                style={getFocusStyle('add-phone')}
+                onFocus={() => setFocusedField('add-phone')}
+                onBlur={() => setFocusedField(null)}
               />
             </div>
           </div>
 
-          {/* Empresa */}
-          <div>
-            <label htmlFor="add-company" className={labelClass}>
-              Empresa
-            </label>
-            <input
-              id="add-company"
-              name="company"
-              type="text"
-              placeholder="Nombre de la empresa"
-              className={inputClass}
-            />
-          </div>
-
-          {/* Tipo de proyecto + Rango de presupuesto */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Estado inicial + Fuente */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
-              <label htmlFor="add-project-type" className={labelClass}>
-                Tipo de proyecto
+              <label htmlFor="add-status" style={fieldLabel}>
+                Estado inicial
               </label>
               <select
-                id="add-project-type"
-                name="project_type"
-                className={inputClass}
-                defaultValue=""
+                id="add-status"
+                name="status"
+                defaultValue={defaultStatus}
+                style={getFocusStyleSelect('add-status')}
+                onFocus={() => setFocusedField('add-status')}
+                onBlur={() => setFocusedField(null)}
               >
-                <option value="" disabled>
-                  Seleccionar...
-                </option>
-                <option value="Videoclip">Videoclip</option>
-                <option value="Corporativo">Corporativo</option>
-                <option value="Restaurante">Restaurante</option>
-                <option value="Comercial">Comercial</option>
-                <option value="Fotografía">Fotografía</option>
-                <option value="Otro">Otro</option>
+                {(Object.keys(STATUS_LABELS) as LeadStatus[]).map((s) => (
+                  <option key={s} value={s}>
+                    {STATUS_LABELS[s]}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
-              <label htmlFor="add-budget" className={labelClass}>
-                Rango de presupuesto
-              </label>
-              <select
-                id="add-budget"
-                name="budget_range"
-                className={inputClass}
-                defaultValue=""
-              >
-                <option value="" disabled>
-                  Seleccionar...
-                </option>
-                <option value="< $5k">&lt; $5k</option>
-                <option value="$5k-$15k">$5k – $15k</option>
-                <option value="$15k-$30k">$15k – $30k</option>
-                <option value="$30k-$50k">$30k – $50k</option>
-                <option value="$50k+">$50k+</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Fuente + Estado inicial */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label htmlFor="add-source" className={labelClass}>
+              <label htmlFor="add-source" style={fieldLabel}>
                 Fuente
               </label>
               <select
                 id="add-source"
                 name="source"
-                className={inputClass}
                 defaultValue="manual"
+                style={getFocusStyleSelect('add-source')}
+                onFocus={() => setFocusedField('add-source')}
+                onBlur={() => setFocusedField(null)}
               >
                 <option value="manual">Manual</option>
                 <option value="referral">Referido</option>
@@ -230,62 +322,158 @@ export default function AddLeadModal({ onClose, onCreated, defaultStatus = 'new'
                 <option value="other">Otro</option>
               </select>
             </div>
+          </div>
+
+          {/* Tipo de proyecto + Presupuesto */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
-              <label htmlFor="add-status" className={labelClass}>
-                Estado inicial
+              <label htmlFor="add-project-type" style={fieldLabel}>
+                Tipo de proyecto
               </label>
               <select
-                id="add-status"
-                name="status"
-                className={inputClass}
-                defaultValue={defaultStatus}
+                id="add-project-type"
+                name="project_type"
+                defaultValue=""
+                style={getFocusStyleSelect('add-project-type')}
+                onFocus={() => setFocusedField('add-project-type')}
+                onBlur={() => setFocusedField(null)}
               >
-                {(Object.keys(STATUS_LABELS) as LeadStatus[]).map((s) => (
-                  <option key={s} value={s}>
-                    {STATUS_LABELS[s]}
-                  </option>
-                ))}
+                <option value="" disabled>
+                  Seleccionar...
+                </option>
+                <option value="Videoclip">Videoclip</option>
+                <option value="Corporativo">Corporativo</option>
+                <option value="Restaurante">Restaurante</option>
+                <option value="Comercial">Comercial</option>
+                <option value="Fotografia">Fotografia</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="add-budget" style={fieldLabel}>
+                Presupuesto
+              </label>
+              <select
+                id="add-budget"
+                name="budget_range"
+                defaultValue=""
+                style={getFocusStyleSelect('add-budget')}
+                onFocus={() => setFocusedField('add-budget')}
+                onBlur={() => setFocusedField(null)}
+              >
+                <option value="" disabled>
+                  Seleccionar...
+                </option>
+                <option value="< $5k">&lt; $5k</option>
+                <option value="$5k-$15k">$5k - $15k</option>
+                <option value="$15k-$30k">$15k - $30k</option>
+                <option value="$30k-$50k">$30k - $50k</option>
+                <option value="$50k+">$50k+</option>
               </select>
             </div>
           </div>
 
           {/* Notas */}
           <div>
-            <label htmlFor="add-notes" className={labelClass}>
+            <label htmlFor="add-notes" style={fieldLabel}>
               Notas
             </label>
             <textarea
               id="add-notes"
               name="notes"
-              rows={3}
               placeholder="Detalles del proyecto, contexto..."
-              className={`${inputClass} resize-none`}
+              style={{
+                ...getFocusStyle('add-notes'),
+                minHeight: '80px',
+                resize: 'none',
+                display: 'block',
+              }}
+              onFocus={() => setFocusedField('add-notes')}
+              onBlur={() => setFocusedField(null)}
             />
           </div>
 
-          {/* Error message */}
+          {/* Error */}
           {error && (
-            <p className="text-[#e8341a] text-xs font-mono">{error}</p>
+            <p
+              style={{
+                fontSize: '13px',
+                color: '#FF453A',
+                margin: 0,
+                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+              }}
+            >
+              {error}
+            </p>
           )}
-
-          {/* Actions */}
-          <div className="flex flex-col gap-2 pt-1">
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full py-2.5 bg-[#e8341a] hover:bg-[#cc2d15] text-white text-xs font-mono tracking-[0.2em] uppercase rounded-sm transition-colors disabled:opacity-40"
-            >
-              {submitting ? 'Creando...' : 'Crear lead'}
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="w-full py-2.5 border border-[#1a1a1a] text-[#555] text-xs font-mono tracking-[0.2em] uppercase rounded-sm hover:border-[#2a2a2a] hover:text-[#888] transition-colors"
-            >
-              Cancelar
-            </button>
-          </div>
         </form>
+
+        {/* Footer */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            gap: '12px',
+            padding: '16px 28px',
+            borderTop: '1px solid rgba(255,255,255,0.08)',
+            flexShrink: 0,
+          }}
+        >
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              padding: '9px 18px',
+              background: 'transparent',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '8px',
+              color: '#86868B',
+              fontSize: '14px',
+              fontWeight: 500,
+              cursor: 'pointer',
+              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+              transition: 'border-color 0.15s ease, color 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'
+              e.currentTarget.style.color = '#F5F5F7'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
+              e.currentTarget.style.color = '#86868B'
+            }}
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            form={formRef.current?.id}
+            disabled={submitting}
+            onClick={() => formRef.current?.requestSubmit()}
+            style={{
+              padding: '9px 20px',
+              background: submitting ? 'rgba(0,113,227,0.5)' : '#0071E3',
+              border: 'none',
+              borderRadius: '8px',
+              color: '#ffffff',
+              fontSize: '14px',
+              fontWeight: 600,
+              cursor: submitting ? 'not-allowed' : 'pointer',
+              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+              transition: 'background 0.15s ease',
+              letterSpacing: '-0.01em',
+            }}
+            onMouseEnter={(e) => {
+              if (!submitting) e.currentTarget.style.background = '#0077ED'
+            }}
+            onMouseLeave={(e) => {
+              if (!submitting) e.currentTarget.style.background = '#0071E3'
+            }}
+          >
+            {submitting ? 'Creando...' : 'Crear Lead'}
+          </button>
+        </div>
       </div>
     </div>
   )

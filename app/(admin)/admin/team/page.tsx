@@ -1,5 +1,17 @@
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import type { Profile } from '@/lib/supabase/types'
+
+// Derive a deterministic HSL color from a string using a simple hash
+function nameToHsl(name: string): string {
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+    hash |= 0
+  }
+  const hue = Math.abs(hash) % 360
+  return `hsl(${hue}, 45%, 32%)`
+}
 
 export default async function AdminTeamPage() {
   const supabase = await createClient()
@@ -13,63 +25,220 @@ export default async function AdminTeamPage() {
   const team: Profile[] = (members ?? []) as Profile[]
 
   return (
-    <div className="px-8 py-10">
-      <div className="mb-10">
-        <h1 className="text-lg font-mono tracking-[0.15em] text-[#e8e8e8] uppercase">
+    <div
+      style={{
+        minHeight: '100vh',
+        backgroundColor: '#111111',
+        padding: '40px 32px',
+        fontFamily:
+          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+      }}
+    >
+      {/* Header */}
+      <div style={{ marginBottom: '32px' }}>
+        <h1
+          style={{
+            fontSize: '28px',
+            fontWeight: 600,
+            color: '#F5F5F7',
+            margin: 0,
+            lineHeight: 1.15,
+            letterSpacing: '-0.3px',
+          }}
+        >
           Equipo
         </h1>
-        <p className="mt-1 text-xs font-mono text-[#555] tracking-wide">
-          {team.length} miembro{team.length !== 1 ? 's' : ''} del staff
+        <p
+          style={{
+            marginTop: '6px',
+            fontSize: '15px',
+            fontWeight: 400,
+            color: '#86868B',
+          }}
+        >
+          {team.length} miembro{team.length !== 1 ? 's' : ''}
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {team.map((member) => {
-          const initials = (member.full_name ?? member.email ?? '?')
-            .split(' ')
-            .map((w) => w[0])
-            .join('')
-            .toUpperCase()
-            .slice(0, 2)
+      {/* Member grid */}
+      {team.length > 0 ? (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+            gap: '16px',
+          }}
+        >
+          {team.map((member) => {
+            const displayName = member.full_name ?? member.email ?? '?'
+            const initial = displayName[0]?.toUpperCase() ?? '?'
+            const avatarBg = nameToHsl(displayName)
 
-          return (
-            <div
-              key={member.id}
-              className="bg-[#111] border border-[#222] rounded-sm p-5 flex items-start gap-4"
-            >
-              <div className="w-10 h-10 rounded-full bg-[#1a1a1a] border border-[#333] flex items-center justify-center flex-shrink-0">
-                {member.avatar_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={member.avatar_url}
-                    alt={member.full_name ?? ''}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
-                ) : (
-                  <span className="text-xs font-mono text-[#888]">{initials}</span>
-                )}
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-mono text-[#e8e8e8] truncate">
-                  {member.full_name ?? '—'}
-                </p>
-                <p className="text-xs font-mono text-[#555] truncate mt-0.5">
-                  {member.email}
-                </p>
-                <span className="inline-block mt-2 px-2 py-0.5 text-[10px] font-mono tracking-widest uppercase bg-[#1a1a1a] border border-[#333] text-[#888] rounded-sm">
-                  {member.role === 'admin_staff' ? 'Staff' : member.role ?? 'Team'}
-                </span>
-              </div>
-            </div>
-          )
-        })}
+            const roleLabel =
+              member.role === 'admin_staff'
+                ? 'Staff'
+                : (member.role ?? 'Equipo')
 
-        {team.length === 0 && (
-          <p className="col-span-3 text-sm font-mono text-[#555]">
-            No hay miembros del equipo registrados.
-          </p>
+            return (
+              <MemberCard
+                key={member.id}
+                member={member}
+                displayName={displayName}
+                initial={initial}
+                avatarBg={avatarBg}
+                roleLabel={roleLabel}
+              />
+            )
+          })}
+        </div>
+      ) : (
+        <p
+          style={{
+            fontSize: '14px',
+            color: '#48484A',
+          }}
+        >
+          No hay miembros del equipo registrados.
+        </p>
+      )}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Sub-component — keeps the hover state isolated in a client component wrapper
+// but since this is a server page, we use a CSS class trick via a style block.
+// ---------------------------------------------------------------------------
+
+interface MemberCardProps {
+  member: Profile
+  displayName: string
+  initial: string
+  avatarBg: string
+  roleLabel: string
+}
+
+function MemberCard({
+  member,
+  displayName,
+  initial,
+  avatarBg,
+  roleLabel,
+}: MemberCardProps) {
+  const isAdmin = member.is_admin_team
+
+  return (
+    <div
+      className="team-member-card"
+      style={{
+        backgroundColor: '#111111',
+        border: '1px solid rgba(255,255,255,0.08)',
+        borderRadius: '16px',
+        padding: '20px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        textAlign: 'center',
+        transition: 'background-color 0.15s ease',
+        cursor: 'default',
+      }}
+    >
+      {/* Avatar */}
+      <div
+        style={{
+          width: '64px',
+          height: '64px',
+          borderRadius: '50%',
+          overflow: 'hidden',
+          flexShrink: 0,
+          backgroundColor: avatarBg,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {member.avatar_url ? (
+          <Image
+            src={member.avatar_url}
+            alt={displayName}
+            width={64}
+            height={64}
+            style={{ objectFit: 'cover', width: '64px', height: '64px' }}
+          />
+        ) : (
+          <span
+            style={{
+              fontSize: '24px',
+              fontWeight: 700,
+              color: '#ffffff',
+              lineHeight: 1,
+              fontFamily:
+                "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+            }}
+          >
+            {initial}
+          </span>
         )}
       </div>
+
+      {/* Name */}
+      <p
+        style={{
+          marginTop: '12px',
+          fontSize: '16px',
+          fontWeight: 600,
+          color: '#F5F5F7',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          maxWidth: '100%',
+        }}
+      >
+        {displayName}
+      </p>
+
+      {/* Email */}
+      {member.email && (
+        <p
+          style={{
+            marginTop: '4px',
+            fontSize: '13px',
+            color: '#86868B',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            maxWidth: '100%',
+          }}
+        >
+          {member.email}
+        </p>
+      )}
+
+      {/* Role badge */}
+      <span
+        style={{
+          display: 'inline-block',
+          marginTop: '10px',
+          padding: '3px 10px',
+          borderRadius: '20px',
+          fontSize: '11px',
+          fontWeight: 500,
+          letterSpacing: '0.01em',
+          backgroundColor: isAdmin
+            ? 'rgba(0,113,227,0.15)'
+            : '#1C1C1E',
+          color: isAdmin ? '#0071E3' : '#86868B',
+        }}
+      >
+        {roleLabel}
+      </span>
+
+      {/* Hover style injected once */}
+      <style>{`
+        .team-member-card:hover {
+          background-color: #1C1C1E !important;
+        }
+      `}</style>
     </div>
   )
 }

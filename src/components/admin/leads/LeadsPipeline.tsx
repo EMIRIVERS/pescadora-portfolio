@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
 import LeadCard from './LeadCard';
 import LeadDetailModal from './LeadDetailModal';
 import AddLeadModal from './AddLeadModal';
@@ -31,12 +32,12 @@ interface Column {
 }
 
 const COLUMNS: Column[] = [
-  { status: 'new',       label: 'Nuevo',      color: '#3b82f6' },
-  { status: 'contacted', label: 'Contactado',  color: '#8b5cf6' },
-  { status: 'qualified', label: 'Calificado',  color: '#f59e0b' },
-  { status: 'proposal',  label: 'Propuesta',   color: '#e8341a' },
-  { status: 'won',       label: 'Ganado',      color: '#10b981' },
-  { status: 'lost',      label: 'Perdido',     color: '#6b7280' },
+  { status: 'new',       label: 'Nuevo',      color: '#0071E3' },
+  { status: 'contacted', label: 'Contactado',  color: '#BF5AF2' },
+  { status: 'qualified', label: 'Calificado',  color: '#FF9F0A' },
+  { status: 'proposal',  label: 'Propuesta',   color: '#FF6961' },
+  { status: 'won',       label: 'Ganado',      color: '#30D158' },
+  { status: 'lost',      label: 'Perdido',     color: '#48484A' },
 ];
 
 interface LeadsPipelineProps {
@@ -48,6 +49,35 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [addPresetStatus, setAddPresetStatus] = useState<Lead['status']>('new');
+
+  // Realtime subscription
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel('leads-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'leads' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setLocalLeads((prev) => [payload.new as Lead, ...prev]);
+          } else if (payload.eventType === 'UPDATE') {
+            setLocalLeads((prev) =>
+              prev.map((l) => (l.id === (payload.new as Lead).id ? (payload.new as Lead) : l))
+            );
+          } else if (payload.eventType === 'DELETE') {
+            setLocalLeads((prev) =>
+              prev.filter((l) => l.id !== (payload.old as { id: string }).id)
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   function handleCardClick(lead: Lead) {
     setSelectedLead(lead);
@@ -98,18 +128,18 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginBottom: '20px',
+          marginBottom: '24px',
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
         }}
       >
         <div>
           <h2
             style={{
               margin: 0,
-              fontSize: '18px',
+              fontSize: '20px',
               fontWeight: 600,
-              color: '#e8e8e8',
-              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-              letterSpacing: '0.02em',
+              color: '#F5F5F7',
+              letterSpacing: '-0.01em',
             }}
           >
             Pipeline de Leads
@@ -117,9 +147,8 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
           <p
             style={{
               margin: '4px 0 0',
-              fontSize: '12px',
-              color: '#555',
-              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+              fontSize: '13px',
+              color: '#86868B',
             }}
           >
             {localLeads.length} lead{localLeads.length !== 1 ? 's' : ''} en total
@@ -135,27 +164,27 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
-            background: '#e8341a',
+            background: '#0071E3',
             color: '#fff',
             border: 'none',
-            borderRadius: '6px',
+            borderRadius: '8px',
             padding: '8px 16px',
             fontSize: '13px',
             fontWeight: 600,
-            fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+            fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
             cursor: 'pointer',
-            letterSpacing: '0.02em',
+            letterSpacing: '-0.01em',
             transition: 'background 0.15s',
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.background = '#c42a14';
+            (e.currentTarget as HTMLButtonElement).style.background = '#0062C4';
           }}
           onMouseLeave={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.background = '#e8341a';
+            (e.currentTarget as HTMLButtonElement).style.background = '#0071E3';
           }}
         >
           <span style={{ fontSize: '16px', lineHeight: 1 }}>+</span>
-          Nuevo lead
+          Nuevo Lead
         </button>
       </div>
 
@@ -163,10 +192,10 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(6, 280px)',
+          gridTemplateColumns: 'repeat(6, 260px)',
           gap: '12px',
           overflowX: 'auto',
-          paddingBottom: '1rem',
+          paddingBottom: '20px',
         }}
       >
         {COLUMNS.map((col) => {
@@ -176,13 +205,14 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
             <div
               key={col.status}
               style={{
-                background: '#111',
-                border: '1px solid #1a1a1a',
-                borderRadius: '8px',
+                background: '#111111',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '16px',
                 display: 'flex',
                 flexDirection: 'column',
                 minHeight: '200px',
                 overflow: 'hidden',
+                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
               }}
             >
               {/* Column header */}
@@ -191,8 +221,8 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  padding: '12px 14px',
-                  borderBottom: '1px solid #1a1a1a',
+                  padding: '14px 16px',
+                  borderBottom: '1px solid rgba(255,255,255,0.06)',
                   flexShrink: 0,
                 }}
               >
@@ -210,9 +240,8 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
                     style={{
                       fontSize: '12px',
                       fontWeight: 600,
-                      color: '#e8e8e8',
-                      fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-                      letterSpacing: '0.05em',
+                      color: '#F5F5F7',
+                      letterSpacing: '0.06em',
                       textTransform: 'uppercase',
                     }}
                   >
@@ -222,14 +251,12 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
 
                 <span
                   style={{
-                    background: '#1a1a1a',
-                    border: '1px solid #222',
-                    color: '#888',
+                    background: '#1C1C1E',
+                    color: '#86868B',
                     borderRadius: '10px',
                     padding: '1px 8px',
                     fontSize: '11px',
-                    fontWeight: 600,
-                    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+                    fontWeight: 500,
                     minWidth: '22px',
                     textAlign: 'center',
                   }}
@@ -247,6 +274,7 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
                   flexDirection: 'column',
                   gap: '8px',
                   overflowY: 'auto',
+                  maxHeight: '70vh',
                 }}
               >
                 {colLeads.length === 0 && (
@@ -256,14 +284,13 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: '#2a2a2a',
+                      color: '#2C2C2E',
                       fontSize: '11px',
-                      fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
                       letterSpacing: '0.05em',
                       padding: '24px 0',
                     }}
                   >
-                    — vacío —
+                    — vacio —
                   </div>
                 )}
 
@@ -281,7 +308,6 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
               <div
                 style={{
                   padding: '8px 10px',
-                  borderTop: '1px solid #1a1a1a',
                   flexShrink: 0,
                 }}
               >
@@ -290,11 +316,11 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
                   style={{
                     width: '100%',
                     background: 'transparent',
-                    border: '1px dashed #222',
-                    borderRadius: '5px',
-                    color: '#444',
+                    border: '1px dashed rgba(255,255,255,0.1)',
+                    borderRadius: '8px',
+                    color: '#48484A',
                     fontSize: '12px',
-                    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+                    fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
                     padding: '6px',
                     cursor: 'pointer',
                     transition: 'border-color 0.15s, color 0.15s',
@@ -310,8 +336,8 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
                   }}
                   onMouseLeave={(e) => {
                     const el = e.currentTarget as HTMLButtonElement;
-                    el.style.borderColor = '#222';
-                    el.style.color = '#444';
+                    el.style.borderColor = 'rgba(255,255,255,0.1)';
+                    el.style.color = '#48484A';
                   }}
                 >
                   <span style={{ fontSize: '14px', lineHeight: 1 }}>+</span>

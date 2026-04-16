@@ -11,12 +11,12 @@ interface Props {
 }
 
 const STATS = [
-  { key: 'new',       label: 'Nuevo',      color: '#3b82f6' },
-  { key: 'contacted', label: 'Contactado', color: '#8b5cf6' },
-  { key: 'qualified', label: 'Calificado', color: '#f59e0b' },
-  { key: 'proposal',  label: 'Propuesta',  color: '#e8341a' },
-  { key: 'won',       label: 'Ganado',     color: '#10b981' },
-  { key: 'lost',      label: 'Perdido',    color: '#6b7280' },
+  { key: 'new',       label: 'Nuevo',      color: '#0071E3' },
+  { key: 'contacted', label: 'Contactado', color: '#BF5AF2' },
+  { key: 'qualified', label: 'Calificado', color: '#FF9F0A' },
+  { key: 'proposal',  label: 'Propuesta',  color: '#FF453A' },
+  { key: 'won',       label: 'Ganado',     color: '#30D158' },
+  { key: 'lost',      label: 'Perdido',    color: '#636366' },
 ] as const
 
 export default function LeadsStats({ counts, total }: Props) {
@@ -27,7 +27,15 @@ export default function LeadsStats({ counts, total }: Props) {
 
   return (
     <div>
-      <div style={{ display: 'flex', gap: 8, marginBottom: '2rem' }}>
+      {/* Stat cards row */}
+      <div
+        style={{
+          display: 'flex',
+          gap: 8,
+          marginBottom: '1.5rem',
+          flexWrap: 'wrap',
+        }}
+      >
         {STATS.map(({ key, label, color }) => {
           const count = counts[key]
           const pct = total > 0 ? Math.round((count / total) * 100) : 0
@@ -37,31 +45,33 @@ export default function LeadsStats({ counts, total }: Props) {
               key={key}
               style={{
                 flex: 1,
-                background: '#0d0d0d',
-                border: '1px solid #1a1a1a',
-                borderTop: `2px solid ${color}`,
-                padding: '1rem',
-                borderRadius: 2,
+                minWidth: 100,
+                background: '#111111',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: 12,
+                padding: '16px 20px',
+                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
               }}
             >
               <p
                 style={{
-                  fontFamily: 'var(--font-geist-mono)',
-                  fontSize: '0.6rem',
-                  letterSpacing: '0.2em',
+                  fontSize: 12,
+                  fontWeight: 500,
+                  letterSpacing: '0.06em',
                   textTransform: 'uppercase',
-                  color: '#555',
-                  marginBottom: '0.5rem',
+                  color: '#86868B',
+                  margin: '0 0 10px 0',
                 }}
               >
                 {label}
               </p>
               <p
                 style={{
-                  fontFamily: 'var(--font-geist-mono)',
-                  fontSize: '1.75rem',
-                  color: '#e8e8e8',
+                  fontSize: 28,
+                  fontWeight: 700,
+                  color,
                   lineHeight: 1,
+                  margin: '0 0 6px 0',
                   fontVariantNumeric: 'tabular-nums',
                 }}
               >
@@ -69,10 +79,10 @@ export default function LeadsStats({ counts, total }: Props) {
               </p>
               <p
                 style={{
-                  fontFamily: 'var(--font-geist-mono)',
-                  fontSize: '0.55rem',
-                  color: '#333',
-                  marginTop: '0.25rem',
+                  fontSize: 11,
+                  color: '#48484A',
+                  margin: 0,
+                  fontVariantNumeric: 'tabular-nums',
                 }}
               >
                 {pct}% del total
@@ -82,30 +92,36 @@ export default function LeadsStats({ counts, total }: Props) {
         })}
       </div>
 
+      {/* Conversion rate strip */}
       <div
         style={{
           display: 'inline-flex',
           alignItems: 'center',
-          gap: '0.75rem',
+          gap: 10,
+          background: '#1C1C1E',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 12,
+          padding: '10px 16px',
           marginBottom: '1.5rem',
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
         }}
       >
         <span
           style={{
-            fontFamily: 'var(--font-geist-mono)',
-            fontSize: '0.6rem',
-            letterSpacing: '0.2em',
+            fontSize: 12,
+            fontWeight: 500,
+            letterSpacing: '0.06em',
             textTransform: 'uppercase',
-            color: '#555',
+            color: '#86868B',
           }}
         >
           Tasa de conversion
         </span>
         <span
           style={{
-            fontFamily: 'var(--font-geist-mono)',
-            fontSize: '1rem',
-            color: conversionRate >= 50 ? '#10b981' : '#e8341a',
+            fontSize: 16,
+            fontWeight: 700,
+            color: conversionRate >= 50 ? '#30D158' : '#FF453A',
             fontVariantNumeric: 'tabular-nums',
           }}
         >
@@ -113,9 +129,9 @@ export default function LeadsStats({ counts, total }: Props) {
         </span>
         <span
           style={{
-            fontFamily: 'var(--font-geist-mono)',
-            fontSize: '0.55rem',
-            color: '#333',
+            fontSize: 11,
+            color: '#48484A',
+            fontVariantNumeric: 'tabular-nums',
           }}
         >
           ({counts.won} ganados / {counts.won + counts.lost} cerrados)

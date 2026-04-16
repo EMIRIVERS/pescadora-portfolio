@@ -4,15 +4,20 @@ import { useEffect, useRef, useTransition, useCallback, useId, useState } from '
 import { useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { taskKeys } from '@/lib/queries/tasks'
-import type { KanbanBoardWithTasks, KanbanTaskWithAssignee, Profile, TaskPriority } from '@/lib/supabase/types'
+import type {
+  KanbanBoardWithTasks,
+  KanbanTaskWithAssignee,
+  Profile,
+  TaskPriority,
+} from '@/lib/supabase/types'
 import { X, Trash2, AlertCircle } from 'lucide-react'
 
 // ── Priority config ────────────────────────────────────────────────────────────
 
-const PRIORITY_OPTIONS: { value: TaskPriority; label: string; dot: string }[] = [
-  { value: 'low',    label: 'Low',    dot: 'bg-zinc-400' },
-  { value: 'medium', label: 'Medium', dot: 'bg-amber-400' },
-  { value: 'high',   label: 'High',   dot: 'bg-red-400' },
+const PRIORITY_OPTIONS: { value: TaskPriority; label: string; color: string }[] = [
+  { value: 'low',    label: 'Low',    color: '#3A3A3C' },
+  { value: 'medium', label: 'Medium', color: '#FF9F0A' },
+  { value: 'high',   label: 'High',   color: '#FF453A' },
 ]
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -44,25 +49,43 @@ function findTaskInBoards(
   return null
 }
 
-// ── Input / Textarea / Select base classes ─────────────────────────────────────
+// ── Shared input style ─────────────────────────────────────────────────────────
 
-const inputCls =
-  'w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500 ' +
-  'focus:outline-none focus:ring-1 focus:ring-zinc-500 focus:border-zinc-500 transition-colors disabled:opacity-50'
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  backgroundColor: '#2C2C2E',
+  border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: '10px',
+  padding: '9px 12px',
+  fontSize: '14px',
+  color: '#F5F5F7',
+  outline: 'none',
+  boxSizing: 'border-box',
+  fontFamily: 'inherit',
+  transition: 'border-color 0.15s',
+}
 
-const labelCls = 'block font-mono text-[11px] uppercase tracking-widest text-zinc-500 mb-1.5'
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  color: '#48484A',
+  fontSize: '11px',
+  fontWeight: 600,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  marginBottom: '6px',
+  fontFamily: 'inherit',
+}
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalProps) {
   const queryClient = useQueryClient()
-  const dialogRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
   const firstFocusableRef = useRef<HTMLButtonElement>(null)
   const [isPending, startTransition] = useTransition()
 
   const titleId = useId()
   const descId = useId()
-  const priorityId = useId()
   const dueDateId = useId()
   const assigneeId = useId()
 
@@ -100,6 +123,13 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
   const [saveError, setSaveError] = useState<string | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [panelVisible, setPanelVisible] = useState(false)
+
+  // Slide-in on mount
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setPanelVisible(true))
+    return () => cancelAnimationFrame(raf)
+  }, [])
 
   // ── Keyboard: Escape closes ────────────────────────────────────────────────
 
@@ -111,16 +141,18 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [onClose])
 
-  // ── Focus trap ─────────────────────────────────────────────────────────────
+  // ── Focus panel on open ────────────────────────────────────────────────────
 
   useEffect(() => {
     firstFocusableRef.current?.focus()
   }, [])
 
-  const handleOverlayKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (!dialogRef.current) return
+  // ── Focus trap ─────────────────────────────────────────────────────────────
+
+  const handlePanelKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!panelRef.current) return
     const focusable = Array.from(
-      dialogRef.current.querySelectorAll<HTMLElement>(
+      panelRef.current.querySelectorAll<HTMLElement>(
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
       )
     ).filter((el) => !el.hasAttribute('disabled'))
@@ -204,58 +236,128 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
     if (e.target === e.currentTarget) onClose()
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // ── Derived values ─────────────────────────────────────────────────────────
 
   const boardTitle = cached?.boardTitle
+  const activePriority = PRIORITY_OPTIONS.find((p) => p.value === form.priority)
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+      className="fixed inset-0 z-50"
+      style={{
+        backgroundColor: panelVisible ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0)',
+        backdropFilter: panelVisible ? 'blur(8px)' : 'blur(0px)',
+        WebkitBackdropFilter: panelVisible ? 'blur(8px)' : 'blur(0px)',
+        transition: 'background-color 0.3s, backdrop-filter 0.3s',
+        display: 'flex',
+        justifyContent: 'flex-end',
+      }}
       onClick={handleOverlayClick}
-      onKeyDown={handleOverlayKeyDown}
+      onKeyDown={handlePanelKeyDown}
       role="presentation"
     >
+      {/* Side panel */}
       <div
-        ref={dialogRef}
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className={[
-          'relative w-full max-w-lg mx-4 rounded-2xl shadow-2xl',
-          'bg-[#080808] border border-zinc-800',
-          'flex flex-col max-h-[90vh]',
-        ].join(' ')}
+        className="flex flex-col"
+        style={{
+          width: '460px',
+          maxWidth: '100vw',
+          height: '100%',
+          backgroundColor: '#111111',
+          borderLeft: '1px solid rgba(255,255,255,0.08)',
+          transform: panelVisible ? 'translateX(0)' : 'translateX(100%)',
+          transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+          boxShadow: '-24px 0 80px rgba(0,0,0,0.7)',
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+          overflowY: 'auto',
+        }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-zinc-800 flex-shrink-0">
-          <div>
-            <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-600 mb-0.5">
-              Task
-            </p>
+        <div
+          className="flex items-start justify-between flex-shrink-0"
+          style={{
+            padding: '24px 24px 20px',
+            borderBottom: '1px solid rgba(255,255,255,0.06)',
+            position: 'sticky',
+            top: 0,
+            backgroundColor: 'rgba(17,17,17,0.95)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            zIndex: 1,
+          }}
+        >
+          <div className="flex-1 min-w-0 pr-4">
             {boardTitle && (
-              <p className="font-mono text-[11px] text-zinc-500">
+              <p
+                style={{
+                  color: '#48484A',
+                  fontSize: '11px',
+                  fontWeight: 500,
+                  letterSpacing: '0.04em',
+                  marginBottom: '4px',
+                  textTransform: 'uppercase',
+                }}
+              >
                 {boardTitle}
               </p>
             )}
+            <h2
+              id={titleId}
+              style={{
+                color: '#F5F5F7',
+                fontSize: '20px',
+                fontWeight: 600,
+                letterSpacing: '-0.02em',
+                lineHeight: '1.25',
+                wordBreak: 'break-word',
+              }}
+            >
+              {cached?.task.title ?? 'Task'}
+            </h2>
           </div>
+
+          {/* Close button — 32px circle */}
           <button
             ref={firstFocusableRef}
             type="button"
             onClick={onClose}
-            aria-label="Close modal"
-            className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+            aria-label="Close panel"
+            className="flex-shrink-0 flex items-center justify-center transition-colors"
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(255,255,255,0.06)',
+              border: 'none',
+              color: '#86868B',
+              cursor: 'pointer',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)'
+              e.currentTarget.style.color = '#F5F5F7'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)'
+              e.currentTarget.style.color = '#86868B'
+            }}
           >
             <X size={16} aria-hidden="true" />
           </button>
         </div>
 
         {/* Scrollable body */}
-        <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
-
-          {/* Title */}
+        <div
+          className="flex-1 overflow-y-auto"
+          style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}
+        >
+          {/* Title field */}
           <div>
-            <label htmlFor={titleId} className={labelCls}>
-              Title <span className="text-red-500">*</span>
+            <label htmlFor={titleId} style={labelStyle}>
+              Title <span style={{ color: '#FF453A' }}>*</span>
             </label>
             <input
               id={titleId}
@@ -263,15 +365,21 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
               value={form.title}
               onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
               placeholder="Task title"
-              className={inputCls}
+              style={inputStyle}
               disabled={isPending}
               autoComplete="off"
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(0,113,227,0.6)'
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
+              }}
             />
           </div>
 
           {/* Description */}
           <div>
-            <label htmlFor={descId} className={labelCls}>
+            <label htmlFor={descId} style={labelStyle}>
               Description
             </label>
             <textarea
@@ -280,102 +388,214 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
               placeholder="Add a description..."
               rows={4}
-              className={[inputCls, 'resize-y min-h-[80px]'].join(' ')}
               disabled={isPending}
+              style={{
+                ...inputStyle,
+                resize: 'vertical',
+                minHeight: '90px',
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(0,113,227,0.6)'
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
+              }}
             />
           </div>
 
-          {/* Priority + Due date side by side */}
-          <div className="grid grid-cols-2 gap-4">
-            {/* Priority */}
+          {/* Priority — pill buttons */}
+          <div>
+            <p style={labelStyle}>Priority</p>
+            <div className="flex gap-2">
+              {PRIORITY_OPTIONS.map(({ value, label, color }) => {
+                const isActive = form.priority === value
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    disabled={isPending}
+                    onClick={() => setForm((f) => ({ ...f, priority: value }))}
+                    className="flex items-center gap-1.5 transition-colors"
+                    style={{
+                      flex: 1,
+                      padding: '7px 10px',
+                      borderRadius: '10px',
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      border: isActive
+                        ? `1px solid ${color}60`
+                        : '1px solid rgba(255,255,255,0.06)',
+                      backgroundColor: isActive ? `${color}18` : '#2C2C2E',
+                      color: isActive ? color : '#48484A',
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <span
+                      className="rounded-full flex-shrink-0"
+                      style={{
+                        width: '6px',
+                        height: '6px',
+                        backgroundColor: color,
+                      }}
+                      aria-hidden="true"
+                    />
+                    {label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Status / board indicator (read-only) */}
+          {boardTitle && (
             <div>
-              <label htmlFor={priorityId} className={labelCls}>
-                Priority
-              </label>
-              <div className="relative">
-                <select
-                  id={priorityId}
-                  value={form.priority}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, priority: e.target.value as TaskPriority }))
-                  }
-                  className={[inputCls, 'appearance-none pr-8 cursor-pointer'].join(' ')}
-                  disabled={isPending}
-                >
-                  {PRIORITY_OPTIONS.map(({ value, label }) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-                {/* Color dot indicator */}
+              <p style={labelStyle}>Status</p>
+              <div
+                className="flex items-center gap-2"
+                style={{
+                  backgroundColor: '#2C2C2E',
+                  borderRadius: '10px',
+                  padding: '9px 12px',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                }}
+              >
                 <span
-                  className={[
-                    'pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full',
-                    PRIORITY_OPTIONS.find((p) => p.value === form.priority)?.dot ?? '',
-                  ].join(' ')}
+                  className="rounded-full flex-shrink-0"
+                  style={{
+                    width: '6px',
+                    height: '6px',
+                    backgroundColor: activePriority?.color ?? '#3A3A3C',
+                  }}
                   aria-hidden="true"
                 />
+                <span style={{ color: '#86868B', fontSize: '14px' }}>{boardTitle}</span>
               </div>
             </div>
+          )}
 
-            {/* Due date */}
-            <div>
-              <label htmlFor={dueDateId} className={labelCls}>
-                Due date
-              </label>
-              <input
-                id={dueDateId}
-                type="date"
-                value={form.due_date}
-                onChange={(e) => setForm((f) => ({ ...f, due_date: e.target.value }))}
-                className={[inputCls, 'cursor-pointer [color-scheme:dark]'].join(' ')}
-                disabled={isPending}
-              />
-            </div>
+          {/* Due date */}
+          <div>
+            <label htmlFor={dueDateId} style={labelStyle}>
+              Due date
+            </label>
+            <input
+              id={dueDateId}
+              type="date"
+              value={form.due_date}
+              onChange={(e) => setForm((f) => ({ ...f, due_date: e.target.value }))}
+              disabled={isPending}
+              style={{
+                ...inputStyle,
+                cursor: 'pointer',
+                colorScheme: 'dark',
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(0,113,227,0.6)'
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
+              }}
+            />
           </div>
 
           {/* Assignee */}
           <div>
-            <label htmlFor={assigneeId} className={labelCls}>
+            <label htmlFor={assigneeId} style={labelStyle}>
               Assignee
             </label>
-            <select
-              id={assigneeId}
-              value={form.assignee_id}
-              onChange={(e) => setForm((f) => ({ ...f, assignee_id: e.target.value }))}
-              className={[inputCls, 'appearance-none cursor-pointer'].join(' ')}
-              disabled={isPending}
-            >
-              <option value="">Unassigned</option>
-              {profiles.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.full_name ?? p.email ?? p.id}
-                </option>
-              ))}
-            </select>
+            <div style={{ position: 'relative' }}>
+              <select
+                id={assigneeId}
+                value={form.assignee_id}
+                onChange={(e) => setForm((f) => ({ ...f, assignee_id: e.target.value }))}
+                disabled={isPending}
+                style={{
+                  ...inputStyle,
+                  appearance: 'none',
+                  cursor: 'pointer',
+                  paddingRight: '32px',
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(0,113,227,0.6)'
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
+                }}
+              >
+                <option value="">Unassigned</option>
+                {profiles.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.full_name ?? p.email ?? p.id}
+                  </option>
+                ))}
+              </select>
+              {/* Chevron indicator */}
+              <span
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  pointerEvents: 'none',
+                  color: '#48484A',
+                  fontSize: '10px',
+                  lineHeight: 1,
+                }}
+              >
+                &#8964;
+              </span>
+            </div>
           </div>
 
           {/* Save error */}
           {saveError && (
-            <div className="flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2.5">
-              <AlertCircle size={14} className="mt-0.5 flex-shrink-0 text-red-400" aria-hidden="true" />
-              <p className="text-xs text-red-400 font-mono">{saveError}</p>
+            <div
+              className="flex items-start gap-2"
+              style={{
+                backgroundColor: 'rgba(255,69,58,0.08)',
+                border: '1px solid rgba(255,69,58,0.25)',
+                borderRadius: '10px',
+                padding: '10px 12px',
+              }}
+            >
+              <AlertCircle size={14} style={{ color: '#FF453A', flexShrink: 0, marginTop: '1px' }} aria-hidden="true" />
+              <p style={{ color: '#FF453A', fontSize: '13px' }}>{saveError}</p>
             </div>
           )}
 
           {/* Delete error */}
           {deleteError && (
-            <div className="flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2.5">
-              <AlertCircle size={14} className="mt-0.5 flex-shrink-0 text-red-400" aria-hidden="true" />
-              <p className="text-xs text-red-400 font-mono">{deleteError}</p>
+            <div
+              className="flex items-start gap-2"
+              style={{
+                backgroundColor: 'rgba(255,69,58,0.08)',
+                border: '1px solid rgba(255,69,58,0.25)',
+                borderRadius: '10px',
+                padding: '10px 12px',
+              }}
+            >
+              <AlertCircle size={14} style={{ color: '#FF453A', flexShrink: 0, marginTop: '1px' }} aria-hidden="true" />
+              <p style={{ color: '#FF453A', fontSize: '13px' }}>{deleteError}</p>
             </div>
           )}
 
           {/* Delete confirmation inline */}
           {deleteConfirm && (
-            <div className="rounded-xl border border-red-800/50 bg-red-950/30 px-4 py-3 space-y-3">
-              <p className="text-sm text-red-300 font-mono">
+            <div
+              style={{
+                backgroundColor: 'rgba(255,69,58,0.06)',
+                border: '1px solid rgba(255,69,58,0.2)',
+                borderRadius: '12px',
+                padding: '14px 16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+              }}
+            >
+              <p style={{ color: '#FF6961', fontSize: '14px', fontWeight: 500 }}>
                 Delete this task permanently?
               </p>
               <div className="flex gap-2">
@@ -383,10 +603,19 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
                   type="button"
                   onClick={handleDeleteConfirm}
                   disabled={isPending}
-                  className={[
-                    'flex-1 rounded-lg px-3 py-2 text-xs font-mono font-medium transition-colors',
-                    'bg-red-700 hover:bg-red-600 text-white disabled:opacity-50',
-                  ].join(' ')}
+                  style={{
+                    flex: 1,
+                    backgroundColor: '#FF453A',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '9px 12px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    opacity: isPending ? 0.5 : 1,
+                  }}
                 >
                   {isPending ? 'Deleting...' : 'Yes, delete'}
                 </button>
@@ -394,10 +623,19 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
                   type="button"
                   onClick={() => setDeleteConfirm(false)}
                   disabled={isPending}
-                  className={[
-                    'flex-1 rounded-lg px-3 py-2 text-xs font-mono font-medium transition-colors',
-                    'bg-zinc-800 hover:bg-zinc-700 text-zinc-200 disabled:opacity-50',
-                  ].join(' ')}
+                  style={{
+                    flex: 1,
+                    backgroundColor: '#2C2C2E',
+                    color: '#F5F5F7',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '8px',
+                    padding: '9px 12px',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    opacity: isPending ? 0.5 : 1,
+                  }}
                 >
                   Cancel
                 </button>
@@ -407,37 +645,77 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-zinc-800 flex-shrink-0">
+        <div
+          className="flex items-center justify-between flex-shrink-0"
+          style={{
+            padding: '16px 24px',
+            borderTop: '1px solid rgba(255,255,255,0.06)',
+            backgroundColor: 'rgba(17,17,17,0.95)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+          }}
+        >
           {/* Delete trigger */}
-          {!deleteConfirm && (
+          {!deleteConfirm ? (
             <button
               type="button"
               onClick={handleDeleteRequest}
               disabled={isPending}
               aria-label="Delete task"
-              className={[
-                'flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-mono transition-colors',
-                'text-zinc-500 hover:text-red-400 hover:bg-red-500/10 disabled:opacity-50',
-              ].join(' ')}
+              className="flex items-center gap-1.5 transition-colors"
+              style={{
+                backgroundColor: 'transparent',
+                border: 'none',
+                color: '#48484A',
+                fontSize: '13px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                padding: '7px 10px',
+                borderRadius: '8px',
+                opacity: isPending ? 0.4 : 1,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#FF453A'
+                e.currentTarget.style.backgroundColor = 'rgba(255,69,58,0.08)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = '#48484A'
+                e.currentTarget.style.backgroundColor = 'transparent'
+              }}
             >
               <Trash2 size={13} aria-hidden="true" />
               Delete
             </button>
+          ) : (
+            <span />
           )}
 
-          {/* Spacer when confirm panel is shown */}
-          {deleteConfirm && <span />}
-
           {/* Primary actions */}
-          <div className="flex items-center gap-2 ml-auto">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={onClose}
               disabled={isPending}
-              className={[
-                'rounded-lg px-4 py-2 text-xs font-mono transition-colors',
-                'bg-zinc-800 hover:bg-zinc-700 text-zinc-300 disabled:opacity-50',
-              ].join(' ')}
+              style={{
+                backgroundColor: '#2C2C2E',
+                border: '1px solid rgba(255,255,255,0.08)',
+                color: '#86868B',
+                borderRadius: '8px',
+                padding: '8px 16px',
+                fontSize: '14px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                opacity: isPending ? 0.4 : 1,
+                transition: 'background-color 0.15s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#3A3A3C'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#2C2C2E'
+              }}
             >
               Cancel
             </button>
@@ -445,10 +723,27 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
               type="button"
               onClick={handleSave}
               disabled={isPending || !form.title.trim()}
-              className={[
-                'rounded-lg px-4 py-2 text-xs font-mono font-medium transition-colors',
-                'bg-zinc-100 hover:bg-white text-zinc-900 disabled:opacity-40 disabled:cursor-not-allowed',
-              ].join(' ')}
+              style={{
+                backgroundColor: '#0071E3',
+                border: 'none',
+                color: '#fff',
+                borderRadius: '8px',
+                padding: '8px 18px',
+                fontSize: '14px',
+                fontWeight: 600,
+                cursor: isPending || !form.title.trim() ? 'not-allowed' : 'pointer',
+                fontFamily: 'inherit',
+                opacity: isPending || !form.title.trim() ? 0.4 : 1,
+                transition: 'opacity 0.15s, background-color 0.15s',
+              }}
+              onMouseEnter={(e) => {
+                if (!isPending && form.title.trim()) {
+                  e.currentTarget.style.backgroundColor = '#0077ED'
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#0071E3'
+              }}
             >
               {isPending ? 'Saving...' : 'Save changes'}
             </button>

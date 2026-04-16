@@ -34,32 +34,126 @@ type FormMode = 'create' | 'edit'
 
 type CategoryFilter = 'todos' | 'videoclips' | 'corporativos' | 'restaurantes' | 'comerciales'
 
-const CATEGORY_BADGES: Record<string, string> = {
-  videoclips: 'bg-purple-900/40 text-purple-300',
-  corporativos: 'bg-blue-900/40 text-blue-300',
-  restaurantes: 'bg-amber-900/40 text-amber-300',
-  comerciales: 'bg-green-900/40 text-green-300',
+// Apple-style category pill colours (bg + text as inline style objects)
+const CATEGORY_STYLES: Record<string, { background: string; color: string }> = {
+  videoclips:   { background: 'rgba(191,90,242,0.15)', color: '#BF5AF2' },
+  corporativos: { background: 'rgba(0,113,227,0.15)',  color: '#0A84FF' },
+  restaurantes: { background: 'rgba(255,159,10,0.15)', color: '#FF9F0A' },
+  comerciales:  { background: 'rgba(48,209,88,0.15)',  color: '#30D158' },
+}
+
+const DEFAULT_CATEGORY_STYLE: { background: string; color: string } = {
+  background: '#2C2C2E',
+  color: '#86868B',
 }
 
 const CATEGORIES = [
-  { value: 'videoclips', label: 'Videoclips' },
+  { value: 'videoclips',   label: 'Videoclips' },
   { value: 'corporativos', label: 'Corporativos' },
   { value: 'restaurantes', label: 'Restaurantes' },
-  { value: 'comerciales', label: 'Comerciales' },
+  { value: 'comerciales',  label: 'Comerciales' },
 ]
 
 const FILTER_PILLS: { value: CategoryFilter; label: string }[] = [
-  { value: 'todos', label: 'Todos' },
-  { value: 'videoclips', label: 'Videoclips' },
+  { value: 'todos',        label: 'Todos' },
+  { value: 'videoclips',   label: 'Videoclips' },
   { value: 'corporativos', label: 'Corporativos' },
   { value: 'restaurantes', label: 'Restaurantes' },
-  { value: 'comerciales', label: 'Comerciales' },
+  { value: 'comerciales',  label: 'Comerciales' },
 ]
 
-const INPUT_CLASS =
-  'w-full bg-[#111] border border-[#2a2a2a] rounded-sm px-3 py-2 text-xs font-mono text-[#ccc] placeholder-[#444] focus:outline-none focus:border-[#3a3a3a] transition-colors'
+// ─── shared style constants ────────────────────────────────────────────────
 
-const LABEL_CLASS = 'block text-[10px] font-mono tracking-widest uppercase text-[#555] mb-1'
+const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+
+const INPUT_STYLE: React.CSSProperties = {
+  width: '100%',
+  backgroundColor: '#1C1C1E',
+  border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: 8,
+  padding: '10px 12px',
+  fontSize: 14,
+  color: '#F5F5F7',
+  fontFamily: FONT,
+  outline: 'none',
+  boxSizing: 'border-box',
+  transition: 'border-color 0.15s',
+}
+
+const LABEL_STYLE: React.CSSProperties = {
+  display: 'block',
+  fontSize: 11,
+  fontFamily: FONT,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  color: '#86868B',
+  marginBottom: 6,
+}
+
+// ─── sub-components ────────────────────────────────────────────────────────
+
+function CategoryPill({ category }: { category: string }) {
+  const s = CATEGORY_STYLES[category] ?? DEFAULT_CATEGORY_STYLE
+  return (
+    <span
+      style={{
+        display: 'inline-block',
+        padding: '3px 10px',
+        borderRadius: 20,
+        fontSize: 11,
+        fontFamily: FONT,
+        fontWeight: 500,
+        letterSpacing: '0.02em',
+        background: s.background,
+        color: s.color,
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {category}
+    </span>
+  )
+}
+
+interface ReorderButtonProps {
+  direction: 'up' | 'down'
+  disabled: boolean
+  onClick: () => void
+  title: string
+}
+
+function ReorderButton({ direction, disabled, onClick, title }: ReorderButtonProps) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 28,
+        height: 28,
+        borderRadius: '50%',
+        border: 'none',
+        background: hovered && !disabled ? '#3A3A3C' : '#2C2C2E',
+        color: disabled ? '#3A3A3C' : '#86868B',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        fontSize: 11,
+        lineHeight: 1,
+        transition: 'background 0.15s, color 0.15s',
+        flexShrink: 0,
+      }}
+    >
+      {direction === 'up' ? '▲' : '▼'}
+    </button>
+  )
+}
+
+// ─── main component ────────────────────────────────────────────────────────
 
 export default function VideoManager({ initialVideos = [] }: VideoManagerProps) {
   const router = useRouter()
@@ -72,6 +166,7 @@ export default function VideoManager({ initialVideos = [] }: VideoManagerProps) 
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [reorderingId, setReorderingId] = useState<string | null>(null)
   const [activeFilter, setActiveFilter] = useState<CategoryFilter>('todos')
+  const [hoveredRow, setHoveredRow] = useState<string | null>(null)
 
   const sortedVideos = [...localVideos].sort((a, b) => a.sort_order - b.sort_order)
 
@@ -141,7 +236,6 @@ export default function VideoManager({ initialVideos = [] }: VideoManagerProps) 
     const current = sorted[idx]
     const adjacent = sorted[swapIdx]
 
-    // Optimistic local update
     const snapshot = localVideos
     setLocalVideos(
       localVideos.map((v) => {
@@ -165,7 +259,6 @@ export default function VideoManager({ initialVideos = [] }: VideoManagerProps) 
           .eq('id', adjacent.id),
       ])
     } catch {
-      // Rollback optimistic update on error
       setLocalVideos(snapshot)
     } finally {
       setReorderingId(null)
@@ -173,24 +266,41 @@ export default function VideoManager({ initialVideos = [] }: VideoManagerProps) 
   }
 
   return (
-    <div className="space-y-4">
-      {/* Top bar */}
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] font-mono text-[#444] tracking-wide">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, fontFamily: FONT }}>
+      {/* ── Top bar ─────────────────────────────────────────────────────── */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: 12, color: '#48484A' }}>
           {localVideos.length} {localVideos.length === 1 ? 'video' : 'videos'}
         </span>
+
         <button
           type="button"
           onClick={openCreateForm}
-          className="flex items-center gap-2 px-3 py-1.5 bg-[#111] border border-[#2a2a2a] rounded-sm text-xs font-mono text-[#ccc] hover:text-[#e8e8e8] hover:border-[#3a3a3a] transition-colors"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '8px 16px',
+            backgroundColor: '#0071E3',
+            border: 'none',
+            borderRadius: 8,
+            fontSize: 14,
+            fontFamily: FONT,
+            fontWeight: 500,
+            color: '#FFFFFF',
+            cursor: 'pointer',
+            transition: 'background-color 0.15s',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#0077ED' }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#0071E3' }}
         >
-          <Plus size={13} strokeWidth={1.5} />
+          <Plus size={14} strokeWidth={2} />
           Agregar video
         </button>
       </div>
 
-      {/* Category filter pills */}
-      <div className="flex items-center gap-1 flex-wrap">
+      {/* ── Category filter pills ────────────────────────────────────────── */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {FILTER_PILLS.map((pill) => {
           const active = activeFilter === pill.value
           return (
@@ -198,9 +308,30 @@ export default function VideoManager({ initialVideos = [] }: VideoManagerProps) 
               key={pill.value}
               type="button"
               onClick={() => setActiveFilter(pill.value)}
-              className={`px-3 py-1 rounded-sm text-[10px] font-mono tracking-[0.15em] uppercase transition-colors ${
-                active ? 'bg-[#1c1c1c] text-[#e8e8e8]' : 'text-[#444] hover:text-[#888]'
-              }`}
+              style={{
+                padding: '6px 16px',
+                borderRadius: 20,
+                border: 'none',
+                fontSize: 13,
+                fontFamily: FONT,
+                fontWeight: active ? 500 : 400,
+                backgroundColor: active ? '#0071E3' : '#1C1C1E',
+                color: active ? '#FFFFFF' : '#86868B',
+                cursor: 'pointer',
+                transition: 'background-color 0.15s, color 0.15s',
+              }}
+              onMouseEnter={(e) => {
+                if (!active) {
+                  e.currentTarget.style.backgroundColor = '#2C2C2E'
+                  e.currentTarget.style.color = '#F5F5F7'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!active) {
+                  e.currentTarget.style.backgroundColor = '#1C1C1E'
+                  e.currentTarget.style.color = '#86868B'
+                }
+              }}
             >
               {pill.label}
             </button>
@@ -208,167 +339,222 @@ export default function VideoManager({ initialVideos = [] }: VideoManagerProps) 
         })}
       </div>
 
-      {/* Inline form panel */}
+      {/* ── Inline form panel ────────────────────────────────────────────── */}
       {showForm && (
-        <div className="bg-[#0d0d0d] border border-[#1a1a1a] rounded-sm p-5">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-[10px] font-mono tracking-widest uppercase text-[#888]">
+        <div
+          style={{
+            backgroundColor: '#1C1C1E',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 16,
+            padding: 24,
+          }}
+        >
+          {/* Form header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+            <h2
+              style={{
+                margin: 0,
+                fontSize: 13,
+                fontFamily: FONT,
+                fontWeight: 600,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                color: '#86868B',
+              }}
+            >
               {formMode === 'create' ? 'Nuevo video' : 'Editar video'}
             </h2>
             <button
               type="button"
               onClick={closeForm}
-              className="text-[#444] hover:text-[#888] transition-colors"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 28,
+                height: 28,
+                borderRadius: 8,
+                border: 'none',
+                background: 'transparent',
+                color: '#48484A',
+                cursor: 'pointer',
+                transition: 'background 0.15s, color 0.15s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#2C2C2E'
+                e.currentTarget.style.color = '#86868B'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent'
+                e.currentTarget.style.color = '#48484A'
+              }}
             >
-              <X size={14} strokeWidth={1.5} />
+              <X size={14} strokeWidth={2} />
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {/* Row 1: Titulo + Vimeo ID */}
-            <div className="grid grid-cols-2 gap-4">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
-                <label htmlFor="title" className={LABEL_CLASS}>
-                  Titulo *
-                </label>
+                <label htmlFor="title" style={LABEL_STYLE}>Titulo *</label>
                 <input
                   id="title"
                   name="title"
                   type="text"
                   required
                   defaultValue={editingVideo?.title ?? ''}
-                  className={INPUT_CLASS}
                   placeholder="Nombre del video"
+                  style={INPUT_STYLE}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
                 />
               </div>
               <div>
-                <label htmlFor="vimeo_id" className={LABEL_CLASS}>
-                  ID de Vimeo *
-                </label>
+                <label htmlFor="vimeo_id" style={LABEL_STYLE}>ID de Vimeo *</label>
                 <input
                   id="vimeo_id"
                   name="vimeo_id"
                   type="text"
                   required
                   defaultValue={editingVideo?.vimeo_id ?? ''}
-                  className={INPUT_CLASS}
                   placeholder="123456789"
+                  style={INPUT_STYLE}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
                 />
               </div>
             </div>
 
             {/* Row 2: Categoria + Cliente + Ano */}
-            <div className="grid grid-cols-3 gap-4">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
               <div>
-                <label htmlFor="category" className={LABEL_CLASS}>
-                  Categoria
-                </label>
+                <label htmlFor="category" style={LABEL_STYLE}>Categoria</label>
                 <select
                   id="category"
                   name="category"
                   defaultValue={editingVideo?.category ?? 'videoclips'}
-                  className={INPUT_CLASS}
+                  style={{ ...INPUT_STYLE, appearance: 'none' }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
                 >
                   {CATEGORIES.map((c) => (
-                    <option key={c.value} value={c.value}>
+                    <option key={c.value} value={c.value} style={{ backgroundColor: '#1C1C1E' }}>
                       {c.label}
                     </option>
                   ))}
                 </select>
               </div>
               <div>
-                <label htmlFor="client_name" className={LABEL_CLASS}>
-                  Cliente
-                </label>
+                <label htmlFor="client_name" style={LABEL_STYLE}>Cliente</label>
                 <input
                   id="client_name"
                   name="client_name"
                   type="text"
                   defaultValue={editingVideo?.client_name ?? ''}
-                  className={INPUT_CLASS}
                   placeholder="Nombre del cliente"
+                  style={INPUT_STYLE}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
                 />
               </div>
               <div>
-                <label htmlFor="year" className={LABEL_CLASS}>
-                  Ano
-                </label>
+                <label htmlFor="year" style={LABEL_STYLE}>Ano</label>
                 <input
                   id="year"
                   name="year"
                   type="text"
                   defaultValue={editingVideo?.year ?? ''}
-                  className={INPUT_CLASS}
                   placeholder="2024"
+                  style={INPUT_STYLE}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
                 />
               </div>
             </div>
 
             {/* Row 3: Rol + Orden */}
-            <div className="grid grid-cols-2 gap-4">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
-                <label htmlFor="role" className={LABEL_CLASS}>
-                  Rol
-                </label>
+                <label htmlFor="role" style={LABEL_STYLE}>Rol</label>
                 <input
                   id="role"
                   name="role"
                   type="text"
                   defaultValue={editingVideo?.role ?? ''}
-                  className={INPUT_CLASS}
                   placeholder="Director, editor..."
+                  style={INPUT_STYLE}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
                 />
               </div>
               <div>
-                <label htmlFor="sort_order" className={LABEL_CLASS}>
-                  Orden
-                </label>
+                <label htmlFor="sort_order" style={LABEL_STYLE}>Orden</label>
                 <input
                   id="sort_order"
                   name="sort_order"
                   type="number"
                   defaultValue={editingVideo?.sort_order ?? 0}
-                  className={INPUT_CLASS}
                   placeholder="0"
+                  style={INPUT_STYLE}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
                 />
               </div>
             </div>
 
             {/* Descripcion */}
             <div>
-              <label htmlFor="description" className={LABEL_CLASS}>
-                Descripcion
-              </label>
+              <label htmlFor="description" style={LABEL_STYLE}>Descripcion</label>
               <textarea
                 id="description"
                 name="description"
                 rows={3}
                 defaultValue={editingVideo?.description ?? ''}
-                className={INPUT_CLASS}
                 placeholder="Descripcion del video..."
+                style={{ ...INPUT_STYLE, resize: 'vertical', lineHeight: 1.5 }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
               />
             </div>
 
             {/* Visible checkbox */}
-            <div className="flex items-center gap-2">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <input
                 id="is_visible"
                 name="is_visible"
                 type="checkbox"
                 defaultChecked={editingVideo ? editingVideo.is_visible : true}
-                className="accent-[#555]"
+                style={{ accentColor: '#0071E3', width: 14, height: 14 }}
               />
-              <label htmlFor="is_visible" className="text-xs font-mono text-[#888]">
+              <label
+                htmlFor="is_visible"
+                style={{ fontSize: 13, fontFamily: FONT, color: '#86868B', cursor: 'pointer' }}
+              >
                 Visible en el portfolio publico
               </label>
             </div>
 
-            {/* Actions */}
-            <div className="flex items-center gap-3 pt-1">
+            {/* Form actions */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingTop: 4 }}>
               <button
                 type="submit"
                 disabled={isPending}
-                className="px-4 py-2 bg-[#1c1c1c] border border-[#2a2a2a] rounded-sm text-xs font-mono text-[#ccc] hover:text-[#e8e8e8] hover:border-[#3a3a3a] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                style={{
+                  padding: '9px 20px',
+                  backgroundColor: '#0071E3',
+                  border: 'none',
+                  borderRadius: 8,
+                  fontSize: 14,
+                  fontFamily: FONT,
+                  fontWeight: 500,
+                  color: '#FFFFFF',
+                  cursor: isPending ? 'not-allowed' : 'pointer',
+                  opacity: isPending ? 0.5 : 1,
+                  transition: 'background-color 0.15s, opacity 0.15s',
+                }}
+                onMouseEnter={(e) => { if (!isPending) e.currentTarget.style.backgroundColor = '#0077ED' }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#0071E3' }}
               >
                 {isPending
                   ? 'Guardando...'
@@ -376,11 +562,24 @@ export default function VideoManager({ initialVideos = [] }: VideoManagerProps) 
                     ? 'Crear video'
                     : 'Guardar cambios'}
               </button>
+
               <button
                 type="button"
                 onClick={closeForm}
                 disabled={isPending}
-                className="px-4 py-2 text-xs font-mono text-[#444] hover:text-[#888] disabled:opacity-40 transition-colors"
+                style={{
+                  padding: '9px 16px',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  fontSize: 14,
+                  fontFamily: FONT,
+                  color: '#48484A',
+                  cursor: isPending ? 'not-allowed' : 'pointer',
+                  opacity: isPending ? 0.4 : 1,
+                  transition: 'color 0.15s',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = '#86868B' }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = '#48484A' }}
               >
                 Cancelar
               </button>
@@ -389,171 +588,321 @@ export default function VideoManager({ initialVideos = [] }: VideoManagerProps) 
         </div>
       )}
 
-      {/* Video table */}
+      {/* ── Video table ──────────────────────────────────────────────────── */}
       {filteredVideos.length === 0 ? (
-        <div className="border border-[#1a1a1a] rounded-sm p-12 text-center">
-          <p className="text-xs font-mono text-[#444]">No hay videos todavia</p>
-          <p className="text-[10px] font-mono text-[#333] mt-1">
+        <div
+          style={{
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 16,
+            padding: '48px 24px',
+            textAlign: 'center',
+          }}
+        >
+          <p style={{ margin: 0, fontSize: 14, fontFamily: FONT, color: '#48484A' }}>
+            No hay videos todavia
+          </p>
+          <p style={{ margin: '6px 0 0', fontSize: 12, fontFamily: FONT, color: '#3A3A3C' }}>
             Usa el boton &quot;Agregar video&quot; para empezar
           </p>
         </div>
       ) : (
-        <div className="border border-[#1a1a1a] rounded-sm overflow-hidden">
-          <table className="w-full">
+        <div
+          style={{
+            backgroundColor: '#111111',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 16,
+            overflow: 'hidden',
+          }}
+        >
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr className="border-b border-[#1a1a1a]">
-                <th className="px-4 py-3 text-left text-[10px] font-mono tracking-widest uppercase text-[#444] w-12">
-                  #
-                </th>
-                <th className="px-4 py-3 text-left text-[10px] font-mono tracking-widest uppercase text-[#444]">
+              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                {/* Thumb / title */}
+                <th
+                  style={{
+                    padding: '12px 16px',
+                    textAlign: 'left',
+                    fontSize: 11,
+                    fontFamily: FONT,
+                    fontWeight: 500,
+                    letterSpacing: '0.07em',
+                    textTransform: 'uppercase',
+                    color: '#48484A',
+                  }}
+                >
                   Video
                 </th>
-                <th className="px-4 py-3 text-left text-[10px] font-mono tracking-widest uppercase text-[#444]">
+                {/* Categoria */}
+                <th
+                  style={{
+                    padding: '12px 16px',
+                    textAlign: 'left',
+                    fontSize: 11,
+                    fontFamily: FONT,
+                    fontWeight: 500,
+                    letterSpacing: '0.07em',
+                    textTransform: 'uppercase',
+                    color: '#48484A',
+                    width: 130,
+                  }}
+                >
                   Categoria
                 </th>
-                <th className="px-4 py-3 text-left text-[10px] font-mono tracking-widest uppercase text-[#444]">
-                  Cliente
+                {/* Vimeo ID */}
+                <th
+                  style={{
+                    padding: '12px 16px',
+                    textAlign: 'left',
+                    fontSize: 11,
+                    fontFamily: FONT,
+                    fontWeight: 500,
+                    letterSpacing: '0.07em',
+                    textTransform: 'uppercase',
+                    color: '#48484A',
+                    width: 100,
+                  }}
+                >
+                  Vimeo ID
                 </th>
-                <th className="px-4 py-3 text-left text-[10px] font-mono tracking-widest uppercase text-[#444] w-16">
-                  Ano
-                </th>
-                <th className="px-4 py-3 text-center text-[10px] font-mono tracking-widest uppercase text-[#444] w-20">
+                {/* Visible */}
+                <th
+                  style={{
+                    padding: '12px 16px',
+                    textAlign: 'center',
+                    fontSize: 11,
+                    fontFamily: FONT,
+                    fontWeight: 500,
+                    letterSpacing: '0.07em',
+                    textTransform: 'uppercase',
+                    color: '#48484A',
+                    width: 80,
+                  }}
+                >
                   Visible
                 </th>
-                <th className="px-4 py-3 w-28" />
+                {/* Actions */}
+                <th style={{ width: 120 }} />
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#111]">
-              {filteredVideos.map((video, idx) => (
-                <tr
-                  key={video.id}
-                  className="group hover:bg-[#0d0d0d] transition-colors"
-                >
-                  {/* Sort order */}
-                  <td className="px-4 py-3">
-                    <span className="text-[10px] font-mono text-[#333]">
-                      {video.sort_order}
-                    </span>
-                  </td>
-
-                  {/* Thumbnail + title */}
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={`/api/vimeo-thumb?id=${video.vimeo_id}`}
-                        alt={video.title}
-                        width={56}
-                        height={32}
-                        className="w-14 h-8 object-cover rounded-sm bg-[#111] flex-shrink-0"
-                      />
-                      <div className="min-w-0">
-                        <p className="text-xs font-mono text-[#ccc] truncate leading-tight">
-                          {video.title}
-                        </p>
-                        <p className="text-[10px] font-mono text-[#444] truncate leading-tight mt-0.5">
-                          {video.vimeo_id}
-                        </p>
+            <tbody>
+              {filteredVideos.map((video, idx) => {
+                const isHovered = hoveredRow === video.id
+                return (
+                  <tr
+                    key={video.id}
+                    onMouseEnter={() => setHoveredRow(video.id)}
+                    onMouseLeave={() => setHoveredRow(null)}
+                    style={{
+                      backgroundColor: isHovered ? '#1C1C1E' : 'transparent',
+                      borderTop: idx === 0 ? 'none' : '1px solid rgba(255,255,255,0.04)',
+                      transition: 'background-color 0.12s',
+                    }}
+                  >
+                    {/* Thumbnail + title */}
+                    <td style={{ padding: '12px 16px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={`/api/vimeo-thumb?id=${video.vimeo_id}`}
+                          alt={video.title}
+                          width={60}
+                          height={40}
+                          style={{
+                            width: 60,
+                            height: 40,
+                            objectFit: 'cover',
+                            borderRadius: 6,
+                            backgroundColor: '#2C2C2E',
+                            flexShrink: 0,
+                          }}
+                        />
+                        <div style={{ minWidth: 0 }}>
+                          <p
+                            style={{
+                              margin: 0,
+                              fontSize: 14,
+                              fontFamily: FONT,
+                              fontWeight: 600,
+                              color: '#F5F5F7',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            }}
+                          >
+                            {video.title}
+                          </p>
+                          {video.client_name && (
+                            <p
+                              style={{
+                                margin: '2px 0 0',
+                                fontSize: 12,
+                                fontFamily: FONT,
+                                color: '#86868B',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}
+                            >
+                              {video.client_name}
+                              {video.year ? ` · ${video.year}` : ''}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </td>
+                    </td>
 
-                  {/* Category badge */}
-                  <td className="px-4 py-3">
-                    <span
-                      className={[
-                        'inline-block px-2 py-0.5 rounded-sm text-[10px] font-mono tracking-wide',
-                        CATEGORY_BADGES[video.category] ?? 'bg-[#1c1c1c] text-[#555]',
-                      ].join(' ')}
-                    >
-                      {video.category}
-                    </span>
-                  </td>
+                    {/* Category pill */}
+                    <td style={{ padding: '12px 16px' }}>
+                      <CategoryPill category={video.category} />
+                    </td>
 
-                  {/* Client */}
-                  <td className="px-4 py-3">
-                    <span className="text-xs font-mono text-[#888] truncate">
-                      {video.client_name || '—'}
-                    </span>
-                  </td>
+                    {/* Vimeo ID */}
+                    <td style={{ padding: '12px 16px' }}>
+                      <span
+                        style={{
+                          fontSize: 12,
+                          fontFamily: 'ui-monospace, SFMono-Regular, monospace',
+                          color: '#48484A',
+                        }}
+                      >
+                        {video.vimeo_id}
+                      </span>
+                    </td>
 
-                  {/* Year */}
-                  <td className="px-4 py-3">
-                    <span className="text-xs font-mono text-[#555]">
-                      {video.year || '—'}
-                    </span>
-                  </td>
-
-                  {/* Visibility toggle */}
-                  <td className="px-4 py-3 text-center">
-                    <button
-                      type="button"
-                      onClick={() => handleToggleVisibility(video)}
-                      disabled={togglingId === video.id || isPending}
-                      title={video.is_visible ? 'Ocultar video' : 'Mostrar video'}
-                      className={[
-                        'inline-flex items-center justify-center w-7 h-7 rounded-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed',
-                        video.is_visible
-                          ? 'text-[#888] hover:text-[#ccc] hover:bg-[#1a1a1a]'
-                          : 'text-[#333] hover:text-[#555] hover:bg-[#111]',
-                      ].join(' ')}
-                    >
-                      {video.is_visible ? (
-                        <Eye size={13} strokeWidth={1.5} />
-                      ) : (
-                        <EyeOff size={13} strokeWidth={1.5} />
-                      )}
-                    </button>
-                  </td>
-
-                  {/* Reorder + Edit + Delete */}
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {/* Up arrow */}
+                    {/* Visibility toggle */}
+                    <td style={{ padding: '12px 16px', textAlign: 'center' }}>
                       <button
                         type="button"
-                        onClick={() => reorderVideo(video.id, 'up')}
-                        disabled={idx === 0 || reorderingId === video.id || isPending}
-                        title="Mover arriba"
-                        className="inline-flex items-center justify-center w-6 h-6 rounded-sm text-[#444] hover:text-[#ccc] hover:bg-[#1a1a1a] transition-colors text-xs disabled:opacity-20 disabled:cursor-not-allowed"
+                        onClick={() => handleToggleVisibility(video)}
+                        disabled={togglingId === video.id || isPending}
+                        title={video.is_visible ? 'Ocultar video' : 'Mostrar video'}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 28,
+                          height: 28,
+                          borderRadius: 8,
+                          border: 'none',
+                          background: 'transparent',
+                          color: video.is_visible ? '#86868B' : '#3A3A3C',
+                          cursor: togglingId === video.id || isPending ? 'not-allowed' : 'pointer',
+                          opacity: togglingId === video.id || isPending ? 0.4 : 1,
+                          transition: 'color 0.15s, background 0.15s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = '#2C2C2E'
+                          e.currentTarget.style.color = '#F5F5F7'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'transparent'
+                          e.currentTarget.style.color = video.is_visible ? '#86868B' : '#3A3A3C'
+                        }}
                       >
-                        &#9650;
+                        {video.is_visible ? (
+                          <Eye size={14} strokeWidth={1.5} />
+                        ) : (
+                          <EyeOff size={14} strokeWidth={1.5} />
+                        )}
                       </button>
-                      {/* Down arrow */}
-                      <button
-                        type="button"
-                        onClick={() => reorderVideo(video.id, 'down')}
-                        disabled={
-                          idx === filteredVideos.length - 1 ||
-                          reorderingId === video.id ||
-                          isPending
-                        }
-                        title="Mover abajo"
-                        className="inline-flex items-center justify-center w-6 h-6 rounded-sm text-[#444] hover:text-[#ccc] hover:bg-[#1a1a1a] transition-colors text-xs disabled:opacity-20 disabled:cursor-not-allowed"
+                    </td>
+
+                    {/* Reorder + Edit + Delete */}
+                    <td style={{ padding: '12px 16px' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          opacity: isHovered ? 1 : 0,
+                          transition: 'opacity 0.15s',
+                        }}
                       >
-                        &#9660;
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => openEditForm(video)}
-                        title="Editar video"
-                        className="inline-flex items-center justify-center w-7 h-7 rounded-sm text-[#444] hover:text-[#ccc] hover:bg-[#1a1a1a] transition-colors"
-                      >
-                        <Pencil size={12} strokeWidth={1.5} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(video)}
-                        disabled={deletingId === video.id || isPending}
-                        title="Eliminar video"
-                        className="inline-flex items-center justify-center w-7 h-7 rounded-sm text-[#444] hover:text-red-400 hover:bg-red-900/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                      >
-                        <Trash2 size={12} strokeWidth={1.5} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                        <ReorderButton
+                          direction="up"
+                          disabled={idx === 0 || reorderingId === video.id || isPending}
+                          onClick={() => reorderVideo(video.id, 'up')}
+                          title="Mover arriba"
+                        />
+                        <ReorderButton
+                          direction="down"
+                          disabled={
+                            idx === filteredVideos.length - 1 ||
+                            reorderingId === video.id ||
+                            isPending
+                          }
+                          onClick={() => reorderVideo(video.id, 'down')}
+                          title="Mover abajo"
+                        />
+
+                        {/* Edit */}
+                        <button
+                          type="button"
+                          onClick={() => openEditForm(video)}
+                          title="Editar video"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: 28,
+                            height: 28,
+                            borderRadius: 8,
+                            border: 'none',
+                            background: 'transparent',
+                            color: '#86868B',
+                            cursor: 'pointer',
+                            transition: 'background 0.15s, color 0.15s',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = '#2C2C2E'
+                            e.currentTarget.style.color = '#F5F5F7'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'transparent'
+                            e.currentTarget.style.color = '#86868B'
+                          }}
+                        >
+                          <Pencil size={13} strokeWidth={1.5} />
+                        </button>
+
+                        {/* Delete */}
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(video)}
+                          disabled={deletingId === video.id || isPending}
+                          title="Eliminar video"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: 28,
+                            height: 28,
+                            borderRadius: 8,
+                            border: 'none',
+                            background: 'transparent',
+                            color: '#86868B',
+                            cursor: deletingId === video.id || isPending ? 'not-allowed' : 'pointer',
+                            opacity: deletingId === video.id || isPending ? 0.4 : 1,
+                            transition: 'background 0.15s, color 0.15s',
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!(deletingId === video.id || isPending)) {
+                              e.currentTarget.style.background = 'rgba(255,69,58,0.15)'
+                              e.currentTarget.style.color = '#FF453A'
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'transparent'
+                            e.currentTarget.style.color = '#86868B'
+                          }}
+                        >
+                          <Trash2 size={13} strokeWidth={1.5} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>

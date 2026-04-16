@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import { useState } from 'react'
 import {
   LayoutDashboard,
   Film,
@@ -16,6 +17,27 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/lib/supabase/types'
 
+// ─── Design tokens ──────────────────────────────────────────────────────────
+const T = {
+  bg: '#000000',
+  surface1: '#111111',
+  surface2: '#1C1C1E',
+  surface3: '#2C2C2E',
+  border: 'rgba(255,255,255,0.08)',
+  borderStrong: 'rgba(255,255,255,0.14)',
+  textPrimary: '#F5F5F7',
+  textSecondary: '#86868B',
+  textTertiary: '#48484A',
+  accent: '#0071E3',
+  accentRed: '#FF453A',
+  radiusSm: '8px',
+  radiusMd: '12px',
+  radiusLg: '16px',
+  font: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+  fontMono: "'SF Mono', SFMono-Regular, ui-monospace, monospace",
+} as const
+
+// ─── Nav items ───────────────────────────────────────────────────────────────
 interface NavItem {
   label: string
   href: string
@@ -60,14 +82,17 @@ const NAV_ITEMS: NavItem[] = [
   },
 ]
 
+// ─── Props ────────────────────────────────────────────────────────────────────
 interface SidebarProps {
   profile: Pick<Profile, 'full_name' | 'email' | 'avatar_url'>
 }
 
+// ─── Component ───────────────────────────────────────────────────────────────
 export default function Sidebar({ profile }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
+  const [logoutHovered, setLogoutHovered] = useState(false)
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -86,82 +111,251 @@ export default function Sidebar({ profile }: SidebarProps) {
       .map((n) => n[0])
       .slice(0, 2)
       .join('')
-      .toUpperCase() ?? '??'
+      .toUpperCase() ?? '?'
 
   return (
-    <aside className="flex flex-col w-56 min-h-screen bg-[#0a0a0a] border-r border-[#1a1a1a] flex-shrink-0">
-      {/* Wordmark */}
-      <div className="px-5 pt-6 pb-5 border-b border-[#1a1a1a]">
-        <span className="font-mono text-[10px] tracking-[0.4em] text-[#888] uppercase">
-          Carajo Films
-        </span>
-        <p className="font-mono text-[9px] tracking-[0.2em] text-[#444] uppercase mt-0.5">
-          Admin
-        </p>
+    <aside
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        width: '220px',
+        minWidth: '220px',
+        minHeight: '100vh',
+        background: T.surface1,
+        borderRight: `1px solid rgba(255,255,255,0.06)`,
+        fontFamily: T.font,
+        flexShrink: 0,
+      }}
+    >
+      {/* ── Wordmark ─────────────────────────────────────────────────────── */}
+      <div
+        style={{
+          padding: '24px 20px 20px',
+          borderBottom: `1px solid ${T.border}`,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: T.font,
+            fontWeight: 700,
+            fontSize: '18px',
+            color: T.textPrimary,
+            letterSpacing: '-0.01em',
+            lineHeight: 1,
+          }}
+        >
+          XICO
+        </div>
+        <div
+          style={{
+            fontFamily: T.font,
+            fontSize: '10px',
+            color: T.textSecondary,
+            letterSpacing: '0.3em',
+            marginTop: '4px',
+            textTransform: 'uppercase',
+          }}
+        >
+          FILMS
+        </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5">
+      {/* ── Navigation ───────────────────────────────────────────────────── */}
+      <nav
+        style={{
+          flex: 1,
+          padding: '12px 8px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '2px',
+        }}
+      >
         {NAV_ITEMS.map((item) => {
           const active = isActive(item.href)
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={[
-                'flex items-center gap-3 px-3 py-2 rounded-sm text-xs font-mono tracking-wide transition-colors',
-                active
-                  ? 'bg-[#1c1c1c] text-[#e8e8e8]'
-                  : 'text-[#555] hover:text-[#aaa] hover:bg-[#111]',
-              ].join(' ')}
-            >
-              <span
-                className={active ? 'text-[#e8e8e8]' : 'text-[#444]'}
-                aria-hidden="true"
-              >
-                {item.icon}
-              </span>
-              {item.label}
-            </Link>
+            <NavLink key={item.href} item={item} active={active} />
           )
         })}
       </nav>
 
-      {/* User footer */}
-      <div className="px-3 pb-4 border-t border-[#1a1a1a] pt-4">
-        <div className="flex items-center gap-3 px-3 py-2 mb-1">
+      {/* ── User footer ──────────────────────────────────────────────────── */}
+      <div
+        style={{
+          borderTop: `1px solid ${T.border}`,
+          padding: '12px 8px',
+        }}
+      >
+        {/* User info row */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '8px 12px',
+            marginBottom: '4px',
+          }}
+        >
+          {/* Avatar */}
           {profile.avatar_url ? (
             <Image
               src={profile.avatar_url}
               alt={profile.full_name ?? 'User avatar'}
-              width={28}
-              height={28}
-              className="rounded-full object-cover flex-shrink-0"
+              width={40}
+              height={40}
+              style={{
+                borderRadius: '50%',
+                objectFit: 'cover',
+                flexShrink: 0,
+              }}
             />
           ) : (
-            <div className="w-7 h-7 rounded-full bg-[#1c1c1c] border border-[#2a2a2a] flex items-center justify-center flex-shrink-0">
-              <span className="text-[9px] font-mono text-[#888]">{initials}</span>
+            <div
+              style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                background: T.surface3,
+                border: `1px solid ${T.borderStrong}`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: T.font,
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: T.textSecondary,
+                  userSelect: 'none',
+                }}
+              >
+                {initials}
+              </span>
             </div>
           )}
-          <div className="min-w-0">
-            <p className="text-[11px] font-mono text-[#ccc] truncate leading-tight">
+
+          {/* Name + email */}
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <p
+              style={{
+                fontFamily: T.font,
+                fontSize: '13px',
+                fontWeight: 500,
+                color: T.textPrimary,
+                margin: 0,
+                lineHeight: 1.3,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
               {profile.full_name ?? 'Usuario'}
             </p>
-            <p className="text-[9px] font-mono text-[#444] truncate leading-tight mt-0.5">
+            <p
+              style={{
+                fontFamily: T.font,
+                fontSize: '11px',
+                color: T.textSecondary,
+                margin: '2px 0 0',
+                lineHeight: 1.3,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
               {profile.email ?? ''}
             </p>
           </div>
         </div>
 
+        {/* Logout button */}
         <button
           type="button"
           onClick={handleLogout}
-          className="flex items-center gap-3 w-full px-3 py-2 rounded-sm text-xs font-mono text-[#444] hover:text-[#888] hover:bg-[#111] transition-colors"
+          onMouseEnter={() => setLogoutHovered(true)}
+          onMouseLeave={() => setLogoutHovered(false)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            width: '100%',
+            padding: '8px 12px',
+            borderRadius: T.radiusSm,
+            border: 'none',
+            background: logoutHovered ? 'rgba(255,69,58,0.08)' : 'transparent',
+            color: logoutHovered ? T.accentRed : T.textSecondary,
+            fontFamily: T.font,
+            fontSize: '13px',
+            cursor: 'pointer',
+            transition: 'background 0.15s ease, color 0.15s ease',
+            textAlign: 'left',
+          }}
         >
-          <LogOut size={14} strokeWidth={1.5} aria-hidden="true" />
+          <LogOut
+            size={15}
+            strokeWidth={1.5}
+            aria-hidden="true"
+            style={{ flexShrink: 0 }}
+          />
           Cerrar sesion
         </button>
       </div>
     </aside>
+  )
+}
+
+// ─── NavLink sub-component ───────────────────────────────────────────────────
+function NavLink({ item, active }: { item: NavItem; active: boolean }) {
+  const [hovered, setHovered] = useState(false)
+
+  const bg = active
+    ? 'rgba(255,255,255,0.08)'
+    : hovered
+    ? 'rgba(255,255,255,0.04)'
+    : 'transparent'
+
+  const color = active
+    ? '#F5F5F7'
+    : hovered
+    ? '#aeaeb2'
+    : '#86868B'
+
+  return (
+    <Link
+      href={item.href}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        padding: '8px 12px',
+        borderRadius: '8px',
+        background: bg,
+        color,
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+        fontSize: '13px',
+        fontWeight: active ? 500 : 400,
+        textDecoration: 'none',
+        transition: 'background 0.15s ease, color 0.15s ease',
+        userSelect: 'none',
+      }}
+    >
+      <span
+        aria-hidden="true"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          flexShrink: 0,
+          color,
+          transition: 'color 0.15s ease',
+        }}
+      >
+        {item.icon}
+      </span>
+      {item.label}
+    </Link>
   )
 }

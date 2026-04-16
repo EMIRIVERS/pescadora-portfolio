@@ -25,44 +25,86 @@ interface FormErrors {
   general?: string
 }
 
+// ─── Design tokens ────────────────────────────────────────────────────────────
+const S = {
+  surface2:      '#1C1C1E',
+  surface3:      '#2C2C2E',
+  border:        'rgba(255,255,255,0.10)',
+  textPrimary:   '#F5F5F7',
+  textSecondary: '#86868B',
+  textTertiary:  '#48484A',
+  accent:        '#0071E3',
+  accentRed:     '#FF453A',
+  font:          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+} as const
+
+// ─── Options ──────────────────────────────────────────────────────────────────
 const TYPE_OPTIONS: { value: DeliverableType; label: string }[] = [
-  { value: 'wip', label: 'WIP' },
+  { value: 'wip',   label: 'WIP' },
   { value: 'final', label: 'Final' },
 ]
 
 const STATUS_OPTIONS: { value: DeliverableStatus; label: string }[] = [
-  { value: 'pending', label: 'Pending' },
-  { value: 'review', label: 'In Review' },
-  { value: 'approved', label: 'Approved' },
-  { value: 'approved', label: 'Rejected' },
+  { value: 'pending',  label: 'Pendiente' },
+  { value: 'review',   label: 'En revision' },
+  { value: 'approved', label: 'Aprobado' },
 ]
 
 const DEFAULT_VALUES: FormValues = {
-  title: '',
+  title:       '',
   description: '',
-  url: '',
-  type: 'wip',
-  status: 'pending',
+  url:         '',
+  type:        'wip',
+  status:      'pending',
 }
 
+// ─── Validation ───────────────────────────────────────────────────────────────
 function validate(values: FormValues): FormErrors {
   const errors: FormErrors = {}
 
   if (!values.title.trim()) {
-    errors.title = 'Title is required.'
+    errors.title = 'El titulo es obligatorio.'
   }
 
   if (values.url.trim() && !/^https?:\/\/.+/.test(values.url.trim())) {
-    errors.url = 'URL must start with http:// or https://'
+    errors.url = 'La URL debe comenzar con http:// o https://'
   }
 
   return errors
 }
 
+// ─── Shared field styles ──────────────────────────────────────────────────────
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  background: S.surface2,
+  border: `1px solid ${S.border}`,
+  borderRadius: 8,
+  padding: '9px 12px',
+  fontSize: 14,
+  color: S.textPrimary,
+  fontFamily: S.font,
+  outline: 'none',
+  boxSizing: 'border-box',
+  transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+}
+
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontSize: 11,
+  fontWeight: 600,
+  color: S.textSecondary,
+  textTransform: 'uppercase',
+  letterSpacing: '0.07em',
+  marginBottom: 6,
+  fontFamily: S.font,
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 export function AddDeliverableForm({ projectId, onSuccess, onCancel }: Props) {
   const [isPending, startTransition] = useTransition()
-  const [errors, setErrors] = useState<FormErrors>({})
-  const [values, setValues] = useState<FormValues>(DEFAULT_VALUES)
+  const [errors, setErrors]          = useState<FormErrors>({})
+  const [values, setValues]          = useState<FormValues>(DEFAULT_VALUES)
+  const [focused, setFocused]        = useState<string | null>(null)
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -89,18 +131,18 @@ export function AddDeliverableForm({ projectId, onSuccess, onCancel }: Props) {
       const { data, error } = await supabase
         .from('project_deliverables')
         .insert({
-          project_id: projectId,
-          title: values.title.trim(),
+          project_id:  projectId,
+          title:       values.title.trim(),
           description: values.description.trim() || null,
-          url: values.url.trim() || null,
-          type: values.type,
-          status: values.status,
+          url:         values.url.trim() || null,
+          type:        values.type,
+          status:      values.status,
         })
         .select('*')
         .single()
 
       if (error || !data) {
-        setErrors({ general: error?.message ?? 'Failed to add deliverable.' })
+        setErrors({ general: error?.message ?? 'No se pudo agregar el entregable.' })
         return
       }
 
@@ -108,18 +150,35 @@ export function AddDeliverableForm({ projectId, onSuccess, onCancel }: Props) {
     })
   }
 
+  function focusStyle(name: string): React.CSSProperties {
+    return focused === name
+      ? { borderColor: S.accent, boxShadow: `0 0 0 3px rgba(0,113,227,0.20)` }
+      : {}
+  }
+
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-4">
+    <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* General error */}
       {errors.general && (
-        <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
+        <div
+          style={{
+            borderRadius: 8,
+            background: 'rgba(255,69,58,0.10)',
+            border: `1px solid rgba(255,69,58,0.25)`,
+            padding: '10px 14px',
+            fontSize: 13,
+            color: S.accentRed,
+            fontFamily: S.font,
+          }}
+        >
           {errors.general}
         </div>
       )}
 
       {/* Title */}
-      <div className="space-y-1.5">
-        <label htmlFor="d-title" className="block text-xs font-medium text-zinc-400">
-          Title <span className="text-red-400">*</span>
+      <div>
+        <label htmlFor="d-title" style={labelStyle}>
+          Titulo <span style={{ color: S.accentRed }}>*</span>
         </label>
         <input
           id="d-title"
@@ -127,19 +186,27 @@ export function AddDeliverableForm({ projectId, onSuccess, onCancel }: Props) {
           type="text"
           value={values.title}
           onChange={handleChange}
+          onFocus={() => setFocused('title')}
+          onBlur={() => setFocused(null)}
           disabled={isPending}
-          className="w-full rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:opacity-50"
-          placeholder="e.g. Cut #3 — rough edit"
+          placeholder="p. ej. Corte #3 — edicion preliminar"
+          style={{
+            ...inputStyle,
+            ...focusStyle('title'),
+            opacity: isPending ? 0.5 : 1,
+          }}
         />
         {errors.title && (
-          <p className="text-xs text-red-400">{errors.title}</p>
+          <p style={{ fontSize: 11, color: S.accentRed, marginTop: 4, fontFamily: S.font }}>
+            {errors.title}
+          </p>
         )}
       </div>
 
       {/* Description */}
-      <div className="space-y-1.5">
-        <label htmlFor="d-description" className="block text-xs font-medium text-zinc-400">
-          Description
+      <div>
+        <label htmlFor="d-description" style={labelStyle}>
+          Descripcion
         </label>
         <textarea
           id="d-description"
@@ -147,15 +214,23 @@ export function AddDeliverableForm({ projectId, onSuccess, onCancel }: Props) {
           rows={3}
           value={values.description}
           onChange={handleChange}
+          onFocus={() => setFocused('description')}
+          onBlur={() => setFocused(null)}
           disabled={isPending}
-          className="w-full rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:opacity-50 resize-none"
-          placeholder="Optional notes…"
+          placeholder="Notas opcionales..."
+          style={{
+            ...inputStyle,
+            ...focusStyle('description'),
+            resize: 'none',
+            opacity: isPending ? 0.5 : 1,
+            lineHeight: 1.5,
+          }}
         />
       </div>
 
       {/* URL */}
-      <div className="space-y-1.5">
-        <label htmlFor="d-url" className="block text-xs font-medium text-zinc-400">
+      <div>
+        <label htmlFor="d-url" style={labelStyle}>
           URL
         </label>
         <input
@@ -164,28 +239,45 @@ export function AddDeliverableForm({ projectId, onSuccess, onCancel }: Props) {
           type="url"
           value={values.url}
           onChange={handleChange}
+          onFocus={() => setFocused('url')}
+          onBlur={() => setFocused(null)}
           disabled={isPending}
-          className="w-full rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:opacity-50 font-mono"
-          placeholder="https://frame.io/…"
+          placeholder="https://frame.io/..."
+          style={{
+            ...inputStyle,
+            ...focusStyle('url'),
+            fontFamily: "'SF Mono', ui-monospace, monospace",
+            fontSize: 13,
+            opacity: isPending ? 0.5 : 1,
+          }}
         />
         {errors.url && (
-          <p className="text-xs text-red-400">{errors.url}</p>
+          <p style={{ fontSize: 11, color: S.accentRed, marginTop: 4, fontFamily: S.font }}>
+            {errors.url}
+          </p>
         )}
       </div>
 
       {/* Type + Status */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-1.5">
-          <label htmlFor="d-type" className="block text-xs font-medium text-zinc-400">
-            Type
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div>
+          <label htmlFor="d-type" style={labelStyle}>
+            Tipo
           </label>
           <select
             id="d-type"
             name="type"
             value={values.type}
             onChange={handleChange}
+            onFocus={() => setFocused('type')}
+            onBlur={() => setFocused(null)}
             disabled={isPending}
-            className="w-full rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:opacity-50"
+            style={{
+              ...inputStyle,
+              ...focusStyle('type'),
+              cursor: 'pointer',
+              opacity: isPending ? 0.5 : 1,
+            }}
           >
             {TYPE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -194,17 +286,25 @@ export function AddDeliverableForm({ projectId, onSuccess, onCancel }: Props) {
             ))}
           </select>
         </div>
-        <div className="space-y-1.5">
-          <label htmlFor="d-status" className="block text-xs font-medium text-zinc-400">
-            Status
+
+        <div>
+          <label htmlFor="d-status" style={labelStyle}>
+            Estado
           </label>
           <select
             id="d-status"
             name="status"
             value={values.status}
             onChange={handleChange}
+            onFocus={() => setFocused('status')}
+            onBlur={() => setFocused(null)}
             disabled={isPending}
-            className="w-full rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-500 disabled:opacity-50"
+            style={{
+              ...inputStyle,
+              ...focusStyle('status'),
+              cursor: 'pointer',
+              opacity: isPending ? 0.5 : 1,
+            }}
           >
             {STATUS_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -216,22 +316,66 @@ export function AddDeliverableForm({ projectId, onSuccess, onCancel }: Props) {
       </div>
 
       {/* Actions */}
-      <div className="flex items-center justify-end gap-3 pt-1">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10, paddingTop: 4 }}>
         <button
           type="button"
           onClick={onCancel}
           disabled={isPending}
-          className="px-3 py-1.5 text-xs rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 transition-colors disabled:opacity-50"
+          style={{
+            padding: '7px 14px',
+            fontSize: 13,
+            fontWeight: 500,
+            borderRadius: 8,
+            background: 'transparent',
+            border: `1px solid ${S.border}`,
+            color: S.textSecondary,
+            cursor: 'pointer',
+            fontFamily: S.font,
+            transition: 'border-color 0.15s ease, color 0.15s ease',
+            opacity: isPending ? 0.5 : 1,
+          }}
+          onMouseEnter={(e) => {
+            const b = e.currentTarget as HTMLButtonElement
+            b.style.borderColor = 'rgba(255,255,255,0.20)'
+            b.style.color = '#F5F5F7'
+          }}
+          onMouseLeave={(e) => {
+            const b = e.currentTarget as HTMLButtonElement
+            b.style.borderColor = S.border
+            b.style.color = S.textSecondary
+          }}
         >
-          Cancel
+          Cancelar
         </button>
+
         <button
           type="submit"
           disabled={isPending}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-zinc-100 hover:bg-white text-zinc-900 font-medium transition-colors disabled:opacity-50"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '7px 16px',
+            fontSize: 13,
+            fontWeight: 500,
+            borderRadius: 8,
+            background: S.accent,
+            border: 'none',
+            color: '#FFFFFF',
+            cursor: isPending ? 'not-allowed' : 'pointer',
+            fontFamily: S.font,
+            transition: 'background 0.15s ease',
+            opacity: isPending ? 0.6 : 1,
+          }}
+          onMouseEnter={(e) => {
+            if (!isPending) (e.currentTarget as HTMLButtonElement).style.background = '#0077ED'
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.background = S.accent
+          }}
         >
-          {isPending && <Loader2 className="w-3 h-3 animate-spin" />}
-          Add deliverable
+          {isPending && <Loader2 size={13} className="animate-spin" />}
+          Agregar entregable
         </button>
       </div>
     </form>

@@ -19,14 +19,24 @@ function getInitials(name: string | null): string {
     .toUpperCase()
 }
 
-const ROLE_STYLES: Record<string, string> = {
-  lead: 'bg-violet-500/15 text-violet-400 ring-1 ring-violet-500/30',
-  editor: 'bg-sky-500/15 text-sky-400 ring-1 ring-sky-500/30',
-  member: 'bg-zinc-500/15 text-zinc-400 ring-1 ring-zinc-500/30',
+const ROLE_COLORS: Record<string, { bg: string; text: string; ring: string }> = {
+  lead: { bg: 'rgba(191,90,242,0.15)', text: '#BF5AF2', ring: 'rgba(191,90,242,0.3)' },
+  editor: { bg: 'rgba(0,113,227,0.15)', text: '#409CFF', ring: 'rgba(0,113,227,0.3)' },
+  member: { bg: 'rgba(72,72,74,0.4)', text: '#86868B', ring: 'rgba(255,255,255,0.08)' },
 }
 
-function roleBadgeClass(role: string): string {
-  return ROLE_STYLES[role] ?? ROLE_STYLES['member']
+function getRoleColor(role: string) {
+  return ROLE_COLORS[role] ?? ROLE_COLORS['member']
+}
+
+const selectBase: React.CSSProperties = {
+  backgroundColor: '#1C1C1E',
+  border: '1px solid rgba(255,255,255,0.1)',
+  borderRadius: '8px',
+  padding: '9px 12px',
+  color: '#F5F5F7',
+  fontSize: '13px',
+  outline: 'none',
 }
 
 export function ProjectAssignments({ projectId }: Props) {
@@ -110,66 +120,136 @@ export function ProjectAssignments({ projectId }: Props) {
   return (
     <div className="space-y-3">
       {error && (
-        <p className="text-xs font-mono text-red-400/80 px-1">{error}</p>
+        <p style={{ fontSize: '12px', color: '#FF453A', padding: '0 4px' }}>{error}</p>
       )}
 
       {assignments.length === 0 && (
-        <p className="text-xs font-mono text-zinc-600 px-1">
+        <p style={{ fontSize: '13px', color: '#48484A', padding: '0 4px' }}>
           Sin miembros asignados.
         </p>
       )}
 
       <ul className="space-y-2">
-        {assignments.map((a) => (
-          <li
-            key={a.id}
-            className="flex items-center gap-3 rounded-xl bg-zinc-900 border border-zinc-800 px-4 py-3"
-          >
-            {/* Avatar */}
-            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-mono text-zinc-400 select-none">
-              {getInitials(a.profile.full_name)}
-            </div>
+        {assignments.map((a) => {
+          const roleColor = getRoleColor(a.role)
+          return (
+            <li
+              key={a.id}
+              className="flex items-center gap-3"
+              style={{
+                backgroundColor: '#1C1C1E',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '12px',
+                padding: '12px 16px',
+              }}
+            >
+              {/* Avatar */}
+              <div
+                className="flex-shrink-0 flex items-center justify-center select-none"
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  backgroundColor: '#2C2C2E',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: '#86868B',
+                  letterSpacing: '0.02em',
+                }}
+              >
+                {getInitials(a.profile.full_name)}
+              </div>
 
-            {/* Name + email */}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-mono text-zinc-200 truncate">
-                {a.profile.full_name ?? a.profile.email ?? 'Unknown'}
-              </p>
-              {a.profile.email && (
-                <p className="text-[11px] font-mono text-zinc-500 truncate">
-                  {a.profile.email}
+              {/* Name + email */}
+              <div className="flex-1 min-w-0">
+                <p
+                  className="truncate"
+                  style={{ fontSize: '14px', fontWeight: 500, color: '#F5F5F7' }}
+                >
+                  {a.profile.full_name ?? a.profile.email ?? 'Desconocido'}
                 </p>
-              )}
-            </div>
+                {a.profile.email && (
+                  <p
+                    className="truncate"
+                    style={{ fontSize: '12px', color: '#86868B', marginTop: '1px' }}
+                  >
+                    {a.profile.email}
+                  </p>
+                )}
+              </div>
 
-            {/* Role badge */}
-            <span
-              className={[
-                'flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono tracking-wide',
-                roleBadgeClass(a.role),
-              ].join(' ')}
-            >
-              {a.role}
-            </span>
+              {/* Role badge */}
+              <span
+                className="flex-shrink-0 inline-flex items-center"
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 500,
+                  letterSpacing: '0.04em',
+                  borderRadius: '20px',
+                  padding: '3px 9px',
+                  backgroundColor: roleColor.bg,
+                  color: roleColor.text,
+                  boxShadow: `0 0 0 1px ${roleColor.ring}`,
+                }}
+              >
+                {a.role}
+              </span>
 
-            {/* Remove */}
-            <button
-              type="button"
-              aria-label={`Remover ${a.profile.full_name ?? 'miembro'}`}
-              disabled={isPending}
-              onClick={() => handleRemove(a.id)}
-              className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded text-zinc-600 hover:text-red-400 hover:bg-red-900/20 transition-colors disabled:opacity-40"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </li>
-        ))}
+              {/* Remove */}
+              <button
+                type="button"
+                aria-label={`Remover ${a.profile.full_name ?? 'miembro'}`}
+                disabled={isPending}
+                onClick={() => handleRemove(a.id)}
+                className="flex-shrink-0 flex items-center justify-center transition-colors"
+                style={{
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: 'transparent',
+                  color: '#48484A',
+                  cursor: isPending ? 'not-allowed' : 'pointer',
+                  opacity: isPending ? 0.4 : 1,
+                }}
+                onMouseOver={(e) => {
+                  if (!isPending) {
+                    e.currentTarget.style.color = '#FF453A'
+                    e.currentTarget.style.backgroundColor = 'rgba(255,69,58,0.1)'
+                  }
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.color = '#48484A'
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                }}
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </li>
+          )
+        })}
       </ul>
 
       {/* Assign picker */}
       {showPicker ? (
-        <div className="rounded-xl bg-zinc-900 border border-zinc-800 px-4 py-4 space-y-3">
-          <p className="text-[10px] font-mono tracking-[0.2em] uppercase text-zinc-500">
+        <div
+          style={{
+            backgroundColor: '#1C1C1E',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '12px',
+            padding: '18px 20px',
+          }}
+          className="space-y-4"
+        >
+          <p
+            style={{
+              fontSize: '11px',
+              fontWeight: 600,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              color: '#48484A',
+            }}
+          >
             Asignar miembro
           </p>
 
@@ -177,7 +257,7 @@ export function ProjectAssignments({ projectId }: Props) {
             <select
               value={selectedProfileId}
               onChange={(e) => setSelectedProfileId(e.target.value)}
-              className="flex-1 min-w-0 bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs font-mono rounded-sm px-3 py-2 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+              style={{ ...selectBase, flex: 1, minWidth: 0 }}
             >
               <option value="">Seleccionar persona...</option>
               {availableStaff.map((p) => (
@@ -190,7 +270,7 @@ export function ProjectAssignments({ projectId }: Props) {
             <select
               value={selectedRole}
               onChange={(e) => setSelectedRole(e.target.value)}
-              className="w-full sm:w-36 bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs font-mono rounded-sm px-3 py-2 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+              style={{ ...selectBase, width: '140px' }}
             >
               <option value="member">member</option>
               <option value="lead">lead</option>
@@ -203,12 +283,24 @@ export function ProjectAssignments({ projectId }: Props) {
               type="button"
               disabled={!selectedProfileId || isPending}
               onClick={handleAdd}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-100 hover:bg-white text-zinc-900 text-xs font-mono rounded-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-1.5"
+              style={{
+                padding: '8px 16px',
+                fontSize: '13px',
+                fontWeight: 500,
+                borderRadius: '8px',
+                backgroundColor: '#0071E3',
+                border: 'none',
+                color: '#FFFFFF',
+                cursor: !selectedProfileId || isPending ? 'not-allowed' : 'pointer',
+                opacity: !selectedProfileId || isPending ? 0.5 : 1,
+                transition: 'opacity 0.15s ease',
+              }}
             >
               {isPending ? (
-                <Loader className="w-3 h-3 animate-spin" />
+                <Loader className="w-3.5 h-3.5 animate-spin" />
               ) : (
-                <UserPlus className="w-3 h-3" />
+                <UserPlus className="w-3.5 h-3.5" />
               )}
               Asignar
             </button>
@@ -219,14 +311,24 @@ export function ProjectAssignments({ projectId }: Props) {
                 setSelectedProfileId('')
                 setSelectedRole('member')
               }}
-              className="px-3 py-1.5 text-zinc-500 hover:text-zinc-200 text-xs font-mono rounded-sm transition-colors"
+              style={{
+                padding: '8px 16px',
+                fontSize: '13px',
+                fontWeight: 500,
+                borderRadius: '8px',
+                backgroundColor: 'transparent',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: '#86868B',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
             >
               Cancelar
             </button>
           </div>
 
           {availableStaff.length === 0 && (
-            <p className="text-[11px] font-mono text-zinc-600">
+            <p style={{ fontSize: '12px', color: '#48484A' }}>
               Todo el equipo ya esta asignado a este proyecto.
             </p>
           )}
@@ -235,9 +337,18 @@ export function ProjectAssignments({ projectId }: Props) {
         <button
           type="button"
           onClick={() => setShowPicker(true)}
-          className="flex items-center gap-1.5 text-xs font-mono text-zinc-500 hover:text-zinc-200 transition-colors"
+          className="flex items-center gap-2 transition-colors"
+          style={{
+            fontSize: '13px',
+            fontWeight: 500,
+            color: '#0071E3',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '4px 0',
+          }}
         >
-          <UserPlus className="w-3.5 h-3.5" />
+          <UserPlus className="w-4 h-4" />
           Asignar miembro
         </button>
       )}

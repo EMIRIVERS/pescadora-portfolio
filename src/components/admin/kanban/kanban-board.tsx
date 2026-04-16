@@ -130,7 +130,10 @@ export function KanbanBoard({ projectId, initialBoards }: KanbanBoardProps) {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex gap-5 items-start overflow-x-auto pb-6 min-h-[60vh]">
+        <div
+          className="flex items-start overflow-x-auto pb-6"
+          style={{ gap: '12px', minHeight: '60vh' }}
+        >
           {boards.map((board) => (
             <KanbanColumn
               key={board.id}
@@ -141,7 +144,10 @@ export function KanbanBoard({ projectId, initialBoards }: KanbanBoardProps) {
           ))}
 
           {boards.length === 0 && (
-            <div className="flex items-center justify-center w-full py-24 text-zinc-500 text-sm">
+            <div
+              className="flex items-center justify-center w-full py-24 text-sm"
+              style={{ color: '#48484A' }}
+            >
               No boards found for this project.
             </div>
           )}
@@ -150,14 +156,14 @@ export function KanbanBoard({ projectId, initialBoards }: KanbanBoardProps) {
         {/* Drag overlay — renders a ghost card while dragging */}
         <DragOverlay>
           {activeTask ? (
-            <div className="rotate-1 scale-105">
+            <div style={{ transform: 'rotate(1deg) scale(1.04)', opacity: 0.95 }}>
               <TaskCard task={activeTask} />
             </div>
           ) : null}
         </DragOverlay>
       </DndContext>
 
-      {/* Task detail modal */}
+      {/* Task detail panel */}
       {openTaskId && (
         <TaskDetailModal
           taskId={openTaskId}

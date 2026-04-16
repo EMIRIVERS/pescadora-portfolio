@@ -7,12 +7,12 @@ import { X, Search } from 'lucide-react'
 
 type StatusOption = 'all' | 'pre_production' | 'production' | 'post_production' | 'delivered'
 
-const STATUS_OPTIONS: { value: StatusOption; label: string }[] = [
-  { value: 'all', label: 'Todos los estados' },
-  { value: 'pre_production', label: 'Pre-produccion' },
-  { value: 'production', label: 'Produccion' },
-  { value: 'post_production', label: 'Post-produccion' },
-  { value: 'delivered', label: 'Entregado' },
+const STATUS_PILLS: { value: StatusOption; label: string; color: string }[] = [
+  { value: 'all',            label: 'Todos',          color: '' },
+  { value: 'pre_production', label: 'Pre-produccion', color: '#FF9F0A' },
+  { value: 'production',     label: 'Produccion',     color: '#0071E3' },
+  { value: 'post_production',label: 'Post-produccion',color: '#BF5AF2' },
+  { value: 'delivered',      label: 'Entregado',      color: '#30D158' },
 ]
 
 interface Props {
@@ -73,45 +73,104 @@ export function ProjectsFilterBar({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div
+      className="flex flex-wrap items-center gap-3"
+      style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif" }}
+    >
       {/* Search input */}
-      <div className="relative flex-1 min-w-[180px] max-w-xs">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#444] pointer-events-none" />
+      <div className="relative flex-1 min-w-[200px] max-w-sm">
+        <Search
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none"
+          style={{ color: '#48484A' }}
+        />
         <input
           type="text"
           placeholder="Buscar por titulo..."
           defaultValue={currentQ}
           onChange={(e) => handleSearch(e.target.value)}
-          className="w-full bg-[#0d0d0d] border border-[#1a1a1a] text-[#ccc] placeholder-[#444] text-xs font-mono rounded-sm pl-8 pr-3 py-2 focus:outline-none focus:border-[#333] transition-colors"
+          style={{
+            width: '100%',
+            background: '#1C1C1E',
+            border: '1px solid rgba(255,255,255,0.08)',
+            color: '#F5F5F7',
+            fontSize: '13px',
+            borderRadius: '10px',
+            paddingLeft: '36px',
+            paddingRight: '12px',
+            paddingTop: '8px',
+            paddingBottom: '8px',
+            outline: 'none',
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = 'rgba(0,113,227,0.5)'
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
+          }}
         />
       </div>
 
-      {/* Status filter */}
-      <select
-        value={currentStatus}
-        onChange={(e) => handleStatus(e.target.value)}
-        className="bg-[#0d0d0d] border border-[#1a1a1a] text-xs font-mono text-[#888] rounded-sm px-3 py-2 focus:outline-none focus:border-[#333] transition-colors appearance-none cursor-pointer"
-      >
-        {STATUS_OPTIONS.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
+      {/* Status pills */}
+      <div className="flex items-center gap-1.5 flex-wrap">
+        {STATUS_PILLS.map((pill) => {
+          const isActive = currentStatus === pill.value
+          return (
+            <button
+              key={pill.value}
+              type="button"
+              onClick={() => handleStatus(pill.value)}
+              style={{
+                fontSize: '12px',
+                fontWeight: 600,
+                borderRadius: '20px',
+                padding: '6px 16px',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                background: isActive
+                  ? pill.color
+                    ? pill.color
+                    : '#F5F5F7'
+                  : '#1C1C1E',
+                color: isActive
+                  ? pill.color
+                    ? '#fff'
+                    : '#000000'
+                  : '#86868B',
+              }}
+            >
+              {pill.label}
+            </button>
+          )
+        })}
+      </div>
 
       {/* Client filter */}
-      <select
-        value={currentClient}
-        onChange={(e) => handleClient(e.target.value)}
-        className="bg-[#0d0d0d] border border-[#1a1a1a] text-xs font-mono text-[#888] rounded-sm px-3 py-2 focus:outline-none focus:border-[#333] transition-colors appearance-none cursor-pointer"
-      >
-        <option value="all">Todos los clientes</option>
-        {clients.map((c) => (
-          <option key={c.id} value={c.id}>
-            {c.name}
-          </option>
-        ))}
-      </select>
+      {clients.length > 0 && (
+        <select
+          value={currentClient}
+          onChange={(e) => handleClient(e.target.value)}
+          style={{
+            background: '#1C1C1E',
+            border: '1px solid rgba(255,255,255,0.08)',
+            color: '#86868B',
+            fontSize: '12px',
+            fontWeight: 500,
+            borderRadius: '20px',
+            padding: '6px 16px',
+            outline: 'none',
+            cursor: 'pointer',
+            appearance: 'none',
+          }}
+        >
+          <option value="all">Todos los clientes</option>
+          {clients.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      )}
 
       {/* Clear filters */}
       {hasFilters && (
@@ -119,15 +178,37 @@ export function ProjectsFilterBar({
           type="button"
           onClick={clearFilters}
           disabled={isPending}
-          className="flex items-center gap-1.5 px-3 py-2 text-[11px] font-mono text-[#666] hover:text-[#ccc] border border-[#1a1a1a] hover:border-[#333] rounded-sm transition-colors disabled:opacity-40"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontSize: '12px',
+            fontWeight: 500,
+            color: '#86868B',
+            background: 'transparent',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '20px',
+            padding: '6px 14px',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+            opacity: isPending ? 0.4 : 1,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = '#F5F5F7'
+            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = '#86868B'
+            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
+          }}
         >
           <X className="w-3 h-3" />
-          Limpiar filtros
+          Limpiar
         </button>
       )}
 
       {isPending && (
-        <span className="text-[10px] font-mono text-[#444] tracking-wide">
+        <span style={{ fontSize: '11px', color: '#48484A', letterSpacing: '0.05em' }}>
           cargando...
         </span>
       )}

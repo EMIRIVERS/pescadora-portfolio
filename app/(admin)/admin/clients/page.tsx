@@ -3,9 +3,21 @@ import { createServiceClient } from '@/lib/supabase/server'
 import type { Client, ProjectStatus } from '@/lib/supabase/types'
 import { InviteClientButton } from '@/components/admin/clients/invite-client-button'
 
+// ── Design tokens ──────────────────────────────────────────────────────────────
+
+const SF = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const AVATAR_COLORS = ['#e8341a', '#3b82f6', '#10b981', '#8b5cf6', '#f59e0b'] as const
+const AVATAR_PALETTE = [
+  '#0071E3', // blue
+  '#30D158', // green
+  '#FF9F0A', // orange
+  '#BF5AF2', // purple
+  '#FF453A', // red
+  '#64D2FF', // cyan
+  '#FFD60A', // yellow
+] as const
 
 const ACTIVE_STATUSES: ProjectStatus[] = ['pre_production', 'production', 'post_production']
 
@@ -42,25 +54,64 @@ function initials(name: string): string {
 }
 
 function avatarColor(name: string): string {
-  const code = name.charCodeAt(0) ?? 0
-  return AVATAR_COLORS[code % AVATAR_COLORS.length]
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = (hash * 31 + name.charCodeAt(i)) >>> 0
+  }
+  return AVATAR_PALETTE[hash % AVATAR_PALETTE.length]
 }
 
 function statusLabel(status: ProjectStatus): string {
   const map: Record<ProjectStatus, string> = {
-    pre_production: 'Pre-producción',
-    production: 'Producción',
-    post_production: 'Post-producción',
+    pre_production: 'Pre-produccion',
+    production: 'Produccion',
+    post_production: 'Post-produccion',
     delivered: 'Entregado',
   }
   return map[status]
 }
 
-function statusColor(status: ProjectStatus): string {
-  if (status === 'delivered') return 'text-[#10b981] border-[#10b981]/20 bg-[#10b981]/5'
-  if (status === 'post_production') return 'text-[#8b5cf6] border-[#8b5cf6]/20 bg-[#8b5cf6]/5'
-  if (status === 'production') return 'text-[#3b82f6] border-[#3b82f6]/20 bg-[#3b82f6]/5'
-  return 'text-[#f59e0b] border-[#f59e0b]/20 bg-[#f59e0b]/5'
+interface StatusStyle {
+  color: string
+  backgroundColor: string
+  border: string
+}
+
+function statusStyle(status: ProjectStatus): StatusStyle {
+  if (status === 'delivered') {
+    return {
+      color: '#30D158',
+      backgroundColor: 'rgba(48,209,88,0.1)',
+      border: '1px solid rgba(48,209,88,0.2)',
+    }
+  }
+  if (status === 'post_production') {
+    return {
+      color: '#BF5AF2',
+      backgroundColor: 'rgba(191,90,242,0.1)',
+      border: '1px solid rgba(191,90,242,0.2)',
+    }
+  }
+  if (status === 'production') {
+    return {
+      color: '#0071E3',
+      backgroundColor: 'rgba(0,113,227,0.1)',
+      border: '1px solid rgba(0,113,227,0.2)',
+    }
+  }
+  return {
+    color: '#FF9F0A',
+    backgroundColor: 'rgba(255,159,10,0.1)',
+    border: '1px solid rgba(255,159,10,0.2)',
+  }
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('es-ES', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -134,15 +185,51 @@ export default async function AdminClientsPage() {
   const withActiveProjects = enrichedCards.filter((c) => c.active_count > 0).length
   const withoutActiveProjects = totalClients - withActiveProjects
 
+  const stats = [
+    { label: 'Total clientes', value: totalClients },
+    { label: 'Con proyectos activos', value: withActiveProjects },
+    { label: 'Sin proyectos activos', value: withoutActiveProjects },
+  ]
+
   return (
-    <div className="px-8 py-10">
+    <div
+      style={{
+        padding: '40px 32px',
+        minHeight: '100%',
+        backgroundColor: '#000000',
+        fontFamily: SF,
+      }}
+    >
       {/* Header */}
-      <div className="flex items-start justify-between mb-8">
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          marginBottom: '32px',
+        }}
+      >
         <div>
-          <h1 className="text-lg font-mono tracking-[0.2em] text-[#e8e8e8] uppercase font-bold">
+          <h1
+            style={{
+              fontSize: '28px',
+              fontWeight: 600,
+              color: '#F5F5F7',
+              letterSpacing: '-0.02em',
+              lineHeight: 1.1,
+              margin: 0,
+            }}
+          >
             Clientes
           </h1>
-          <p className="mt-1 text-xs font-mono text-[#555] tracking-wide">
+          <p
+            style={{
+              marginTop: '6px',
+              fontSize: '13px',
+              color: '#86868B',
+              letterSpacing: '-0.01em',
+            }}
+          >
             {totalClients} cliente{totalClients !== 1 ? 's' : ''} registrado
             {totalClients !== 1 ? 's' : ''}
           </p>
@@ -152,136 +239,320 @@ export default async function AdminClientsPage() {
 
       {/* Error */}
       {clientsError && (
-        <div className="mb-6 p-4 border border-red-900/40 bg-red-950/20 rounded-sm">
-          <p className="text-xs font-mono text-red-400/80">
+        <div
+          style={{
+            marginBottom: '24px',
+            padding: '14px 16px',
+            backgroundColor: 'rgba(255,69,58,0.08)',
+            border: '1px solid rgba(255,69,58,0.2)',
+            borderRadius: '12px',
+          }}
+        >
+          <p style={{ fontSize: '13px', color: '#FF453A' }}>
             Error al cargar clientes: {clientsError.message}
           </p>
         </div>
       )}
 
       {/* Stats row */}
-      <div className="grid grid-cols-3 gap-3 mb-8">
-        {[
-          { label: 'Total clientes', value: totalClients },
-          { label: 'Con proyectos activos', value: withActiveProjects },
-          { label: 'Sin proyectos activos', value: withoutActiveProjects },
-        ].map(({ label, value }) => (
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: '12px',
+          marginBottom: '32px',
+        }}
+      >
+        {stats.map(({ label, value }) => (
           <div
             key={label}
-            className="bg-[#0d0d0d] border border-[#1a1a1a] rounded-sm px-5 py-4"
+            style={{
+              backgroundColor: '#111111',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '12px',
+              padding: '18px 20px',
+            }}
           >
-            <p className="text-[9px] font-mono tracking-[0.25em] uppercase text-[#444] mb-1">
+            <p
+              style={{
+                fontSize: '11px',
+                fontWeight: 500,
+                color: '#48484A',
+                letterSpacing: '0.02em',
+                textTransform: 'uppercase',
+                marginBottom: '8px',
+              }}
+            >
               {label}
             </p>
-            <p className="text-2xl font-mono text-[#e8e8e8] tabular-nums">{value}</p>
+            <p
+              style={{
+                fontSize: '28px',
+                fontWeight: 600,
+                color: '#F5F5F7',
+                letterSpacing: '-0.02em',
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              {value}
+            </p>
           </div>
         ))}
       </div>
 
       {/* Empty state */}
       {enrichedCards.length === 0 && !clientsError ? (
-        <div className="py-20 text-center border border-[#1a1a1a] rounded-sm bg-[#0d0d0d]">
-          <p className="text-xs font-mono text-[#444] tracking-wide">
+        <div
+          style={{
+            padding: '80px 20px',
+            textAlign: 'center',
+            backgroundColor: '#111111',
+            border: '1px solid rgba(255,255,255,0.06)',
+            borderRadius: '16px',
+          }}
+        >
+          <p style={{ fontSize: '15px', color: '#48484A' }}>
             No hay clientes todavia.
+          </p>
+          <p style={{ fontSize: '13px', color: '#2C2C2E', marginTop: '6px' }}>
+            Invita al primer cliente usando el boton de arriba.
           </p>
         </div>
       ) : (
         /* Client cards grid */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+            gap: '12px',
+          }}
+        >
           {enrichedCards.map((client) => {
             const color = avatarColor(client.name)
             return (
-              <div
+              <ClientCardItem
                 key={client.id}
-                className="bg-[#0d0d0d] border border-[#1a1a1a] rounded-sm p-5 hover:border-[#2a2a2a] transition-colors flex flex-col gap-3"
-              >
-                {/* Top: avatar + name + company */}
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: `${color}1a`, border: `1px solid ${color}33` }}
-                  >
-                    <span
-                      className="text-[11px] font-mono font-bold"
-                      style={{ color }}
-                    >
-                      {initials(client.name)}
-                    </span>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-mono font-bold text-[#e8e8e8] truncate">
-                      {client.name}
-                    </p>
-                    {client.company && (
-                      <p className="text-[10px] font-mono text-[#555] truncate mt-0.5">
-                        {client.company}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Email */}
-                {client.email ? (
-                  <a
-                    href={`mailto:${client.email}`}
-                    className="text-[11px] font-mono text-[#444] hover:text-[#888] truncate transition-colors"
-                  >
-                    {client.email}
-                  </a>
-                ) : (
-                  <span className="text-[11px] font-mono text-[#2a2a2a]">
-                    Sin email
-                  </span>
-                )}
-
-                {/* Badges row */}
-                <div className="flex flex-wrap gap-2">
-                  {/* Project count */}
-                  <span
-                    className={[
-                      'inline-block px-2 py-0.5 rounded-sm text-[9px] font-mono tracking-[0.1em] uppercase border',
-                      client.project_count > 0
-                        ? 'bg-[#0d1a2e] text-[#6fa3e0] border-[#1a3050]'
-                        : 'bg-[#111] text-[#444] border-[#1a1a1a]',
-                    ].join(' ')}
-                  >
-                    {client.project_count} proyecto{client.project_count !== 1 ? 's' : ''}
-                  </span>
-
-                  {/* Most recent project status */}
-                  {client.most_recent_project_status !== null && (
-                    <span
-                      className={[
-                        'inline-block px-2 py-0.5 rounded-sm text-[9px] font-mono tracking-[0.1em] uppercase border',
-                        statusColor(client.most_recent_project_status),
-                      ].join(' ')}
-                    >
-                      {statusLabel(client.most_recent_project_status)}
-                    </span>
-                  )}
-
-                  {/* Converted from lead */}
-                  {client.converted_lead_count > 0 && (
-                    <span className="inline-block px-2 py-0.5 rounded-sm text-[9px] font-mono tracking-[0.1em] uppercase border bg-[#1a1200] text-[#a07a00] border-[#2e2200]">
-                      Lead convertido
-                    </span>
-                  )}
-                </div>
-
-                {/* Footer link */}
-                <div className="mt-auto pt-2 border-t border-[#111]">
-                  <Link
-                    href={`/admin/projects?client=${client.id}`}
-                    className="text-[10px] font-mono text-[#555] hover:text-[#e8e8e8] tracking-[0.1em] uppercase transition-colors"
-                  >
-                    Ver proyectos →
-                  </Link>
-                </div>
-              </div>
+                client={client}
+                color={color}
+              />
             )
           })}
         </div>
       )}
+    </div>
+  )
+}
+
+// ── Client card (separate component for hover state) ──────────────────────────
+
+interface ClientCardItemProps {
+  client: ClientCard
+  color: string
+}
+
+function ClientCardItem({ client, color }: ClientCardItemProps) {
+  const sStyle = client.most_recent_project_status !== null
+    ? statusStyle(client.most_recent_project_status)
+    : null
+
+  return (
+    <div
+      className="group"
+      style={{
+        backgroundColor: '#111111',
+        border: '1px solid rgba(255,255,255,0.06)',
+        borderRadius: '16px',
+        padding: '20px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '14px',
+        transition: 'background-color 0.15s ease, border-color 0.15s ease',
+        cursor: 'default',
+      }}
+      onMouseEnter={(e) => {
+        const el = e.currentTarget as HTMLDivElement
+        el.style.backgroundColor = '#1C1C1E'
+        el.style.borderColor = 'rgba(255,255,255,0.1)'
+      }}
+      onMouseLeave={(e) => {
+        const el = e.currentTarget as HTMLDivElement
+        el.style.backgroundColor = '#111111'
+        el.style.borderColor = 'rgba(255,255,255,0.06)'
+      }}
+    >
+      {/* Top: avatar + name + company */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div
+          style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: '50%',
+            backgroundColor: `${color}22`,
+            border: `1.5px solid ${color}44`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
+        >
+          <span
+            style={{
+              fontSize: '13px',
+              fontWeight: 700,
+              color,
+              letterSpacing: '-0.02em',
+              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+            }}
+          >
+            {initials(client.name)}
+          </span>
+        </div>
+        <div style={{ minWidth: 0 }}>
+          <p
+            style={{
+              fontSize: '15px',
+              fontWeight: 600,
+              color: '#F5F5F7',
+              letterSpacing: '-0.01em',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {client.name}
+          </p>
+          {client.company && (
+            <p
+              style={{
+                fontSize: '12px',
+                color: '#86868B',
+                marginTop: '2px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {client.company}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Email */}
+      {client.email ? (
+        <a
+          href={`mailto:${client.email}`}
+          style={{
+            fontSize: '13px',
+            color: '#86868B',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            textDecoration: 'none',
+            transition: 'color 0.15s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = '#0071E3'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = '#86868B'
+          }}
+        >
+          {client.email}
+        </a>
+      ) : (
+        <span style={{ fontSize: '13px', color: '#2C2C2E' }}>Sin email</span>
+      )}
+
+      {/* Metadata row */}
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap' as const,
+          gap: '6px',
+          alignItems: 'center',
+        }}
+      >
+        {/* Fecha de registro */}
+        <span
+          style={{
+            fontSize: '12px',
+            color: '#48484A',
+          }}
+        >
+          Desde {formatDate(client.created_at)}
+        </span>
+        <span style={{ fontSize: '12px', color: '#2C2C2E' }}>·</span>
+        {/* Numero de proyectos */}
+        <span
+          style={{
+            fontSize: '12px',
+            color: client.project_count > 0 ? '#86868B' : '#48484A',
+          }}
+        >
+          {client.project_count} proyecto{client.project_count !== 1 ? 's' : ''}
+        </span>
+      </div>
+
+      {/* Badges row */}
+      <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '6px' }}>
+        {/* Most recent project status */}
+        {client.most_recent_project_status !== null && sStyle !== null && (
+          <span
+            style={{
+              display: 'inline-block',
+              padding: '3px 9px',
+              borderRadius: '20px',
+              fontSize: '11px',
+              fontWeight: 500,
+              letterSpacing: '0.01em',
+              ...sStyle,
+            }}
+          >
+            {statusLabel(client.most_recent_project_status)}
+          </span>
+        )}
+
+        {/* Converted from lead */}
+        {client.converted_lead_count > 0 && (
+          <span
+            style={{
+              display: 'inline-block',
+              padding: '3px 9px',
+              borderRadius: '20px',
+              fontSize: '11px',
+              fontWeight: 500,
+              color: '#FF9F0A',
+              backgroundColor: 'rgba(255,159,10,0.1)',
+              border: '1px solid rgba(255,159,10,0.2)',
+            }}
+          >
+            Lead convertido
+          </span>
+        )}
+      </div>
+
+      {/* Footer link */}
+      <div
+        style={{
+          marginTop: 'auto',
+          paddingTop: '12px',
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+        }}
+      >
+        <Link
+          href={`/admin/projects?client=${client.id}`}
+          style={{
+            fontSize: '13px',
+            fontWeight: 500,
+            color: '#0071E3',
+            textDecoration: 'none',
+            letterSpacing: '-0.01em',
+          }}
+        >
+          Ver proyectos
+        </Link>
+      </div>
     </div>
   )
 }

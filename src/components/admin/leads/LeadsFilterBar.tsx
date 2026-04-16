@@ -25,36 +25,40 @@ interface Props {
 }
 
 const STATUS_LABELS: Record<LeadStatus | 'all', string> = {
-  all: 'Todos',
-  new: 'Nuevo',
+  all:       'Todos',
+  new:       'Nuevo',
   contacted: 'Contactado',
   qualified: 'Calificado',
-  proposal: 'Propuesta',
-  won: 'Ganado',
-  lost: 'Perdido',
+  proposal:  'Propuesta',
+  won:       'Ganado',
+  lost:      'Perdido',
 }
 
 const STATUS_OPTIONS = ['all', 'new', 'contacted', 'qualified', 'proposal', 'won', 'lost'] as const
 type StatusOption = (typeof STATUS_OPTIONS)[number]
 
 const SOURCE_LABELS: Record<LeadSource | 'all', string> = {
-  all: 'Todas fuentes',
-  manual: 'Manual',
-  referral: 'Referido',
+  all:       'Todas fuentes',
+  manual:    'Manual',
+  referral:  'Referido',
   instagram: 'Instagram',
-  web: 'Web',
-  whatsapp: 'WhatsApp',
-  other: 'Otro',
+  web:       'Web',
+  whatsapp:  'WhatsApp',
+  other:     'Otro',
 }
 
 const SOURCE_OPTIONS = ['all', 'manual', 'referral', 'instagram', 'web', 'whatsapp', 'other'] as const
 type SourceOption = (typeof SOURCE_OPTIONS)[number]
 
+const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+
 export default function LeadsFilterBar({ leads, onFiltered }: Props) {
-  const [search, setSearch] = useState('')
-  const [status, setStatus] = useState<StatusOption>('all')
-  const [source, setSource] = useState<SourceOption>('all')
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [search, setSearch]               = useState('')
+  const [status, setStatus]               = useState<StatusOption>('all')
+  const [source, setSource]               = useState<SourceOption>('all')
+  const [hoveredPill, setHoveredPill]     = useState<string | null>(null)
+  const [hoveredClear, setHoveredClear]   = useState(false)
+  const debounceRef                       = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [debouncedSearch, setDebouncedSearch] = useState('')
 
   const isActive = debouncedSearch !== '' || status !== 'all' || source !== 'all'
@@ -104,7 +108,7 @@ export default function LeadsFilterBar({ leads, onFiltered }: Props) {
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '12px',
+        gap: 10,
         marginBottom: '1.5rem',
         flexWrap: 'wrap',
       }}
@@ -116,38 +120,45 @@ export default function LeadsFilterBar({ leads, onFiltered }: Props) {
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         style={{
-          background: '#111',
-          border: '1px solid #222',
-          borderRadius: 2,
-          padding: '0.5rem 0.75rem',
-          color: '#e8e8e8',
-          fontFamily: 'var(--font-geist-mono)',
-          fontSize: '0.75rem',
+          background: '#1C1C1E',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 12,
+          padding: '7px 14px',
+          color: '#F5F5F7',
+          fontFamily: FONT,
+          fontSize: 12,
           outline: 'none',
           width: 220,
         }}
       />
 
       {/* Status filter pills */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
         {STATUS_OPTIONS.map((s) => {
-          const active = status === s
+          const active  = status === s
+          const hovered = hoveredPill === `status-${s}`
+
           return (
             <button
               key={s}
               onClick={() => setStatus(s)}
+              onMouseEnter={() => setHoveredPill(`status-${s}`)}
+              onMouseLeave={() => setHoveredPill(null)}
               style={{
-                padding: '0.25rem 0.75rem',
-                borderRadius: 2,
-                fontSize: '0.6rem',
-                fontFamily: 'var(--font-geist-mono)',
-                letterSpacing: '0.15em',
-                textTransform: 'uppercase',
+                padding: '6px 14px',
+                borderRadius: 20,
+                fontSize: 12,
+                fontWeight: active ? 600 : 400,
+                fontFamily: FONT,
                 cursor: 'pointer',
-                background: active ? '#1c1c1c' : 'transparent',
-                color: active ? '#e8e8e8' : '#555',
-                border: '1px solid',
-                borderColor: active ? '#333' : 'transparent',
+                border: 'none',
+                background: active
+                  ? '#0071E3'
+                  : hovered
+                  ? '#2C2C2E'
+                  : 'transparent',
+                color: active ? '#FFFFFF' : '#86868B',
+                transition: 'background 0.15s, color 0.15s',
               }}
             >
               {STATUS_LABELS[s]}
@@ -156,24 +167,27 @@ export default function LeadsFilterBar({ leads, onFiltered }: Props) {
         })}
       </div>
 
-      {/* Source filter dropdown */}
+      {/* Source filter — pill select */}
       <select
         value={source}
         onChange={(e) => setSource(e.target.value as SourceOption)}
         style={{
-          background: '#111',
-          border: '1px solid #222',
-          borderRadius: 2,
-          padding: '0.5rem 0.75rem',
-          color: source === 'all' ? '#555' : '#e8e8e8',
-          fontFamily: 'var(--font-geist-mono)',
-          fontSize: '0.75rem',
+          background: '#1C1C1E',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 20,
+          padding: '6px 14px',
+          color: source === 'all' ? '#86868B' : '#F5F5F7',
+          fontFamily: FONT,
+          fontSize: 12,
           outline: 'none',
           cursor: 'pointer',
+          appearance: 'none',
+          WebkitAppearance: 'none',
+          paddingRight: 28,
         }}
       >
         {SOURCE_OPTIONS.map((s) => (
-          <option key={s} value={s}>
+          <option key={s} value={s} style={{ background: '#1C1C1E', color: '#F5F5F7' }}>
             {SOURCE_LABELS[s]}
           </option>
         ))}
@@ -183,17 +197,18 @@ export default function LeadsFilterBar({ leads, onFiltered }: Props) {
       {isActive && (
         <button
           onClick={clearAll}
+          onMouseEnter={() => setHoveredClear(true)}
+          onMouseLeave={() => setHoveredClear(false)}
           style={{
-            padding: '0.25rem 0.75rem',
-            borderRadius: 2,
-            fontSize: '0.6rem',
-            fontFamily: 'var(--font-geist-mono)',
-            letterSpacing: '0.15em',
-            textTransform: 'uppercase',
+            padding: '6px 14px',
+            borderRadius: 20,
+            fontSize: 12,
+            fontFamily: FONT,
             cursor: 'pointer',
-            background: 'transparent',
-            color: '#666',
-            border: '1px solid #333',
+            border: '1px solid rgba(255,255,255,0.08)',
+            background: hoveredClear ? '#2C2C2E' : 'transparent',
+            color: '#86868B',
+            transition: 'background 0.15s',
           }}
         >
           Limpiar

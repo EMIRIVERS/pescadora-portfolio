@@ -4,7 +4,7 @@ import type {
   KanbanBoardWithTasks,
   KanbanTaskWithAssignee,
 } from '@/lib/supabase/types'
-import { Kanban } from 'lucide-react'
+import { Plus } from 'lucide-react'
 
 interface PageProps {
   searchParams: Promise<{ project?: string }>
@@ -64,20 +64,58 @@ export default async function KanbanPage({ searchParams }: PageProps) {
   const boards = await fetchBoardsWithTasks(projectId)
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+    <div
+      className="min-h-screen"
+      style={{
+        backgroundColor: '#111111',
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+      }}
+    >
       {/* Top bar */}
-      <div className="border-b border-zinc-800 bg-zinc-900/60 backdrop-blur-sm sticky top-0 z-10">
-        <div className="px-8 h-14 flex items-center gap-3">
-          <Kanban className="w-4 h-4 text-zinc-400" />
-          <h1 className="text-sm font-semibold text-zinc-200 tracking-wide">
-            Kanban
-          </h1>
-          {projectId && (
-            <span className="ml-1 text-xs text-zinc-500">
-              &mdash; project&nbsp;
-              <span className="font-mono text-zinc-400">{projectId}</span>
-            </span>
-          )}
+      <div
+        className="sticky top-0 z-10"
+        style={{
+          backgroundColor: 'rgba(17,17,17,0.85)',
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+        }}
+      >
+        <div className="px-8 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h1
+              className="font-semibold"
+              style={{ color: '#F5F5F7', fontSize: '18px', letterSpacing: '-0.01em' }}
+            >
+              Kanban
+            </h1>
+            {projectId && (
+              <span
+                className="text-xs font-mono"
+                style={{ color: '#48484A' }}
+              >
+                &mdash;&nbsp;{projectId}
+              </span>
+            )}
+          </div>
+
+          <button
+            type="button"
+            className="flex items-center gap-1.5 transition-opacity hover:opacity-80 active:opacity-60"
+            style={{
+              backgroundColor: '#0071E3',
+              color: '#fff',
+              fontSize: '13px',
+              fontWeight: 500,
+              borderRadius: '8px',
+              padding: '6px 14px',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            <Plus size={14} aria-hidden="true" />
+            New task
+          </button>
         </div>
       </div>
 

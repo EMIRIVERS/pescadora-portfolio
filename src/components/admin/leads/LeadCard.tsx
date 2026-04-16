@@ -24,12 +24,12 @@ interface LeadCardProps {
 }
 
 const SOURCE_COLORS: Record<string, string> = {
-  instagram: '#e8341a',
-  whatsapp: '#10b981',
-  referral: '#8b5cf6',
-  web: '#3b82f6',
-  manual: '#6b7280',
-  other: '#6b7280',
+  instagram: '#FF453A',
+  whatsapp: '#30D158',
+  referral: '#BF5AF2',
+  web: '#0071E3',
+  manual: '#86868B',
+  other:   '#86868B',
 }
 
 function isClosingSoon(dateStr: string): boolean {
@@ -47,85 +47,128 @@ function formatDate(dateStr: string): string {
   })
 }
 
-export default function LeadCard({ lead, onClick }: LeadCardProps) {
+export default function LeadCard({ lead, onClick, accentColor = '#86868B' }: LeadCardProps) {
   const sourceColor = SOURCE_COLORS[lead.source] ?? SOURCE_COLORS['other']
-  const closingSoon =
-    lead.expected_close_date ? isClosingSoon(lead.expected_close_date) : false
+  const closingSoon = lead.expected_close_date ? isClosingSoon(lead.expected_close_date) : false
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className="w-full text-left bg-[#0d0d0d] border border-[#1a1a1a] rounded-sm p-4 cursor-pointer hover:border-[#2a2a2a] hover:bg-[#111] transition-colors"
+      style={{
+        width: '100%',
+        textAlign: 'left',
+        background: '#1C1C1E',
+        border: 'none',
+        borderRadius: '12px',
+        padding: '14px 16px',
+        cursor: 'pointer',
+        transition: 'background 0.15s',
+        borderLeft: `3px solid ${accentColor}`,
+        display: 'block',
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+      }}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLButtonElement).style.background = '#2C2C2E'
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLButtonElement).style.background = '#1C1C1E'
+      }}
     >
-      {/* Top row: name + source badge */}
-      <div className="flex items-start justify-between gap-2">
-        <span className="text-[#e8e8e8] text-sm font-mono font-medium leading-tight truncate">
-          {lead.name}
-        </span>
-        <span
-          className="shrink-0 text-[9px] font-mono tracking-[0.15em] uppercase px-1.5 py-0.5 rounded-sm"
-          style={{ color: sourceColor, backgroundColor: `${sourceColor}1a` }}
-        >
-          {lead.source}
-        </span>
+      {/* Top row: name */}
+      <div
+        style={{
+          fontSize: '14px',
+          fontWeight: 600,
+          color: '#F5F5F7',
+          lineHeight: 1.3,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          marginBottom: lead.company ? '2px' : '0',
+        }}
+      >
+        {lead.name}
       </div>
 
-      {/* Company row */}
+      {/* Company */}
       {lead.company && (
-        <div className="mt-1">
-          <span className="text-[#555] text-xs font-mono">{lead.company}</span>
+        <div
+          style={{
+            fontSize: '12px',
+            color: '#86868B',
+            marginBottom: '6px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {lead.company}
         </div>
       )}
 
       {/* Contact row */}
       {(lead.email ?? lead.phone) && (
-        <div className="mt-1.5 flex items-center gap-1.5">
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            marginTop: lead.company ? '0' : '4px',
+            marginBottom: '8px',
+          }}
+        >
           {lead.email ? (
             <>
-              {/* envelope icon */}
               <svg
                 width="10"
                 height="10"
                 viewBox="0 0 16 16"
                 fill="none"
-                className="shrink-0"
                 aria-hidden="true"
+                style={{ flexShrink: 0 }}
               >
-                <rect
-                  x="1"
-                  y="3"
-                  width="14"
-                  height="10"
-                  rx="1"
-                  stroke="#555"
-                  strokeWidth="1.5"
-                />
-                <path d="M1 4l7 5 7-5" stroke="#555" strokeWidth="1.5" />
+                <rect x="1" y="3" width="14" height="10" rx="1" stroke="#48484A" strokeWidth="1.5" />
+                <path d="M1 4l7 5 7-5" stroke="#48484A" strokeWidth="1.5" />
               </svg>
-              <span className="text-[#555] text-xs font-mono truncate">
+              <span
+                style={{
+                  fontSize: '12px',
+                  color: '#86868B',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
                 {lead.email}
               </span>
             </>
           ) : (
             <>
-              {/* phone icon */}
               <svg
                 width="10"
                 height="10"
                 viewBox="0 0 16 16"
                 fill="none"
-                className="shrink-0"
                 aria-hidden="true"
+                style={{ flexShrink: 0 }}
               >
                 <path
                   d="M3 1h3l1.5 4-2 1.5a9 9 0 004 4L11 9l4 1.5V14c0 1-4 2-8-2S1 5 2 4c0 0 0-3 1-3z"
-                  stroke="#555"
+                  stroke="#48484A"
                   strokeWidth="1.5"
                   strokeLinejoin="round"
                 />
               </svg>
-              <span className="text-[#555] text-xs font-mono truncate">
+              <span
+                style={{
+                  fontSize: '12px',
+                  color: '#86868B',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
                 {lead.phone}
               </span>
             </>
@@ -133,38 +176,77 @@ export default function LeadCard({ lead, onClick }: LeadCardProps) {
         </div>
       )}
 
-      {/* Bottom row: tags + budget */}
-      <div className="mt-2.5 flex items-center flex-wrap gap-1.5">
-        {lead.project_type && (
-          <span className="text-[9px] font-mono tracking-[0.1em] uppercase px-2 py-0.5 bg-[#1a1a1a] text-[#555] rounded-sm">
-            {lead.project_type}
+      {/* Bottom row: source badge + date */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '8px',
+          marginTop: '8px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+          {/* Source badge */}
+          <span
+            style={{
+              fontSize: '11px',
+              color: sourceColor,
+              backgroundColor: `${sourceColor}1a`,
+              padding: '2px 7px',
+              borderRadius: '6px',
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase' as const,
+              fontWeight: 500,
+            }}
+          >
+            {lead.source}
           </span>
-        )}
-        {lead.budget_range && (
-          <span className="text-[9px] font-mono text-[#444]">
-            {lead.budget_range}
+
+          {/* Project type */}
+          {lead.project_type && (
+            <span
+              style={{
+                fontSize: '11px',
+                color: '#48484A',
+                backgroundColor: 'rgba(255,255,255,0.04)',
+                padding: '2px 7px',
+                borderRadius: '6px',
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase' as const,
+              }}
+            >
+              {lead.project_type}
+            </span>
+          )}
+
+          {/* Converted badge */}
+          {lead.converted_to_client_id && (
+            <span
+              style={{
+                fontSize: '11px',
+                color: '#30D158',
+                backgroundColor: 'rgba(48,209,88,0.12)',
+                padding: '2px 7px',
+                borderRadius: '6px',
+              }}
+            >
+              Convertido
+            </span>
+          )}
+        </div>
+
+        {/* Date */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+          {lead.expected_close_date && closingSoon && (
+            <span style={{ fontSize: '11px', color: '#FF453A' }}>
+              cierre {formatDate(lead.expected_close_date)}
+            </span>
+          )}
+          <span style={{ fontSize: '11px', color: '#48484A' }}>
+            {formatDate(lead.created_at)}
           </span>
-        )}
-
-        {/* Spacer pushes date/badge to right */}
-        <span className="flex-1" />
-
-        {lead.converted_to_client_id && (
-          <span className="text-[9px] font-mono tracking-[0.1em] px-1.5 py-0.5 rounded-sm bg-[#10b98120] text-[#10b981]">
-            + Convertido
-          </span>
-        )}
-
-        {lead.expected_close_date && closingSoon && (
-          <span className="text-[9px] font-mono text-[#e8341a]">
-            {formatDate(lead.expected_close_date)}
-          </span>
-        )}
-      </div>
-
-      {/* Created date — subtle footer */}
-      <div className="mt-2 text-[#333] text-[9px] font-mono">
-        {formatDate(lead.created_at)}
+        </div>
       </div>
     </button>
   )

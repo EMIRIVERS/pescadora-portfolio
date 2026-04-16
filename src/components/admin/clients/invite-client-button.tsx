@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Plus } from 'lucide-react'
 import { InviteClientModal } from '@/components/admin/clients/invite-client-modal'
 
 export function InviteClientButton() {
@@ -11,8 +12,19 @@ export function InviteClientButton() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="px-4 py-2 border border-[#2a2a2a] hover:border-[#444] text-[#aaa] hover:text-[#e8e8e8] text-[11px] font-mono tracking-[0.15em] uppercase rounded-sm transition-colors"
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-medium text-white transition-all duration-150 active:scale-95"
+        style={{
+          backgroundColor: '#0071E3',
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = '#0077ED'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = '#0071E3'
+        }}
       >
+        <Plus className="w-4 h-4" strokeWidth={2.5} />
         Invitar cliente
       </button>
 

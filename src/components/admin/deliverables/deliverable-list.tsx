@@ -11,36 +11,76 @@ interface Props {
   initialDeliverables: Deliverable[]
 }
 
-const TYPE_STYLES: Record<DeliverableType, string> = {
-  wip: 'bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/25',
-  final: 'bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/25',
+// ─── Design tokens (Apple dark) ──────────────────────────────────────────────
+const S = {
+  surface1: '#111111',
+  surface2: '#1C1C1E',
+  surface3: '#2C2C2E',
+  border: 'rgba(255,255,255,0.08)',
+  borderSubtle: 'rgba(255,255,255,0.06)',
+  textPrimary: '#F5F5F7',
+  textSecondary: '#86868B',
+  textTertiary: '#48484A',
+  accent: '#0071E3',
+  accentRed: '#FF453A',
+} as const
+
+// ─── Type pills ───────────────────────────────────────────────────────────────
+const TYPE_PILL: Record<DeliverableType, { bg: string; text: string; ring: string }> = {
+  wip:   { bg: 'rgba(255,159,10,0.14)',  text: '#FF9F0A', ring: 'rgba(255,159,10,0.25)' },
+  final: { bg: 'rgba(48,209,88,0.14)',   text: '#30D158', ring: 'rgba(48,209,88,0.25)' },
 }
 
 const TYPE_LABELS: Record<DeliverableType, string> = {
-  wip: 'WIP',
+  wip:   'WIP',
   final: 'Final',
 }
 
-const STATUS_STYLES: Record<DeliverableStatus, string> = {
-  pending: 'bg-zinc-700/50 text-zinc-400 ring-1 ring-zinc-600/50',
-  review: 'bg-sky-500/15 text-sky-400 ring-1 ring-sky-500/25',
-  approved: 'bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/25',
+// ─── Status pills ─────────────────────────────────────────────────────────────
+const STATUS_PILL: Record<DeliverableStatus, { bg: string; text: string; ring: string }> = {
+  pending:  { bg: 'rgba(72,72,74,0.5)',   text: '#86868B', ring: 'rgba(99,99,102,0.5)' },
+  review:   { bg: 'rgba(10,132,255,0.14)', text: '#0A84FF', ring: 'rgba(10,132,255,0.25)' },
+  approved: { bg: 'rgba(48,209,88,0.14)', text: '#30D158', ring: 'rgba(48,209,88,0.25)' },
 }
 
 const STATUS_LABELS: Record<DeliverableStatus, string> = {
-  pending: 'Pending',
-  review: 'In Review',
-  approved: 'Approved',
+  pending:  'Pendiente',
+  review:   'En revision',
+  approved: 'Aprobado',
 }
 
 function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-US', {
+  return new Date(dateStr).toLocaleDateString('es-MX', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
   })
 }
 
+// ─── Pill component ───────────────────────────────────────────────────────────
+function Pill({ bg, text, ring, label }: { bg: string; text: string; ring: string; label: string }) {
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        padding: '2px 8px',
+        borderRadius: 999,
+        fontSize: 11,
+        fontWeight: 500,
+        letterSpacing: '0.01em',
+        background: bg,
+        color: text,
+        boxShadow: `0 0 0 1px ${ring}`,
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+      }}
+    >
+      {label}
+    </span>
+  )
+}
+
+// ─── Row ──────────────────────────────────────────────────────────────────────
 interface DeliverableRowProps {
   deliverable: Deliverable
   isEditing: boolean
@@ -57,11 +97,31 @@ function DeliverableRow({
   onEditCancel,
 }: DeliverableRowProps) {
   const [expanded, setExpanded] = useState(false)
+  const [hovered, setHovered] = useState(false)
 
   if (isEditing) {
     return (
-      <div className="rounded-xl bg-zinc-900 border border-zinc-700 p-5">
-        <h3 className="text-sm font-semibold text-zinc-200 mb-4">Edit deliverable</h3>
+      <div
+        style={{
+          borderRadius: 12,
+          background: S.surface2,
+          border: `1px solid ${S.border}`,
+          padding: '20px',
+        }}
+      >
+        <p
+          style={{
+            fontSize: 13,
+            fontWeight: 600,
+            color: S.textSecondary,
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+            marginBottom: 16,
+            fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+          }}
+        >
+          Editar entregable
+        </p>
         <EditDeliverableForm
           deliverable={deliverable}
           onSuccess={onEditSuccess}
@@ -71,76 +131,188 @@ function DeliverableRow({
     )
   }
 
+  const typePill   = TYPE_PILL[deliverable.type]
+  const statusPill = STATUS_PILL[deliverable.status]
+
   return (
-    <div className="rounded-xl bg-zinc-900 border border-zinc-800 overflow-hidden">
-      <div className="flex items-center gap-3 px-4 py-3">
+    <div
+      style={{
+        borderRadius: 12,
+        background: hovered ? S.surface2 : 'transparent',
+        borderBottom: `1px solid ${S.borderSubtle}`,
+        transition: 'background 0.15s ease',
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {/* Main row */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          padding: '14px 16px',
+        }}
+      >
         {/* Expand toggle */}
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="text-zinc-600 hover:text-zinc-400 transition-colors flex-shrink-0"
-          aria-label={expanded ? 'Collapse' : 'Expand'}
+          aria-label={expanded ? 'Contraer' : 'Expandir'}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 20,
+            height: 20,
+            flexShrink: 0,
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            cursor: 'pointer',
+            color: S.textTertiary,
+            transition: 'color 0.15s ease',
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = S.textSecondary }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = S.textTertiary }}
         >
-          {expanded ? (
-            <ChevronUp className="w-4 h-4" />
-          ) : (
-            <ChevronDown className="w-4 h-4" />
-          )}
+          {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
         </button>
 
         {/* Title */}
-        <span className="flex-1 min-w-0 text-sm font-medium text-zinc-100 truncate">
+        <span
+          style={{
+            flex: 1,
+            minWidth: 0,
+            fontSize: 14,
+            fontWeight: 500,
+            color: S.textPrimary,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+          }}
+        >
           {deliverable.title}
         </span>
 
-        {/* Badges */}
-        <span
-          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${TYPE_STYLES[deliverable.type]}`}
-        >
-          {TYPE_LABELS[deliverable.type]}
-        </span>
-        <span
-          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLES[deliverable.status]}`}
-        >
-          {STATUS_LABELS[deliverable.status]}
-        </span>
+        {/* Type pill */}
+        <Pill bg={typePill.bg} text={typePill.text} ring={typePill.ring} label={TYPE_LABELS[deliverable.type]} />
+
+        {/* Status pill */}
+        <Pill bg={statusPill.bg} text={statusPill.text} ring={statusPill.ring} label={STATUS_LABELS[deliverable.status]} />
 
         {/* Actions */}
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
           {deliverable.url && (
             <a
               href={deliverable.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-1.5 rounded-md text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
-              title="Open URL"
+              title="Abrir URL"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 28,
+                height: 28,
+                borderRadius: 6,
+                color: S.accent,
+                textDecoration: 'none',
+                transition: 'background 0.15s ease',
+              }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = S.surface3 }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = 'transparent' }}
             >
-              <ExternalLink className="w-3.5 h-3.5" />
+              <ExternalLink size={13} />
             </a>
           )}
           <button
             type="button"
             onClick={onEdit}
-            className="p-1.5 rounded-md text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
-            title="Edit deliverable"
+            title="Editar entregable"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 28,
+              height: 28,
+              borderRadius: 6,
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer',
+              color: S.textTertiary,
+              transition: 'background 0.15s ease, color 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              const b = e.currentTarget as HTMLButtonElement
+              b.style.background = S.surface3
+              b.style.color = S.textSecondary
+            }}
+            onMouseLeave={(e) => {
+              const b = e.currentTarget as HTMLButtonElement
+              b.style.background = 'transparent'
+              b.style.color = S.textTertiary
+            }}
           >
-            <Pencil className="w-3.5 h-3.5" />
+            <Pencil size={13} />
           </button>
         </div>
       </div>
 
+      {/* Expanded detail */}
       {expanded && (
-        <div className="border-t border-zinc-800 px-4 py-3 space-y-2">
+        <div
+          style={{
+            borderTop: `1px solid ${S.borderSubtle}`,
+            padding: '12px 16px 14px 46px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 6,
+          }}
+        >
           {deliverable.description && (
-            <p className="text-sm text-zinc-400 leading-relaxed">
+            <p
+              style={{
+                fontSize: 13,
+                color: S.textSecondary,
+                lineHeight: 1.55,
+                margin: 0,
+                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+              }}
+            >
               {deliverable.description}
             </p>
           )}
           {deliverable.url && (
-            <p className="text-xs text-zinc-500 font-mono truncate">{deliverable.url}</p>
+            <a
+              href={deliverable.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                fontSize: 11,
+                color: S.accent,
+                fontFamily: "'SF Mono', ui-monospace, monospace",
+                textDecoration: 'none',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                display: 'block',
+              }}
+            >
+              {deliverable.url}
+            </a>
           )}
-          <p className="text-xs text-zinc-600">
-            Added {formatDate(deliverable.created_at)}
+          <p
+            style={{
+              fontSize: 11,
+              color: S.textTertiary,
+              margin: 0,
+              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+            }}
+          >
+            Agregado {formatDate(deliverable.created_at)}
           </p>
         </div>
       )}
@@ -148,10 +320,12 @@ function DeliverableRow({
   )
 }
 
+// ─── Main list ────────────────────────────────────────────────────────────────
 export function DeliverableList({ projectId, initialDeliverables }: Props) {
   const [deliverables, setDeliverables] = useState<Deliverable[]>(initialDeliverables)
-  const [showForm, setShowForm] = useState(false)
-  const [editingId, setEditingId] = useState<string | null>(null)
+  const [showForm, setShowForm]         = useState(false)
+  const [editingId, setEditingId]       = useState<string | null>(null)
+  const [addHovered, setAddHovered]     = useState(false)
 
   const handleAdded = useCallback((newDeliverable: Deliverable) => {
     setDeliverables((prev) => [newDeliverable, ...prev])
@@ -166,52 +340,129 @@ export function DeliverableList({ projectId, initialDeliverables }: Props) {
   }, [])
 
   return (
-    <div className="space-y-3">
-      {deliverables.length === 0 && !showForm && (
-        <div className="rounded-xl border border-dashed border-zinc-800 px-6 py-10 text-center">
-          <p className="text-sm text-zinc-500">No deliverables yet.</p>
-          <p className="text-xs text-zinc-600 mt-1">
-            Add the first file, link, or export for this project.
-          </p>
-        </div>
-      )}
-
-      {deliverables.map((d) => (
-        <DeliverableRow
-          key={d.id}
-          deliverable={d}
-          isEditing={editingId === d.id}
-          onEdit={() => {
-            setShowForm(false)
-            setEditingId(d.id)
+    <div
+      style={{
+        background: S.surface1,
+        borderRadius: 16,
+        border: `1px solid ${S.border}`,
+        overflow: 'hidden',
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+      }}
+    >
+      {/* Card header */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '14px 16px',
+          borderBottom: `1px solid ${S.border}`,
+        }}
+      >
+        <span
+          style={{
+            fontSize: 16,
+            fontWeight: 600,
+            color: S.textPrimary,
+            letterSpacing: '-0.01em',
           }}
-          onEditSuccess={handleEditSuccess}
-          onEditCancel={() => setEditingId(null)}
-        />
-      ))}
-
-      {showForm ? (
-        <div className="rounded-xl bg-zinc-900 border border-zinc-700 p-5">
-          <h3 className="text-sm font-semibold text-zinc-200 mb-4">Add deliverable</h3>
-          <AddDeliverableForm
-            projectId={projectId}
-            onSuccess={handleAdded}
-            onCancel={() => setShowForm(false)}
-          />
-        </div>
-      ) : (
-        <button
-          type="button"
-          onClick={() => {
-            setEditingId(null)
-            setShowForm(true)
-          }}
-          className="w-full flex items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-700 hover:border-zinc-500 px-4 py-3 text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
         >
-          <Plus className="w-4 h-4" />
-          Add deliverable
-        </button>
-      )}
+          Entregables
+        </span>
+
+        {!showForm && (
+          <button
+            type="button"
+            onClick={() => {
+              setEditingId(null)
+              setShowForm(true)
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5,
+              padding: '6px 12px',
+              borderRadius: 8,
+              background: addHovered ? '#0077ED' : S.accent,
+              border: 'none',
+              cursor: 'pointer',
+              color: '#FFFFFF',
+              fontSize: 13,
+              fontWeight: 500,
+              transition: 'background 0.15s ease',
+              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+            }}
+            onMouseEnter={() => setAddHovered(true)}
+            onMouseLeave={() => setAddHovered(false)}
+          >
+            <Plus size={14} strokeWidth={2.5} />
+            Agregar
+          </button>
+        )}
+      </div>
+
+      {/* Body */}
+      <div>
+        {/* Empty state */}
+        {deliverables.length === 0 && !showForm && (
+          <div
+            style={{
+              padding: '40px 24px',
+              textAlign: 'center',
+            }}
+          >
+            <p style={{ fontSize: 14, color: S.textSecondary, margin: 0 }}>
+              Sin entregables todavia.
+            </p>
+            <p style={{ fontSize: 12, color: S.textTertiary, marginTop: 4 }}>
+              Agrega el primer archivo, enlace o exportacion del proyecto.
+            </p>
+          </div>
+        )}
+
+        {/* Rows */}
+        {deliverables.map((d) => (
+          <DeliverableRow
+            key={d.id}
+            deliverable={d}
+            isEditing={editingId === d.id}
+            onEdit={() => {
+              setShowForm(false)
+              setEditingId(d.id)
+            }}
+            onEditSuccess={handleEditSuccess}
+            onEditCancel={() => setEditingId(null)}
+          />
+        ))}
+
+        {/* Add form */}
+        {showForm && (
+          <div
+            style={{
+              borderTop: deliverables.length > 0 ? `1px solid ${S.border}` : undefined,
+              padding: '20px 16px',
+            }}
+          >
+            <p
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: S.textSecondary,
+                textTransform: 'uppercase',
+                letterSpacing: '0.07em',
+                marginBottom: 16,
+              }}
+            >
+              Nuevo entregable
+            </p>
+            <AddDeliverableForm
+              projectId={projectId}
+              onSuccess={handleAdded}
+              onCancel={() => setShowForm(false)}
+            />
+          </div>
+        )}
+      </div>
     </div>
   )
 }

@@ -31,7 +31,16 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-[#080808] text-[#e8e8e8]">
+    <div
+      className="admin-root"
+      style={{
+        display: 'flex',
+        minHeight: '100vh',
+        background: '#000000',
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+        color: '#F5F5F7',
+      }}
+    >
       <Sidebar
         profile={{
           full_name: profile.full_name,
@@ -39,7 +48,16 @@ export default async function AdminLayout({
           avatar_url: profile.avatar_url,
         }}
       />
-      <main className="flex-1 min-w-0 overflow-auto">{children}</main>
+      <main
+        style={{
+          flex: 1,
+          minWidth: 0,
+          overflowY: 'auto',
+          padding: '32px 40px',
+        }}
+      >
+        {children}
+      </main>
     </div>
   )
 }
