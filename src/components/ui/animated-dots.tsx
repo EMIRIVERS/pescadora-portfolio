@@ -131,7 +131,9 @@ export const AnimatedDots: React.FC<AnimatedDotsProps> = ({
 
     const createDots = () => {
       dotsRef.current = [];
-      for (let i = 0; i < dotsNum; i++) {
+      const colWidth = dotRadius * 2 + dotSpacing + 1;
+      const count = Math.max(dotsNum, Math.ceil(width / colWidth) + 1);
+      for (let i = 0; i < count; i++) {
         dotsRef.current.push(new Dot(i));
       }
     };

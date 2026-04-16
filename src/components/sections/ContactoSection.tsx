@@ -90,9 +90,20 @@ export function ContactoSection() {
               margin: 0,
             }}
           >
-            <span style={{ display: 'block' }}>HACEMOS</span>
-            <span style={{ display: 'block' }}>ALGO?</span>
+            <span style={{ display: 'block' }}>COTIZA</span>
+            <span style={{ display: 'block' }}>TU PROYECTO.</span>
           </h2>
+          <p style={{
+            fontFamily: 'var(--font-geist-mono)',
+            fontSize: 'clamp(0.65rem, 1.2vw, 0.9rem)',
+            letterSpacing: '0.25em',
+            textTransform: 'uppercase',
+            color: '#444',
+            marginTop: '2rem',
+            lineHeight: 1.8,
+          }}>
+            Videoclips&nbsp;&nbsp;·&nbsp;&nbsp;Corporativo&nbsp;&nbsp;·&nbsp;&nbsp;Restaurantes&nbsp;&nbsp;·&nbsp;&nbsp;Comerciales&nbsp;&nbsp;·&nbsp;&nbsp;Fotografía
+          </p>
         </div>
 
         {/* Contact links row */}
