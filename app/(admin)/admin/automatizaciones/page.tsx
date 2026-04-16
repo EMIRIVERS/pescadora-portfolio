@@ -56,12 +56,10 @@ const TRIGGERS: TriggerItem[] = [
   {
     event: 'Cambio de estado de proyecto',
     actions: ['Notifica al cliente'],
-    soon: true,
   },
   {
-    event: 'Proyecto actualizado',
-    actions: ['Notificacion al cliente'],
-    soon: true,
+    event: 'Nuevo cliente creado',
+    actions: ['Notificacion al admin'],
   },
   {
     event: 'Deadline proximo (< 7 dias)',

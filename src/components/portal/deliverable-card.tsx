@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { ExternalLink, MessageSquare, ChevronDown } from 'lucide-react'
 import type { Deliverable, DeliverableType, DeliverableStatus } from '@/lib/supabase/types'
 import DeliverableComments from '@/components/shared/deliverable-comments'
+import DeliverableApprovalPanel from '@/components/portal/DeliverableApprovalPanel'
 
 // ---------------------------------------------------------------------------
 // Badge configs
@@ -98,6 +99,15 @@ export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
           )}
         </div>
       </div>
+
+      {/* Approval panel */}
+      <DeliverableApprovalPanel
+        deliverableId={deliverable.id}
+        currentStatus={deliverable.status}
+        currentFeedback={deliverable.client_feedback}
+        clientApprovedAt={deliverable.client_approved_at}
+        clientRejectedAt={deliverable.client_rejected_at}
+      />
 
       {/* Comments section */}
       <div className="mt-4 pt-4 border-t border-zinc-800/60">

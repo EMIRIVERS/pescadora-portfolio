@@ -16,6 +16,7 @@ export interface VideoEntry {
   category: VideoCategory
   tags: string[]
   vimeoId?: string
+  cover_url?: string | null
 }
 
 export interface PortfolioCategory {

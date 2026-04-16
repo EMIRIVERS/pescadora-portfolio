@@ -15,6 +15,7 @@ interface DbVideo {
   category: string
   sort_order: number
   is_visible: boolean
+  cover_url: string | null
 }
 
 function dbToVideoEntry(row: DbVideo): VideoEntry {
@@ -26,6 +27,7 @@ function dbToVideoEntry(row: DbVideo): VideoEntry {
     category: row.category as VideoCategory,
     tags: [],
     vimeoId: row.vimeo_id,
+    cover_url: row.cover_url,
   }
 }
 
@@ -45,7 +47,7 @@ export default async function Home() {
         .order('portfolio_order', { ascending: true }),
       supabase
         .from('portfolio_videos')
-        .select('id, title, vimeo_id, category, sort_order, is_visible')
+        .select('id, title, vimeo_id, category, sort_order, is_visible, cover_url')
         .eq('is_visible', true)
         .order('sort_order', { ascending: true }),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

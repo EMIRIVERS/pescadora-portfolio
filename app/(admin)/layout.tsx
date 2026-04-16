@@ -3,6 +3,9 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import Sidebar from '@/components/admin/sidebar'
 import MobileNav from '@/components/admin/MobileNav'
 import { ToastProvider } from '@/components/admin/ui'
+import CommandPalette from '@/components/admin/CommandPalette'
+import CommandPaletteButton from '@/components/admin/CommandPaletteButton'
+import NotificationBell from '@/components/admin/NotificationBell'
 
 export default async function AdminLayout({
   children,
@@ -40,6 +43,7 @@ export default async function AdminLayout({
 
   return (
     <ToastProvider>
+      <CommandPalette />
       <div
         className="admin-root"
         style={{
@@ -57,17 +61,31 @@ export default async function AdminLayout({
           <div className="sidebar-wrapper">
             <Sidebar profile={profileData} />
           </div>
-          <main
-            className="admin-main-content"
-            style={{
-              flex: 1,
-              minWidth: 0,
-              overflowY: 'auto',
-              padding: '32px 40px',
-            }}
-          >
-            {children}
-          </main>
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+            {/* Top bar */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              padding: '10px 24px',
+              borderBottom: '1px solid rgba(255,255,255,0.05)',
+              gap: 8,
+            }}>
+              <CommandPaletteButton />
+              <NotificationBell />
+            </div>
+            <main
+              className="admin-main-content"
+              style={{
+                flex: 1,
+                minWidth: 0,
+                overflowY: 'auto',
+                padding: '32px 40px',
+              }}
+            >
+              {children}
+            </main>
+          </div>
         </div>
       </div>
     </ToastProvider>

@@ -176,6 +176,9 @@ export interface Database {
           status: DeliverableStatus
           sort_order: number
           due_date: string | null
+          client_feedback: string | null
+          client_approved_at: string | null
+          client_rejected_at: string | null
         }
         Insert: {
           id?: string
@@ -189,6 +192,9 @@ export interface Database {
           status?: DeliverableStatus
           sort_order?: number
           due_date?: string | null
+          client_feedback?: string | null
+          client_approved_at?: string | null
+          client_rejected_at?: string | null
         }
         Update: {
           id?: string
@@ -202,6 +208,9 @@ export interface Database {
           status?: DeliverableStatus
           sort_order?: number
           due_date?: string | null
+          client_feedback?: string | null
+          client_approved_at?: string | null
+          client_rejected_at?: string | null
         }
         Relationships: [
           {
@@ -503,6 +512,7 @@ export interface Database {
           description: string
           sort_order: number
           is_visible: boolean
+          cover_url: string | null
           created_at: string
           updated_at: string
         }
@@ -517,6 +527,7 @@ export interface Database {
           description?: string
           sort_order?: number
           is_visible?: boolean
+          cover_url?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -531,8 +542,35 @@ export interface Database {
           description?: string
           sort_order?: number
           is_visible?: boolean
+          cover_url?: string | null
           created_at?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      email_log: {
+        Row: {
+          id: string
+          created_at: string
+          to_email: string
+          subject: string
+          template_name: string | null
+          status: string | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          to_email: string
+          subject: string
+          template_name?: string | null
+          status?: string | null
+        }
+        Update: {
+          id?: string
+          to_email?: string
+          subject?: string
+          template_name?: string | null
+          status?: string | null
         }
         Relationships: []
       }

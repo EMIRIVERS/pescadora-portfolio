@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 
 function parseVideoForm(formData: FormData) {
+  const coverUrl = String(formData.get('cover_url') ?? '').trim()
   return {
     title: String(formData.get('title') ?? '').trim(),
     vimeo_id: String(formData.get('vimeo_id') ?? '').trim(),
@@ -15,6 +16,7 @@ function parseVideoForm(formData: FormData) {
     sort_order: Number(formData.get('sort_order') ?? 0),
     // checkbox sends 'on' when checked, null when unchecked
     is_visible: formData.get('is_visible') !== null,
+    cover_url: coverUrl.length > 0 ? coverUrl : null,
   }
 }
 

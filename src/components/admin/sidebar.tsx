@@ -3,12 +3,13 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   LayoutDashboard,
   Film,
   FolderKanban,
   Kanban,
+  Calendar,
   Users,
   Users2,
   Target,
@@ -17,6 +18,7 @@ import {
   BarChart2,
   Activity,
   LogOut,
+  Receipt,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/lib/supabase/types'
@@ -34,6 +36,7 @@ const T = {
   borderStrong: 'rgba(255,255,255,0.14)',
   textPrimary: '#F5F5F7',
   textSecondary: '#86868B',
+  textTertiary: '#48484A',
   accentRed: '#FF453A',
   radiusSm: '8px',
   radiusMd: '12px',
@@ -71,9 +74,19 @@ const NAV_ITEMS: NavItem[] = [
     icon: <Kanban size={16} strokeWidth={1.5} />,
   },
   {
+    label: 'Calendario',
+    href: '/admin/calendar',
+    icon: <Calendar size={16} strokeWidth={1.5} />,
+  },
+  {
     label: 'Clientes',
     href: '/admin/clients',
     icon: <Users size={16} strokeWidth={1.5} />,
+  },
+  {
+    label: 'Facturas',
+    href: '/admin/invoices',
+    icon: <Receipt size={16} strokeWidth={1.5} />,
   },
   {
     label: 'Leads',
@@ -127,7 +140,12 @@ export default function Sidebar({ profile }: SidebarProps) {
   const router = useRouter()
   const supabase = createClient()
   const [logoutHovered, setLogoutHovered] = useState(false)
+  const [searchHovered, setSearchHovered] = useState(false)
   const [newLeadsCount, setNewLeadsCount] = useState(0)
+
+  const openCommandPalette = useCallback(() => {
+    window.dispatchEvent(new Event('open-command-palette'))
+  }, [])
 
   // Dynamic theme colours — initialised from localStorage, updated on change
   const [themeColors, setThemeColors] = useState<Theme>(resolveStoredTheme)
@@ -248,6 +266,49 @@ export default function Sidebar({ profile }: SidebarProps) {
         >
           FILMS
         </div>
+      </div>
+
+      {/* ── Command palette trigger ──────────────────────────────────────── */}
+      <div style={{ padding: '10px 12px', borderBottom: `1px solid ${T.border}` }}>
+        <button
+          type="button"
+          onClick={openCommandPalette}
+          onMouseEnter={() => setSearchHovered(true)}
+          onMouseLeave={() => setSearchHovered(false)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            width: '100%',
+            padding: '7px 10px',
+            borderRadius: T.radiusSm,
+            border: `1px solid ${searchHovered ? T.borderStrong : T.border}`,
+            background: searchHovered ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.02)',
+            cursor: 'pointer',
+            fontFamily: T.font,
+            fontSize: '13px',
+            color: T.textSecondary,
+            transition: 'background 0.15s ease, border-color 0.15s ease',
+          }}
+          aria-label="Abrir busqueda (Cmd+K)"
+        >
+          <Search size={13} strokeWidth={1.6} aria-hidden="true" style={{ flexShrink: 0 }} />
+          <span style={{ flex: 1, textAlign: 'left' }}>Buscar...</span>
+          <kbd
+            style={{
+              fontSize: '10px',
+              color: T.textTertiary,
+              background: 'rgba(255,255,255,0.06)',
+              border: `1px solid ${T.border}`,
+              borderRadius: '4px',
+              padding: '1px 5px',
+              fontFamily: T.font,
+              lineHeight: 1.5,
+            }}
+          >
+            K
+          </kbd>
+        </button>
       </div>
 
       {/* ── Navigation ───────────────────────────────────────────────────── */}

@@ -66,7 +66,10 @@ function buildAllCards(videos: VideoEntry[], cats: PortfolioCategory[]): Project
     } else {
       const catVideos = videoList.filter((v) => v.category === cat.slug)
       if (catVideos.length === 0) continue
-      const autoCover = catVideos[0]?.vimeoId ? `/api/vimeo-thumb?id=${catVideos[0].vimeoId}` : null
+      const firstVideo = catVideos[0]
+      const autoCover = firstVideo
+        ? (firstVideo.cover_url ?? (firstVideo.vimeoId ? `/api/vimeo-thumb?id=${firstVideo.vimeoId}` : null))
+        : null
       cards.push({
         name: cat.slug,
         label: cat.label,

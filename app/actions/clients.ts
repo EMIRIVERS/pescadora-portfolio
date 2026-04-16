@@ -1,6 +1,34 @@
 'use server'
 import { revalidatePath } from 'next/cache'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { createServiceClient } from '@/lib/supabase/server'
+import { sendEmail, ADMIN_EMAIL } from '@/lib/email'
+
+// ── Minimal DB type for email_log (not yet in generated types) ────────────────
+interface EmailLogDb {
+  public: {
+    Tables: {
+      email_log: {
+        Row: { id: string; to_email: string; subject: string; template_name: string; sent_at: string }
+        Insert: { to_email: string; subject: string; template_name: string }
+        Update: Record<string, never>
+        Relationships: []
+      }
+    }
+    Views: Record<string, never>
+    Functions: Record<string, never>
+    Enums: Record<string, never>
+    CompositeTypes: Record<string, never>
+  }
+}
+
+function createEmailLogClient() {
+  return createSupabaseClient<EmailLogDb>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false } },
+  )
+}
 
 // ── Create client manually (no Auth account) ──────────────────────────────────
 
@@ -17,6 +45,38 @@ export async function createClient(formData: FormData): Promise<{ error?: string
   })
 
   if (error) return { error: error.message }
+
+  // Notify admin that a new client was created — fire-and-forget
+  const clientEmail = String(formData.get('email') ?? '').trim() || null
+  const clientName = String(formData.get('name') ?? '').trim()
+  const notificationHtml = `<!DOCTYPE html><html><body style="background:#0a0a0a;color:#F5F5F7;font-family:system-ui,sans-serif;padding:40px;max-width:600px;margin:0 auto;">
+    <h2 style="font-size:18px;font-weight:700;color:#F5F5F7;margin:0 0 16px;">Nuevo cliente creado</h2>
+    <p style="font-size:14px;line-height:1.7;color:#cccccc;margin:0 0 8px;"><strong>Nombre:</strong> ${clientName}</p>
+    ${clientEmail ? `<p style="font-size:14px;line-height:1.7;color:#cccccc;margin:0 0 8px;"><strong>Email:</strong> ${clientEmail}</p>` : ''}
+    <hr style="border:none;border-top:1px solid #222;margin:24px 0;">
+    <p style="font-size:12px;color:#86868B;">XICO Films — Panel de administracion</p>
+    </body></html>`
+
+  await Promise.allSettled([
+    sendEmail({
+      to: ADMIN_EMAIL,
+      subject: `Nuevo cliente: ${clientName}`,
+      html: notificationHtml,
+    }),
+  ])
+
+  // Insert into email_log so the automations history panel reflects this event
+  try {
+    const logDb = createEmailLogClient()
+    await logDb.from('email_log').insert({
+      to_email: ADMIN_EMAIL,
+      subject: `Nuevo cliente: ${clientName}`,
+      template_name: 'new_client',
+    })
+  } catch {
+    // email_log may not exist yet — safe to ignore
+  }
+
   revalidatePath('/admin/clients')
   return {}
 }

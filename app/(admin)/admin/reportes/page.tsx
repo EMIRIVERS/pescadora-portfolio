@@ -1,6 +1,7 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import type { LeadStatus, LeadSource, ProjectStatus } from '@/lib/supabase/types'
 import PeriodSelector from './PeriodSelector'
+import ExportButton from './ExportButton'
 
 // ─── Local types ─────────────────────────────────────────────────────────────
 
@@ -484,7 +485,10 @@ export default async function ReportesPage({ searchParams }: PageProps) {
               {PERIOD_LABEL[period]}
             </p>
           </div>
-          <PeriodSelector currentPeriod={period} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+            <ExportButton period={period} />
+            <PeriodSelector currentPeriod={period} />
+          </div>
         </div>
 
         {/* ── Section 2: KPIs principales ──────────────────────────────────── */}

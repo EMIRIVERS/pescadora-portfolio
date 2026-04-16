@@ -22,6 +22,7 @@ interface PortfolioVideo {
   description: string
   sort_order: number
   is_visible: boolean
+  cover_url?: string | null
   created_at: string
   updated_at: string
 }
@@ -518,6 +519,23 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
               </div>
             </div>
 
+            {/* Cover URL (solo para videos de Vimeo) */}
+            {!isPhoto && (
+              <div>
+                <label htmlFor="cover_url" style={LABEL_STYLE}>Miniatura personalizada</label>
+                <input
+                  id="cover_url"
+                  name="cover_url"
+                  type="url"
+                  defaultValue={editingVideo?.cover_url ?? ''}
+                  placeholder="https://... (opcional, usa Vimeo si vacío)"
+                  style={INPUT_STYLE}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
+                />
+              </div>
+            )}
+
             {/* Row 2: Categoria + Cliente + Ano */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
               <div>
@@ -799,7 +817,7 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
                           src={
                             video.category === 'fotografia'
                               ? video.vimeo_id
-                              : `/api/vimeo-thumb?id=${video.vimeo_id}`
+                              : (video.cover_url ?? `/api/vimeo-thumb?id=${video.vimeo_id}`)
                           }
                           alt={video.title}
                           width={60}
