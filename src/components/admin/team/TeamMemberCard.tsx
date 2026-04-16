@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { useTransition, useState } from 'react'
 import { updateMemberRole, toggleAdminStatus } from '../../../../app/actions/team'
+import DeleteMemberButton from './DeleteMemberButton'
 
 const ROLE_OPTIONS = [
   'Fotógrafo',
@@ -297,6 +298,14 @@ export default function TeamMemberCard({ member, currentUserId }: Props) {
       >
         Desde {formatDate(member.created_at)}
       </p>
+
+      {/* Delete button — hidden for self */}
+      {!isSelf && (
+        <DeleteMemberButton
+          memberId={member.id}
+          memberName={displayName}
+        />
+      )}
 
       {/* Spinner keyframe */}
       <style>{`

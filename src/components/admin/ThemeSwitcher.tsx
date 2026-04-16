@@ -92,17 +92,19 @@ function PaletteIcon({ color }: { color: string }) {
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function ThemeSwitcher() {
   const [open, setOpen] = useState(false)
-  const [activeId, setActiveId] = useState<Theme['id']>(DEFAULT_THEME_ID)
+  // Lazy initializer: read localStorage once on first render (client only)
+  const [activeId, setActiveId] = useState<Theme['id']>(() => {
+    if (typeof window === 'undefined') return DEFAULT_THEME_ID
+    return (localStorage.getItem(STORAGE_KEY) as Theme['id']) ?? DEFAULT_THEME_ID
+  })
   const [btnHovered, setBtnHovered] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
   const btnRef = useRef<HTMLButtonElement>(null)
 
-  // Mount: restore saved theme
+  // Mount: apply the persisted theme to the DOM
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    const theme = getThemeById(saved ?? DEFAULT_THEME_ID)
-    setActiveId(theme.id)
-    applyTheme(theme)
+    applyTheme(getThemeById(activeId))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Close panel on outside click

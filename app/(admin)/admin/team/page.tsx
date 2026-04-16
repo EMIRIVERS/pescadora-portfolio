@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import TeamMemberCard from '@/components/admin/team/TeamMemberCard'
 import InviteMemberForm from '@/components/admin/team/InviteMemberForm'
+import MyProfileModal from '@/components/admin/team/MyProfileModal'
+
+const ADMIN_ROLES = new Set(['admin', 'admin_staff'])
 
 export default async function AdminTeamPage() {
   const supabase = await createClient()
@@ -25,7 +28,32 @@ export default async function AdminTeamPage() {
     created_at: string
   }[]
 
-  const adminCount = team.filter((m) => m.is_admin_team).length
+  // Split into admin group and support group
+  const adminTeam = team.filter(
+    (m) => m.is_admin_team || ADMIN_ROLES.has(m.role ?? ''),
+  )
+  const supportTeam = team.filter(
+    (m) => !m.is_admin_team && !ADMIN_ROLES.has(m.role ?? ''),
+  )
+
+  // Find current user's profile for the modal
+  const currentUserProfile = team.find((m) => m.id === currentUserId) ?? null
+
+  const gridStyle: React.CSSProperties = {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+    gap: '16px',
+  }
+
+  const sectionHeadingStyle: React.CSSProperties = {
+    fontSize: '12px',
+    fontWeight: 600,
+    letterSpacing: '0.06em',
+    textTransform: 'uppercase',
+    color: '#48484A',
+    marginBottom: '16px',
+    marginTop: 0,
+  }
 
   return (
     <div
@@ -44,6 +72,8 @@ export default async function AdminTeamPage() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '16px',
         }}
       >
         <div>
@@ -68,42 +98,68 @@ export default async function AdminTeamPage() {
             }}
           >
             {team.length} miembro{team.length !== 1 ? 's' : ''}
-            {adminCount > 0 && (
+            {adminTeam.length > 0 && (
               <span style={{ marginLeft: '8px', color: '#48484A' }}>
-                &middot; {adminCount} admin{adminCount !== 1 ? 's' : ''}
+                &middot; {adminTeam.length} admin{adminTeam.length !== 1 ? 's' : ''}
               </span>
             )}
           </p>
         </div>
-        <InviteMemberForm />
+
+        {/* Header actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {currentUserProfile && (
+            <MyProfileModal currentUser={currentUserProfile} />
+          )}
+          <InviteMemberForm />
+        </div>
       </div>
 
-      {/* Member grid */}
-      {team.length > 0 ? (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-            gap: '16px',
-          }}
-        >
-          {team.map((member) => (
-            <TeamMemberCard
-              key={member.id}
-              member={member}
-              currentUserId={currentUserId}
-            />
-          ))}
-        </div>
-      ) : (
-        <p
-          style={{
-            fontSize: '14px',
-            color: '#48484A',
-          }}
-        >
+      {team.length === 0 && (
+        <p style={{ fontSize: '14px', color: '#48484A' }}>
           No hay miembros registrados.
         </p>
+      )}
+
+      {/* Admin group */}
+      {adminTeam.length > 0 && (
+        <section style={{ marginBottom: '40px' }}>
+          <p style={sectionHeadingStyle}>Equipo Admin</p>
+          <div style={gridStyle}>
+            {adminTeam.map((member) => (
+              <TeamMemberCard
+                key={member.id}
+                member={member}
+                currentUserId={currentUserId}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Support group */}
+      {supportTeam.length > 0 && (
+        <section>
+          {adminTeam.length > 0 && (
+            <div
+              style={{
+                height: '1px',
+                backgroundColor: 'rgba(255,255,255,0.06)',
+                marginBottom: '32px',
+              }}
+            />
+          )}
+          <p style={sectionHeadingStyle}>Equipo de Apoyo</p>
+          <div style={gridStyle}>
+            {supportTeam.map((member) => (
+              <TeamMemberCard
+                key={member.id}
+                member={member}
+                currentUserId={currentUserId}
+              />
+            ))}
+          </div>
+        </section>
       )}
     </div>
   )
