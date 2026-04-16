@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { createServiceClient } from '@/lib/supabase/server'
 import type { ProjectStatus, LeadStatus } from '@/lib/supabase/types'
+import SearchInput from './SearchInput'
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
@@ -153,63 +154,6 @@ function formatDate(iso: string): string {
   })
 }
 
-// ── Search form (plain HTML — works without JS) ───────────────────────────────
-
-function SearchForm({ q }: { q: string }) {
-  return (
-    <form
-      action="/admin/buscar"
-      method="GET"
-      style={{
-        display: 'flex',
-        gap: '10px',
-        alignItems: 'stretch',
-      }}
-    >
-      <input
-        name="q"
-        type="search"
-        defaultValue={q}
-        autoFocus
-        autoComplete="off"
-        placeholder="Busca proyectos, clientes o leads..."
-        style={{
-          flex: 1,
-          background: '#111111',
-          border: '1px solid rgba(255,255,255,0.1)',
-          borderRadius: '12px',
-          padding: '16px 20px',
-          fontSize: '18px',
-          color: '#F5F5F7',
-          fontFamily: T.font,
-          outline: 'none',
-          caretColor: T.accent,
-          minWidth: 0,
-        }}
-      />
-      <button
-        type="submit"
-        style={{
-          background: T.accent,
-          color: '#fff',
-          border: 'none',
-          borderRadius: '12px',
-          padding: '16px 24px',
-          fontSize: '15px',
-          fontWeight: 600,
-          fontFamily: T.font,
-          cursor: 'pointer',
-          whiteSpace: 'nowrap',
-          letterSpacing: '-0.01em',
-          flexShrink: 0,
-        }}
-      >
-        Buscar &rarr;
-      </button>
-    </form>
-  )
-}
-
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 interface PageProps {
@@ -258,8 +202,6 @@ export default async function AdminBuscarPage({ searchParams }: PageProps) {
   return (
     <>
       <style>{`
-        .buscar-input:focus { border-color: rgba(0,113,227,0.6) !important; box-shadow: 0 0 0 3px rgba(0,113,227,0.15); }
-        .buscar-submit:hover { opacity: 0.88 !important; }
         .result-row { transition: background 0.1s ease; }
         .result-row:hover { background: #1C1C1E !important; }
         .result-link { color: #F5F5F7; text-decoration: none; display: flex; align-items: center; gap: 12px; padding: 14px 20px; width: 100%; }
@@ -279,7 +221,7 @@ export default async function AdminBuscarPage({ searchParams }: PageProps) {
         <div style={{ maxWidth: '720px', margin: '0 auto' }}>
 
           {/* Header */}
-          <div style={{ marginBottom: '36px', textAlign: 'center' }}>
+          <div style={{ marginBottom: '32px', textAlign: 'center' }}>
             <h1
               style={{
                 fontSize: '34px',
@@ -303,9 +245,9 @@ export default async function AdminBuscarPage({ searchParams }: PageProps) {
             </p>
           </div>
 
-          {/* Search form */}
+          {/* Search input — client component with 300 ms debounce */}
           <div style={{ marginBottom: '48px' }}>
-            <SearchForm q={q} />
+            <SearchInput defaultValue={q} />
           </div>
 
           {/* ── States ── */}
@@ -359,24 +301,96 @@ export default async function AdminBuscarPage({ searchParams }: PageProps) {
             <div
               style={{
                 textAlign: 'center',
-                padding: '60px 20px',
+                padding: '64px 24px',
                 background: T.surface1,
-                borderRadius: '16px',
+                borderRadius: '18px',
+                border: `1px solid ${T.borderSubtle}`,
               }}
             >
-              <p
+              {/* Icon container */}
+              <div
                 style={{
-                  fontSize: '15px',
-                  color: T.textSecondary,
-                  margin: '0 0 6px 0',
-                  fontWeight: 500,
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '16px',
+                  background: T.surface2,
+                  border: `1px solid ${T.border}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 20px',
                 }}
               >
-                Sin resultados para &ldquo;{q}&rdquo;
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke={T.textTertiary}
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="M21 21l-4.35-4.35" />
+                  <path d="M8.5 8.5l5 5M13.5 8.5l-5 5" />
+                </svg>
+              </div>
+
+              {/* Headline */}
+              <p
+                style={{
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  color: T.textPrimary,
+                  margin: '0 0 8px 0',
+                  letterSpacing: '-0.01em',
+                }}
+              >
+                Sin resultados para{' '}
+                <span style={{ color: T.textSecondary }}>&ldquo;{q}&rdquo;</span>
               </p>
-              <p style={{ fontSize: '13px', color: T.textTertiary, margin: 0 }}>
-                Intenta con otro termino de busqueda
+
+              {/* Suggestions */}
+              <p
+                style={{
+                  fontSize: '13px',
+                  color: T.textTertiary,
+                  margin: '0 0 20px 0',
+                  lineHeight: 1.5,
+                }}
+              >
+                Revisa la ortografia o prueba con un termino mas corto.
               </p>
+
+              {/* Hint pills */}
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '8px',
+                  justifyContent: 'center',
+                  flexWrap: 'wrap',
+                }}
+              >
+                {['nombre', 'email', 'empresa'].map((hint) => (
+                  <span
+                    key={hint}
+                    style={{
+                      padding: '4px 12px',
+                      borderRadius: '20px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      background: T.surface2,
+                      border: `1px solid ${T.border}`,
+                      color: T.textTertiary,
+                      fontFamily: T.font,
+                    }}
+                  >
+                    Busca por {hint}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
 

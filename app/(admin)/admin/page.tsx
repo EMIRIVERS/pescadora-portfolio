@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { FolderKanban, Users, Target, CheckCircle2, Film } from 'lucide-react'
 import { createServiceClient } from '@/lib/supabase/server'
-import type { ProjectStatus, LeadStatus, LeadSource } from '@/lib/supabase/types'
+import type { ProjectStatus, LeadStatus, LeadSource, DeliverableStatus } from '@/lib/supabase/types'
 
 // ─── Local types ────────────────────────────────────────────────────────────
 
@@ -18,6 +18,21 @@ interface RecentLead {
   name: string
   status: LeadStatus
   source: LeadSource
+  created_at: string
+}
+
+interface UpcomingDeliverable {
+  id: string
+  title: string
+  due_date: string
+  status: DeliverableStatus
+  project: { id: string; title: string } | null
+}
+
+interface NewLead {
+  id: string
+  name: string
+  email: string
   created_at: string
 }
 
@@ -47,6 +62,27 @@ function todayLabel(): string {
     month: 'long',
     year: 'numeric',
   })
+}
+
+function timeAgo(iso: string): string {
+  const now = Date.now()
+  const then = new Date(iso).getTime()
+  const diffMs = now - then
+  const diffMins = Math.floor(diffMs / 60000)
+  if (diffMins < 60) return `hace ${diffMins} min`
+  const diffHours = Math.floor(diffMins / 60)
+  if (diffHours < 24) return `hace ${diffHours} h`
+  const diffDays = Math.floor(diffHours / 24)
+  if (diffDays === 1) return 'hace 1 dia'
+  return `hace ${diffDays} dias`
+}
+
+function daysUntil(isoDate: string): number {
+  const now = new Date()
+  now.setHours(0, 0, 0, 0)
+  const target = new Date(isoDate)
+  target.setHours(0, 0, 0, 0)
+  return Math.round((target.getTime() - now.getTime()) / 86400000)
 }
 
 function greetingLabel(): string {
@@ -104,6 +140,24 @@ const LEAD_STATUS_LABEL: Record<LeadStatus, string> = {
   lost: 'Perdido',
 }
 
+const DELIVERABLE_STATUS_COLOR: Record<DeliverableStatus, string> = {
+  pending: '#FF9F0A',
+  review: '#BF5AF2',
+  approved: '#30D158',
+}
+
+const DELIVERABLE_STATUS_BG: Record<DeliverableStatus, string> = {
+  pending: 'rgba(255,159,10,0.13)',
+  review: 'rgba(191,90,242,0.13)',
+  approved: 'rgba(48,209,88,0.13)',
+}
+
+const DELIVERABLE_STATUS_LABEL: Record<DeliverableStatus, string> = {
+  pending: 'Pendiente',
+  review: 'En revision',
+  approved: 'Aprobado',
+}
+
 // ─── Stat card accent colours (icon + number tint) ───────────────────────────
 
 const STAT_ACCENT = ['#0071E3', '#30D158', '#FF9F0A', '#BF5AF2', '#FF453A'] as const
@@ -113,6 +167,14 @@ const STAT_ACCENT = ['#0071E3', '#30D158', '#FF9F0A', '#BF5AF2', '#FF453A'] as c
 export default async function AdminDashboardPage() {
   const supabase = createServiceClient()
 
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  // project_deliverables.due_date is a date column (YYYY-MM-DD), so compare as date string
+  const todayDate = today.toISOString().slice(0, 10)
+  const in7Days = new Date(today)
+  in7Days.setDate(in7Days.getDate() + 7)
+  const in7DaysDate = in7Days.toISOString().slice(0, 10)
+
   const [
     { count: totalProjects },
     { count: activeProjects },
@@ -121,6 +183,9 @@ export default async function AdminDashboardPage() {
     { data: recentProjectsRaw },
     { data: recentLeadsRaw },
     { count: totalPortfolioVideos },
+    { data: deliverablesRaw },
+    { data: newLeadsRaw },
+    { count: newLeadsCount },
   ] = await Promise.all([
     supabase
       .from('projects')
@@ -149,6 +214,24 @@ export default async function AdminDashboardPage() {
       .from('portfolio_videos')
       .select('id', { count: 'exact', head: true })
       .eq('is_visible', true),
+    supabase
+      .from('project_deliverables')
+      .select('id, title, due_date, status, project:projects(id, title)')
+      .gte('due_date', todayDate)
+      .lte('due_date', in7DaysDate)
+      .neq('status', 'approved')
+      .order('due_date', { ascending: true })
+      .limit(8),
+    supabase
+      .from('leads')
+      .select('id, name, email, created_at')
+      .eq('status', 'new')
+      .order('created_at', { ascending: false })
+      .limit(5),
+    supabase
+      .from('leads')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'new'),
   ])
 
   // Aggregate leads by status
@@ -179,6 +262,19 @@ export default async function AdminDashboardPage() {
   }))
 
   const recentLeads: RecentLead[] = (recentLeadsRaw ?? []) as RecentLead[]
+
+  const upcomingDeliverables: UpcomingDeliverable[] = (deliverablesRaw ?? []).map((d) => ({
+    id: d.id,
+    title: d.title,
+    due_date: d.due_date as string,
+    status: d.status as DeliverableStatus,
+    project: Array.isArray(d.project)
+      ? (d.project[0] ?? null)
+      : (d.project as { id: string; title: string } | null),
+  }))
+
+  const newLeads: NewLead[] = (newLeadsRaw ?? []) as NewLead[]
+  const totalNewLeads = newLeadsCount ?? 0
 
   // ── Stats cards definition ─────────────────────────────────────────────────
   const statCards = [
@@ -303,6 +399,47 @@ export default async function AdminDashboardPage() {
         .apd-project-link:hover {
           color: #0071E3;
         }
+        .dh-row:hover {
+          background: #1C1C1E;
+        }
+        .dh-link:hover {
+          color: #0071E3;
+        }
+        .dh-action-primary {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 12px 20px;
+          background: #0071E3;
+          border-radius: 10px;
+          color: #F5F5F7;
+          font-size: 14px;
+          font-weight: 500;
+          text-decoration: none;
+          transition: opacity 0.15s;
+          flex: 1;
+        }
+        .dh-action-primary:hover {
+          opacity: 0.85;
+        }
+        .dh-action-secondary {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 12px 20px;
+          background: #1C1C1E;
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 10px;
+          color: #F5F5F7;
+          font-size: 14px;
+          font-weight: 500;
+          text-decoration: none;
+          transition: background 0.15s;
+          flex: 1;
+        }
+        .dh-action-secondary:hover {
+          background: #2C2C2E;
+        }
       `}</style>
 
       <div className="apd-root">
@@ -394,6 +531,285 @@ export default async function AdminDashboardPage() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* ── Entregas + Leads sin atender (2 cols) ── */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '16px',
+            marginBottom: '16px',
+          }}
+        >
+          {/* ── Entregas esta semana ── */}
+          <div
+            style={{
+              background: '#111111',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '12px',
+              padding: '20px',
+            }}
+          >
+            <p
+              style={{
+                fontSize: '15px',
+                fontWeight: 600,
+                color: '#F5F5F7',
+                margin: '0 0 16px 0',
+              }}
+            >
+              <span style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                Entregas esta semana
+                {upcomingDeliverables.length > 0 && (
+                  <span
+                    style={{
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: upcomingDeliverables.length >= 3 ? '#FF453A' : '#FF9F0A',
+                      background: upcomingDeliverables.length >= 3
+                        ? 'rgba(255,69,58,0.13)'
+                        : 'rgba(255,159,10,0.13)',
+                      borderRadius: '6px',
+                      padding: '2px 7px',
+                    }}
+                  >
+                    {upcomingDeliverables.length}
+                  </span>
+                )}
+              </span>
+            </p>
+
+            {upcomingDeliverables.length === 0 ? (
+              <p style={{ fontSize: '13px', color: '#86868B', margin: 0 }}>
+                Sin entregas pendientes esta semana
+              </p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                {upcomingDeliverables.map((deliverable) => {
+                  const days = daysUntil(deliverable.due_date)
+                  const daysColor = days < 3 ? '#FF453A' : days < 5 ? '#FF9F0A' : '#30D158'
+                  return (
+                    <Link
+                      key={deliverable.id}
+                      href={deliverable.project ? `/admin/projects/${deliverable.project.id}` : '/admin/projects'}
+                      className="dh-row dh-link"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '12px',
+                        padding: '8px 10px',
+                        borderRadius: '8px',
+                        textDecoration: 'none',
+                        transition: 'background 0.15s',
+                      }}
+                    >
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <span
+                          style={{
+                            fontSize: '13px',
+                            color: '#F5F5F7',
+                            display: 'block',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {deliverable.title}
+                        </span>
+                        {deliverable.project && (
+                          <span
+                            style={{
+                              fontSize: '11px',
+                              color: '#48484A',
+                              display: 'block',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              marginTop: '2px',
+                            }}
+                          >
+                            {deliverable.project.title}
+                          </span>
+                        )}
+                      </div>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            color: daysColor,
+                            minWidth: '20px',
+                            textAlign: 'right',
+                          }}
+                        >
+                          {days}d
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            fontWeight: 500,
+                            color: DELIVERABLE_STATUS_COLOR[deliverable.status],
+                            background: DELIVERABLE_STATUS_BG[deliverable.status],
+                            borderRadius: '6px',
+                            padding: '3px 8px',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {DELIVERABLE_STATUS_LABEL[deliverable.status]}
+                        </span>
+                      </div>
+                    </Link>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* ── Leads sin atender ── */}
+          <div
+            style={{
+              background: '#111111',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '12px',
+              padding: '20px',
+            }}
+          >
+            <p
+              style={{
+                fontSize: '15px',
+                fontWeight: 600,
+                color: '#F5F5F7',
+                margin: '0 0 16px 0',
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '8px',
+              }}
+            >
+              Leads sin atender
+              {totalNewLeads > 0 && (
+                <span
+                  style={{
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#0071E3',
+                    background: 'rgba(0,113,227,0.13)',
+                    borderRadius: '6px',
+                    padding: '2px 7px',
+                  }}
+                >
+                  {totalNewLeads}
+                </span>
+              )}
+            </p>
+
+            {newLeads.length === 0 ? (
+              <p style={{ fontSize: '13px', color: '#30D158', margin: 0 }}>
+                Todos los leads atendidos
+              </p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                {newLeads.map((lead) => (
+                  <Link
+                    key={lead.id}
+                    href="/admin/leads"
+                    className="dh-row dh-link"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '12px',
+                      padding: '8px 10px',
+                      borderRadius: '8px',
+                      textDecoration: 'none',
+                      transition: 'background 0.15s, color 0.15s',
+                    }}
+                  >
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <span
+                        style={{
+                          fontSize: '13px',
+                          color: '#F5F5F7',
+                          display: 'block',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {lead.name}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          color: '#48484A',
+                          display: 'block',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          marginTop: '2px',
+                        }}
+                      >
+                        {lead.email}
+                      </span>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '11px',
+                        color: '#86868B',
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {timeAgo(lead.created_at)}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── Acciones rapidas ── */}
+        <div
+          style={{
+            background: '#111111',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '12px',
+            padding: '20px',
+            marginBottom: '28px',
+          }}
+        >
+          <p
+            style={{
+              fontSize: '11px',
+              fontWeight: 600,
+              color: '#86868B',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              margin: '0 0 14px 0',
+            }}
+          >
+            Acciones rapidas
+          </p>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <Link href="/admin/projects/new" className="dh-action-primary">
+              + Nuevo proyecto
+            </Link>
+            <Link href="/admin/leads?showAdd=1" className="dh-action-secondary">
+              + Nuevo lead
+            </Link>
+            <Link href="/admin/clients" className="dh-action-secondary">
+              + Nuevo cliente
+            </Link>
+          </div>
         </div>
 
         {/* ── Two-column grid ── */}

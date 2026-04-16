@@ -19,8 +19,18 @@ interface ProjectRow {
   client_id: string | null
 }
 
+interface ProjectBudgetRow {
+  id: string
+  status: ProjectStatus
+  budget: number | null
+  currency: string | null
+  client_id: string | null
+  title: string
+}
+
 interface ClientRow {
   id: string
+  name: string
   created_at: string
 }
 
@@ -28,6 +38,13 @@ interface MonthBucket {
   year: number
   month: number // 0-indexed
   label: string
+}
+
+interface ClientBudgetSummary {
+  clientId: string
+  clientName: string
+  totalBudget: number
+  projectCount: number
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -126,6 +143,14 @@ function formatPercent(value: number): string {
   return `${value.toFixed(1)}%`
 }
 
+function formatMXN(value: number): string {
+  return new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency: 'MXN',
+    maximumFractionDigits: 0,
+  }).format(value)
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function ReportesPage() {
@@ -134,7 +159,8 @@ export default async function ReportesPage() {
   const [
     { data: allLeadsRaw },
     { data: allProjectsRaw },
-    { data: allClients },
+    { data: allProjectsBudgetRaw },
+    { data: allClientsRaw },
   ] = await Promise.all([
     supabase
       .from('leads')
@@ -143,13 +169,17 @@ export default async function ReportesPage() {
       .from('projects')
       .select('id, title, status, created_at, client_id'),
     supabase
+      .from('projects')
+      .select('id, title, status, budget, currency, client_id'),
+    supabase
       .from('clients')
-      .select('id, created_at'),
+      .select('id, name, created_at'),
   ])
 
   const allLeads: LeadRow[] = (allLeadsRaw ?? []) as LeadRow[]
   const allProjects: ProjectRow[] = (allProjectsRaw ?? []) as ProjectRow[]
-  const clients: ClientRow[] = (allClients ?? [])
+  const allProjectsBudget: ProjectBudgetRow[] = (allProjectsBudgetRaw ?? []) as unknown as ProjectBudgetRow[]
+  const clients: ClientRow[] = (allClientsRaw ?? []) as unknown as ClientRow[]
 
   // ── 1. Summary metrics ────────────────────────────────────────────────────
 
@@ -167,11 +197,11 @@ export default async function ReportesPage() {
     activeProjectClientIds.has(c.id),
   ).length
 
-  // Projected revenue: projects with status != 'delivered'
-  // Note: budget/currency fields are not yet in the schema; showing project count instead
-  const activeProjectsCount = allProjects.filter(
-    (p) => p.status !== 'delivered',
-  ).length
+  // Total budget from all projects
+  const totalBudget = allProjectsBudget.reduce(
+    (s, p) => s + (p.budget ?? 0),
+    0,
+  )
 
   // ── 2. Leads pipeline by status ───────────────────────────────────────────
 
@@ -186,7 +216,10 @@ export default async function ReportesPage() {
   for (const lead of allLeads) {
     leadsByStatus[lead.status]++
   }
-  const maxLeadCount = Math.max(...Object.values(leadsByStatus), 1)
+  const totalLeadCount = Math.max(
+    Object.values(leadsByStatus).reduce((a, b) => a + b, 0),
+    1,
+  )
 
   // ── 3. Projects by status ─────────────────────────────────────────────────
 
@@ -199,6 +232,19 @@ export default async function ReportesPage() {
   for (const project of allProjects) {
     projectsByStatus[project.status]++
   }
+
+  // ── 3b. Budget by status ──────────────────────────────────────────────────
+
+  const budgetByStatus: Record<ProjectStatus, number> = {
+    pre_production: 0,
+    production: 0,
+    post_production: 0,
+    delivered: 0,
+  }
+  for (const project of allProjectsBudget) {
+    budgetByStatus[project.status] += project.budget ?? 0
+  }
+  const hasBudgetData = allProjectsBudget.some((p) => (p.budget ?? 0) > 0)
 
   // ── 4. Leads by source ────────────────────────────────────────────────────
 
@@ -236,12 +282,42 @@ export default async function ReportesPage() {
     ).length,
   }))
 
-  // ── 6. Top 10 projects (by title alphabetically since no budget field) ────
-  // We show all projects sorted by created_at desc, top 10
+  // ── 6. Top 10 projects by created_at desc ────────────────────────────────
 
   const top10Projects = [...allProjects]
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 10)
+
+  // ── 7. Top 5 clients by budget ────────────────────────────────────────────
+
+  const clientMap = new Map<string, ClientRow>(
+    clients.map((c) => [c.id, c]),
+  )
+
+  const clientBudgetMap = new Map<string, { totalBudget: number; projectCount: number; clientName: string }>()
+  for (const project of allProjectsBudget) {
+    if (project.client_id === null) continue
+    const budget = project.budget ?? 0
+    const existing = clientBudgetMap.get(project.client_id)
+    const clientName = clientMap.get(project.client_id)?.name ?? 'Cliente desconocido'
+    if (existing) {
+      existing.totalBudget += budget
+      existing.projectCount += 1
+    } else {
+      clientBudgetMap.set(project.client_id, {
+        totalBudget: budget,
+        projectCount: 1,
+        clientName,
+      })
+    }
+  }
+
+  const topClients: ClientBudgetSummary[] = [...clientBudgetMap.entries()]
+    .map(([clientId, data]) => ({ clientId, ...data }))
+    .sort((a, b) => b.totalBudget - a.totalBudget)
+    .slice(0, 5)
+
+  const maxClientBudget = Math.max(...topClients.map((c) => c.totalBudget), 1)
 
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -302,6 +378,13 @@ export default async function ReportesPage() {
         .rpt-source-bar-track {
           flex: 1;
           height: 5px;
+          background: rgba(255,255,255,0.06);
+          border-radius: 3px;
+          overflow: hidden;
+        }
+        .rpt-client-bar-track {
+          flex: 1;
+          height: 6px;
           background: rgba(255,255,255,0.06);
           border-radius: 3px;
           overflow: hidden;
@@ -430,7 +513,7 @@ export default async function ReportesPage() {
             </p>
           </div>
 
-          {/* Projects in progress */}
+          {/* Presupuesto total — Fix 1 */}
           <div className="rpt-stat-card">
             <p
               style={{
@@ -442,22 +525,22 @@ export default async function ReportesPage() {
                 margin: '0 0 12px 0',
               }}
             >
-              Proyectos Activos
+              Presupuesto Total
             </p>
             <p
               style={{
-                fontSize: '40px',
+                fontSize: totalBudget >= 1_000_000 ? '28px' : '34px',
                 fontWeight: 700,
-                color: '#BF5AF2',
+                color: '#30D158',
                 margin: '0 0 4px 0',
                 letterSpacing: '-0.03em',
                 lineHeight: 1,
               }}
             >
-              {activeProjectsCount}
+              {formatMXN(totalBudget)}
             </p>
             <p style={{ fontSize: '12px', color: '#48484A', margin: 0 }}>
-              sin entregar
+              suma de todos los proyectos
             </p>
           </div>
         </div>
@@ -471,7 +554,7 @@ export default async function ReportesPage() {
             marginBottom: '16px',
           }}
         >
-          {/* ── Pipeline de leads ──────────────────────────────────────────── */}
+          {/* ── Pipeline de leads — Fix 2 ────────────────────────────────── */}
           <div className="rpt-card">
             <div
               style={{
@@ -494,7 +577,8 @@ export default async function ReportesPage() {
             <div style={{ padding: '8px 0' }}>
               {LEAD_STATUS_ORDER.map((status, idx) => {
                 const count = leadsByStatus[status]
-                const pct = Math.round((count / maxLeadCount) * 100)
+                // Fix 2: proportional to total (not to max), so widths sum to 100%
+                const pct = Math.round((count / totalLeadCount) * 100)
                 return (
                   <div
                     key={status}
@@ -532,6 +616,16 @@ export default async function ReportesPage() {
                         }}
                       >
                         {count}
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            color: '#48484A',
+                            fontWeight: 400,
+                            marginLeft: '4px',
+                          }}
+                        >
+                          {pct}%
+                        </span>
                       </span>
                     </div>
                     <div className="rpt-progress-bar-track">
@@ -630,6 +724,99 @@ export default async function ReportesPage() {
               })}
             </div>
           </div>
+        </div>
+
+        {/* ── Fix 3: Presupuesto por estado ─────────────────────────────── */}
+        <div className="rpt-card" style={{ marginBottom: '16px' }}>
+          <div
+            style={{
+              padding: '18px 20px 14px',
+              borderBottom: '1px solid rgba(255,255,255,0.06)',
+            }}
+          >
+            <h2
+              style={{
+                fontSize: '15px',
+                fontWeight: 600,
+                color: '#F5F5F7',
+                margin: 0,
+              }}
+            >
+              Presupuesto por Estado
+            </h2>
+          </div>
+
+          {hasBudgetData ? (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '12px',
+                padding: '16px',
+              }}
+            >
+              {PROJECT_STATUS_ORDER.map((status) => {
+                const amount = budgetByStatus[status]
+                return (
+                  <div
+                    key={status}
+                    className="rpt-proj-status-card"
+                    style={{
+                      borderColor: `${PROJECT_STATUS_COLOR[status]}33`,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'inline-block',
+                        fontSize: '10px',
+                        fontWeight: 600,
+                        color: PROJECT_STATUS_COLOR[status],
+                        background: PROJECT_STATUS_BG[status],
+                        borderRadius: '5px',
+                        padding: '2px 8px',
+                        letterSpacing: '0.04em',
+                        marginBottom: '10px',
+                      }}
+                    >
+                      {PROJECT_STATUS_LABEL[status].toUpperCase()}
+                    </div>
+                    <p
+                      style={{
+                        fontSize: amount >= 1_000_000 ? '22px' : '26px',
+                        fontWeight: 700,
+                        color: PROJECT_STATUS_COLOR[status],
+                        margin: 0,
+                        letterSpacing: '-0.02em',
+                        lineHeight: 1.1,
+                      }}
+                    >
+                      {formatMXN(amount)}
+                    </p>
+                    <p
+                      style={{
+                        fontSize: '11px',
+                        color: '#48484A',
+                        margin: '6px 0 0 0',
+                      }}
+                    >
+                      presupuesto acumulado
+                    </p>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <p
+              style={{
+                color: '#48484A',
+                fontSize: '13px',
+                padding: '24px 20px',
+                margin: 0,
+              }}
+            >
+              Sin datos de presupuesto todavia
+            </p>
+          )}
         </div>
 
         {/* ── 4 + 5: Two-column row — Fuentes + Actividad mensual ───────── */}
@@ -801,6 +988,114 @@ export default async function ReportesPage() {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* ── Fix 4: Top clientes por presupuesto ───────────────────────── */}
+        <div className="rpt-card" style={{ marginBottom: '16px' }}>
+          <div
+            style={{
+              padding: '18px 20px 14px',
+              borderBottom: '1px solid rgba(255,255,255,0.06)',
+            }}
+          >
+            <h2
+              style={{
+                fontSize: '15px',
+                fontWeight: 600,
+                color: '#F5F5F7',
+                margin: 0,
+              }}
+            >
+              Top Clientes por Presupuesto
+            </h2>
+          </div>
+
+          {topClients.length === 0 ? (
+            <p
+              style={{
+                color: '#48484A',
+                fontSize: '13px',
+                padding: '24px 20px',
+                margin: 0,
+              }}
+            >
+              Sin datos de presupuesto por cliente todavia.
+            </p>
+          ) : (
+            <div style={{ padding: '8px 0' }}>
+              {topClients.map((client, idx) => {
+                const barPct = Math.round((client.totalBudget / maxClientBudget) * 100)
+                return (
+                  <div
+                    key={client.clientId}
+                    className="rpt-table-row"
+                    style={{
+                      padding: '14px 20px',
+                      borderBottom:
+                        idx < topClients.length - 1
+                          ? '1px solid rgba(255,255,255,0.04)'
+                          : 'none',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        marginBottom: '8px',
+                      }}
+                    >
+                      <div>
+                        <span
+                          style={{
+                            fontSize: '14px',
+                            fontWeight: 500,
+                            color: '#F5F5F7',
+                            display: 'block',
+                          }}
+                        >
+                          {client.clientName}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            color: '#48484A',
+                            marginTop: '2px',
+                            display: 'block',
+                          }}
+                        >
+                          {client.projectCount === 1
+                            ? '1 proyecto'
+                            : `${client.projectCount} proyectos`}
+                        </span>
+                      </div>
+                      <span
+                        style={{
+                          fontSize: '15px',
+                          fontWeight: 700,
+                          color: '#30D158',
+                          letterSpacing: '-0.02em',
+                        }}
+                      >
+                        {formatMXN(client.totalBudget)}
+                      </span>
+                    </div>
+                    <div className="rpt-client-bar-track">
+                      <div
+                        style={{
+                          width: `${barPct}%`,
+                          height: '100%',
+                          background: '#30D158',
+                          borderRadius: '3px',
+                          transition: 'width 0.3s ease',
+                        }}
+                      />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
 
         {/* ── 6. Proyectos recientes (top 10) ───────────────────────────── */}

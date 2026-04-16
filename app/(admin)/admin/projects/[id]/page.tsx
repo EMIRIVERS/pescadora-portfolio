@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import type {
   ProjectWithClient,
   Deliverable,
@@ -33,6 +34,17 @@ function formatDate(dateStr: string | null): string {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
+  })
+}
+
+function formatDateTime(dateStr: string | null): string {
+  if (!dateStr) return '\u2014'
+  return new Date(dateStr).toLocaleDateString('es-ES', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   })
 }
 
@@ -90,11 +102,37 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   const safeTasks: Pick<KanbanTask, 'id' | 'assignee_id'>[] =
     (tasks ?? []) as Pick<KanbanTask, 'id' | 'assignee_id'>[]
 
+  const taskIds = safeTasks.map((t) => t.id)
+  const { data: activityLog } = taskIds.length > 0
+    ? await supabase
+        .from('task_activity_log')
+        .select('id, action, created_at')
+        .in('task_id', taskIds)
+        .ilike('action', '%status%')
+        .order('created_at', { ascending: false })
+        .limit(10)
+    : { data: [] }
+  const safeActivityLog = (activityLog ?? []) as { id: string; action: string; created_at: string }[]
+
   const deliverableStatusCounts = countByStatus(safeDeliverables)
   const taskCount = safeTasks.length
   const uniqueAssignees = new Set(
     safeTasks.map((t) => t.assignee_id).filter(Boolean)
   ).size
+
+  async function createDeliverable(fd: FormData) {
+    'use server'
+    const sc = createServiceClient()
+    const title = fd.get('title') as string
+    const url = (fd.get('url') as string) || null
+    await sc.from('project_deliverables').insert({
+      project_id: id,
+      title,
+      url,
+      status: 'pending',
+    })
+    revalidatePath(`/admin/projects/${id}`)
+  }
 
   const statsCards = [
     {
@@ -246,6 +284,45 @@ export default async function ProjectDetailPage({ params }: PageProps) {
           </dl>
         </section>
 
+        {/* Historial de estados */}
+        <section className="space-y-4">
+          <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#F5F5F7' }}>
+            Historial
+          </h2>
+          <div
+            style={{
+              backgroundColor: '#1C1C1E',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '16px',
+              padding: '20px 24px',
+            }}
+          >
+            {safeActivityLog.length === 0 ? (
+              <p style={{ fontSize: '13px', color: '#48484A' }}>Sin historial de cambios.</p>
+            ) : (
+              <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {safeActivityLog.map((entry) => (
+                  <li key={entry.id} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span
+                      style={{
+                        width: '7px',
+                        height: '7px',
+                        borderRadius: '50%',
+                        backgroundColor: '#0071E3',
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span style={{ fontSize: '13px', color: '#F5F5F7', flex: 1 }}>{entry.action}</span>
+                    <span style={{ fontSize: '12px', color: '#48484A', whiteSpace: 'nowrap' }}>
+                      {formatDateTime(entry.created_at)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+
         {/* Deliverables section */}
         <section className="space-y-5">
           <div className="flex items-center justify-between">
@@ -267,6 +344,57 @@ export default async function ProjectDetailPage({ params }: PageProps) {
               </span>
             </div>
           </div>
+          {/* Inline add-deliverable form */}
+          <form
+            action={createDeliverable}
+            style={{ display: 'flex', flexDirection: 'row', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}
+          >
+            <input
+              name="title"
+              required
+              placeholder="Título del entregable"
+              style={{
+                flex: '1 1 160px',
+                backgroundColor: '#1C1C1E',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '8px',
+                padding: '8px 12px',
+                color: '#F5F5F7',
+                fontSize: '13px',
+                outline: 'none',
+              }}
+            />
+            <input
+              name="url"
+              placeholder="URL opcional"
+              style={{
+                flex: '1 1 160px',
+                backgroundColor: '#1C1C1E',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '8px',
+                padding: '8px 12px',
+                color: '#F5F5F7',
+                fontSize: '13px',
+                outline: 'none',
+              }}
+            />
+            <button
+              type="submit"
+              style={{
+                backgroundColor: '#0071E3',
+                color: '#FFFFFF',
+                borderRadius: '8px',
+                padding: '8px 16px',
+                fontSize: '13px',
+                fontWeight: 500,
+                border: 'none',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              + Agregar
+            </button>
+          </form>
           <DeliverableList projectId={id} initialDeliverables={safeDeliverables} />
         </section>
 

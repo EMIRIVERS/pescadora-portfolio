@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createServiceClient } from '@/lib/supabase/server'
 import type { Client, ProjectStatus, LeadStatus } from '@/lib/supabase/types'
+import { LinkClientButton } from '@/components/admin/clients/link-client-button'
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 
@@ -117,7 +118,8 @@ export default async function ClientDetailPage({ params }: PageProps) {
     { data: projectsData },
     { data: leadsData },
   ] = await Promise.all([
-    supabase.from('clients').select('*').eq('id', id).single(),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any).from('clients').select('*').eq('id', id).single(),
     supabase
       .from('projects')
       .select('id, title, status, start_date, end_date, budget, currency')
@@ -133,7 +135,7 @@ export default async function ClientDetailPage({ params }: PageProps) {
     notFound()
   }
 
-  const client = clientData as Client
+  const client = clientData as Client & { phone?: string | null; notes?: string | null }
   const projects: ProjectRow[] = (projectsData ?? []) as unknown as ProjectRow[]
   const leads: LeadRow[] = (leadsData ?? []) as LeadRow[]
 
@@ -506,44 +508,77 @@ export default async function ClientDetailPage({ params }: PageProps) {
                 </span>
               </div>
 
-              {/* Profile ID */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <span style={{ fontSize: '12px', color: '#48484A', fontWeight: 500, minWidth: '80px' }}>
+              {/* Phone */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+                <span style={{ fontSize: '12px', color: '#48484A', fontWeight: 500, minWidth: '80px', paddingTop: '1px' }}>
+                  Telefono
+                </span>
+                {client.phone ? (
+                  <a href={`tel:${client.phone}`} className="cd-email-link" style={{ fontSize: '14px' }}>
+                    {client.phone}
+                  </a>
+                ) : (
+                  <span style={{ fontSize: '14px', color: '#3A3A3C' }}>Sin telefono</span>
+                )}
+              </div>
+
+              {/* Notes */}
+              {client.notes && (
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+                  <span style={{ fontSize: '12px', color: '#48484A', fontWeight: 500, minWidth: '80px', paddingTop: '1px' }}>
+                    Notas
+                  </span>
+                  <p style={{ fontSize: '14px', color: '#86868B', margin: 0, lineHeight: 1.5 }}>
+                    {client.notes}
+                  </p>
+                </div>
+              )}
+
+              {/* Profile ID / Portal access */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+                <span style={{ fontSize: '12px', color: '#48484A', fontWeight: 500, minWidth: '80px', paddingTop: '8px' }}>
                   Portal
                 </span>
-                {client.profile_id ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span
-                      style={{
-                        display: 'inline-block',
-                        padding: '3px 10px',
-                        borderRadius: '20px',
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        color: '#30D158',
-                        backgroundColor: 'rgba(48,209,88,0.1)',
-                        border: '1px solid rgba(48,209,88,0.25)',
-                      }}
-                    >
-                      Portal activo
-                    </span>
-                    <span
-                      style={{
-                        fontSize: '12px',
-                        color: '#48484A',
-                        fontFamily: 'monospace',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        maxWidth: '280px',
-                      }}
-                    >
-                      {client.profile_id}
-                    </span>
-                  </div>
-                ) : (
-                  <span style={{ fontSize: '14px', color: '#3A3A3C' }}>Sin acceso al portal</span>
-                )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+                  {client.profile_id ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          padding: '3px 10px',
+                          borderRadius: '20px',
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          color: '#30D158',
+                          backgroundColor: 'rgba(48,209,88,0.1)',
+                          border: '1px solid rgba(48,209,88,0.25)',
+                        }}
+                      >
+                        Tiene acceso
+                      </span>
+                      <span
+                        style={{
+                          fontSize: '12px',
+                          color: '#48484A',
+                          fontFamily: 'monospace',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          maxWidth: '260px',
+                        }}
+                      >
+                        {client.profile_id}
+                      </span>
+                    </div>
+                  ) : (
+                    <span style={{ fontSize: '14px', color: '#3A3A3C', paddingTop: '4px' }}>Sin acceso al portal</span>
+                  )}
+                  <LinkClientButton
+                    clientId={client.id}
+                    clientName={client.name}
+                    currentProfileId={client.profile_id}
+                  />
+                </div>
               </div>
             </div>
           </section>

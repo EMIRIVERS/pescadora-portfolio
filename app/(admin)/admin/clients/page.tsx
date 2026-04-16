@@ -116,7 +116,12 @@ function formatDate(iso: string): string {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export default async function AdminClientsPage() {
+interface PageProps {
+  searchParams: Promise<{ q?: string }>
+}
+
+export default async function AdminClientsPage({ searchParams }: PageProps) {
+  const { q } = await searchParams
   const supabase = createServiceClient()
 
   const [
@@ -124,10 +129,16 @@ export default async function AdminClientsPage() {
     { data: projectsData },
     { data: leadsData },
   ] = await Promise.all([
-    supabase
-      .from('clients')
-      .select('id, name, email, company, avatar_url, profile_id, created_at')
-      .order('name', { ascending: true }),
+    (() => {
+      let query = supabase
+        .from('clients')
+        .select('id, name, email, company, avatar_url, profile_id, created_at')
+        .order('name', { ascending: true })
+      if (q) {
+        query = query.or(`name.ilike.%${q}%,email.ilike.%${q}%,company.ilike.%${q}%`)
+      }
+      return query
+    })(),
     supabase
       .from('projects')
       .select('id, status, created_at, client_id'),
@@ -200,6 +211,13 @@ export default async function AdminClientsPage() {
       .client-email-link:hover { color: #0071E3 !important; }
       .client-detail-link { color: #F5F5F7; transition: color 0.15s ease; }
       .client-detail-link:hover { color: #0071E3 !important; }
+      .search-input { background-color: #1C1C1E; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px 16px; color: #F5F5F7; outline: none; width: 100%; font-size: 14px; box-sizing: border-box; }
+      .search-input::placeholder { color: #48484A; }
+      .search-input:focus { border-color: rgba(0,113,227,0.5); }
+      .search-btn { background-color: #0071E3; color: #ffffff; border: none; border-radius: 8px; padding: 10px 20px; font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: background-color 0.15s ease; }
+      .search-btn:hover { background-color: #0077ED !important; }
+      .search-clear-link { color: #86868B; font-size: 13px; text-decoration: none; white-space: nowrap; transition: color 0.15s ease; }
+      .search-clear-link:hover { color: #F5F5F7 !important; }
     `}</style>
     <div
       style={{
@@ -239,8 +257,16 @@ export default async function AdminClientsPage() {
               letterSpacing: '-0.01em',
             }}
           >
-            {totalClients} cliente{totalClients !== 1 ? 's' : ''} registrado
-            {totalClients !== 1 ? 's' : ''}
+            {totalClients} cliente{totalClients !== 1 ? 's' : ''}
+            {q ? (
+              <span style={{ color: '#48484A' }}>
+                {' · '}busqueda: &ldquo;{q}&rdquo;
+              </span>
+            ) : (
+              <span>
+                {' '}registrado{totalClients !== 1 ? 's' : ''}
+              </span>
+            )}
           </p>
         </div>
         <InviteClientButton />
@@ -309,6 +335,42 @@ export default async function AdminClientsPage() {
         ))}
       </div>
 
+      {/* Search bar */}
+      <form
+        method="GET"
+        action="/admin/clients"
+        style={{
+          display: 'flex',
+          gap: '10px',
+          alignItems: 'center',
+          marginBottom: '24px',
+        }}
+      >
+        <input
+          className="search-input"
+          name="q"
+          type="text"
+          defaultValue={q ?? ''}
+          placeholder="Buscar por nombre, email o empresa..."
+          style={{ fontFamily: SF }}
+        />
+        <button
+          className="search-btn"
+          type="submit"
+          style={{ fontFamily: SF }}
+        >
+          Buscar
+        </button>
+        {q && (
+          <Link
+            href="/admin/clients"
+            className="search-clear-link"
+          >
+            Limpiar
+          </Link>
+        )}
+      </form>
+
       {/* Empty state */}
       {enrichedCards.length === 0 && !clientsError ? (
         <div
@@ -320,12 +382,30 @@ export default async function AdminClientsPage() {
             borderRadius: '16px',
           }}
         >
-          <p style={{ fontSize: '15px', color: '#48484A' }}>
-            No hay clientes todavia.
-          </p>
-          <p style={{ fontSize: '13px', color: '#2C2C2E', marginTop: '6px' }}>
-            Invita al primer cliente usando el boton de arriba.
-          </p>
+          {q ? (
+            <>
+              <p style={{ fontSize: '15px', color: '#48484A' }}>
+                No se encontraron clientes para &ldquo;{q}&rdquo;.
+              </p>
+              <p style={{ fontSize: '13px', color: '#2C2C2E', marginTop: '6px' }}>
+                <Link
+                  href="/admin/clients"
+                  style={{ color: '#0071E3', textDecoration: 'none' }}
+                >
+                  Ver todos los clientes
+                </Link>
+              </p>
+            </>
+          ) : (
+            <>
+              <p style={{ fontSize: '15px', color: '#48484A' }}>
+                No hay clientes todavia.
+              </p>
+              <p style={{ fontSize: '13px', color: '#2C2C2E', marginTop: '6px' }}>
+                Invita al primer cliente usando el boton de arriba.
+              </p>
+            </>
+          )}
         </div>
       ) : (
         /* Client cards grid */
@@ -518,6 +598,39 @@ function ClientCardItem({ client, color }: ClientCardItemProps) {
             }}
           >
             Lead convertido
+          </span>
+        )}
+
+        {/* Portal access badge */}
+        {client.profile_id !== null ? (
+          <span
+            style={{
+              display: 'inline-block',
+              padding: '3px 9px',
+              borderRadius: '20px',
+              fontSize: '11px',
+              fontWeight: 500,
+              color: '#30D158',
+              backgroundColor: 'rgba(48,209,88,0.1)',
+              border: '1px solid rgba(48,209,88,0.2)',
+            }}
+          >
+            Tiene acceso
+          </span>
+        ) : (
+          <span
+            style={{
+              display: 'inline-block',
+              padding: '3px 9px',
+              borderRadius: '20px',
+              fontSize: '11px',
+              fontWeight: 500,
+              color: '#48484A',
+              backgroundColor: 'rgba(72,72,74,0.1)',
+              border: '1px solid rgba(72,72,74,0.2)',
+            }}
+          >
+            Sin acceso
           </span>
         )}
       </div>

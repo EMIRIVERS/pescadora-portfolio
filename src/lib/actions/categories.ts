@@ -55,6 +55,18 @@ export async function toggleCategoryVisibility(id: string, is_visible: boolean) 
   revalidatePath('/')
 }
 
+export async function updateCategoryCover(slug: string, coverUrl: string | null) {
+  const db = createServiceClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (db as any)
+    .from('portfolio_categories')
+    .update({ cover_url: coverUrl })
+    .eq('slug', slug)
+  if (error) throw new Error(error.message)
+  revalidatePath('/admin/portfolio')
+  revalidatePath('/')
+}
+
 export async function reorderCategories(id: string, adjacentId: string, myOrder: number, adjacentOrder: number) {
   const db = createServiceClient()
   await Promise.all([

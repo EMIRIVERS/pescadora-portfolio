@@ -22,6 +22,7 @@ export interface PortfolioCategory {
   slug: string
   label: string
   sort_order: number
+  cover_url?: string | null
 }
 
 export interface MediaRegistry {

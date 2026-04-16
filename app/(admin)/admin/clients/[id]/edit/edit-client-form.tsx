@@ -10,6 +10,8 @@ interface Props {
   initialName: string
   initialEmail: string
   initialCompany: string
+  initialPhone: string
+  initialNotes: string
 }
 
 // ── Style helpers ──────────────────────────────────────────────────────────────
@@ -38,7 +40,7 @@ const inputBase: React.CSSProperties = {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function EditClientForm({ id, initialName, initialEmail, initialCompany }: Props) {
+export function EditClientForm({ id, initialName, initialEmail, initialCompany, initialPhone, initialNotes }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [isDeleting, startDeleteTransition] = useTransition()
@@ -46,6 +48,8 @@ export function EditClientForm({ id, initialName, initialEmail, initialCompany }
   const [name, setName] = useState(initialName)
   const [email, setEmail] = useState(initialEmail)
   const [company, setCompany] = useState(initialCompany)
+  const [phone, setPhone] = useState(initialPhone)
+  const [notes, setNotes] = useState(initialNotes)
   const [focusedField, setFocusedField] = useState<string | null>(null)
   const [nameError, setNameError] = useState<string | null>(null)
   const [generalError, setGeneralError] = useState<string | null>(null)
@@ -74,6 +78,8 @@ export function EditClientForm({ id, initialName, initialEmail, initialCompany }
     formData.set('name', name)
     formData.set('email', email)
     formData.set('company', company)
+    formData.set('phone', phone)
+    formData.set('notes', notes)
 
     startTransition(async () => {
       const result = await updateClient(id, formData)
@@ -177,6 +183,48 @@ export function EditClientForm({ id, initialName, initialEmail, initialCompany }
           onFocus={() => setFocusedField('company')}
           onBlur={() => setFocusedField(null)}
           style={getInputStyle('company')}
+        />
+      </div>
+
+      {/* Phone */}
+      <div>
+        <label htmlFor="phone" style={fieldLabel}>
+          Telefono
+        </label>
+        <input
+          id="phone"
+          name="phone"
+          type="tel"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          disabled={isBusy}
+          placeholder="+52 55 0000 0000"
+          onFocus={() => setFocusedField('phone')}
+          onBlur={() => setFocusedField(null)}
+          style={getInputStyle('phone')}
+        />
+      </div>
+
+      {/* Notes */}
+      <div>
+        <label htmlFor="notes" style={fieldLabel}>
+          Notas internas
+        </label>
+        <textarea
+          id="notes"
+          name="notes"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          disabled={isBusy}
+          placeholder="Notas privadas sobre el cliente..."
+          rows={4}
+          onFocus={() => setFocusedField('notes')}
+          onBlur={() => setFocusedField(null)}
+          style={{
+            ...getInputStyle('notes'),
+            resize: 'vertical',
+            fontFamily: 'inherit',
+          }}
         />
       </div>
 

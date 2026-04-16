@@ -260,7 +260,34 @@ export default function LeadDetailModal({
   const [convertPending, startConvertTransition] = useTransition()
   const [emailPending, startEmailTransition] = useTransition()
 
+  // Next action state — seeded from lead if fields exist
+  const leadAny = lead as unknown as Record<string, unknown>
+  const [nextAction, setNextAction] = useState<string>(
+    typeof leadAny.next_action === 'string' ? leadAny.next_action : ''
+  )
+  const [nextActionDate, setNextActionDate] = useState<string>(
+    typeof leadAny.next_action_date === 'string' ? leadAny.next_action_date : ''
+  )
+  const [nextActionSaving, setNextActionSaving] = useState(false)
+  const [nextActionError, setNextActionError] = useState<string | null>(null)
+  const [nextActionSaved, setNextActionSaved] = useState(false)
+
+  // Budget estimate inline edit state
+  const [budgetEditing, setBudgetEditing] = useState(false)
+  const [budgetValue, setBudgetValue] = useState<string>(
+    leadAny.budget_estimate != null ? String(leadAny.budget_estimate) : ''
+  )
+  const [budgetSaving, setBudgetSaving] = useState(false)
+
   const panelRef = useRef<HTMLDivElement>(null)
+
+  // Lock body scroll while modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [])
 
   // Escape key closes modal
   useEffect(() => {
@@ -414,6 +441,53 @@ export default function LeadDetailModal({
     })
   }
 
+  async function handleSaveNextAction() {
+    setNextActionSaving(true)
+    setNextActionError(null)
+    setNextActionSaved(false)
+    const supabase = createClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase.from('leads') as any)
+      .update({
+        next_action: nextAction || null,
+        next_action_date: nextActionDate || null,
+      })
+      .eq('id', lead.id)
+    setNextActionSaving(false)
+    if (error) {
+      setNextActionError(error.message)
+    } else {
+      setNextActionSaved(true)
+      setTimeout(() => setNextActionSaved(false), 2000)
+    }
+  }
+
+  async function handleSaveBudget(raw: string) {
+    const num = raw === '' ? null : Number(raw)
+    if (raw !== '' && isNaN(num as number)) return
+    setBudgetSaving(true)
+    const supabase = createClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase.from('leads') as any)
+      .update({ budget_estimate: num })
+      .eq('id', lead.id)
+    setBudgetSaving(false)
+    setBudgetEditing(false)
+  }
+
+  function getNextActionDateColor(): string {
+    if (!nextActionDate) return T.textPrimary
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const target = new Date(nextActionDate + 'T00:00:00')
+    const diffDays = Math.ceil(
+      (target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+    )
+    if (diffDays < 0) return '#FF453A'
+    if (diffDays <= 2) return '#FF9F0A'
+    return '#30D158'
+  }
+
   const statusColor = STATUS_COLORS[currentStatus]
 
   return (
@@ -453,6 +527,20 @@ export default function LeadDetailModal({
           background: #0077ED !important;
         }
         .ldm-compose-toggle:hover {
+          color: ${T.textPrimary} !important;
+        }
+        .ldm-next-action-input:focus {
+          outline: none;
+          border-color: rgba(255,255,255,0.2) !important;
+        }
+        .ldm-next-action-input::placeholder {
+          color: ${T.textTertiary};
+        }
+        .ldm-budget-input:focus {
+          outline: none;
+          border-color: rgba(255,255,255,0.2) !important;
+        }
+        .ldm-pencil-btn:hover {
           color: ${T.textPrimary} !important;
         }
       `}</style>
@@ -636,6 +724,83 @@ export default function LeadDetailModal({
                     : null
                 }
               />
+
+              {/* Presupuesto estimado — editable inline */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span
+                  style={{
+                    fontFamily: T.font,
+                    fontSize: 11,
+                    fontWeight: 500,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    color: T.textSecondary,
+                  }}
+                >
+                  Presupuesto estimado
+                </span>
+                {budgetEditing ? (
+                  <input
+                    type="number"
+                    autoFocus
+                    value={budgetValue}
+                    onChange={(e) => setBudgetValue(e.target.value)}
+                    onBlur={() => handleSaveBudget(budgetValue)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSaveBudget(budgetValue)
+                      if (e.key === 'Escape') setBudgetEditing(false)
+                    }}
+                    disabled={budgetSaving}
+                    className="ldm-budget-input"
+                    style={{
+                      background: T.surface2,
+                      border: `1px solid rgba(255,255,255,0.1)`,
+                      borderRadius: 6,
+                      color: T.textPrimary,
+                      fontFamily: T.font,
+                      fontSize: 14,
+                      padding: '5px 8px',
+                      width: '100%',
+                      boxSizing: 'border-box',
+                      outline: 'none',
+                      opacity: budgetSaving ? 0.5 : 1,
+                      transition: 'border-color 0.15s',
+                    }}
+                  />
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span
+                      style={{
+                        fontFamily: T.font,
+                        fontSize: 14,
+                        color: T.textPrimary,
+                      }}
+                    >
+                      {budgetValue !== ''
+                        ? `$${Number(budgetValue).toLocaleString('es-MX')} MXN`
+                        : '—'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setBudgetEditing(true)}
+                      className="ldm-pencil-btn"
+                      title="Editar presupuesto estimado"
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: T.textSecondary,
+                        cursor: 'pointer',
+                        padding: 0,
+                        fontSize: 12,
+                        lineHeight: 1,
+                        transition: 'color 0.15s',
+                      }}
+                    >
+                      ✎
+                    </button>
+                  </div>
+                )}
+              </div>
             </InfoGrid>
 
             {lead.notes && (
@@ -999,6 +1164,100 @@ export default function LeadDetailModal({
                 </div>
               </div>
             )}
+          </div>
+
+          {/* ---------------------------------------------------------------- */}
+          {/* Section 3c — Proxima accion                                      */}
+          {/* ---------------------------------------------------------------- */}
+          <SectionDivider />
+          <div style={{ padding: '20px 24px' }}>
+            <SectionHeader>Proxima accion</SectionHeader>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <input
+                type="text"
+                value={nextAction}
+                onChange={(e) => setNextAction(e.target.value)}
+                placeholder="Que hay que hacer..."
+                className="ldm-next-action-input"
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  background: T.surface2,
+                  border: `1px solid rgba(255,255,255,0.1)`,
+                  borderRadius: 8,
+                  color: T.textPrimary,
+                  fontFamily: T.font,
+                  fontSize: 14,
+                  padding: '9px 12px',
+                  outline: 'none',
+                  transition: 'border-color 0.15s',
+                }}
+              />
+              <input
+                type="date"
+                value={nextActionDate}
+                onChange={(e) => setNextActionDate(e.target.value)}
+                className="ldm-next-action-input"
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  background: T.surface2,
+                  border: `1px solid rgba(255,255,255,0.1)`,
+                  borderRadius: 8,
+                  color: nextActionDate ? getNextActionDateColor() : T.textSecondary,
+                  fontFamily: T.font,
+                  fontSize: 14,
+                  padding: '9px 12px',
+                  outline: 'none',
+                  transition: 'border-color 0.15s',
+                  colorScheme: 'dark',
+                }}
+              />
+              {nextActionError && (
+                <span
+                  style={{
+                    fontFamily: T.font,
+                    fontSize: 13,
+                    color: T.accentRed,
+                  }}
+                >
+                  {nextActionError}
+                </span>
+              )}
+              {nextActionSaved && (
+                <span
+                  style={{
+                    fontFamily: T.font,
+                    fontSize: 13,
+                    color: '#30D158',
+                  }}
+                >
+                  Guardado
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={handleSaveNextAction}
+                disabled={nextActionSaving}
+                className="ldm-save-btn"
+                style={{
+                  alignSelf: 'flex-start',
+                  fontFamily: T.font,
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: '#ffffff',
+                  background: T.accent,
+                  border: 'none',
+                  borderRadius: 8,
+                  padding: '8px 18px',
+                  cursor: nextActionSaving ? 'not-allowed' : 'pointer',
+                  opacity: nextActionSaving ? 0.6 : 1,
+                  transition: 'background 0.15s, opacity 0.15s',
+                }}
+              >
+                {nextActionSaving ? 'Guardando...' : 'Guardar'}
+              </button>
+            </div>
           </div>
 
           {/* ---------------------------------------------------------------- */}

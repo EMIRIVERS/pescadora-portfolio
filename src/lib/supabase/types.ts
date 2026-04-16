@@ -175,6 +175,7 @@ export interface Database {
           type: DeliverableType
           status: DeliverableStatus
           sort_order: number
+          due_date: string | null
         }
         Insert: {
           id?: string
@@ -187,6 +188,7 @@ export interface Database {
           type?: DeliverableType
           status?: DeliverableStatus
           sort_order?: number
+          due_date?: string | null
         }
         Update: {
           id?: string
@@ -199,6 +201,7 @@ export interface Database {
           type?: DeliverableType
           status?: DeliverableStatus
           sort_order?: number
+          due_date?: string | null
         }
         Relationships: [
           {

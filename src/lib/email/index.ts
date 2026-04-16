@@ -8,19 +8,29 @@ export interface SendEmailOptions {
 }
 
 export async function sendEmail(options: SendEmailOptions): Promise<void> {
-  if (!process.env.RESEND_API_KEY) {
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) {
     console.warn('[email] RESEND_API_KEY not set — skipping send')
     return
   }
   try {
-    const { Resend } = await import('resend')
-    const resend = new Resend(process.env.RESEND_API_KEY)
-    await resend.emails.send({
-      from: EMAIL_FROM,
-      to: options.to,
-      subject: options.subject,
-      html: options.html,
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        from: EMAIL_FROM,
+        to: options.to,
+        subject: options.subject,
+        html: options.html,
+      }),
     })
+    if (!res.ok) {
+      const text = await res.text()
+      console.error('[email] Resend API error', res.status, text)
+    }
   } catch (err) {
     console.error('[email] Failed to send to', options.to, ':', err)
   }

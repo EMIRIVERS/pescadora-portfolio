@@ -2,10 +2,11 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Pencil, Trash2, Eye, EyeOff, X, Check } from 'lucide-react'
+import { Plus, Pencil, Trash2, Eye, EyeOff, X, Check, ImageIcon } from 'lucide-react'
 import {
   createCategory,
   updateCategory,
+  updateCategoryCover,
   deleteCategory,
   toggleCategoryVisibility,
   reorderCategories,
@@ -17,10 +18,12 @@ interface Category {
   label: string
   sort_order: number
   is_visible: boolean
+  cover_url?: string | null
 }
 
 interface Props {
   initialCategories: Category[]
+  videoCounts?: Record<string, number>
 }
 
 const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
@@ -37,7 +40,7 @@ const INPUT: React.CSSProperties = {
   boxSizing: 'border-box',
 }
 
-export default function CategoryManager({ initialCategories }: Props) {
+export default function CategoryManager({ initialCategories, videoCounts = {} }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [cats, setCats] = useState<Category[]>(initialCategories)
@@ -48,6 +51,10 @@ export default function CategoryManager({ initialCategories }: Props) {
   const [editLabel, setEditLabel] = useState('')
   const [reorderingId, setReorderingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  // Cover editing state: keyed by category id
+  const [coverEditingId, setCoverEditingId] = useState<string | null>(null)
+  const [coverDraft, setCoverDraft] = useState('')
 
   const sorted = [...cats].sort((a, b) => a.sort_order - b.sort_order)
 
@@ -151,6 +158,33 @@ export default function CategoryManager({ initialCategories }: Props) {
     })
   }
 
+  function handleOpenCoverEdit(cat: Category) {
+    setCoverEditingId(cat.id)
+    setCoverDraft(cat.cover_url ?? '')
+    setEditingId(null)
+    setError(null)
+  }
+
+  function handleSaveCover(cat: Category) {
+    const url = coverDraft.trim() || null
+    startTransition(async () => {
+      try {
+        await updateCategoryCover(cat.slug, url)
+        setCats((prev) => prev.map((c) => c.id === cat.id ? { ...c, cover_url: url } : c))
+        setCoverEditingId(null)
+        setCoverDraft('')
+        router.refresh()
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Error al guardar miniatura')
+      }
+    })
+  }
+
+  function handleCancelCover() {
+    setCoverEditingId(null)
+    setCoverDraft('')
+  }
+
   return (
     <div style={{ fontFamily: FONT }}>
       <style>{`
@@ -159,6 +193,7 @@ export default function CategoryManager({ initialCategories }: Props) {
         .cm-btn { transition: background 0.12s, color 0.12s; }
         .cm-btn:hover { background: #2C2C2E !important; color: #F5F5F7 !important; }
         .cm-del:hover { background: rgba(255,69,58,0.15) !important; color: #FF453A !important; }
+        .cm-cover-input:focus { border-color: rgba(255,255,255,0.25) !important; }
       `}</style>
 
       {/* Header */}
@@ -223,103 +258,279 @@ export default function CategoryManager({ initialCategories }: Props) {
       {/* Category list */}
       <div style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, overflow: 'hidden' }}>
         {sorted.map((cat, idx) => (
-          <div
-            key={cat.id}
-            className="cm-row"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              padding: '12px 16px',
-              borderBottom: idx < sorted.length - 1 ? '1px solid rgba(255,255,255,0.04)' : undefined,
-              opacity: cat.is_visible ? 1 : 0.45,
-            }}
-          >
-            {/* Up/Down */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <button
-                className="cm-btn"
-                onClick={() => handleReorder(cat, 'up')}
-                disabled={idx === 0 || isPending || reorderingId === cat.id}
-                style={{ width: 20, height: 20, background: 'transparent', border: 'none', color: idx === 0 ? '#2C2C2E' : '#48484A', cursor: idx === 0 ? 'not-allowed' : 'pointer', fontSize: 9, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >▲</button>
-              <button
-                className="cm-btn"
-                onClick={() => handleReorder(cat, 'down')}
-                disabled={idx === sorted.length - 1 || isPending || reorderingId === cat.id}
-                style={{ width: 20, height: 20, background: 'transparent', border: 'none', color: idx === sorted.length - 1 ? '#2C2C2E' : '#48484A', cursor: idx === sorted.length - 1 ? 'not-allowed' : 'pointer', fontSize: 9, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >▼</button>
+          <div key={cat.id}>
+            {/* Main row */}
+            <div
+              className="cm-row"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                padding: '12px 16px',
+                borderBottom: (idx < sorted.length - 1 && coverEditingId !== cat.id)
+                  ? '1px solid rgba(255,255,255,0.04)'
+                  : undefined,
+                opacity: cat.is_visible ? 1 : 0.45,
+              }}
+            >
+              {/* Up/Down */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <button
+                  className="cm-btn"
+                  onClick={() => handleReorder(cat, 'up')}
+                  disabled={idx === 0 || isPending || reorderingId === cat.id}
+                  style={{ width: 20, height: 20, background: 'transparent', border: 'none', color: idx === 0 ? '#2C2C2E' : '#48484A', cursor: idx === 0 ? 'not-allowed' : 'pointer', fontSize: 9, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >▲</button>
+                <button
+                  className="cm-btn"
+                  onClick={() => handleReorder(cat, 'down')}
+                  disabled={idx === sorted.length - 1 || isPending || reorderingId === cat.id}
+                  style={{ width: 20, height: 20, background: 'transparent', border: 'none', color: idx === sorted.length - 1 ? '#2C2C2E' : '#48484A', cursor: idx === sorted.length - 1 ? 'not-allowed' : 'pointer', fontSize: 9, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >▼</button>
+              </div>
+
+              {/* Cover thumbnail preview */}
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 6,
+                  overflow: 'hidden',
+                  flexShrink: 0,
+                  background: '#1C1C1E',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {cat.cover_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={cat.cover_url}
+                    alt=""
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  <ImageIcon size={14} strokeWidth={1.5} color="#3A3A3C" />
+                )}
+              </div>
+
+              {/* Label / edit */}
+              <div style={{ flex: 1 }}>
+                {editingId === cat.id ? (
+                  <input
+                    value={editLabel}
+                    onChange={(e) => setEditLabel(e.target.value)}
+                    autoFocus
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleSaveEdit(cat); if (e.key === 'Escape') setEditingId(null) }}
+                    style={{ ...INPUT, padding: '5px 10px', fontSize: 13, width: '100%' }}
+                  />
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: '#F5F5F7' }}>{cat.label}</span>
+                    <span style={{ fontSize: 11, color: '#48484A', fontFamily: 'monospace' }}>{cat.slug}</span>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        color: '#86868B',
+                        backgroundColor: 'rgba(255,255,255,0.06)',
+                        borderRadius: 20,
+                        padding: '1px 8px',
+                        lineHeight: '18px',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {videoCounts[cat.slug] ?? 0} {(videoCounts[cat.slug] ?? 0) === 1 ? 'video' : 'videos'}
+                    </span>
+                    {cat.cover_url && (
+                      <span
+                        style={{
+                          fontSize: 10,
+                          color: '#30D158',
+                          backgroundColor: 'rgba(48,209,88,0.1)',
+                          borderRadius: 20,
+                          padding: '1px 8px',
+                          lineHeight: '18px',
+                          flexShrink: 0,
+                          letterSpacing: '0.03em',
+                        }}
+                      >
+                        cover manual
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                {editingId === cat.id ? (
+                  <>
+                    <button
+                      className="cm-btn"
+                      onClick={() => handleSaveEdit(cat)}
+                      disabled={isPending}
+                      style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: '#30D158', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <Check size={13} strokeWidth={2.5} />
+                    </button>
+                    <button
+                      className="cm-btn"
+                      onClick={() => setEditingId(null)}
+                      style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: '#48484A', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <X size={13} strokeWidth={2} />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      className="cm-btn"
+                      onClick={() => handleToggle(cat)}
+                      disabled={isPending}
+                      title={cat.is_visible ? 'Ocultar' : 'Mostrar'}
+                      style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: cat.is_visible ? '#86868B' : '#3A3A3C', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      {cat.is_visible ? <Eye size={13} strokeWidth={1.5} /> : <EyeOff size={13} strokeWidth={1.5} />}
+                    </button>
+                    <button
+                      className="cm-btn"
+                      onClick={() => handleOpenCoverEdit(cat)}
+                      title="Cambiar miniatura"
+                      style={{ width: 28, height: 28, background: coverEditingId === cat.id ? '#2C2C2E' : 'transparent', border: 'none', color: cat.cover_url ? '#30D158' : '#86868B', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <ImageIcon size={13} strokeWidth={1.5} />
+                    </button>
+                    <button
+                      className="cm-btn"
+                      onClick={() => handleEdit(cat)}
+                      title="Renombrar"
+                      style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: '#86868B', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <Pencil size={13} strokeWidth={1.5} />
+                    </button>
+                    <button
+                      className="cm-btn cm-del"
+                      onClick={() => handleDelete(cat)}
+                      disabled={isPending}
+                      title="Eliminar categoría"
+                      style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: '#86868B', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <Trash2 size={13} strokeWidth={1.5} />
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
 
-            {/* Label / edit */}
-            <div style={{ flex: 1 }}>
-              {editingId === cat.id ? (
-                <input
-                  value={editLabel}
-                  onChange={(e) => setEditLabel(e.target.value)}
-                  autoFocus
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleSaveEdit(cat); if (e.key === 'Escape') setEditingId(null) }}
-                  style={{ ...INPUT, padding: '5px 10px', fontSize: 13, width: '100%' }}
-                />
-              ) : (
-                <div>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: '#F5F5F7' }}>{cat.label}</span>
-                  <span style={{ fontSize: 11, color: '#48484A', marginLeft: 8, fontFamily: 'monospace' }}>{cat.slug}</span>
+            {/* Cover edit panel — inline below the row */}
+            {coverEditingId === cat.id && (
+              <div
+                style={{
+                  padding: '12px 16px 16px',
+                  background: '#161616',
+                  borderBottom: idx < sorted.length - 1 ? '1px solid rgba(255,255,255,0.04)' : undefined,
+                  borderTop: '1px solid rgba(255,255,255,0.06)',
+                }}
+              >
+                <p style={{ margin: '0 0 8px', fontSize: 11, color: '#86868B', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                  Miniatura de portada — {cat.label}
+                </p>
+
+                <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                  {/* Preview */}
+                  <div
+                    style={{
+                      width: 72,
+                      height: 48,
+                      borderRadius: 6,
+                      overflow: 'hidden',
+                      flexShrink: 0,
+                      background: '#1C1C1E',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {coverDraft.trim() ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={coverDraft.trim()}
+                        alt=""
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+                      />
+                    ) : (
+                      <ImageIcon size={18} strokeWidth={1.2} color="#3A3A3C" />
+                    )}
+                  </div>
+
+                  {/* Input + actions */}
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <input
+                      className="cm-cover-input"
+                      value={coverDraft}
+                      onChange={(e) => setCoverDraft(e.target.value)}
+                      placeholder="https://... pega la URL de la imagen"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSaveCover(cat)
+                        if (e.key === 'Escape') handleCancelCover()
+                      }}
+                      style={{
+                        ...INPUT,
+                        width: '100%',
+                        fontSize: 12,
+                        padding: '7px 10px',
+                      }}
+                    />
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <button
+                        onClick={() => handleSaveCover(cat)}
+                        disabled={isPending}
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 5,
+                          padding: '6px 14px', background: '#0071E3', border: 'none',
+                          borderRadius: 7, fontSize: 12, color: '#fff', cursor: 'pointer',
+                          opacity: isPending ? 0.5 : 1, fontFamily: FONT,
+                        }}
+                      >
+                        <Check size={11} strokeWidth={2.5} />
+                        {isPending ? 'Guardando...' : 'Guardar'}
+                      </button>
+                      {cat.cover_url && (
+                        <button
+                          onClick={() => { setCoverDraft(''); handleSaveCover({ ...cat, cover_url: null }) }}
+                          disabled={isPending}
+                          style={{
+                            padding: '6px 12px', background: 'transparent',
+                            border: '1px solid rgba(255,69,58,0.3)', borderRadius: 7,
+                            fontSize: 12, color: '#FF453A', cursor: 'pointer', fontFamily: FONT,
+                          }}
+                        >
+                          Quitar cover
+                        </button>
+                      )}
+                      <button
+                        onClick={handleCancelCover}
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                          width: 28, height: 28, background: 'transparent', border: 'none',
+                          color: '#48484A', cursor: 'pointer', borderRadius: 6,
+                        }}
+                      >
+                        <X size={13} strokeWidth={2} />
+                      </button>
+                    </div>
+                    <p style={{ margin: 0, fontSize: 11, color: '#3A3A3C' }}>
+                      Acepta cualquier URL publica — Supabase Storage, Vimeo, etc. Deja vacio para usar la miniatura automatica.
+                    </p>
+                  </div>
                 </div>
-              )}
-            </div>
-
-            {/* Actions */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              {editingId === cat.id ? (
-                <>
-                  <button
-                    className="cm-btn"
-                    onClick={() => handleSaveEdit(cat)}
-                    disabled={isPending}
-                    style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: '#30D158', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  >
-                    <Check size={13} strokeWidth={2.5} />
-                  </button>
-                  <button
-                    className="cm-btn"
-                    onClick={() => setEditingId(null)}
-                    style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: '#48484A', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  >
-                    <X size={13} strokeWidth={2} />
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    className="cm-btn"
-                    onClick={() => handleToggle(cat)}
-                    disabled={isPending}
-                    title={cat.is_visible ? 'Ocultar' : 'Mostrar'}
-                    style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: cat.is_visible ? '#86868B' : '#3A3A3C', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  >
-                    {cat.is_visible ? <Eye size={13} strokeWidth={1.5} /> : <EyeOff size={13} strokeWidth={1.5} />}
-                  </button>
-                  <button
-                    className="cm-btn"
-                    onClick={() => handleEdit(cat)}
-                    title="Renombrar"
-                    style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: '#86868B', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  >
-                    <Pencil size={13} strokeWidth={1.5} />
-                  </button>
-                  <button
-                    className="cm-btn cm-del"
-                    onClick={() => handleDelete(cat)}
-                    disabled={isPending}
-                    title="Eliminar categoría"
-                    style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: '#86868B', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  >
-                    <Trash2 size={13} strokeWidth={1.5} />
-                  </button>
-                </>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         ))}
 

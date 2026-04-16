@@ -28,6 +28,7 @@ interface PortfolioVideo {
 
 interface VideoManagerProps {
   initialVideos?: PortfolioVideo[]
+  initialCategories?: { id: string; slug: string; label: string }[]
 }
 
 type FormMode = 'create' | 'edit'
@@ -158,7 +159,7 @@ function ReorderButton({ direction, disabled, onClick, title }: ReorderButtonPro
 
 // ─── main component ────────────────────────────────────────────────────────
 
-export default function VideoManager({ initialVideos = [] }: VideoManagerProps) {
+export default function VideoManager({ initialVideos = [], initialCategories }: VideoManagerProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [localVideos, setLocalVideos] = useState<PortfolioVideo[]>(initialVideos)
@@ -181,7 +182,15 @@ export default function VideoManager({ initialVideos = [] }: VideoManagerProps) 
   const [hoveredRow, setHoveredRow] = useState<string | null>(null)
 
   const [formCategory, setFormCategory] = useState<string>('videoclips')
+  const [formVimeoId, setFormVimeoId] = useState<string>('')
+  const [previewVimeoId, setPreviewVimeoId] = useState<string>('')
   const isPhoto = formCategory === 'fotografia'
+
+  // Resolved category list: use initialCategories if provided and non-empty, else fall back to CATEGORIES
+  const resolvedCategories =
+    initialCategories && initialCategories.length > 0
+      ? initialCategories.map((c) => ({ value: c.slug, label: c.label }))
+      : CATEGORIES
 
   const sortedVideos = [...localVideos].sort((a, b) => a.sort_order - b.sort_order)
 
@@ -194,6 +203,8 @@ export default function VideoManager({ initialVideos = [] }: VideoManagerProps) 
     setEditingVideo(null)
     setFormMode('create')
     setFormCategory('videoclips')
+    setFormVimeoId('')
+    setPreviewVimeoId('')
     setShowForm(true)
   }
 
@@ -201,11 +212,20 @@ export default function VideoManager({ initialVideos = [] }: VideoManagerProps) 
     setEditingVideo(video)
     setFormMode('edit')
     setFormCategory(video.category)
+    setFormVimeoId(video.vimeo_id)
+    setPreviewVimeoId('')
     setShowForm(true)
   }
 
   function closeForm() {
     setShowForm(false)
+    setEditingVideo(null)
+  }
+
+  function resetFormState() {
+    setFormCategory('videoclips')
+    setFormVimeoId('')
+    setPreviewVimeoId('')
     setEditingVideo(null)
   }
 
@@ -220,6 +240,7 @@ export default function VideoManager({ initialVideos = [] }: VideoManagerProps) 
         await updatePortfolioVideo(editingVideo.id, formData)
       }
       closeForm()
+      resetFormState()
       router.refresh()
     })
   }
@@ -431,17 +452,69 @@ export default function VideoManager({ initialVideos = [] }: VideoManagerProps) 
                 <label htmlFor="vimeo_id" style={LABEL_STYLE}>
                   {isPhoto ? 'URL de imagen *' : 'ID de Vimeo *'}
                 </label>
-                <input
-                  id="vimeo_id"
-                  name="vimeo_id"
-                  type={isPhoto ? 'url' : 'text'}
-                  required
-                  defaultValue={editingVideo?.vimeo_id ?? ''}
-                  placeholder={isPhoto ? 'https://...' : '123456789'}
-                  style={INPUT_STYLE}
-                  onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
-                />
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input
+                    id="vimeo_id"
+                    name="vimeo_id"
+                    type={isPhoto ? 'url' : 'text'}
+                    required
+                    value={formVimeoId}
+                    onChange={(e) => {
+                      setFormVimeoId(e.target.value)
+                      setPreviewVimeoId('')
+                    }}
+                    placeholder={isPhoto ? 'https://...' : '123456789'}
+                    style={INPUT_STYLE}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
+                  />
+                  {!isPhoto && formVimeoId && (
+                    <button
+                      type="button"
+                      onClick={() => setPreviewVimeoId(formVimeoId)}
+                      style={{
+                        flexShrink: 0,
+                        padding: '8px 12px',
+                        backgroundColor: '#2C2C2E',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: 8,
+                        fontSize: 12,
+                        fontFamily: FONT,
+                        color: '#86868B',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        transition: 'background-color 0.15s, color 0.15s',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#3A3A3C'
+                        e.currentTarget.style.color = '#F5F5F7'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#2C2C2E'
+                        e.currentTarget.style.color = '#86868B'
+                      }}
+                    >
+                      Ver preview
+                    </button>
+                  )}
+                </div>
+                {!isPhoto && previewVimeoId && (
+                  <div style={{ marginTop: 10 }}>
+                    <iframe
+                      src={`https://player.vimeo.com/video/${previewVimeoId}`}
+                      width={400}
+                      height={225}
+                      allow="autoplay; fullscreen; picture-in-picture"
+                      style={{
+                        border: 'none',
+                        borderRadius: 8,
+                        display: 'block',
+                        backgroundColor: '#000',
+                      }}
+                      title="Vimeo preview"
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -458,7 +531,7 @@ export default function VideoManager({ initialVideos = [] }: VideoManagerProps) 
                   onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
                   onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
                 >
-                  {CATEGORIES.map((c) => (
+                  {resolvedCategories.map((c) => (
                     <option key={c.value} value={c.value} style={{ backgroundColor: '#1C1C1E' }}>
                       {c.label}
                     </option>
@@ -789,7 +862,11 @@ export default function VideoManager({ initialVideos = [] }: VideoManagerProps) 
                           color: '#48484A',
                         }}
                       >
-                        {video.vimeo_id}
+                        {video.category === 'fotografia'
+                          ? 'imagen'
+                          : video.vimeo_id.length > 12
+                            ? `${video.vimeo_id.slice(0, 12)}...`
+                            : video.vimeo_id}
                       </span>
                     </td>
 

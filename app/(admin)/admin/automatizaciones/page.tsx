@@ -1,4 +1,5 @@
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { TestEmailForm } from './TestEmailForm'
 
 // Minimal DB schema covering only the tables used in this page.
 // Extend once the generated types are regenerated post-migration.
@@ -53,6 +54,11 @@ const TRIGGERS: TriggerItem[] = [
     actions: ['Email de kickoff al cliente'],
   },
   {
+    event: 'Cambio de estado de proyecto',
+    actions: ['Notifica al cliente'],
+    soon: true,
+  },
+  {
     event: 'Proyecto actualizado',
     actions: ['Notificacion al cliente'],
     soon: true,
@@ -81,8 +87,29 @@ export default async function AutomatizacionesPage() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { persistSession: false } },
   )
+
   const apiKeyConfigured = Boolean(process.env.RESEND_API_KEY)
+  const cronSecretConfigured = Boolean(process.env.CRON_SECRET)
   const publicUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+
+  // Determine overall system status
+  const systemStatus: 'active' | 'partial' | 'inactive' =
+    apiKeyConfigured && cronSecretConfigured
+      ? 'active'
+      : apiKeyConfigured
+        ? 'partial'
+        : 'inactive'
+
+  const statusColor =
+    systemStatus === 'active' ? '#30D158' : systemStatus === 'partial' ? '#FF9F0A' : '#FF453A'
+  const statusLabel =
+    systemStatus === 'active' ? 'Operativo' : systemStatus === 'partial' ? 'Parcial' : 'Inactivo'
+  const statusBg =
+    systemStatus === 'active'
+      ? 'rgba(48,209,88,0.1)'
+      : systemStatus === 'partial'
+        ? 'rgba(255,159,10,0.1)'
+        : 'rgba(255,69,58,0.1)'
 
   let emailLogs: EmailLogRow[] = []
   try {
@@ -103,6 +130,7 @@ export default async function AutomatizacionesPage() {
         .auto-env-chip { font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace; }
         .auto-form-link:hover { color: #409CFF !important; }
         .auto-table-row:hover td { background: rgba(255,255,255,0.02); }
+        .auto-test-input:focus { border-color: rgba(0,113,227,0.5) !important; }
       `}</style>
 
       <div
@@ -165,30 +193,98 @@ export default async function AutomatizacionesPage() {
               Estado del sistema
             </h2>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+            {/* Overall status badge */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
               <span
                 style={{
                   width: '8px',
                   height: '8px',
                   borderRadius: '50%',
-                  backgroundColor: apiKeyConfigured ? '#30D158' : '#FF9F0A',
+                  backgroundColor: statusColor,
                   flexShrink: 0,
                 }}
               />
               <span style={{ fontSize: '15px', fontWeight: 500, color: '#F5F5F7' }}>
-                {apiKeyConfigured ? 'Sistema activo' : 'Sin configurar'}
+                {statusLabel}
               </span>
               <span
                 style={{
                   fontSize: '12px',
-                  color: apiKeyConfigured ? '#30D158' : '#FF9F0A',
-                  backgroundColor: apiKeyConfigured ? 'rgba(48,209,88,0.1)' : 'rgba(255,159,10,0.1)',
+                  color: statusColor,
+                  backgroundColor: statusBg,
                   borderRadius: '6px',
                   padding: '2px 8px',
                 }}
               >
-                {apiKeyConfigured ? 'Emails configurados' : 'Accion requerida'}
+                {systemStatus === 'active'
+                  ? 'Todos los servicios activos'
+                  : systemStatus === 'partial'
+                    ? 'Configuracion incompleta'
+                    : 'Accion requerida'}
               </span>
+            </div>
+
+            {/* Individual service rows */}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+                backgroundColor: '#1C1C1E',
+                border: '1px solid rgba(255,255,255,0.05)',
+                borderRadius: '8px',
+                padding: '14px 16px',
+              }}
+            >
+              {/* Email (Resend) */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span
+                  style={{
+                    width: '7px',
+                    height: '7px',
+                    borderRadius: '50%',
+                    backgroundColor: apiKeyConfigured ? '#30D158' : '#FF453A',
+                    flexShrink: 0,
+                  }}
+                />
+                <span style={{ fontSize: '13px', color: '#F5F5F7', flex: 1 }}>
+                  Email (Resend)
+                </span>
+                <span
+                  style={{
+                    fontSize: '11px',
+                    color: apiKeyConfigured ? '#30D158' : '#FF453A',
+                    fontFamily: "'SF Mono', SFMono-Regular, ui-monospace, monospace",
+                  }}
+                >
+                  {apiKeyConfigured ? 'RESEND_API_KEY configurada' : 'RESEND_API_KEY faltante'}
+                </span>
+              </div>
+
+              {/* Cron jobs */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span
+                  style={{
+                    width: '7px',
+                    height: '7px',
+                    borderRadius: '50%',
+                    backgroundColor: cronSecretConfigured ? '#30D158' : '#FF453A',
+                    flexShrink: 0,
+                  }}
+                />
+                <span style={{ fontSize: '13px', color: '#F5F5F7', flex: 1 }}>
+                  Cron jobs
+                </span>
+                <span
+                  style={{
+                    fontSize: '11px',
+                    color: cronSecretConfigured ? '#30D158' : '#FF453A',
+                    fontFamily: "'SF Mono', SFMono-Regular, ui-monospace, monospace",
+                  }}
+                >
+                  {cronSecretConfigured ? 'CRON_SECRET configurada' : 'CRON_SECRET faltante'}
+                </span>
+              </div>
             </div>
 
             {!apiKeyConfigured && (
@@ -198,14 +294,18 @@ export default async function AutomatizacionesPage() {
                   border: '1px solid rgba(255,159,10,0.15)',
                   borderRadius: '8px',
                   padding: '14px 16px',
-                  marginTop: '12px',
+                  marginTop: '14px',
                 }}
               >
                 <p style={{ fontSize: '13px', color: '#86868B', margin: '0 0 10px' }}>
-                  Agrega las siguientes variables de entorno en tu archivo <span className="auto-env-chip" style={{ color: '#F5F5F7', fontSize: '12px' }}>.env.local</span>:
+                  Agrega las siguientes variables de entorno en Vercel o en tu archivo{' '}
+                  <span className="auto-env-chip" style={{ color: '#F5F5F7', fontSize: '12px' }}>
+                    .env.local
+                  </span>
+                  :
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {['RESEND_API_KEY', 'ADMIN_EMAIL', 'EMAIL_FROM'].map((v) => (
+                  {['RESEND_API_KEY', 'CRON_SECRET', 'ADMIN_EMAIL', 'EMAIL_FROM'].map((v) => (
                     <code
                       key={v}
                       className="auto-env-chip"
@@ -225,6 +325,51 @@ export default async function AutomatizacionesPage() {
                 </div>
               </div>
             )}
+          </section>
+
+          {/* ── Email de prueba ────────────────────────────────────────────── */}
+          <section
+            style={{
+              backgroundColor: '#111111',
+              border: '1px solid rgba(255,255,255,0.06)',
+              borderRadius: '12px',
+              padding: '20px',
+            }}
+          >
+            <h2
+              style={{
+                fontSize: '13px',
+                fontWeight: 600,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                color: '#48484A',
+                margin: '0 0 8px',
+              }}
+            >
+              Probar configuracion de email
+            </h2>
+            <p style={{ fontSize: '14px', color: '#86868B', margin: '0 0 16px' }}>
+              Envia un email de prueba para verificar que Resend esta configurado correctamente.
+            </p>
+
+            {!apiKeyConfigured ? (
+              <div
+                style={{
+                  backgroundColor: 'rgba(255,159,10,0.06)',
+                  border: '1px solid rgba(255,159,10,0.18)',
+                  borderRadius: '8px',
+                  padding: '12px 16px',
+                }}
+              >
+                <p style={{ fontSize: '13px', color: '#FF9F0A', margin: 0 }}>
+                  Configura RESEND_API_KEY en Vercel primero
+                </p>
+              </div>
+            ) : null}
+
+            <div style={{ marginTop: !apiKeyConfigured ? '14px' : '0' }}>
+              <TestEmailForm disabled={!apiKeyConfigured} />
+            </div>
           </section>
 
           {/* ── Triggers activos ───────────────────────────────────────────── */}
@@ -283,7 +428,7 @@ export default async function AutomatizacionesPage() {
                           key={a}
                           style={{
                             fontSize: '12px',
-                            color: '#86868B',
+                            color: t.soon ? '#48484A' : '#86868B',
                             backgroundColor: 'rgba(255,255,255,0.04)',
                             borderRadius: '6px',
                             padding: '3px 8px',
@@ -488,7 +633,7 @@ export default async function AutomatizacionesPage() {
                   width: '8px',
                   height: '8px',
                   borderRadius: '50%',
-                  backgroundColor: '#30D158',
+                  backgroundColor: cronSecretConfigured ? '#30D158' : '#FF453A',
                   flexShrink: 0,
                   marginTop: '5px',
                 }}

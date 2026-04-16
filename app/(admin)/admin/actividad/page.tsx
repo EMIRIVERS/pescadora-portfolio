@@ -1,60 +1,50 @@
 import Link from 'next/link'
 import { createServiceClient } from '@/lib/supabase/server'
-import type { LeadActivityType } from '@/lib/supabase/types'
 
 // ─── Raw query shapes ─────────────────────────────────────────────────────────
 
 interface RawLeadActivity {
   id: string
   lead_id: string
-  type: LeadActivityType
+  type: string
   content: string | null
   created_at: string
-  old_status: string | null
-  new_status: string | null
-  lead: { name: string } | { name: string }[] | null
+  lead: { name: string; email: string | null } | { name: string; email: string | null }[] | null
 }
 
 interface RawTaskActivity {
   id: string
-  task_id: string
+  project_id: string
   action: string
-  old_value: string | null
-  new_value: string | null
+  metadata: Record<string, unknown> | null
   created_at: string
-  task: { title: string } | { title: string }[] | null
+  project: { title: string } | { title: string }[] | null
 }
 
-interface RawDeliverableComment {
+interface RawLead {
   id: string
-  deliverable_id: string
-  content: string
+  name: string
+  email: string | null
   created_at: string
-  deliverable: { title: string } | { title: string }[] | null
+}
+
+interface RawDeliverable {
+  id: string
+  project_id: string
+  title: string
+  created_at: string
+  project: { title: string } | { title: string }[] | null
 }
 
 // ─── Normalised item ──────────────────────────────────────────────────────────
 
 interface ActivityItem {
   id: string
-  type: 'lead_activity' | 'task_activity' | 'deliverable_comment'
+  type: 'lead_action' | 'project_action' | 'lead_new' | 'deliverable_new'
   title: string
   subtitle: string
   createdAt: string
-  link: string | undefined
-  color: string
-  icon: 'lead' | 'task' | 'comment'
-}
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const LEAD_ACTIVITY_TYPE_LABEL: Record<LeadActivityType, string> = {
-  note: 'Nota',
-  email: 'Email',
-  call: 'Llamada',
-  whatsapp: 'WhatsApp',
-  meeting: 'Reunion',
-  status_change: 'Cambio de estado',
+  linkHref: string
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -65,57 +55,103 @@ function resolveJoined<T>(raw: T | T[] | null): T | null {
   return raw
 }
 
-function timeAgo(isoDate: string): string {
-  const diff = Date.now() - new Date(isoDate).getTime()
-  const minutes = Math.floor(diff / 60000)
-  if (minutes < 60) return `hace ${minutes} min`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `hace ${hours}h`
-  const days = Math.floor(hours / 24)
-  return `hace ${days} dia${days !== 1 ? 's' : ''}`
+function formatRelativeTime(isoDate: string): string {
+  const now = new Date()
+  const date = new Date(isoDate)
+  const diffMs = now.getTime() - date.getTime()
+  const diffHours = diffMs / (1000 * 60 * 60)
+
+  if (diffHours < 24) {
+    const hours = Math.floor(diffHours)
+    if (hours < 1) {
+      const minutes = Math.floor(diffMs / (1000 * 60))
+      return `hace ${minutes} min`
+    }
+    return `hace ${hours}h`
+  }
+
+  const toLocal = (d: Date) =>
+    new Date(d.toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' }))
+
+  const localNow = toLocal(now)
+  const localDate = toLocal(date)
+
+  const todayStart = new Date(localNow)
+  todayStart.setHours(0, 0, 0, 0)
+  const itemStart = new Date(localDate)
+  itemStart.setHours(0, 0, 0, 0)
+
+  const diffDays = Math.round((todayStart.getTime() - itemStart.getTime()) / 86_400_000)
+
+  if (diffDays === 0) return 'hoy'
+  if (diffDays === 1) return 'ayer'
+
+  return localDate.toLocaleDateString('es-AR', {
+    day: 'numeric',
+    month: 'short',
+    year: localDate.getFullYear() !== localNow.getFullYear() ? 'numeric' : undefined,
+  })
 }
 
-/**
- * Returns a day-bucket label relative to today (server time at render).
- * Groups items by calendar day in UTC-3 (America/Argentina/Buenos_Aires).
- */
 function dayLabel(isoDate: string): string {
   const ref = new Date(isoDate)
   const now = new Date()
 
-  const toArgentineDate = (d: Date) =>
+  const toLocal = (d: Date) =>
     new Date(d.toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' }))
 
-  const item = toArgentineDate(ref)
-  const today = toArgentineDate(now)
+  const item = toLocal(ref)
+  const today = toLocal(now)
 
-  const diffDays = Math.floor(
-    (today.setHours(0, 0, 0, 0) - item.setHours(0, 0, 0, 0)) / 86_400_000
-  )
+  const todayStart = new Date(today)
+  todayStart.setHours(0, 0, 0, 0)
+  const itemStart = new Date(item)
+  itemStart.setHours(0, 0, 0, 0)
+
+  const diffDays = Math.round((todayStart.getTime() - itemStart.getTime()) / 86_400_000)
 
   if (diffDays === 0) return 'Hoy'
   if (diffDays === 1) return 'Ayer'
   return `Hace ${diffDays} dias`
 }
 
-function buildLeadTitle(row: RawLeadActivity): string {
-  if (row.type === 'status_change' && row.old_status && row.new_status) {
-    return `Estado cambiado: ${row.old_status} → ${row.new_status}`
-  }
-  const typeLabel = LEAD_ACTIVITY_TYPE_LABEL[row.type] ?? row.type
-  if (row.content) return `${typeLabel}: ${row.content.slice(0, 80)}${row.content.length > 80 ? '...' : ''}`
-  return typeLabel
+function thirtyDaysAgo(): string {
+  const d = new Date()
+  d.setDate(d.getDate() - 30)
+  return d.toISOString()
 }
 
-function buildTaskTitle(row: RawTaskActivity): string {
-  if (row.old_value && row.new_value) {
-    return `${row.action}: ${row.old_value} → ${row.new_value}`
-  }
-  if (row.new_value) return `${row.action}: ${row.new_value}`
-  return row.action
+// ─── Pill config ──────────────────────────────────────────────────────────────
+
+const PILL_LABEL: Record<ActivityItem['type'], string> = {
+  lead_action: 'Lead',
+  project_action: 'Proyecto',
+  lead_new: 'Nuevo lead',
+  deliverable_new: 'Entregable',
 }
 
-// ─── Icon SVGs (inline, no external lib needed) ───────────────────────────────
+const PILL_COLOR: Record<ActivityItem['type'], string> = {
+  lead_action: '#0071E3',
+  project_action: '#BF5AF2',
+  lead_new: '#30D158',
+  deliverable_new: '#FF9F0A',
+}
+
+const PILL_BG: Record<ActivityItem['type'], string> = {
+  lead_action: 'rgba(0,113,227,0.13)',
+  project_action: 'rgba(191,90,242,0.13)',
+  lead_new: 'rgba(48,209,88,0.13)',
+  deliverable_new: 'rgba(255,159,10,0.13)',
+}
+
+const DOT_COLOR: Record<ActivityItem['type'], string> = {
+  lead_action: '#0071E3',
+  project_action: '#BF5AF2',
+  lead_new: '#30D158',
+  deliverable_new: '#FF9F0A',
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
 function IconDot({ color }: { color: string }) {
   return (
@@ -133,100 +169,153 @@ function IconDot({ color }: { color: string }) {
   )
 }
 
-// ─── Type pill ────────────────────────────────────────────────────────────────
-
-const PILL_LABEL: Record<ActivityItem['type'], string> = {
-  lead_activity: 'Lead',
-  task_activity: 'Tarea',
-  deliverable_comment: 'Entregable',
-}
-
-const PILL_COLOR: Record<ActivityItem['type'], string> = {
-  lead_activity: '#0071E3',
-  task_activity: '#BF5AF2',
-  deliverable_comment: '#30D158',
-}
-
-const PILL_BG: Record<ActivityItem['type'], string> = {
-  lead_activity: 'rgba(0,113,227,0.13)',
-  task_activity: 'rgba(191,90,242,0.13)',
-  deliverable_comment: 'rgba(48,209,88,0.13)',
+function ClockIcon() {
+  return (
+    <svg
+      width="32"
+      height="32"
+      viewBox="0 0 32 32"
+      fill="none"
+      aria-hidden="true"
+      style={{ display: 'block' }}
+    >
+      <circle cx="16" cy="16" r="13" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" />
+      <path
+        d="M16 9v7l4 4"
+        stroke="rgba(255,255,255,0.25)"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function ActividadPage() {
   const supabase = createServiceClient()
+  const cutoff = thirtyDaysAgo()
 
-  const [
-    { data: leadActivitiesRaw },
-    { data: taskActivitiesRaw },
-    { data: deliverableCommentsRaw },
-  ] = await Promise.all([
-    supabase
+  // ── Query 1: lead_activities joined with leads ─────────────────────────────
+  let leadActivities: ActivityItem[] = []
+  try {
+    const { data } = await supabase
       .from('lead_activities')
-      .select('id, lead_id, type, content, created_at, old_status, new_status, lead:leads(name)')
+      .select('id, lead_id, type, content, created_at, lead:leads(name, email)')
       .order('created_at', { ascending: false })
-      .limit(30),
-    supabase
+      .limit(30)
+
+    for (const row of (data ?? []) as unknown as RawLeadActivity[]) {
+      const lead = resolveJoined(row.lead)
+      const leadName = lead?.name ?? 'Lead desconocido'
+      leadActivities.push({
+        id: `lead-act-${row.id}`,
+        type: 'lead_action',
+        title: `Actividad en lead: ${leadName}`,
+        subtitle: row.content ?? row.type,
+        createdAt: row.created_at,
+        linkHref: '/admin/leads',
+      })
+    }
+  } catch {
+    leadActivities = []
+  }
+
+  // ── Query 2: task_activity_log joined with projects ────────────────────────
+  let taskActivities: ActivityItem[] = []
+  try {
+    const { data } = await supabase
       .from('task_activity_log')
-      .select('id, task_id, action, old_value, new_value, created_at, task:tasks(title)')
+      .select('id, project_id, action, metadata, created_at, project:projects(title)')
       .order('created_at', { ascending: false })
-      .limit(20),
-    supabase
-      .from('deliverable_comments')
-      .select('id, deliverable_id, content, created_at, deliverable:project_deliverables(title)')
+      .limit(20)
+
+    for (const row of (data ?? []) as unknown as RawTaskActivity[]) {
+      const project = resolveJoined(row.project)
+      const projectTitle = project?.title ?? 'Proyecto desconocido'
+      taskActivities.push({
+        id: `task-act-${row.id}`,
+        type: 'project_action',
+        title: row.action,
+        subtitle: `Proyecto: ${projectTitle}`,
+        createdAt: row.created_at,
+        linkHref: `/admin/projects/${row.project_id}`,
+      })
+    }
+  } catch {
+    taskActivities = []
+  }
+
+  // ── Query 3: leads recientes (ultimos 30 dias) ─────────────────────────────
+  let recentLeads: ActivityItem[] = []
+  try {
+    const { data } = await supabase
+      .from('leads')
+      .select('id, name, email, created_at')
+      .gte('created_at', cutoff)
       .order('created_at', { ascending: false })
-      .limit(20),
-  ])
+      .limit(20)
 
-  // ── Normalise ──────────────────────────────────────────────────────────────
+    for (const row of (data ?? []) as unknown as RawLead[]) {
+      recentLeads.push({
+        id: `lead-new-${row.id}`,
+        type: 'lead_new',
+        title: `Nuevo lead: ${row.name}`,
+        subtitle: row.email ?? 'Sin email',
+        createdAt: row.created_at,
+        linkHref: '/admin/leads',
+      })
+    }
+  } catch {
+    recentLeads = []
+  }
 
+  // ── Query 4: project_deliverables recientes (ultimos 30 dias) ─────────────
+  let recentDeliverables: ActivityItem[] = []
+  try {
+    const { data } = await supabase
+      .from('project_deliverables')
+      .select('id, project_id, title, created_at, project:projects(title)')
+      .gte('created_at', cutoff)
+      .order('created_at', { ascending: false })
+      .limit(20)
+
+    for (const row of (data ?? []) as unknown as RawDeliverable[]) {
+      const project = resolveJoined(row.project)
+      const projectTitle = project?.title ?? 'Proyecto desconocido'
+      recentDeliverables.push({
+        id: `deliverable-new-${row.id}`,
+        type: 'deliverable_new',
+        title: `Entregable: ${row.title}`,
+        subtitle: `Proyecto: ${projectTitle}`,
+        createdAt: row.created_at,
+        linkHref: `/admin/projects/${row.project_id}`,
+      })
+    }
+  } catch {
+    recentDeliverables = []
+  }
+
+  // ── Merge and sort ─────────────────────────────────────────────────────────
+
+  const allItems: ActivityItem[] = [
+    ...leadActivities,
+    ...taskActivities,
+    ...recentLeads,
+    ...recentDeliverables,
+  ]
+
+  // Deduplicate by id (in case a lead appears in both lead_activities and leads)
+  const seen = new Set<string>()
   const items: ActivityItem[] = []
-
-  for (const row of (leadActivitiesRaw ?? []) as unknown as RawLeadActivity[]) {
-    const lead = resolveJoined(row.lead)
-    items.push({
-      id: `lead-${row.id}`,
-      type: 'lead_activity',
-      title: buildLeadTitle(row),
-      subtitle: lead?.name ?? 'Lead desconocido',
-      createdAt: row.created_at,
-      link: `/admin/leads`,
-      color: '#0071E3',
-      icon: 'lead',
-    })
+  for (const item of allItems) {
+    if (!seen.has(item.id)) {
+      seen.add(item.id)
+      items.push(item)
+    }
   }
 
-  for (const row of (taskActivitiesRaw ?? []) as RawTaskActivity[]) {
-    const task = resolveJoined(row.task)
-    items.push({
-      id: `task-${row.id}`,
-      type: 'task_activity',
-      title: buildTaskTitle(row),
-      subtitle: task?.title ?? 'Tarea desconocida',
-      createdAt: row.created_at,
-      link: `/admin/kanban`,
-      color: '#BF5AF2',
-      icon: 'task',
-    })
-  }
-
-  for (const row of (deliverableCommentsRaw ?? []) as RawDeliverableComment[]) {
-    const deliverable = resolveJoined(row.deliverable)
-    items.push({
-      id: `comment-${row.id}`,
-      type: 'deliverable_comment',
-      title: row.content.slice(0, 100) + (row.content.length > 100 ? '...' : ''),
-      subtitle: deliverable?.title ?? 'Entregable desconocido',
-      createdAt: row.created_at,
-      link: undefined,
-      color: '#30D158',
-      icon: 'comment',
-    })
-  }
-
-  // Sort all items together by date descending
   items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
   // ── Group by day ───────────────────────────────────────────────────────────
@@ -281,7 +370,7 @@ export default async function ActividadPage() {
         .act-card {
           flex: 1;
           background: #111111;
-          border: 1px solid rgba(255,255,255,0.07);
+          border: 1px solid rgba(255,255,255,0.08);
           border-radius: 12px;
           padding: 12px 16px;
           transition: background 0.15s, border-color 0.15s;
@@ -298,7 +387,7 @@ export default async function ActividadPage() {
         }
         .act-subtitle {
           font-size: 12px;
-          color: #48484A;
+          color: #86868B;
           margin: 0;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -337,6 +426,32 @@ export default async function ActividadPage() {
         .act-day-label:first-child {
           padding-top: 0;
         }
+        .act-empty {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 14px;
+          background: #111111;
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 16px;
+          padding: 48px 32px;
+          margin-top: 40px;
+          text-align: center;
+        }
+        .act-empty-title {
+          font-size: 15px;
+          font-weight: 500;
+          color: #F5F5F7;
+          margin: 0;
+        }
+        .act-empty-desc {
+          font-size: 13px;
+          color: #86868B;
+          margin: 0;
+          max-width: 320px;
+          line-height: 1.5;
+        }
       `}</style>
 
       <div className="act-root">
@@ -367,9 +482,13 @@ export default async function ActividadPage() {
 
         {/* ── Empty state ── */}
         {items.length === 0 && (
-          <p style={{ color: '#48484A', fontSize: '14px', marginTop: '40px' }}>
-            Sin actividad reciente.
-          </p>
+          <div className="act-empty">
+            <ClockIcon />
+            <p className="act-empty-title">Sin actividad reciente</p>
+            <p className="act-empty-desc">
+              La actividad aparecera aqui cuando se creen leads, proyectos o entregables.
+            </p>
+          </div>
         )}
 
         {/* ── Timeline ── */}
@@ -401,6 +520,7 @@ export default async function ActividadPage() {
               />
 
               {group.items.map((item) => {
+                const dotColor = DOT_COLOR[item.type]
                 const inner = (
                   <>
                     {/* Dot column */}
@@ -414,7 +534,7 @@ export default async function ActividadPage() {
                         flexShrink: 0,
                       }}
                     >
-                      <IconDot color={item.color} />
+                      <IconDot color={dotColor} />
                     </div>
 
                     {/* Card */}
@@ -429,7 +549,7 @@ export default async function ActividadPage() {
                         >
                           {PILL_LABEL[item.type]}
                         </span>
-                        <span className="act-time">{timeAgo(item.createdAt)}</span>
+                        <span className="act-time">{formatRelativeTime(item.createdAt)}</span>
                       </div>
                       <p className="act-title">{item.title}</p>
                       <p className="act-subtitle">{item.subtitle}</p>
@@ -437,14 +557,10 @@ export default async function ActividadPage() {
                   </>
                 )
 
-                return item.link ? (
-                  <Link key={item.id} href={item.link} className="act-item-row">
+                return (
+                  <Link key={item.id} href={item.linkHref} className="act-item-row">
                     {inner}
                   </Link>
-                ) : (
-                  <div key={item.id} className="act-item-row">
-                    {inner}
-                  </div>
                 )
               })}
             </div>

@@ -10,9 +10,10 @@ export default async function EditClientPage({ params }: Props) {
   const { id } = await params
   const db = createServiceClient()
 
-  const { data: client, error } = await db
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: client, error } = await (db as any)
     .from('clients')
-    .select('id, name, email, company')
+    .select('id, name, email, company, phone, notes')
     .eq('id', id)
     .single()
 
@@ -68,6 +69,8 @@ export default async function EditClientPage({ params }: Props) {
           initialName={client.name}
           initialEmail={client.email ?? ''}
           initialCompany={client.company ?? ''}
+          initialPhone={(client as Record<string, unknown>).phone as string ?? ''}
+          initialNotes={(client as Record<string, unknown>).notes as string ?? ''}
         />
       </div>
     </div>

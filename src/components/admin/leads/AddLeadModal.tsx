@@ -314,11 +314,11 @@ export default function AddLeadModal({ onClose, onCreated, defaultStatus = 'new'
                 onFocus={() => setFocusedField('add-source')}
                 onBlur={() => setFocusedField(null)}
               >
-                <option value="manual">Manual</option>
+                <option value="web">Web</option>
                 <option value="referral">Referido</option>
                 <option value="instagram">Instagram</option>
-                <option value="web">Web</option>
                 <option value="whatsapp">WhatsApp</option>
+                <option value="manual">Manual</option>
                 <option value="other">Otro</option>
               </select>
             </div>
@@ -330,24 +330,15 @@ export default function AddLeadModal({ onClose, onCreated, defaultStatus = 'new'
               <label htmlFor="add-project-type" style={fieldLabel}>
                 Tipo de proyecto
               </label>
-              <select
+              <input
                 id="add-project-type"
                 name="project_type"
-                defaultValue=""
-                style={getFocusStyleSelect('add-project-type')}
+                type="text"
+                placeholder="Videoclip, Boda, Corporativo..."
+                style={getFocusStyle('add-project-type')}
                 onFocus={() => setFocusedField('add-project-type')}
                 onBlur={() => setFocusedField(null)}
-              >
-                <option value="" disabled>
-                  Seleccionar...
-                </option>
-                <option value="Videoclip">Videoclip</option>
-                <option value="Corporativo">Corporativo</option>
-                <option value="Restaurante">Restaurante</option>
-                <option value="Comercial">Comercial</option>
-                <option value="Fotografia">Fotografia</option>
-                <option value="Otro">Otro</option>
-              </select>
+              />
             </div>
             <div>
               <label htmlFor="add-budget" style={fieldLabel}>

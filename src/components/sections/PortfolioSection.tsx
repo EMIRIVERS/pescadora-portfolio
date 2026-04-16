@@ -50,7 +50,8 @@ function buildAllCards(videos: VideoEntry[], cats: PortfolioCategory[]): Project
       // DB fotografia: vimeoId = image URL
       const dbFotos = videoList.filter((v) => (v.category as string) === 'fotografia')
       if (dbFotos.length > 0) {
-        cards.push({ name: cat.slug, label: cat.label, coverUrl: dbFotos[0]?.vimeoId ?? null, count: dbFotos.length, isPhoto: true })
+        const autoCover = dbFotos[0]?.vimeoId ?? null
+        cards.push({ name: cat.slug, label: cat.label, coverUrl: cat.cover_url ?? autoCover, count: dbFotos.length, isPhoto: true })
       } else {
         // Fallback: static registry grouped by project
         const projectMap = new Map<string, string>()
@@ -59,16 +60,17 @@ function buildAllCards(videos: VideoEntry[], cats: PortfolioCategory[]): Project
         }
         if (projectMap.size > 0) {
           const [, url] = [...projectMap.entries()][0]
-          cards.push({ name: cat.slug, label: cat.label, coverUrl: url, count: projectMap.size, isPhoto: true })
+          cards.push({ name: cat.slug, label: cat.label, coverUrl: cat.cover_url ?? url, count: projectMap.size, isPhoto: true })
         }
       }
     } else {
       const catVideos = videoList.filter((v) => v.category === cat.slug)
       if (catVideos.length === 0) continue
+      const autoCover = catVideos[0]?.vimeoId ? `/api/vimeo-thumb?id=${catVideos[0].vimeoId}` : null
       cards.push({
         name: cat.slug,
         label: cat.label,
-        coverUrl: catVideos[0]?.vimeoId ? `/api/vimeo-thumb?id=${catVideos[0].vimeoId}` : null,
+        coverUrl: cat.cover_url ?? autoCover,
         count: catVideos.length,
         isPhoto: false,
       })

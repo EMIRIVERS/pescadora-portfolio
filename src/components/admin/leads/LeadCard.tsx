@@ -23,13 +23,15 @@ interface LeadCardProps {
   accentColor?: string
 }
 
-const SOURCE_COLORS: Record<string, string> = {
-  instagram: '#FF453A',
-  whatsapp: '#30D158',
-  referral: '#BF5AF2',
-  web: '#0071E3',
-  manual: '#86868B',
-  other:   '#86868B',
+const SOURCE_LABELS: Record<string, string> = {
+  web:       'Web',
+  referral:  'Referido',
+  instagram: 'IG',
+  whatsapp:  'WA',
+  email:     'Email',
+  phone:     'Telefono',
+  manual:    'Manual',
+  other:     'Otro',
 }
 
 function isClosingSoon(dateStr: string): boolean {
@@ -48,8 +50,12 @@ function formatDate(dateStr: string): string {
 }
 
 export default function LeadCard({ lead, onClick, accentColor = '#86868B' }: LeadCardProps) {
-  const sourceColor = SOURCE_COLORS[lead.source] ?? SOURCE_COLORS['other']
   const closingSoon = lead.expected_close_date ? isClosingSoon(lead.expected_close_date) : false
+  const sourceLabel = SOURCE_LABELS[lead.source] ?? lead.source
+
+  function truncate(str: string, max: number): string {
+    return str.length > max ? str.slice(0, max) + '...' : str
+  }
 
   return (
     <button
@@ -85,11 +91,28 @@ export default function LeadCard({ lead, onClick, accentColor = '#86868B' }: Lea
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
-          marginBottom: lead.company ? '2px' : '0',
+          marginBottom: '2px',
         }}
       >
         {lead.name}
       </div>
+
+      {/* Project type — italic line below name */}
+      {lead.project_type && (
+        <div
+          style={{
+            fontSize: '11px',
+            color: '#86868B',
+            fontStyle: 'italic',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            marginBottom: '4px',
+          }}
+        >
+          {lead.project_type}
+        </div>
+      )}
 
       {/* Company */}
       {lead.company && (
@@ -97,7 +120,7 @@ export default function LeadCard({ lead, onClick, accentColor = '#86868B' }: Lea
           style={{
             fontSize: '12px',
             color: '#86868B',
-            marginBottom: '6px',
+            marginBottom: '4px',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
@@ -107,72 +130,77 @@ export default function LeadCard({ lead, onClick, accentColor = '#86868B' }: Lea
         </div>
       )}
 
-      {/* Contact row */}
-      {(lead.email ?? lead.phone) && (
+      {/* Email row */}
+      {lead.email && (
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '6px',
-            marginTop: lead.company ? '0' : '4px',
-            marginBottom: '8px',
+            gap: '4px',
+            marginBottom: '4px',
           }}
         >
-          {lead.email ? (
-            <>
-              <svg
-                width="10"
-                height="10"
-                viewBox="0 0 16 16"
-                fill="none"
-                aria-hidden="true"
-                style={{ flexShrink: 0 }}
-              >
-                <rect x="1" y="3" width="14" height="10" rx="1" stroke="#48484A" strokeWidth="1.5" />
-                <path d="M1 4l7 5 7-5" stroke="#48484A" strokeWidth="1.5" />
-              </svg>
-              <span
-                style={{
-                  fontSize: '12px',
-                  color: '#86868B',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {lead.email}
-              </span>
-            </>
-          ) : (
-            <>
-              <svg
-                width="10"
-                height="10"
-                viewBox="0 0 16 16"
-                fill="none"
-                aria-hidden="true"
-                style={{ flexShrink: 0 }}
-              >
-                <path
-                  d="M3 1h3l1.5 4-2 1.5a9 9 0 004 4L11 9l4 1.5V14c0 1-4 2-8-2S1 5 2 4c0 0 0-3 1-3z"
-                  stroke="#48484A"
-                  strokeWidth="1.5"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <span
-                style={{
-                  fontSize: '12px',
-                  color: '#86868B',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {lead.phone}
-              </span>
-            </>
-          )}
+          <span
+            aria-hidden="true"
+            style={{
+              fontSize: '11px',
+              color: '#48484A',
+              lineHeight: 1,
+              flexShrink: 0,
+            }}
+          >
+            @
+          </span>
+          <span
+            style={{
+              fontSize: '11px',
+              color: '#48484A',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {truncate(lead.email, 20)}
+          </span>
+        </div>
+      )}
+
+      {/* Phone row — only shown when no email */}
+      {!lead.email && lead.phone && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            marginBottom: '4px',
+          }}
+        >
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 16 16"
+            fill="none"
+            aria-hidden="true"
+            style={{ flexShrink: 0 }}
+          >
+            <path
+              d="M3 1h3l1.5 4-2 1.5a9 9 0 004 4L11 9l4 1.5V14c0 1-4 2-8-2S1 5 2 4c0 0 0-3 1-3z"
+              stroke="#48484A"
+              strokeWidth="1.5"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <span
+            style={{
+              fontSize: '11px',
+              color: '#48484A',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {lead.phone}
+          </span>
         </div>
       )}
 
@@ -187,36 +215,21 @@ export default function LeadCard({ lead, onClick, accentColor = '#86868B' }: Lea
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-          {/* Source badge */}
-          <span
-            style={{
-              fontSize: '11px',
-              color: sourceColor,
-              backgroundColor: `${sourceColor}1a`,
-              padding: '2px 7px',
-              borderRadius: '6px',
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase' as const,
-              fontWeight: 500,
-            }}
-          >
-            {lead.source}
-          </span>
-
-          {/* Project type */}
-          {lead.project_type && (
+          {/* Source badge — neutral style */}
+          {lead.source && (
             <span
               style={{
-                fontSize: '11px',
-                color: '#48484A',
-                backgroundColor: 'rgba(255,255,255,0.04)',
-                padding: '2px 7px',
-                borderRadius: '6px',
-                letterSpacing: '0.04em',
+                fontSize: '9px',
+                color: '#86868B',
+                backgroundColor: 'rgba(255,255,255,0.06)',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                letterSpacing: '0.08em',
                 textTransform: 'uppercase' as const,
+                fontWeight: 500,
               }}
             >
-              {lead.project_type}
+              {sourceLabel}
             </span>
           )}
 

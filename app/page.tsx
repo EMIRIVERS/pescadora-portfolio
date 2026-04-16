@@ -51,7 +51,7 @@ export default async function Home() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (supabase as any)
         .from('portfolio_categories')
-        .select('slug, label, sort_order')
+        .select('slug, label, sort_order, cover_url')
         .eq('is_visible', true)
         .order('sort_order', { ascending: true }),
     ])

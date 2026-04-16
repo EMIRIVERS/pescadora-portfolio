@@ -105,6 +105,7 @@ interface PortfolioCategory {
   label: string
   sort_order: number
   is_visible: boolean
+  cover_url?: string | null
 }
 
 export default async function PortfolioAdminPage() {
@@ -126,6 +127,12 @@ export default async function PortfolioAdminPage() {
     },
     {},
   )
+
+  // Full count per slug — includes any slugs not in the static STAT_CATEGORIES list
+  const videoCountsBySlug = allVideos.reduce<Record<string, number>>((acc, v) => {
+    if (v.category) acc[v.category] = (acc[v.category] ?? 0) + 1
+    return acc
+  }, {})
 
   const visibleCount = allVideos.filter((v) => v.is_visible).length
   const hiddenCount  = allVideos.length - visibleCount
@@ -188,7 +195,7 @@ export default async function PortfolioAdminPage() {
 
       {/* ── Category manager ──────────────────────────────────────────────── */}
       <div style={{ marginBottom: 32 }}>
-        <CategoryManager initialCategories={allCategories} />
+        <CategoryManager initialCategories={allCategories} videoCounts={videoCountsBySlug} />
       </div>
 
       {/* ── Video manager ─────────────────────────────────────────────────── */}

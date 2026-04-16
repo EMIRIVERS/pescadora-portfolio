@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/lib/supabase/types'
+import ThemeSwitcher from '@/components/admin/ThemeSwitcher'
 
 // ─── Design tokens ──────────────────────────────────────────────────────────
 const T = {
@@ -123,12 +124,32 @@ export default function Sidebar({ profile }: SidebarProps) {
   const [newLeadsCount, setNewLeadsCount] = useState(0)
 
   useEffect(() => {
-    const leadsClient = createClient()
-    leadsClient
-      .from('leads')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'new')
-      .then(({ count }) => setNewLeadsCount(count ?? 0))
+    const supabaseRT = createClient()
+
+    async function fetchNewLeads() {
+      const { count } = await supabaseRT
+        .from('leads')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'new')
+      setNewLeadsCount(count ?? 0)
+    }
+
+    // Initial fetch
+    void fetchNewLeads()
+
+    // Realtime: re-fetch on any INSERT / UPDATE / DELETE in leads
+    const channel = supabaseRT
+      .channel('sidebar-leads-badge')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'leads' },
+        () => { void fetchNewLeads() },
+      )
+      .subscribe()
+
+    return () => {
+      void supabaseRT.removeChannel(channel)
+    }
   }, [])
 
   async function handleLogout() {
@@ -327,6 +348,9 @@ export default function Sidebar({ profile }: SidebarProps) {
             </p>
           </div>
         </div>
+
+        {/* Theme switcher */}
+        <ThemeSwitcher />
 
         {/* Logout button */}
         <button
