@@ -25,7 +25,7 @@ export function InviteClientButton() {
         }}
       >
         <Plus className="w-4 h-4" strokeWidth={2.5} />
-        Invitar cliente
+        Nuevo cliente
       </button>
 
       {open && <InviteClientModal onClose={() => setOpen(false)} />}

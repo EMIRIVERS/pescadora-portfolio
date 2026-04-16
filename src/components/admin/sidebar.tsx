@@ -20,20 +20,20 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/lib/supabase/types'
-import ThemeSwitcher from '@/components/admin/ThemeSwitcher'
+import ThemeSwitcher, {
+  THEMES,
+  type Theme,
+  STORAGE_KEY,
+  getThemeById,
+} from '@/components/admin/ThemeSwitcher'
 
-// ─── Design tokens ──────────────────────────────────────────────────────────
+// ─── Static design tokens (non-theme values) ─────────────────────────────────
 const T = {
-  bg: '#000000',
-  surface1: '#111111',
-  surface2: '#1C1C1E',
   surface3: '#2C2C2E',
   border: 'rgba(255,255,255,0.08)',
   borderStrong: 'rgba(255,255,255,0.14)',
   textPrimary: '#F5F5F7',
   textSecondary: '#86868B',
-  textTertiary: '#48484A',
-  accent: '#0071E3',
   accentRed: '#FF453A',
   radiusSm: '8px',
   radiusMd: '12px',
@@ -66,7 +66,7 @@ const NAV_ITEMS: NavItem[] = [
     icon: <FolderKanban size={16} strokeWidth={1.5} />,
   },
   {
-    label: 'Kanban',
+    label: 'Tareas',
     href: '/admin/kanban',
     icon: <Kanban size={16} strokeWidth={1.5} />,
   },
@@ -115,6 +115,12 @@ interface SidebarProps {
   profile: Pick<Profile, 'full_name' | 'email' | 'avatar_url'>
 }
 
+// ─── Helper: resolve theme colours from localStorage ─────────────────────────
+function resolveStoredTheme(): Theme {
+  if (typeof window === 'undefined') return THEMES[0]
+  return getThemeById(localStorage.getItem(STORAGE_KEY) ?? '')
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function Sidebar({ profile }: SidebarProps) {
   const pathname = usePathname()
@@ -122,6 +128,30 @@ export default function Sidebar({ profile }: SidebarProps) {
   const supabase = createClient()
   const [logoutHovered, setLogoutHovered] = useState(false)
   const [newLeadsCount, setNewLeadsCount] = useState(0)
+
+  // Dynamic theme colours — initialised from localStorage, updated on change
+  const [themeColors, setThemeColors] = useState<Theme>(resolveStoredTheme)
+
+  // Listen for theme changes dispatched by ThemeSwitcher (same tab)
+  useEffect(() => {
+    function onThemeChange(e: Event) {
+      const theme = (e as CustomEvent<Theme>).detail
+      setThemeColors(theme)
+    }
+    window.addEventListener('dash-theme-change', onThemeChange)
+    return () => window.removeEventListener('dash-theme-change', onThemeChange)
+  }, [])
+
+  // Also react to storage events (other tabs)
+  useEffect(() => {
+    function onStorage(e: StorageEvent) {
+      if (e.key === STORAGE_KEY && e.newValue) {
+        setThemeColors(getThemeById(e.newValue))
+      }
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [])
 
   useEffect(() => {
     const supabaseRT = createClient()
@@ -173,16 +203,18 @@ export default function Sidebar({ profile }: SidebarProps) {
 
   return (
     <aside
+      data-dash-sidebar
       style={{
         display: 'flex',
         flexDirection: 'column',
         width: '220px',
         minWidth: '220px',
         minHeight: '100vh',
-        background: T.surface1,
+        background: themeColors.surface1,
         borderRight: `1px solid rgba(255,255,255,0.06)`,
         fontFamily: T.font,
         flexShrink: 0,
+        transition: 'background 0.25s ease',
       }}
     >
       {/* ── Wordmark ─────────────────────────────────────────────────────── */}
@@ -235,6 +267,7 @@ export default function Sidebar({ profile }: SidebarProps) {
               key={item.href}
               item={item}
               active={active}
+              accent={themeColors.accent}
               badge={item.label === 'Leads' && newLeadsCount > 0 ? newLeadsCount : undefined}
             />
           )
@@ -252,7 +285,7 @@ export default function Sidebar({ profile }: SidebarProps) {
         {NAV_ITEMS_SECONDARY.map((item) => {
           const active = isActive(item.href)
           return (
-            <NavLink key={item.href} item={item} active={active} />
+            <NavLink key={item.href} item={item} active={active} accent={themeColors.accent} />
           )
         })}
       </nav>
@@ -392,10 +425,12 @@ export default function Sidebar({ profile }: SidebarProps) {
 function NavLink({
   item,
   active,
+  accent,
   badge,
 }: {
   item: NavItem
   active: boolean
+  accent: string
   badge?: number
 }) {
   const [hovered, setHovered] = useState(false)
@@ -431,6 +466,7 @@ function NavLink({
         textDecoration: 'none',
         transition: 'background 0.15s ease, color 0.15s ease',
         userSelect: 'none',
+        borderLeft: active ? `2px solid ${accent}` : '2px solid transparent',
       }}
     >
       <span
@@ -439,7 +475,7 @@ function NavLink({
           display: 'flex',
           alignItems: 'center',
           flexShrink: 0,
-          color,
+          color: active ? accent : color,
           transition: 'color 0.15s ease',
         }}
       >

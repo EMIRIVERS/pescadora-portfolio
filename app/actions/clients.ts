@@ -2,6 +2,40 @@
 import { revalidatePath } from 'next/cache'
 import { createServiceClient } from '@/lib/supabase/server'
 
+// ── Create client manually (no Auth account) ──────────────────────────────────
+
+export async function createClient(formData: FormData): Promise<{ error?: string }> {
+  const db = createServiceClient()
+  const name = String(formData.get('name') ?? '').trim()
+  if (!name) return { error: 'El nombre es obligatorio.' }
+
+  const { error } = await db.from('clients').insert({
+    name,
+    email: String(formData.get('email') ?? '').trim() || null,
+    company: String(formData.get('company') ?? '').trim() || null,
+    phone: String(formData.get('phone') ?? '').trim() || null,
+  })
+
+  if (error) return { error: error.message }
+  revalidatePath('/admin/clients')
+  return {}
+}
+
+// ── Invite client via Supabase Auth email ────────────────────────────────────
+
+export async function inviteClientByEmail(email: string): Promise<{ error?: string }> {
+  const trimmed = email.trim().toLowerCase()
+  if (!trimmed) return { error: 'El email es obligatorio.' }
+
+  const db = createServiceClient()
+  const { error } = await db.auth.admin.inviteUserByEmail(trimmed, {
+    data: { role: 'client' },
+    redirectTo: process.env.NEXT_PUBLIC_SITE_URL + '/auth/callback',
+  })
+  if (error) return { error: error.message }
+  return {}
+}
+
 // ── Link client to Supabase Auth user by email ────────────────────────────────
 
 export async function linkClientToUser(

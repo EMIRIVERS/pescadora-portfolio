@@ -26,15 +26,29 @@ export async function createCategory(formData: FormData) {
   revalidatePath('/')
 }
 
-export async function updateCategory(id: string, formData: FormData) {
-  const label = String(formData.get('label') ?? '').trim()
-  if (!label) throw new Error('label es obligatorio')
+export async function updateCategory(
+  oldSlug: string,
+  data: { label?: string; slug?: string; sort_order?: number; is_visible?: boolean }
+): Promise<{ error?: string }> {
+  if (data.label !== undefined && !data.label.trim()) return { error: 'label es obligatorio' }
   const db = createServiceClient()
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (db as any).from("portfolio_categories").update({ label }).eq('id', id)
-  if (error) throw new Error(error.message)
+  const { error } = await (db as any).from('portfolio_categories').update(data).eq('slug', oldSlug)
+  if (error) return { error: error.message }
+
+  // If slug changed, cascade update to all videos in that category
+  if (data.slug && data.slug !== oldSlug) {
+    const { error: videoError } = await db
+      .from('portfolio_videos')
+      .update({ category: data.slug })
+      .eq('category', oldSlug)
+    if (videoError) return { error: videoError.message }
+  }
+
   revalidatePath('/admin/portfolio')
   revalidatePath('/')
+  return {}
 }
 
 export async function deleteCategory(id: string) {

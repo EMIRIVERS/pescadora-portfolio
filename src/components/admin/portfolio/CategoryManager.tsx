@@ -50,6 +50,7 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editLabel, setEditLabel] = useState('')
   const [reorderingId, setReorderingId] = useState<string | null>(null)
+  const [editSlugWarning, setEditSlugWarning] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   // Cover editing state: keyed by category id
@@ -58,13 +59,19 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
 
   const sorted = [...cats].sort((a, b) => a.sort_order - b.sort_order)
 
-  function slugify(str: string) {
-    return str.toLowerCase().trim().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
+  function generateSlug(str: string): string {
+    return str
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-')
   }
 
   function handleNewLabelChange(val: string) {
     setNewLabel(val)
-    setNewSlug(slugify(val))
+    setNewSlug(generateSlug(val))
   }
 
   function handleCreate(e: React.FormEvent) {
@@ -89,23 +96,49 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
   function handleEdit(cat: Category) {
     setEditingId(cat.id)
     setEditLabel(cat.label)
+    setEditSlugWarning(null)
     setError(null)
   }
 
   function handleSaveEdit(cat: Category) {
-    if (!editLabel.trim()) return
-    const fd = new FormData()
-    fd.set('label', editLabel)
+    const trimmed = editLabel.trim()
+    if (!trimmed) return
+    const newSlugVal = generateSlug(trimmed)
+    const slugChanged = newSlugVal !== cat.slug
     startTransition(async () => {
       try {
-        await updateCategory(cat.id, fd)
-        setCats((prev) => prev.map((c) => c.id === cat.id ? { ...c, label: editLabel } : c))
+        const result = await updateCategory(cat.slug, {
+          label: trimmed,
+          ...(slugChanged ? { slug: newSlugVal } : {}),
+        })
+        if (result.error) {
+          setError(result.error)
+          return
+        }
+        setCats((prev) =>
+          prev.map((c) =>
+            c.id === cat.id
+              ? { ...c, label: trimmed, ...(slugChanged ? { slug: newSlugVal } : {}) }
+              : c
+          )
+        )
         setEditingId(null)
+        setEditSlugWarning(null)
         router.refresh()
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error al guardar')
       }
     })
+  }
+
+  function handleEditLabelChange(val: string, cat: Category) {
+    setEditLabel(val)
+    const newSlugVal = generateSlug(val.trim())
+    if (newSlugVal && newSlugVal !== cat.slug) {
+      setEditSlugWarning(`El slug cambiara de '${cat.slug}' a '${newSlugVal}'. Los videos se actualizaran automaticamente.`)
+    } else {
+      setEditSlugWarning(null)
+    }
   }
 
   function handleDelete(cat: Category) {
@@ -319,13 +352,20 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
               {/* Label / edit */}
               <div style={{ flex: 1 }}>
                 {editingId === cat.id ? (
-                  <input
-                    value={editLabel}
-                    onChange={(e) => setEditLabel(e.target.value)}
-                    autoFocus
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleSaveEdit(cat); if (e.key === 'Escape') setEditingId(null) }}
-                    style={{ ...INPUT, padding: '5px 10px', fontSize: 13, width: '100%' }}
-                  />
+                  <div>
+                    <input
+                      value={editLabel}
+                      onChange={(e) => handleEditLabelChange(e.target.value, cat)}
+                      autoFocus
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleSaveEdit(cat); if (e.key === 'Escape') { setEditingId(null); setEditSlugWarning(null) } }}
+                      style={{ ...INPUT, padding: '5px 10px', fontSize: 13, width: '100%' }}
+                    />
+                    {editSlugWarning && (
+                      <p style={{ margin: '4px 0 0', fontSize: 11, color: '#FF9F0A', lineHeight: 1.4 }}>
+                        {editSlugWarning}
+                      </p>
+                    )}
+                  </div>
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                     <span style={{ fontSize: 14, fontWeight: 600, color: '#F5F5F7' }}>{cat.label}</span>

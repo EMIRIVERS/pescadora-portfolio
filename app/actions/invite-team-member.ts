@@ -70,3 +70,51 @@ export async function inviteTeamMember(formData: FormData): Promise<{ error?: st
   revalidatePath('/admin/team')
   return {}
 }
+
+// ── Add team member manually (creates Auth user, no invitation email) ─────────
+
+export async function addTeamMemberManually(
+  name: string,
+  email: string,
+  role: string,
+): Promise<{ error?: string }> {
+  const trimmedName = name.trim()
+  const trimmedEmail = email.trim().toLowerCase()
+  const trimmedRole = role.trim() || 'Asistente'
+
+  if (!trimmedName) return { error: 'El nombre es obligatorio.' }
+  if (!trimmedEmail) return { error: 'El email es obligatorio.' }
+
+  const db = createServiceClient()
+
+  // Generate a random password — user will need to reset it
+  const randomPassword =
+    Math.random().toString(36).slice(2) +
+    Math.random().toString(36).slice(2).toUpperCase() +
+    '!'
+
+  const { data, error: createError } = await db.auth.admin.createUser({
+    email: trimmedEmail,
+    password: randomPassword,
+    email_confirm: true,
+    user_metadata: { full_name: trimmedName, role: trimmedRole, is_admin_team: true },
+  })
+
+  if (createError) return { error: createError.message }
+
+  if (data?.user?.id) {
+    await db.from('profiles').upsert(
+      {
+        id: data.user.id,
+        email: trimmedEmail,
+        full_name: trimmedName,
+        role: trimmedRole as 'admin_staff',
+        is_admin_team: true,
+      },
+      { onConflict: 'id' },
+    )
+  }
+
+  revalidatePath('/admin/team')
+  return {}
+}

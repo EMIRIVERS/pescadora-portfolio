@@ -119,7 +119,7 @@ export default function PortfolioSection({ cmsProjects, videos, categories }: Pr
         }}
         style={{ position: 'relative', overflow: 'hidden', cursor: 'pointer' }}
       >
-        <div style={{ paddingBottom: card.isPhoto ? '75%' : '56.25%', position: 'relative' }}>
+        <div style={{ paddingBottom: card.isPhoto ? '56.25%' : '56.25%', position: 'relative' }}>
           {card.coverUrl ? (
             card.isPhoto ? (
               <Image
