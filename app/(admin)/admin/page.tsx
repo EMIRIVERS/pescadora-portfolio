@@ -543,7 +543,7 @@ export default async function AdminDashboardPage() {
             <Link
               key={link.href}
               href={link.href}
-              className="font-mono"
+              className="font-mono hover:text-[#ccc] hover:border-[#333] transition-colors"
               style={{
                 padding: '0.4rem 0.85rem',
                 border: '1px solid #1a1a1a',
@@ -552,17 +552,6 @@ export default async function AdminDashboardPage() {
                 fontSize: '0.6rem',
                 letterSpacing: '0.08em',
                 textDecoration: 'none',
-                transition: 'color 0.15s, border-color 0.15s',
-              }}
-              onMouseEnter={(e) => {
-                const el = e.currentTarget as HTMLAnchorElement
-                el.style.color = '#ccc'
-                el.style.borderColor = '#333'
-              }}
-              onMouseLeave={(e) => {
-                const el = e.currentTarget as HTMLAnchorElement
-                el.style.color = '#555'
-                el.style.borderColor = '#1a1a1a'
               }}
             >
               {link.label}
