@@ -90,6 +90,97 @@ export default function PortfolioSection({ cmsProjects, videos, categories }: Pr
     [videos]
   )
 
+  const videoCards = allCards.filter((c) => !c.isPhoto)
+  const photoCards = allCards.filter((c) => c.isPhoto)
+
+  function renderCard(card: ReturnType<typeof buildAllCards>[0], index: number) {
+    return (
+      <motion.div
+        key={card.name}
+        initial={{ opacity: 0, y: 24 }}
+        animate={{
+          opacity: 1,
+          y: 0,
+          transition: {
+            duration: 0.5,
+            ease: [0.25, 0.46, 0.45, 0.94],
+            delay: index * 0.06,
+          },
+        }}
+        onClick={() => setOpenState({
+          project: card.name,
+          mediaType: card.name === 'fotografia' ? 'fotografia' : 'video',
+        })}
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLDivElement).style.outline = '1px solid rgba(237,232,224,0.15)'
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLDivElement).style.outline = ''
+        }}
+        style={{ position: 'relative', overflow: 'hidden', cursor: 'pointer' }}
+      >
+        <div style={{ paddingBottom: card.isPhoto ? '75%' : '56.25%', position: 'relative' }}>
+          {card.coverUrl ? (
+            card.isPhoto ? (
+              <Image
+                src={card.coverUrl}
+                alt={card.name}
+                fill
+                sizes="(max-width: 800px) 100vw, 50vw"
+                style={{ objectFit: 'cover', transition: 'transform 0.7s ease' }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1.03)' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1)' }}
+              />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={card.coverUrl}
+                alt={card.name}
+                style={{
+                  position: 'absolute', inset: 0,
+                  width: '100%', height: '100%',
+                  objectFit: 'cover', transition: 'transform 0.7s ease',
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1.03)' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1)' }}
+              />
+            )
+          ) : (
+            <div style={{ position: 'absolute', inset: 0, backgroundColor: '#111' }} />
+          )}
+
+          {/* Gradient */}
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(transparent 30%, rgba(0,0,0,0.88))',
+            pointerEvents: 'none',
+          }} />
+
+          {/* Category label */}
+          <span style={{
+            position: 'absolute', bottom: '1rem', left: '1rem',
+            fontSize: 'clamp(1rem, 2vw, 1.6rem)',
+            fontWeight: 700, letterSpacing: '0.02em',
+            textTransform: 'uppercase', color: '#ede8e0',
+            pointerEvents: 'none',
+          }}>
+            {card.label}
+          </span>
+
+          {/* Count */}
+          <span style={{
+            position: 'absolute', bottom: '1rem', right: '1rem',
+            fontFamily: 'var(--font-geist-mono)', fontSize: '0.6rem',
+            color: '#6b6560', letterSpacing: '0.15em',
+            textTransform: 'uppercase', pointerEvents: 'none',
+          }}>
+            {card.count} {card.name === 'fotografia' ? 'proyectos' : 'videos'}
+          </span>
+        </div>
+      </motion.div>
+    )
+  }
+
   return (
     <section id="portfolio" style={{ padding: '0 0 4rem' }}>
 
@@ -107,98 +198,60 @@ export default function PortfolioSection({ cmsProjects, videos, categories }: Pr
         </span>
       </div>
 
-      {/* Unified category grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-        gap: '2px',
-      }}>
-        {allCards.map((card, index) => (
-          <motion.div
-            key={card.name}
-            initial={{ opacity: 0, y: 24 }}
-            animate={{
-              opacity: 1,
-              y: 0,
-              transition: {
-                duration: 0.5,
-                ease: [0.25, 0.46, 0.45, 0.94],
-                delay: index * 0.06,
-              },
-            }}
-            onClick={() => setOpenState({
-              project: card.name,
-              mediaType: card.name === 'fotografia' ? 'fotografia' : 'video',
-            })}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLDivElement).style.outline = '1px solid rgba(237,232,224,0.15)'
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLDivElement).style.outline = ''
-            }}
-            style={{ position: 'relative', overflow: 'hidden', cursor: 'pointer' }}
-          >
-            <div style={{ paddingBottom: card.isPhoto ? '75%' : '56.25%', position: 'relative' }}>
-              {card.coverUrl ? (
-                card.isPhoto ? (
-                  <Image
-                    src={card.coverUrl}
-                    alt={card.name}
-                    fill
-                    sizes="(max-width: 800px) 100vw, 50vw"
-                    style={{ objectFit: 'cover', transition: 'transform 0.7s ease' }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1.03)' }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1)' }}
-                  />
-                ) : (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={card.coverUrl}
-                    alt={card.name}
-                    style={{
-                      position: 'absolute', inset: 0,
-                      width: '100%', height: '100%',
-                      objectFit: 'cover', transition: 'transform 0.7s ease',
-                    }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1.03)' }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1)' }}
-                  />
-                )
-              ) : (
-                <div style={{ position: 'absolute', inset: 0, backgroundColor: '#111' }} />
-              )}
+      {/* ── VIDEO CATEGORIES ── */}
+      {videoCards.length > 0 && (
+        <>
+          <div style={{ paddingLeft: '2rem', paddingBottom: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <span style={{
+              fontFamily: 'var(--font-geist-mono)',
+              fontSize: '0.5rem',
+              letterSpacing: '0.25em',
+              textTransform: 'uppercase',
+              color: '#3a3632',
+            }}>
+              Audiovisual
+            </span>
+            <div style={{ flex: 1, height: '1px', background: 'rgba(237,232,224,0.04)' }} />
+          </div>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+            gap: '2px',
+          }}>
+            {videoCards.map((card, index) => renderCard(card, index))}
+          </div>
+        </>
+      )}
 
-              {/* Gradient */}
-              <div style={{
-                position: 'absolute', inset: 0,
-                background: 'linear-gradient(transparent 30%, rgba(0,0,0,0.88))',
-                pointerEvents: 'none',
-              }} />
+      {/* ── SEPARATOR ── */}
+      {videoCards.length > 0 && photoCards.length > 0 && (
+        <div style={{ height: '3px', background: '#050505' }} />
+      )}
 
-              {/* Category label */}
-              <span style={{
-                position: 'absolute', bottom: '1rem', left: '1rem',
-                fontSize: 'clamp(1rem, 2vw, 1.6rem)',
-                fontWeight: 700, letterSpacing: '0.02em',
-                textTransform: 'uppercase', color: '#ede8e0',
-                pointerEvents: 'none',
-              }}>
-                {card.label}
-              </span>
-
-              {/* Count */}
-              <span style={{
-                position: 'absolute', bottom: '1rem', right: '1rem',
-                fontFamily: 'var(--font-geist-mono)', fontSize: '0.6rem',
-                color: '#6b6560', letterSpacing: '0.15em',
-                textTransform: 'uppercase', pointerEvents: 'none',
-              }}>
-                {card.count} {card.name === 'fotografia' ? 'proyectos' : 'videos'}
-              </span>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+      {/* ── PHOTO CATEGORIES ── */}
+      {photoCards.length > 0 && (
+        <>
+          <div style={{ paddingLeft: '2rem', paddingTop: '0.5rem', paddingBottom: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <span style={{
+              fontFamily: 'var(--font-geist-mono)',
+              fontSize: '0.5rem',
+              letterSpacing: '0.25em',
+              textTransform: 'uppercase',
+              color: '#3a3632',
+            }}>
+              Fotografía
+            </span>
+            <div style={{ flex: 1, height: '1px', background: 'rgba(237,232,224,0.04)' }} />
+          </div>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+            gap: '2px',
+          }}>
+            {photoCards.map((card, index) => renderCard(card, videoCards.length + index))}
+          </div>
+        </>
+      )}
 
       {/* Overlay */}
       {openState !== null && (
