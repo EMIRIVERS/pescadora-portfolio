@@ -6,43 +6,73 @@ import { useState, useEffect, useRef } from 'react'
 export const THEMES = [
   {
     id: 'obsidian', name: 'Obsidian',
-    accent: '#0071E3', bg: '#000000', surface1: '#111111', surface2: '#1C1C1E', text: '#F5F5F7',
+    accent: '#0071E3', accentHover: '#0077ED',
+    bg: '#000000', surface1: '#111111', surface2: '#1C1C1E', surface3: '#2C2C2E',
+    text: '#F5F5F7', textSecondary: '#86868B', textTertiary: '#48484A',
+    border: 'rgba(255,255,255,0.08)', borderStrong: 'rgba(255,255,255,0.14)',
   },
   {
     id: 'midnight', name: 'Midnight',
-    accent: '#5E5CE6', bg: '#0A0A1A', surface1: '#12122A', surface2: '#1E1E3A', text: '#E8E8FF',
+    accent: '#5E5CE6', accentHover: '#6E6CF6',
+    bg: '#0A0A1A', surface1: '#12122A', surface2: '#1E1E3A', surface3: '#2A2A4A',
+    text: '#E8E8FF', textSecondary: '#8888BB', textTertiary: '#5555AA',
+    border: 'rgba(140,140,255,0.1)', borderStrong: 'rgba(140,140,255,0.18)',
   },
   {
     id: 'forest', name: 'Forest',
-    accent: '#30D158', bg: '#050F07', surface1: '#0A1A0D', surface2: '#122018', text: '#E8FFE8',
+    accent: '#30D158', accentHover: '#40E168',
+    bg: '#050F07', surface1: '#0A1A0D', surface2: '#122018', surface3: '#1A2E20',
+    text: '#E8FFE8', textSecondary: '#6B9B72', textTertiary: '#3A6B42',
+    border: 'rgba(48,209,88,0.1)', borderStrong: 'rgba(48,209,88,0.18)',
   },
   {
     id: 'sunset', name: 'Sunset',
-    accent: '#FF6B35', bg: '#0F0804', surface1: '#1A1008', surface2: '#241A10', text: '#FFE8D6',
+    accent: '#FF6B35', accentHover: '#FF7B45',
+    bg: '#0F0804', surface1: '#1A1008', surface2: '#241A10', surface3: '#2E2218',
+    text: '#FFE8D6', textSecondary: '#9B7060', textTertiary: '#6B4030',
+    border: 'rgba(255,107,53,0.12)', borderStrong: 'rgba(255,107,53,0.22)',
   },
   {
     id: 'rose', name: 'Rose',
-    accent: '#FF375F', bg: '#0F0508', surface1: '#1A080F', surface2: '#24101A', text: '#FFE0E8',
+    accent: '#FF375F', accentHover: '#FF476F',
+    bg: '#0F0508', surface1: '#1A080F', surface2: '#24101A', surface3: '#2E1824',
+    text: '#FFE0E8', textSecondary: '#9B6070', textTertiary: '#6B3040',
+    border: 'rgba(255,55,95,0.12)', borderStrong: 'rgba(255,55,95,0.22)',
   },
   {
     id: 'aurora', name: 'Aurora',
-    accent: '#64D2FF', bg: '#030A10', surface1: '#071520', surface2: '#0D1F2D', text: '#D6F0FF',
+    accent: '#64D2FF', accentHover: '#74E2FF',
+    bg: '#030A10', surface1: '#071520', surface2: '#0D1F2D', surface3: '#132A3A',
+    text: '#D6F0FF', textSecondary: '#6090A0', textTertiary: '#305060',
+    border: 'rgba(100,210,255,0.1)', borderStrong: 'rgba(100,210,255,0.18)',
   },
   {
     id: 'amber', name: 'Amber',
-    accent: '#FFD60A', bg: '#0F0B00', surface1: '#1A1400', surface2: '#24200A', text: '#FFF8D6',
+    accent: '#FFD60A', accentHover: '#FFE61A',
+    bg: '#0F0B00', surface1: '#1A1400', surface2: '#24200A', surface3: '#2E2A12',
+    text: '#FFF8D6', textSecondary: '#9B9060', textTertiary: '#6B6030',
+    border: 'rgba(255,214,10,0.1)', borderStrong: 'rgba(255,214,10,0.18)',
   },
   {
     id: 'violet', name: 'Violet',
-    accent: '#BF5AF2', bg: '#0A0510', surface1: '#12081C', surface2: '#1C1028', text: '#F0DAFF',
+    accent: '#BF5AF2', accentHover: '#CF6AFF',
+    bg: '#0A0510', surface1: '#12081C', surface2: '#1C1028', surface3: '#261834',
+    text: '#F0DAFF', textSecondary: '#907AAA', textTertiary: '#604A7A',
+    border: 'rgba(191,90,242,0.1)', borderStrong: 'rgba(191,90,242,0.18)',
   },
   {
     id: 'slate', name: 'Slate',
-    accent: '#98989D', bg: '#0A0A0A', surface1: '#141414', surface2: '#1E1E1E', text: '#EBEBF5',
+    accent: '#98989D', accentHover: '#A8A8AD',
+    bg: '#0A0A0A', surface1: '#141414', surface2: '#1E1E1E', surface3: '#282828',
+    text: '#EBEBF5', textSecondary: '#8E8E93', textTertiary: '#5E5E63',
+    border: 'rgba(152,152,157,0.1)', borderStrong: 'rgba(152,152,157,0.18)',
   },
   {
     id: 'crimson', name: 'Crimson',
-    accent: '#E8341A', bg: '#0F0302', surface1: '#1A0804', surface2: '#241008', text: '#FFE0D6',
+    accent: '#E8341A', accentHover: '#F8442A',
+    bg: '#0F0302', surface1: '#1A0804', surface2: '#241008', surface3: '#2E1810',
+    text: '#FFE0D6', textSecondary: '#9B6050', textTertiary: '#6B3020',
+    border: 'rgba(232,52,26,0.12)', borderStrong: 'rgba(232,52,26,0.22)',
   },
 ] as const
 
@@ -54,51 +84,37 @@ const DEFAULT_THEME_ID: ThemeId = 'obsidian'
 
 // ─── Apply theme to DOM ───────────────────────────────────────────────────────
 export function applyTheme(theme: Theme): void {
-  const root = document.documentElement
+  // 1. Set data-theme attribute — triggers all [data-theme="xxx"] CSS blocks in globals.css
+  document.documentElement.setAttribute('data-theme', theme.id)
 
-  // CSS custom properties (for any component that uses them)
-  root.style.setProperty('--dash-accent', theme.accent)
+  // 2. Direct body background for immediate visual feedback
+  document.body.style.backgroundColor = theme.bg
+  document.body.style.color = theme.text
+
+  // 3. CSS custom properties (for components that read var(--dash-*))
+  const root = document.documentElement
   root.style.setProperty('--dash-bg', theme.bg)
+  root.style.setProperty('--dash-surface-1', theme.surface1)
+  root.style.setProperty('--dash-surface-2', theme.surface2)
+  root.style.setProperty('--dash-surface-3', theme.surface3)
+  root.style.setProperty('--dash-accent', theme.accent)
+  root.style.setProperty('--dash-accent-hover', theme.accentHover)
+  root.style.setProperty('--dash-text-primary', theme.text)
+  root.style.setProperty('--dash-text-secondary', theme.textSecondary)
+  root.style.setProperty('--dash-text-tertiary', theme.textTertiary)
+  root.style.setProperty('--dash-border', theme.border)
+  root.style.setProperty('--dash-border-strong', theme.borderStrong)
+
+  // Legacy property names kept for backwards compatibility with sidebar.tsx T object
   root.style.setProperty('--dash-surface1', theme.surface1)
   root.style.setProperty('--dash-surface2', theme.surface2)
   root.style.setProperty('--dash-text', theme.text)
 
-  // data-theme attribute so CSS selectors can target it
-  root.setAttribute('data-theme', theme.id)
-
-  // Direct body background (fastest paint)
-  document.body.style.backgroundColor = theme.bg
-
-  // Inject / update a <style> block with !important overrides so hardcoded
-  // inline-style values in server-rendered components are superseded.
-  let styleEl = document.getElementById('dash-theme-override') as HTMLStyleElement | null
-  if (!styleEl) {
-    styleEl = document.createElement('style')
-    styleEl.id = 'dash-theme-override'
-    document.head.appendChild(styleEl)
-  }
-
-  styleEl.textContent = `
-    /* Pescadora admin theme override — generated by ThemeSwitcher */
-    html, body { background-color: ${theme.bg} !important; }
-
-    /* Admin root wrapper (.admin-root in layout.tsx) */
-    .admin-root { background: ${theme.bg} !important; color: ${theme.text} !important; }
-
-    /* Sidebar aside — targeted by data attribute set in sidebar.tsx */
-    [data-dash-sidebar] { background: ${theme.surface1} !important; }
-
-    /* Generic surface helpers used by other dashboard panels */
-    [data-dash-surface1] { background: ${theme.surface1} !important; }
-    [data-dash-surface2] { background: ${theme.surface2} !important; }
-
-    /* Accent colour for elements that opt-in via data attribute */
-    [data-dash-accent-bg] { background: ${theme.accent} !important; }
-    [data-dash-accent-text] { color: ${theme.accent} !important; }
-  `
-
-  // Dispatch a CustomEvent so same-tab listeners (e.g. Sidebar) can react
+  // 4. Dispatch for sidebar and other same-tab listeners
   window.dispatchEvent(new CustomEvent('dash-theme-change', { detail: theme }))
+
+  // 5. Persist
+  localStorage.setItem(STORAGE_KEY, theme.id)
 }
 
 export function getThemeById(id: string): Theme {
@@ -167,7 +183,6 @@ export default function ThemeSwitcher() {
 
   function selectTheme(theme: Theme) {
     setActiveId(theme.id)
-    localStorage.setItem(STORAGE_KEY, theme.id)
     applyTheme(theme)
   }
 
@@ -240,8 +255,8 @@ export default function ThemeSwitcher() {
             bottom: 'calc(100% + 8px)',
             left: '8px',
             right: '8px',
-            background: '#1C1C1E',
-            border: '1px solid rgba(255,255,255,0.10)',
+            background: 'var(--dash-surface-2, #1C1C1E)',
+            border: '1px solid var(--dash-border, rgba(255,255,255,0.10))',
             borderRadius: '12px',
             padding: '14px',
             boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
@@ -295,7 +310,7 @@ export default function ThemeSwitcher() {
               margin: 0,
               fontFamily: font,
               fontSize: '11px',
-              color: '#86868B',
+              color: 'var(--dash-text-secondary, #86868B)',
               textAlign: 'center',
               letterSpacing: '0.02em',
             }}

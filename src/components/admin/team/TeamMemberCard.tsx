@@ -1,18 +1,21 @@
 'use client'
 
 import Image from 'next/image'
-import { useTransition, useState } from 'react'
-import { updateMemberRole, toggleAdminStatus } from '../../../../app/actions/team'
+import { useTransition, useState, useRef } from 'react'
+import { changeTeamMemberRole } from '../../../../app/actions/invite-team-member'
+import { toggleAdminStatus } from '../../../../app/actions/team'
 import DeleteMemberButton from './DeleteMemberButton'
 
+const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+
 const ROLE_OPTIONS = [
+  'admin_staff',
   'Fotógrafo',
   'Videógrafo',
   'Editor',
   'Director',
   'Productor',
   'Asistente',
-  'Admin',
 ] as const
 
 type RoleOption = (typeof ROLE_OPTIONS)[number]
@@ -52,13 +55,12 @@ export default function TeamMemberCard({ member, currentUserId }: Props) {
   const initial = displayName[0]?.toUpperCase() ?? '?'
   const avatarBg = nameToHsl(displayName)
 
-  const initialRole: RoleOption =
-    ROLE_OPTIONS.includes(member.role as RoleOption)
-      ? (member.role as RoleOption)
-      : 'Asistente'
+  const normaliseRole = (r: string | null): RoleOption =>
+    ROLE_OPTIONS.includes(r as RoleOption) ? (r as RoleOption) : 'Asistente'
 
-  const [currentRole, setCurrentRole] = useState<RoleOption>(initialRole)
+  const [currentRole, setCurrentRole] = useState<RoleOption>(normaliseRole(member.role))
   const [isAdmin, setIsAdmin] = useState(member.is_admin_team)
+  const [roleEditing, setRoleEditing] = useState(false)
   const [roleError, setRoleError] = useState<string | null>(null)
   const [adminError, setAdminError] = useState<string | null>(null)
   const [hovered, setHovered] = useState(false)
@@ -66,17 +68,45 @@ export default function TeamMemberCard({ member, currentUserId }: Props) {
   const [rolePending, startRoleTransition] = useTransition()
   const [adminPending, startAdminTransition] = useTransition()
 
-  function handleRoleChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const next = e.target.value as RoleOption
+  const selectRef = useRef<HTMLSelectElement>(null)
+
+  function openRoleEditor() {
+    if (rolePending) return
+    setRoleEditing(true)
+    // Focus the select after React renders it
+    setTimeout(() => selectRef.current?.focus(), 0)
+  }
+
+  function commitRole(value: string) {
+    const next = normaliseRole(value)
+    setRoleEditing(false)
+    if (next === currentRole) return
+    const prev = currentRole
     setCurrentRole(next)
     setRoleError(null)
     startRoleTransition(async () => {
-      const result = await updateMemberRole(member.id, next)
+      const result = await changeTeamMemberRole(member.id, next)
       if (result.error) {
         setRoleError(result.error)
-        setCurrentRole(currentRole)
+        setCurrentRole(prev)
       }
     })
+  }
+
+  function handleSelectChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    commitRole(e.target.value)
+  }
+
+  function handleSelectBlur(e: React.FocusEvent<HTMLSelectElement>) {
+    commitRole(e.target.value)
+  }
+
+  function handleSelectKeyDown(e: React.KeyboardEvent<HTMLSelectElement>) {
+    if (e.key === 'Enter') {
+      commitRole((e.target as HTMLSelectElement).value)
+    } else if (e.key === 'Escape') {
+      setRoleEditing(false)
+    }
   }
 
   function handleToggleAdmin() {
@@ -91,6 +121,9 @@ export default function TeamMemberCard({ member, currentUserId }: Props) {
       }
     })
   }
+
+  // Role badge color
+  const roleBadgeColor = currentRole === 'admin_staff' ? '#BF5AF2' : '#0071E3'
 
   return (
     <div
@@ -138,8 +171,7 @@ export default function TeamMemberCard({ member, currentUserId }: Props) {
               fontWeight: 700,
               color: '#ffffff',
               lineHeight: 1,
-              fontFamily:
-                "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+              fontFamily: FONT,
             }}
           >
             {initial}
@@ -201,46 +233,89 @@ export default function TeamMemberCard({ member, currentUserId }: Props) {
         </span>
       )}
 
-      {/* Role select */}
-      <div style={{ marginTop: '14px', width: '100%', position: 'relative' }}>
-        <select
-          value={currentRole}
-          onChange={handleRoleChange}
-          disabled={rolePending}
-          style={{
-            width: '100%',
-            backgroundColor: '#2C2C2E',
-            border: 'none',
-            borderRadius: '8px',
-            color: '#F5F5F7',
-            fontSize: '13px',
-            fontWeight: 500,
-            padding: '7px 10px',
-            appearance: 'none',
-            cursor: rolePending ? 'not-allowed' : 'pointer',
-            opacity: rolePending ? 0.6 : 1,
-            fontFamily:
-              "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
-            outline: 'none',
-          }}
-        >
-          {ROLE_OPTIONS.map((r) => (
-            <option key={r} value={r} style={{ backgroundColor: '#2C2C2E', color: '#F5F5F7' }}>
-              {r}
-            </option>
-          ))}
-        </select>
+      {/* Role — badge that becomes an inline select on click */}
+      <div style={{ marginTop: '12px', width: '100%', position: 'relative' }}>
+        {roleEditing ? (
+          <select
+            ref={selectRef}
+            defaultValue={currentRole}
+            onChange={handleSelectChange}
+            onBlur={handleSelectBlur}
+            onKeyDown={handleSelectKeyDown}
+            disabled={rolePending}
+            style={{
+              width: '100%',
+              backgroundColor: '#2C2C2E',
+              border: `1px solid ${roleBadgeColor}`,
+              borderRadius: '8px',
+              color: '#F5F5F7',
+              fontSize: '13px',
+              fontWeight: 500,
+              padding: '6px 10px',
+              appearance: 'none',
+              cursor: 'pointer',
+              fontFamily: FONT,
+              outline: 'none',
+            }}
+          >
+            {ROLE_OPTIONS.map((r) => (
+              <option key={r} value={r} style={{ backgroundColor: '#2C2C2E', color: '#F5F5F7' }}>
+                {r}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <button
+            onClick={openRoleEditor}
+            disabled={rolePending}
+            title="Cambiar rol"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 12px',
+              borderRadius: '20px',
+              border: 'none',
+              backgroundColor: `${roleBadgeColor}26`,
+              color: roleBadgeColor,
+              fontSize: '12px',
+              fontWeight: 600,
+              cursor: rolePending ? 'not-allowed' : 'pointer',
+              opacity: rolePending ? 0.6 : 1,
+              fontFamily: FONT,
+              transition: 'opacity 0.15s ease',
+              lineHeight: 1.4,
+            }}
+          >
+            {rolePending ? 'Guardando...' : currentRole}
+            {/* Pencil icon */}
+            <svg
+              width="11"
+              height="11"
+              viewBox="0 0 12 12"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              style={{ flexShrink: 0 }}
+            >
+              <path d="M8.5 1.5 10.5 3.5 4 10 1.5 10.5 2 8Z" />
+            </svg>
+          </button>
+        )}
 
-        {/* Spinner overlay */}
-        {rolePending && (
+        {/* Spinner overlay while pending in badge mode */}
+        {rolePending && !roleEditing && (
           <span
             style={{
               position: 'absolute',
-              right: '10px',
+              right: '-18px',
               top: '50%',
               transform: 'translateY(-50%)',
-              width: '12px',
-              height: '12px',
+              width: '11px',
+              height: '11px',
               border: '2px solid rgba(255,255,255,0.15)',
               borderTop: '2px solid #F5F5F7',
               borderRadius: '50%',
@@ -274,8 +349,7 @@ export default function TeamMemberCard({ member, currentUserId }: Props) {
           backgroundColor: isAdmin ? 'rgba(255,69,58,0.12)' : 'rgba(48,209,88,0.12)',
           color: isAdmin ? '#FF453A' : '#30D158',
           transition: 'opacity 0.15s ease, background-color 0.15s ease',
-          fontFamily:
-            "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+          fontFamily: FONT,
         }}
       >
         {adminPending ? 'Guardando...' : isAdmin ? 'Quitar admin' : 'Hacer admin'}

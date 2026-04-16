@@ -27,6 +27,27 @@ const PRIORITY_LABELS: Record<TaskPriority, string> = {
   high: 'High',
 }
 
+// Only show badge for medium and high
+const PRIORITY_BADGE: Partial<Record<TaskPriority, { label: string; color: string; bg: string }>> = {
+  medium: { label: 'Alta', color: '#FF9F0A', bg: 'rgba(255,159,10,0.12)' },
+  high:   { label: 'Urgente', color: '#FF453A', bg: 'rgba(255,69,58,0.12)' },
+}
+
+// ── Due-date color helper ──────────────────────────────────────────────────────
+
+function getDueDateColor(due: string): string {
+  // due is 'YYYY-MM-DD'; compare against today in local time
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const dueDate = new Date(`${due}T00:00:00`)
+  const diff = dueDate.getTime() - today.getTime()
+  const dayMs = 86_400_000
+  if (diff < 0) return '#FF453A'           // overdue
+  if (diff === 0) return '#FF9F0A'         // today
+  if (diff <= 6 * dayMs) return '#FFD60A' // this week
+  return '#48484A'                          // future
+}
+
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 interface TaskCardProps {
@@ -85,6 +106,7 @@ export function TaskCard({ task, onOpenDetail }: TaskCardProps) {
           e.currentTarget.style.backgroundColor = '#2C2C2E'
           e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
           e.currentTarget.style.borderLeft = `3px solid ${PRIORITY_BORDER_COLOR[task.priority]}`
+          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.4)'
         }
       }}
       onMouseLeave={(e) => {
@@ -92,6 +114,7 @@ export function TaskCard({ task, onOpenDetail }: TaskCardProps) {
           e.currentTarget.style.backgroundColor = '#1C1C1E'
           e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'
           e.currentTarget.style.borderLeft = `3px solid ${PRIORITY_BORDER_COLOR[task.priority]}`
+          e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.4)'
         }
       }}
     >
@@ -143,10 +166,10 @@ export function TaskCard({ task, onOpenDetail }: TaskCardProps) {
         {/* Footer row */}
         <div
           className="flex items-center gap-2"
-          style={{ justifyContent: 'space-between' }}
+          style={{ justifyContent: 'space-between', flexWrap: 'wrap', rowGap: '6px' }}
         >
-          {/* Priority indicator */}
-          <div className="flex items-center gap-1.5">
+          {/* Priority indicator + badge */}
+          <div className="flex items-center gap-1.5 min-w-0">
             <span
               className="rounded-full flex-shrink-0"
               style={{
@@ -165,22 +188,39 @@ export function TaskCard({ task, onOpenDetail }: TaskCardProps) {
             >
               {PRIORITY_LABELS[task.priority]}
             </span>
+            {PRIORITY_BADGE[task.priority] && (
+              <span
+                style={{
+                  backgroundColor: PRIORITY_BADGE[task.priority]!.bg,
+                  color: PRIORITY_BADGE[task.priority]!.color,
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  borderRadius: '5px',
+                  padding: '1px 5px',
+                  letterSpacing: '0.01em',
+                  flexShrink: 0,
+                }}
+              >
+                {PRIORITY_BADGE[task.priority]!.label}
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-2 ml-auto">
-            {/* Due date */}
+            {/* Due date — colored by urgency */}
             {task.due_date && (
               <span
                 style={{
-                  color: '#48484A',
+                  color: getDueDateColor(task.due_date),
                   fontSize: '11px',
-                  fontWeight: 400,
+                  fontWeight: 500,
                   letterSpacing: '0.01em',
+                  flexShrink: 0,
                 }}
               >
-                {new Date(task.due_date).toLocaleDateString('en-US', {
-                  month: 'short',
+                {new Date(`${task.due_date}T00:00:00`).toLocaleDateString('es-ES', {
                   day: 'numeric',
+                  month: 'short',
                 })}
               </span>
             )}

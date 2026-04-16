@@ -134,6 +134,85 @@ export default async function AdminLeadsPage() {
         {/* Stats strip */}
         <LeadsStats counts={countsByStatus} total={total} />
 
+        {/* Empty state — shown when there are no leads at all */}
+        {leads.length === 0 && !error && (
+          <div
+            style={{
+              padding: '80px 20px',
+              textAlign: 'center',
+              background: '#111111',
+              border: '1px solid rgba(255,255,255,0.06)',
+              borderRadius: '16px',
+              marginBottom: '32px',
+            }}
+          >
+            {/* Funnel SVG */}
+            <svg
+              width="80"
+              height="80"
+              viewBox="0 0 80 80"
+              fill="none"
+              aria-hidden="true"
+              style={{ display: 'block', margin: '0 auto 20px' }}
+            >
+              {/* Funnel outline */}
+              <path
+                d="M14 18h52l-20 24v18l-12-8V42L14 18z"
+                fill="#2C2C2E"
+                stroke="#3A3A3C"
+                strokeWidth="1.5"
+                strokeLinejoin="round"
+              />
+              {/* Funnel top line (filter) */}
+              <line x1="14" y1="18" x2="66" y2="18" stroke="#3A3A3C" strokeWidth="1.5" strokeLinecap="round" />
+              {/* Spout drip */}
+              <circle cx="40" cy="70" r="3" fill="#3A3A3C" />
+            </svg>
+            <h3
+              style={{
+                fontSize: '17px',
+                fontWeight: 600,
+                color: '#F5F5F7',
+                margin: '0 0 8px',
+                letterSpacing: '-0.02em',
+                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+              }}
+            >
+              Pipeline vacio
+            </h3>
+            <p
+              style={{
+                fontSize: '13px',
+                color: '#86868B',
+                margin: '0 0 24px',
+                lineHeight: 1.5,
+                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+              }}
+            >
+              Registra tu primer prospecto para empezar a hacer seguimiento.
+            </p>
+            <a
+              href="/admin/leads?showAdd=1"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 20px',
+                backgroundColor: '#0071E3',
+                color: '#FFFFFF',
+                fontSize: '14px',
+                fontWeight: 500,
+                letterSpacing: '-0.01em',
+                borderRadius: '980px',
+                textDecoration: 'none',
+                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+              }}
+            >
+              + Nuevo lead
+            </a>
+          </div>
+        )}
+
         {/* Pipeline kanban board */}
         <LeadsPipeline leads={leads} />
       </div>

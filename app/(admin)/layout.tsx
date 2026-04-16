@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import Sidebar from '@/components/admin/sidebar'
+import MobileNav from '@/components/admin/MobileNav'
+import { ToastProvider } from '@/components/admin/ui'
 
 export default async function AdminLayout({
   children,
@@ -30,34 +32,44 @@ export default async function AdminLayout({
     redirect('/login')
   }
 
+  const profileData = {
+    full_name: profile.full_name,
+    email: profile.email,
+    avatar_url: profile.avatar_url,
+  }
+
   return (
-    <div
-      className="admin-root"
-      style={{
-        display: 'flex',
-        minHeight: '100vh',
-        background: '#000000',
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
-        color: '#F5F5F7',
-      }}
-    >
-      <Sidebar
-        profile={{
-          full_name: profile.full_name,
-          email: profile.email,
-          avatar_url: profile.avatar_url,
-        }}
-      />
-      <main
+    <ToastProvider>
+      <div
+        className="admin-root"
         style={{
-          flex: 1,
-          minWidth: 0,
-          overflowY: 'auto',
-          padding: '32px 40px',
+          minHeight: '100vh',
+          background: '#000000',
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+          color: '#F5F5F7',
         }}
       >
-        {children}
-      </main>
-    </div>
+        {/* Mobile-only hamburger + drawer */}
+        <MobileNav profile={profileData} />
+
+        {/* Desktop layout: sidebar + content side by side */}
+        <div style={{ display: 'flex' }}>
+          <div className="sidebar-wrapper">
+            <Sidebar profile={profileData} />
+          </div>
+          <main
+            className="admin-main-content"
+            style={{
+              flex: 1,
+              minWidth: 0,
+              overflowY: 'auto',
+              padding: '32px 40px',
+            }}
+          >
+            {children}
+          </main>
+        </div>
+      </div>
+    </ToastProvider>
   )
 }

@@ -2,8 +2,29 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 import type { ProjectStatus, ProjectWithClient } from '@/lib/supabase/types'
 import { StatusChanger } from '@/components/admin/projects/StatusChanger'
+import { PROJECT_STATUS_STYLES } from '@/lib/status-colors'
+
+// ── Budget formatting ──────────────────────────────────────────────────────────
+
+export function formatBudget(
+  budget: number | null | undefined,
+  currency: string | null | undefined,
+): string {
+  if (budget == null) return '—'
+  const code = currency ?? 'MXN'
+  try {
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency: code,
+      maximumFractionDigits: 0,
+    }).format(budget)
+  } catch {
+    return `$${budget.toLocaleString('es-MX')} ${code}`
+  }
+}
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
@@ -22,24 +43,14 @@ const T = {
   font:          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
 } as const
 
-// ── Status config ─────────────────────────────────────────────────────────────
-
-type StatusConfig = {
-  label: string
-  color: string
-}
-
-const STATUS_CONFIG: Record<ProjectStatus, StatusConfig> = {
-  pre_production:  { label: 'Pre-produccion',  color: '#FF9F0A' },
-  production:      { label: 'Produccion',       color: '#0071E3' },
-  post_production: { label: 'Post-produccion',  color: '#BF5AF2' },
-  delivered:       { label: 'Entregado',        color: '#30D158' },
-}
-
 // ── Status pill ───────────────────────────────────────────────────────────────
 
 function StatusPill({ status }: { status: ProjectStatus }) {
-  const { label, color } = STATUS_CONFIG[status]
+  const { label, color, bg } = PROJECT_STATUS_STYLES[status] ?? {
+    label: status,
+    color: '#86868B',
+    bg: 'rgba(134,134,139,0.1)',
+  }
   return (
     <span
       style={{
@@ -48,7 +59,7 @@ function StatusPill({ status }: { status: ProjectStatus }) {
         borderRadius: '20px',
         fontSize: '12px',
         fontWeight: 600,
-        background: `${color}26`,
+        background: bg,
         color,
         fontFamily: T.font,
         whiteSpace: 'nowrap',
@@ -111,7 +122,7 @@ export function DaysRemaining({ endDate }: { endDate: string | null }) {
 
 // ── Table columns ─────────────────────────────────────────────────────────────
 
-const TABLE_COLS = 'grid-cols-[1fr_160px_160px_110px_110px_80px_36px]'
+const TABLE_COLS = 'grid-cols-[1fr_160px_160px_110px_110px_100px_80px_36px]'
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -144,7 +155,7 @@ export function ProjectsTable({ rows, pageSize = 15 }: ProjectsTableProps) {
           borderBottom: `1px solid ${T.borderHeader}`,
         }}
       >
-        {['Proyecto', 'Cliente', 'Estado', 'Inicio', 'Entrega', 'Dias rest.', ''].map(
+        {['Proyecto', 'Cliente', 'Estado', 'Inicio', 'Entrega', 'Presupuesto', 'Dias rest.', ''].map(
           (col) => (
             <span
               key={col}
@@ -165,9 +176,12 @@ export function ProjectsTable({ rows, pageSize = 15 }: ProjectsTableProps) {
       {/* Table rows */}
       <div>
         {paginatedRows.map((project, idx) => (
-          <div
+          <motion.div
             key={project.id}
             className={`proj-row grid ${TABLE_COLS} gap-4 items-center`}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, delay: idx * 0.03 }}
             style={{
               padding: '16px 20px',
               borderBottom:
@@ -260,6 +274,23 @@ export function ProjectsTable({ rows, pageSize = 15 }: ProjectsTableProps) {
               {formatDate(project.end_date)}
             </p>
 
+            {/* Budget */}
+            <p
+              style={{
+                fontSize: '12px',
+                color: (project as unknown as { budget: number | null }).budget != null
+                  ? T.textSecondary
+                  : T.textTertiary,
+                margin: 0,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {formatBudget(
+                (project as unknown as { budget: number | null }).budget,
+                (project as unknown as { currency: string | null }).currency,
+              )}
+            </p>
+
             {/* Days remaining */}
             <div>
               <DaysRemaining endDate={project.end_date} />
@@ -295,7 +326,7 @@ export function ProjectsTable({ rows, pageSize = 15 }: ProjectsTableProps) {
                 <path d="M2 6h8M6 2l4 4-4 4" />
               </svg>
             </Link>
-          </div>
+          </motion.div>
         ))}
       </div>
 

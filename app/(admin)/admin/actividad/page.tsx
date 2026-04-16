@@ -172,21 +172,26 @@ function IconDot({ color }: { color: string }) {
 function ClockIcon() {
   return (
     <svg
-      width="32"
-      height="32"
-      viewBox="0 0 32 32"
+      width="80"
+      height="80"
+      viewBox="0 0 80 80"
       fill="none"
       aria-hidden="true"
       style={{ display: 'block' }}
     >
-      <circle cx="16" cy="16" r="13" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" />
-      <path
-        d="M16 9v7l4 4"
-        stroke="rgba(255,255,255,0.25)"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      {/* Clock face */}
+      <circle cx="40" cy="40" r="26" fill="#2C2C2E" stroke="#3A3A3C" strokeWidth="1.5" />
+      {/* Hour hand */}
+      <line x1="40" y1="40" x2="40" y2="24" stroke="#48484A" strokeWidth="2" strokeLinecap="round" />
+      {/* Minute hand */}
+      <line x1="40" y1="40" x2="52" y2="48" stroke="#48484A" strokeWidth="2" strokeLinecap="round" />
+      {/* Center dot */}
+      <circle cx="40" cy="40" r="2.5" fill="#3A3A3C" />
+      {/* Tick marks at 12, 3, 6, 9 */}
+      <line x1="40" y1="16" x2="40" y2="20" stroke="#3A3A3C" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="64" y1="40" x2="60" y2="40" stroke="#3A3A3C" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="40" y1="64" x2="40" y2="60" stroke="#3A3A3C" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="16" y1="40" x2="20" y2="40" stroke="#3A3A3C" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   )
 }
@@ -431,26 +436,27 @@ export default async function ActividadPage() {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          gap: 14px;
+          gap: 16px;
           background: #111111;
           border: 1px solid rgba(255,255,255,0.08);
           border-radius: 16px;
-          padding: 48px 32px;
+          padding: 64px 32px;
           margin-top: 40px;
           text-align: center;
         }
         .act-empty-title {
-          font-size: 15px;
-          font-weight: 500;
+          font-size: 17px;
+          font-weight: 600;
           color: #F5F5F7;
           margin: 0;
+          letter-spacing: -0.02em;
         }
         .act-empty-desc {
           font-size: 13px;
           color: #86868B;
           margin: 0;
-          max-width: 320px;
-          line-height: 1.5;
+          max-width: 340px;
+          line-height: 1.6;
         }
       `}</style>
 
@@ -486,7 +492,7 @@ export default async function ActividadPage() {
             <ClockIcon />
             <p className="act-empty-title">Sin actividad reciente</p>
             <p className="act-empty-desc">
-              La actividad aparecera aqui cuando se creen leads, proyectos o entregables.
+              Todo quieto por ahora. La actividad aparecera aqui cuando se registren leads, se actualicen proyectos o se suban entregables.
             </p>
           </div>
         )}

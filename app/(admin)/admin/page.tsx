@@ -1,5 +1,15 @@
 import Link from 'next/link'
-import { FolderKanban, Users, Target, CheckCircle2, Film } from 'lucide-react'
+import {
+  FolderKanban,
+  Users,
+  Target,
+  CheckCircle2,
+  Film,
+  Plus,
+  UserPlus,
+  UserCheck,
+  TrendingUp,
+} from 'lucide-react'
 import { createServiceClient } from '@/lib/supabase/server'
 import type { ProjectStatus, LeadStatus, LeadSource, DeliverableStatus } from '@/lib/supabase/types'
 
@@ -43,6 +53,18 @@ interface LeadsByStatus {
   proposal: number
   won: number
   lost: number
+}
+
+interface AtRiskProject {
+  id: string
+  title: string
+  end_date: string
+  status: ProjectStatus
+  client_id: string | null
+}
+
+interface DeliveredProjectForSparkline {
+  end_date: string | null
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -90,6 +112,55 @@ function greetingLabel(): string {
   if (hour >= 5 && hour < 12) return 'Buenos dias'
   if (hour >= 12 && hour < 20) return 'Buenas tardes'
   return 'Buenas noches'
+}
+
+// Build last-5-months sparkline data from delivered projects grouped by end_date month
+function buildSparklinePoints(projects: DeliveredProjectForSparkline[]): number[] {
+  const now = new Date()
+  // produce [month-4, month-3, month-2, month-1, month-0] counts
+  const counts: number[] = [0, 0, 0, 0, 0]
+  for (const p of projects) {
+    if (!p.end_date) continue
+    const d = new Date(p.end_date)
+    const monthsDiff =
+      (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth())
+    if (monthsDiff >= 0 && monthsDiff < 5) {
+      counts[4 - monthsDiff]++
+    }
+  }
+  return counts
+}
+
+// Render a tiny 80x24 SVG polyline from an array of 5 values
+function SparklineSVG({ values, color }: { values: number[]; color: string }) {
+  const w = 80
+  const h = 24
+  const max = Math.max(...values, 1)
+  const pts = values
+    .map((v, i) => {
+      const x = (i / (values.length - 1)) * w
+      const y = h - (v / max) * (h - 2) - 1
+      return `${x},${y}`
+    })
+    .join(' ')
+  return (
+    <svg
+      width={w}
+      height={h}
+      viewBox={`0 0 ${w} ${h}`}
+      aria-hidden="true"
+      style={{ display: 'block' }}
+    >
+      <polyline
+        points={pts}
+        fill="none"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
 }
 
 const PROJECT_STATUS_LABEL: Record<ProjectStatus, string> = {
@@ -175,6 +246,11 @@ export default async function AdminDashboardPage() {
   in7Days.setDate(in7Days.getDate() + 7)
   const in7DaysDate = in7Days.toISOString().slice(0, 10)
 
+  // For sparkline: last 5 months of delivered projects (use end_date)
+  const fiveMonthsAgo = new Date(today)
+  fiveMonthsAgo.setMonth(fiveMonthsAgo.getMonth() - 4)
+  fiveMonthsAgo.setDate(1)
+
   const [
     { count: totalProjects },
     { count: activeProjects },
@@ -186,6 +262,8 @@ export default async function AdminDashboardPage() {
     { data: deliverablesRaw },
     { data: newLeadsRaw },
     { count: newLeadsCount },
+    { data: atRiskRaw },
+    { data: deliveredProjectsRaw },
   ] = await Promise.all([
     supabase
       .from('projects')
@@ -232,6 +310,20 @@ export default async function AdminDashboardPage() {
       .from('leads')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'new'),
+    // Projects in risk: end_date within next 5 days and not delivered
+    supabase
+      .from('projects')
+      .select('id, title, end_date, status, client_id')
+      .neq('status', 'delivered')
+      .lte('end_date', new Date(Date.now() + 5 * 86400000).toISOString())
+      .order('end_date', { ascending: true })
+      .limit(3),
+    // Delivered projects in the last 5 months for sparkline
+    supabase
+      .from('projects')
+      .select('end_date')
+      .eq('status', 'delivered')
+      .gte('end_date', fiveMonthsAgo.toISOString().slice(0, 10)),
   ])
 
   // Aggregate leads by status
@@ -276,6 +368,21 @@ export default async function AdminDashboardPage() {
   const newLeads: NewLead[] = (newLeadsRaw ?? []) as NewLead[]
   const totalNewLeads = newLeadsCount ?? 0
 
+  // At-risk projects
+  const atRiskProjects: AtRiskProject[] = (atRiskRaw ?? []).map((p) => ({
+    id: p.id as string,
+    title: p.title as string,
+    end_date: p.end_date as string,
+    status: p.status as ProjectStatus,
+    client_id: p.client_id as string | null,
+  }))
+
+  // Sparkline data
+  const sparklineValues = buildSparklinePoints(
+    (deliveredProjectsRaw ?? []) as DeliveredProjectForSparkline[]
+  )
+  const sparklineAccent = STAT_ACCENT[0]
+
   // ── Stats cards definition ─────────────────────────────────────────────────
   const statCards = [
     {
@@ -284,6 +391,7 @@ export default async function AdminDashboardPage() {
       value: activeProjects ?? 0,
       icon: FolderKanban,
       accent: STAT_ACCENT[0],
+      href: '/admin/projects?status=active',
     },
     {
       label: 'CLIENTES',
@@ -291,6 +399,7 @@ export default async function AdminDashboardPage() {
       value: totalClients ?? 0,
       icon: Users,
       accent: STAT_ACCENT[1],
+      href: '/admin/clients',
     },
     {
       label: 'LEADS ACTIVOS',
@@ -298,6 +407,7 @@ export default async function AdminDashboardPage() {
       value: activeLeads,
       icon: Target,
       accent: STAT_ACCENT[2],
+      href: '/admin/leads',
     },
     {
       label: 'LEADS GANADOS',
@@ -305,6 +415,7 @@ export default async function AdminDashboardPage() {
       value: leadsByStatus.won,
       icon: CheckCircle2,
       accent: STAT_ACCENT[3],
+      href: '/admin/leads',
     },
     {
       label: 'VIDEOS PORTFOLIO',
@@ -312,6 +423,28 @@ export default async function AdminDashboardPage() {
       value: totalPortfolioVideos ?? 0,
       icon: Film,
       accent: STAT_ACCENT[4],
+      href: '/admin/portfolio',
+    },
+  ] as const
+
+  const quickActions = [
+    {
+      label: 'Nuevo proyecto',
+      href: '/admin/projects/new',
+      icon: Plus,
+      variant: 'primary' as const,
+    },
+    {
+      label: 'Nuevo lead',
+      href: '/admin/leads?showAdd=1',
+      icon: UserPlus,
+      variant: 'secondary' as const,
+    },
+    {
+      label: 'Nuevo cliente',
+      href: '/admin/clients',
+      icon: UserCheck,
+      variant: 'secondary' as const,
     },
   ] as const
 
@@ -344,10 +477,13 @@ export default async function AdminDashboardPage() {
           display: flex;
           flex-direction: column;
           gap: 10px;
-          transition: border-color 0.2s;
+          text-decoration: none;
+          color: inherit;
+          transition: border-color 0.2s, transform 0.2s;
         }
         .apd-stat-card:hover {
-          border-color: rgba(255,255,255,0.14);
+          border-color: rgba(255,255,255,0.15) !important;
+          transform: translateY(-1px);
         }
         .apd-list-card {
           background: #111111;
@@ -409,6 +545,7 @@ export default async function AdminDashboardPage() {
           display: flex;
           align-items: center;
           justify-content: center;
+          gap: 8px;
           padding: 12px 20px;
           background: #0071E3;
           border-radius: 10px;
@@ -416,16 +553,18 @@ export default async function AdminDashboardPage() {
           font-size: 14px;
           font-weight: 500;
           text-decoration: none;
-          transition: opacity 0.15s;
+          transition: opacity 0.15s, transform 0.15s;
           flex: 1;
         }
         .dh-action-primary:hover {
-          opacity: 0.85;
+          opacity: 0.88;
+          transform: translateY(-1px);
         }
         .dh-action-secondary {
           display: flex;
           align-items: center;
           justify-content: center;
+          gap: 8px;
           padding: 12px 20px;
           background: #1C1C1E;
           border: 1px solid rgba(255,255,255,0.1);
@@ -434,11 +573,45 @@ export default async function AdminDashboardPage() {
           font-size: 14px;
           font-weight: 500;
           text-decoration: none;
-          transition: background 0.15s;
+          transition: background 0.15s, border-color 0.15s, transform 0.15s;
           flex: 1;
         }
         .dh-action-secondary:hover {
           background: #2C2C2E;
+          border-color: rgba(255,255,255,0.18);
+          transform: translateY(-1px);
+        }
+        .apd-actions-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 12px;
+        }
+        @media (max-width: 640px) {
+          .apd-actions-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+        /* Alert icon for at-risk projects — CSS triangle, no emoji */
+        .apd-alert-icon {
+          display: inline-block;
+          width: 0;
+          height: 0;
+          border-left: 7px solid transparent;
+          border-right: 7px solid transparent;
+          border-bottom: 12px solid currentColor;
+          flex-shrink: 0;
+          position: relative;
+          top: 1px;
+        }
+        .apd-alert-icon::after {
+          content: '';
+          position: absolute;
+          width: 2px;
+          height: 5px;
+          background: #111111;
+          left: -1px;
+          top: 3px;
+          border-radius: 1px;
         }
       `}</style>
 
@@ -469,7 +642,7 @@ export default async function AdminDashboardPage() {
           </p>
         </div>
 
-        {/* ── Stat cards row ── */}
+        {/* ── Stat cards row — now clickable Links ── */}
         <div
           style={{
             display: 'grid',
@@ -478,8 +651,8 @@ export default async function AdminDashboardPage() {
             marginBottom: '28px',
           }}
         >
-          {statCards.map(({ label, sublabel, value, icon: Icon, accent }) => (
-            <div key={label} className="apd-stat-card">
+          {statCards.map(({ label, sublabel, value, icon: Icon, accent, href }) => (
+            <Link key={label} href={href} className="apd-stat-card">
               <div
                 style={{
                   width: '36px',
@@ -526,12 +699,177 @@ export default async function AdminDashboardPage() {
                     margin: 0,
                   }}
                 >
+                  {/* Revenue card gets a sparkline below the sublabel */}
                   {sublabel}
                 </p>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
+
+        {/* ── Revenue sparkline card (standalone, full-width accent) ── */}
+        <div
+          style={{
+            background: '#111111',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '12px',
+            padding: '16px 20px',
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '16px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div
+              style={{
+                width: '30px',
+                height: '30px',
+                borderRadius: '8px',
+                background: `${sparklineAccent}1A`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <TrendingUp size={15} color={sparklineAccent} strokeWidth={1.8} />
+            </div>
+            <div>
+              <p
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: '#86868B',
+                  margin: '0 0 2px 0',
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Proyectos entregados
+              </p>
+              <p style={{ fontSize: '11px', color: '#48484A', margin: 0 }}>
+                ultimos 5 meses
+              </p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span
+              style={{
+                fontSize: '22px',
+                fontWeight: 700,
+                color: '#F5F5F7',
+                letterSpacing: '-0.02em',
+              }}
+            >
+              {sparklineValues.reduce((a, b) => a + b, 0)}
+            </span>
+            <SparklineSVG values={sparklineValues} color={sparklineAccent} />
+          </div>
+        </div>
+
+        {/* ── Proyectos en riesgo ── */}
+        {atRiskProjects.length > 0 && (
+          <div
+            style={{
+              background: '#111111',
+              border: '1px solid rgba(255,69,58,0.25)',
+              borderRadius: '12px',
+              padding: '16px 20px',
+              marginBottom: '16px',
+            }}
+          >
+            <p
+              style={{
+                fontSize: '13px',
+                fontWeight: 600,
+                color: '#FF453A',
+                margin: '0 0 12px 0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <span
+                className="apd-alert-icon"
+                style={{ color: '#FF453A' }}
+                aria-hidden="true"
+              />
+              Proyectos en riesgo
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              {atRiskProjects.map((proj) => {
+                const days = daysUntil(proj.end_date)
+                const overdue = days < 0
+                const daysColor = overdue ? '#FF453A' : '#FF9F0A'
+                const daysLabel = overdue ? `${Math.abs(days)} dias vencido` : `${days} dias`
+                return (
+                  <Link
+                    key={proj.id}
+                    href={`/admin/projects/${proj.id}`}
+                    className="dh-row dh-link"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '12px',
+                      padding: '8px 10px',
+                      borderRadius: '8px',
+                      textDecoration: 'none',
+                      transition: 'background 0.15s',
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: '13px',
+                        color: '#F5F5F7',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        flex: 1,
+                      }}
+                    >
+                      {proj.title}
+                    </span>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          fontWeight: 500,
+                          color: PROJECT_STATUS_COLOR[proj.status],
+                          background: PROJECT_STATUS_BG[proj.status],
+                          borderRadius: '6px',
+                          padding: '3px 8px',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {PROJECT_STATUS_LABEL[proj.status]}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          color: daysColor,
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {daysLabel}
+                      </span>
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* ── Entregas + Leads sin atender (2 cols) ── */}
         <div
@@ -799,16 +1137,17 @@ export default async function AdminDashboardPage() {
           >
             Acciones rapidas
           </p>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <Link href="/admin/projects/new" className="dh-action-primary">
-              + Nuevo proyecto
-            </Link>
-            <Link href="/admin/leads?showAdd=1" className="dh-action-secondary">
-              + Nuevo lead
-            </Link>
-            <Link href="/admin/clients" className="dh-action-secondary">
-              + Nuevo cliente
-            </Link>
+          <div className="apd-actions-grid">
+            {quickActions.map(({ label, href, icon: ActionIcon, variant }) => (
+              <Link
+                key={href}
+                href={href}
+                className={variant === 'primary' ? 'dh-action-primary' : 'dh-action-secondary'}
+              >
+                <ActionIcon size={15} strokeWidth={2} />
+                {label}
+              </Link>
+            ))}
           </div>
         </div>
 

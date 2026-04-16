@@ -199,6 +199,7 @@ export interface CreateTaskPayload {
   boardId: string
   title: string
   priority: 'low' | 'medium' | 'high'
+  due_date?: string | null
   projectId?: string
 }
 
@@ -223,6 +224,7 @@ export function useCreateTask(projectId?: string) {
           board_id: variables.boardId,
           title: variables.title,
           priority: variables.priority,
+          due_date: variables.due_date ?? null,
           position: nextPosition,
         })
         .select('*, assignee:profiles(*)')
@@ -246,7 +248,7 @@ export function useCreateTask(projectId?: string) {
         description: null,
         priority: variables.priority,
         assignee_id: null,
-        due_date: null,
+        due_date: variables.due_date ?? null,
         position: 0,
         assignee: null,
       }

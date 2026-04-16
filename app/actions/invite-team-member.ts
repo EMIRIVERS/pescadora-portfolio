@@ -71,6 +71,24 @@ export async function inviteTeamMember(formData: FormData): Promise<{ error?: st
   return {}
 }
 
+// ── Change role of an existing team member ────────────────────────────────────
+
+export async function changeTeamMemberRole(
+  profileId: string,
+  newRole: string,
+): Promise<{ error?: string }> {
+  if (!profileId) return { error: 'ID de perfil requerido' }
+  const db = createServiceClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (db as any)
+    .from('profiles')
+    .update({ role: newRole })
+    .eq('id', profileId)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/team')
+  return {}
+}
+
 // ── Add team member manually (creates Auth user, no invitation email) ─────────
 
 export async function addTeamMemberManually(

@@ -1,5 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import type { LeadStatus, LeadSource, ProjectStatus } from '@/lib/supabase/types'
+import PeriodSelector from './PeriodSelector'
 
 // ─── Local types ─────────────────────────────────────────────────────────────
 
@@ -11,21 +12,25 @@ interface LeadRow {
   budget_range: string | null
 }
 
+interface ProjectDeliveredRow {
+  id: string
+  title: string
+  status: ProjectStatus
+  budget: number | null
+  currency: string | null
+  client_id: string | null
+  created_at: string
+  end_date: string | null
+}
+
 interface ProjectRow {
   id: string
   title: string
   status: ProjectStatus
   created_at: string
   client_id: string | null
-}
-
-interface ProjectBudgetRow {
-  id: string
-  status: ProjectStatus
   budget: number | null
-  currency: string | null
-  client_id: string | null
-  title: string
+  end_date: string | null
 }
 
 interface ClientRow {
@@ -36,26 +41,39 @@ interface ClientRow {
 
 interface MonthBucket {
   year: number
-  month: number // 0-indexed
+  month: number
   label: string
 }
 
-interface ClientBudgetSummary {
-  clientId: string
-  clientName: string
-  totalBudget: number
-  projectCount: number
+// ─── Period config ────────────────────────────────────────────────────────────
+
+type Period = 'month' | '3months' | 'year' | 'all'
+
+function getPeriodStart(period: Period): string | null {
+  const now = new Date()
+  if (period === 'month') {
+    const d = new Date(now.getFullYear(), now.getMonth(), 1)
+    return d.toISOString()
+  }
+  if (period === '3months') {
+    const d = new Date(now.getFullYear(), now.getMonth() - 2, 1)
+    return d.toISOString()
+  }
+  if (period === 'year') {
+    const d = new Date(now.getFullYear(), 0, 1)
+    return d.toISOString()
+  }
+  return null
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const LEAD_STATUS_ORDER: LeadStatus[] = [
+const LEAD_STATUS_FUNNEL: LeadStatus[] = [
   'new',
   'contacted',
   'qualified',
   'proposal',
   'won',
-  'lost',
 ]
 
 const LEAD_STATUS_LABEL: Record<LeadStatus, string> = {
@@ -83,6 +101,15 @@ const LEAD_SOURCE_LABEL: Record<LeadSource, string> = {
   referral: 'Referido',
   manual: 'Manual',
   other: 'Otro',
+}
+
+const LEAD_SOURCE_COLOR: Record<LeadSource, string> = {
+  instagram: '#BF5AF2',
+  web: '#0071E3',
+  whatsapp: '#30D158',
+  referral: '#FF9F0A',
+  manual: '#FF6961',
+  other: '#48484A',
 }
 
 const PROJECT_STATUS_ORDER: ProjectStatus[] = [
@@ -113,6 +140,15 @@ const PROJECT_STATUS_BG: Record<ProjectStatus, string> = {
   delivered: 'rgba(0,113,227,0.12)',
 }
 
+const LEAD_SOURCES: LeadSource[] = [
+  'instagram',
+  'web',
+  'whatsapp',
+  'referral',
+  'manual',
+  'other',
+]
+
 const MONTH_NAMES_ES = [
   'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
   'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',
@@ -128,22 +164,33 @@ function getLast6Months(): MonthBucket[] {
     buckets.push({
       year: d.getFullYear(),
       month: d.getMonth(),
-      label: `${MONTH_NAMES_ES[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`,
+      label: MONTH_NAMES_ES[d.getMonth()],
     })
   }
   return buckets
 }
 
-function isInMonth(isoDate: string, year: number, month: number): boolean {
+function isInMonth(isoDate: string | null, year: number, month: number): boolean {
+  if (!isoDate) return false
   const d = new Date(isoDate)
   return d.getFullYear() === year && d.getMonth() === month
 }
 
-function formatPercent(value: number): string {
-  return `${value.toFixed(1)}%`
+function formatMXN(value: number): string {
+  if (value >= 1_000_000) {
+    return `$${(value / 1_000_000).toFixed(1)}M`
+  }
+  if (value >= 1_000) {
+    return `$${(value / 1_000).toFixed(0)}k`
+  }
+  return new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency: 'MXN',
+    maximumFractionDigits: 0,
+  }).format(value)
 }
 
-function formatMXN(value: number): string {
+function formatMXNFull(value: number): string {
   return new Intl.NumberFormat('es-MX', {
     style: 'currency',
     currency: 'MXN',
@@ -153,173 +200,164 @@ function formatMXN(value: number): string {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default async function ReportesPage() {
+interface PageProps {
+  searchParams: Promise<{ period?: string }>
+}
+
+export default async function ReportesPage({ searchParams }: PageProps) {
+  const params = await searchParams
+  const rawPeriod = params.period ?? 'all'
+  const period: Period = ['month', '3months', 'year', 'all'].includes(rawPeriod)
+    ? (rawPeriod as Period)
+    : 'all'
+
   const supabase = createServiceClient()
+  const periodStart = getPeriodStart(period)
 
-  const [
-    { data: allLeadsRaw },
-    { data: allProjectsRaw },
-    { data: allProjectsBudgetRaw },
-    { data: allClientsRaw },
-  ] = await Promise.all([
-    supabase
-      .from('leads')
-      .select('id, status, source, created_at, budget_range'),
-    supabase
-      .from('projects')
-      .select('id, title, status, created_at, client_id'),
-    supabase
-      .from('projects')
-      .select('id, title, status, budget, currency, client_id'),
-    supabase
-      .from('clients')
-      .select('id, name, created_at'),
-  ])
+  // ── Queries ──────────────────────────────────────────────────────────────
 
-  const allLeads: LeadRow[] = (allLeadsRaw ?? []) as LeadRow[]
-  const allProjects: ProjectRow[] = (allProjectsRaw ?? []) as ProjectRow[]
-  const allProjectsBudget: ProjectBudgetRow[] = (allProjectsBudgetRaw ?? []) as unknown as ProjectBudgetRow[]
+  // All leads in period
+  let leadsQuery = supabase
+    .from('leads')
+    .select('id, status, source, created_at, budget_range')
+  if (periodStart) {
+    leadsQuery = leadsQuery.gte('created_at', periodStart)
+  }
+  const { data: allLeadsRaw } = await leadsQuery
+
+  // All projects in period (for pipeline + status distribution)
+  let projectsQuery = supabase
+    .from('projects')
+    .select('id, title, status, created_at, client_id, budget, end_date')
+  if (periodStart) {
+    projectsQuery = projectsQuery.gte('created_at', periodStart)
+  }
+  const { data: allProjectsRaw } = await projectsQuery
+
+  // Delivered projects in period (for revenue)
+  let deliveredQuery = supabase
+    .from('projects')
+    .select('id, title, status, budget, currency, client_id, created_at, end_date')
+    .eq('status', 'delivered')
+  if (periodStart) {
+    deliveredQuery = deliveredQuery.gte('created_at', periodStart)
+  }
+  const { data: deliveredRaw } = await deliveredQuery
+
+  // Clients
+  const { data: allClientsRaw } = await supabase
+    .from('clients')
+    .select('id, name, created_at')
+
+  const allLeads: LeadRow[] = (allLeadsRaw ?? []) as unknown as LeadRow[]
+  const allProjects: ProjectRow[] = (allProjectsRaw ?? []) as unknown as ProjectRow[]
+  const deliveredProjects: ProjectDeliveredRow[] = (deliveredRaw ?? []) as unknown as ProjectDeliveredRow[]
   const clients: ClientRow[] = (allClientsRaw ?? []) as unknown as ClientRow[]
 
-  // ── 1. Summary metrics ────────────────────────────────────────────────────
+  // ── KPI calculations ─────────────────────────────────────────────────────
 
+  const totalRevenue = deliveredProjects.reduce((s, p) => s + (p.budget ?? 0), 0)
+  const completedCount = deliveredProjects.length
   const totalLeads = allLeads.length
   const wonLeads = allLeads.filter((l) => l.status === 'won').length
+  const lostLeads = allLeads.filter((l) => l.status === 'lost').length
   const conversionRate = totalLeads > 0 ? (wonLeads / totalLeads) * 100 : 0
+  const avgTicket = completedCount > 0 ? totalRevenue / completedCount : 0
 
-  // Active clients = clients that have at least 1 project with status != 'delivered'
-  const activeProjectClientIds = new Set(
-    allProjects
-      .filter((p) => p.status !== 'delivered' && p.client_id !== null)
-      .map((p) => p.client_id as string),
-  )
-  const activeClients = clients.filter((c) =>
-    activeProjectClientIds.has(c.id),
-  ).length
-
-  // Total budget from all projects
-  const totalBudget = allProjectsBudget.reduce(
-    (s, p) => s + (p.budget ?? 0),
-    0,
-  )
-
-  // ── 2. Leads pipeline by status ───────────────────────────────────────────
+  // ── Pipeline funnel ───────────────────────────────────────────────────────
 
   const leadsByStatus: Record<LeadStatus, number> = {
-    new: 0,
-    contacted: 0,
-    qualified: 0,
-    proposal: 0,
-    won: 0,
-    lost: 0,
+    new: 0, contacted: 0, qualified: 0, proposal: 0, won: 0, lost: 0,
   }
   for (const lead of allLeads) {
     leadsByStatus[lead.status]++
   }
-  const totalLeadCount = Math.max(
-    Object.values(leadsByStatus).reduce((a, b) => a + b, 0),
-    1,
-  )
+  const funnelMax = Math.max(leadsByStatus['new'], 1)
 
-  // ── 3. Projects by status ─────────────────────────────────────────────────
+  // ── Revenue by month (last 6 months — always uses ALL delivered projects for this chart) ──
+
+  const { data: allDeliveredRaw } = await supabase
+    .from('projects')
+    .select('id, budget, end_date, created_at, status')
+    .eq('status', 'delivered')
+
+  const allDelivered = (allDeliveredRaw ?? []) as unknown as ProjectDeliveredRow[]
+  const months = getLast6Months()
+  const monthlyRevenue = months.map((bucket) => {
+    const revenue = allDelivered
+      .filter((p) => isInMonth(p.end_date ?? p.created_at, bucket.year, bucket.month))
+      .reduce((s, p) => s + (p.budget ?? 0), 0)
+    return { label: bucket.label, revenue }
+  })
+  const maxRevenue = Math.max(...monthlyRevenue.map((m) => m.revenue), 1)
+
+  // ── Projects by status ────────────────────────────────────────────────────
 
   const projectsByStatus: Record<ProjectStatus, number> = {
-    pre_production: 0,
-    production: 0,
-    post_production: 0,
-    delivered: 0,
+    pre_production: 0, production: 0, post_production: 0, delivered: 0,
   }
   for (const project of allProjects) {
     projectsByStatus[project.status]++
   }
+  const totalProjects = Math.max(allProjects.length, 1)
 
-  // ── 3b. Budget by status ──────────────────────────────────────────────────
+  // ── Top 5 projects by budget ──────────────────────────────────────────────
 
-  const budgetByStatus: Record<ProjectStatus, number> = {
-    pre_production: 0,
-    production: 0,
-    post_production: 0,
-    delivered: 0,
-  }
-  for (const project of allProjectsBudget) {
-    budgetByStatus[project.status] += project.budget ?? 0
-  }
-  const hasBudgetData = allProjectsBudget.some((p) => (p.budget ?? 0) > 0)
+  const clientMap = new Map<string, string>(clients.map((c) => [c.id, c.name]))
 
-  // ── 4. Leads by source ────────────────────────────────────────────────────
+  const top5Projects = [...allProjects]
+    .filter((p) => (p.budget ?? 0) > 0)
+    .sort((a, b) => (b.budget ?? 0) - (a.budget ?? 0))
+    .slice(0, 5)
 
-  const LEAD_SOURCES: LeadSource[] = [
-    'instagram',
-    'web',
-    'whatsapp',
-    'referral',
-    'manual',
-    'other',
-  ]
+  const maxProjectBudget = Math.max(...top5Projects.map((p) => p.budget ?? 0), 1)
+
+  // ── Leads by source ───────────────────────────────────────────────────────
+
   const leadsBySource: Record<LeadSource, number> = {
-    instagram: 0,
-    web: 0,
-    whatsapp: 0,
-    referral: 0,
-    manual: 0,
-    other: 0,
+    instagram: 0, web: 0, whatsapp: 0, referral: 0, manual: 0, other: 0,
   }
   for (const lead of allLeads) {
     leadsBySource[lead.source]++
   }
-  const maxSourceCount = Math.max(...Object.values(leadsBySource), 1)
+  const totalLeadsForSource = Math.max(allLeads.length, 1)
 
-  // ── 5. Activity by month (last 6 months) ──────────────────────────────────
+  // Build conic-gradient segments for donut
+  type SourceWithData = { source: LeadSource; count: number; pct: number; color: string }
+  const sourcesWithData: SourceWithData[] = LEAD_SOURCES
+    .map((source) => ({
+      source,
+      count: leadsBySource[source],
+      pct: Math.round((leadsBySource[source] / totalLeadsForSource) * 100),
+      color: LEAD_SOURCE_COLOR[source],
+    }))
+    .filter((s) => s.count > 0)
+    .sort((a, b) => b.count - a.count)
 
-  const months = getLast6Months()
-  const monthlyActivity = months.map((bucket) => ({
-    label: bucket.label,
-    newLeads: allLeads.filter((l) =>
-      isInMonth(l.created_at, bucket.year, bucket.month),
-    ).length,
-    newProjects: allProjects.filter((p) =>
-      isInMonth(p.created_at, bucket.year, bucket.month),
-    ).length,
-  }))
-
-  // ── 6. Top 10 projects by created_at desc ────────────────────────────────
-
-  const top10Projects = [...allProjects]
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, 10)
-
-  // ── 7. Top 5 clients by budget ────────────────────────────────────────────
-
-  const clientMap = new Map<string, ClientRow>(
-    clients.map((c) => [c.id, c]),
-  )
-
-  const clientBudgetMap = new Map<string, { totalBudget: number; projectCount: number; clientName: string }>()
-  for (const project of allProjectsBudget) {
-    if (project.client_id === null) continue
-    const budget = project.budget ?? 0
-    const existing = clientBudgetMap.get(project.client_id)
-    const clientName = clientMap.get(project.client_id)?.name ?? 'Cliente desconocido'
-    if (existing) {
-      existing.totalBudget += budget
-      existing.projectCount += 1
-    } else {
-      clientBudgetMap.set(project.client_id, {
-        totalBudget: budget,
-        projectCount: 1,
-        clientName,
-      })
-    }
+  let conicStops = ''
+  let runningPct = 0
+  for (const s of sourcesWithData) {
+    conicStops += `${s.color} ${runningPct}% ${runningPct + s.pct}%, `
+    runningPct += s.pct
   }
-
-  const topClients: ClientBudgetSummary[] = [...clientBudgetMap.entries()]
-    .map(([clientId, data]) => ({ clientId, ...data }))
-    .sort((a, b) => b.totalBudget - a.totalBudget)
-    .slice(0, 5)
-
-  const maxClientBudget = Math.max(...topClients.map((c) => c.totalBudget), 1)
+  // Fill remainder with dark
+  if (runningPct < 100) {
+    conicStops += `#1C1C1E ${runningPct}% 100%`
+  } else {
+    conicStops = conicStops.slice(0, -2)
+  }
+  const conicGradient = sourcesWithData.length > 0
+    ? `conic-gradient(${conicStops})`
+    : 'conic-gradient(#1C1C1E 0% 100%)'
 
   // ─────────────────────────────────────────────────────────────────────────
+
+  const PERIOD_LABEL: Record<Period, string> = {
+    month: 'Este mes',
+    '3months': 'Ultimos 3 meses',
+    year: 'Este ano',
+    all: 'Todo el tiempo',
+  }
 
   return (
     <>
@@ -338,758 +376,397 @@ export default async function ReportesPage() {
           border-radius: 16px;
           overflow: hidden;
         }
-        .rpt-card:hover {
-          border-color: rgba(255,255,255,0.12);
+        .rpt-card-header {
+          padding: 18px 20px 14px;
+          border-bottom: 1px solid rgba(255,255,255,0.06);
         }
-        .rpt-stat-card {
+        .rpt-card-title {
+          font-size: 15px;
+          font-weight: 600;
+          color: #F5F5F7;
+          margin: 0;
+          letter-spacing: -0.01em;
+        }
+        .rpt-card-subtitle {
+          font-size: 12px;
+          color: #48484A;
+          margin: 3px 0 0 0;
+        }
+        .rpt-kpi-card {
           background: #111111;
           border: 1px solid rgba(255,255,255,0.08);
           border-radius: 16px;
-          padding: 24px;
+          padding: 22px 24px;
           transition: border-color 0.2s;
         }
-        .rpt-stat-card:hover {
-          border-color: rgba(255,255,255,0.14);
-        }
-        .rpt-proj-status-card {
-          background: #111111;
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 16px;
-          padding: 20px 24px;
-          transition: border-color 0.2s;
-        }
-        .rpt-proj-status-card:hover {
-          border-color: rgba(255,255,255,0.14);
-        }
-        .rpt-table-row {
-          transition: background 0.15s;
-        }
-        .rpt-table-row:hover {
-          background: rgba(255,255,255,0.03);
-        }
-        .rpt-progress-bar-track {
+        .rpt-kpi-card:hover { border-color: rgba(255,255,255,0.14); }
+        .rpt-table-row { transition: background 0.15s; }
+        .rpt-table-row:hover { background: rgba(255,255,255,0.03); }
+        .rpt-bar-track {
           width: 100%;
-          height: 6px;
-          background: rgba(255,255,255,0.06);
-          border-radius: 3px;
-          overflow: hidden;
-          margin-top: 6px;
-        }
-        .rpt-source-bar-track {
-          flex: 1;
           height: 5px;
           background: rgba(255,255,255,0.06);
           border-radius: 3px;
           overflow: hidden;
+          margin-top: 7px;
         }
-        .rpt-client-bar-track {
-          flex: 1;
-          height: 6px;
-          background: rgba(255,255,255,0.06);
+        .rpt-bar-fill {
+          height: 100%;
           border-radius: 3px;
-          overflow: hidden;
+          transition: width 0.4s ease;
+        }
+        .rpt-col-chart {
+          display: flex;
+          align-items: flex-end;
+          gap: 8px;
+          height: 160px;
+          padding: 0 20px 0 20px;
+        }
+        .rpt-col-wrap {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 6px;
+          height: 100%;
+          justify-content: flex-end;
+        }
+        .rpt-col-bar {
+          width: 100%;
+          background: linear-gradient(180deg, #0A84FF 0%, #0071E3 100%);
+          border-radius: 4px 4px 0 0;
+          min-height: 3px;
+          transition: height 0.4s ease;
+          position: relative;
+          cursor: default;
+        }
+        .rpt-col-bar:hover { background: linear-gradient(180deg, #40A8FF 0%, #0A84FF 100%); }
+        .rpt-col-label {
+          font-size: 11px;
+          color: #48484A;
+          letter-spacing: 0.02em;
+        }
+        .rpt-funnel-row {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0;
+        }
+        .rpt-funnel-bar {
+          height: 36px;
+          border-radius: 6px;
+          display: flex;
+          align-items: center;
+          padding: 0 14px;
+          transition: opacity 0.2s;
+          position: relative;
+        }
+        .rpt-funnel-bar:hover { opacity: 0.85; }
+        .rpt-status-badge {
+          display: inline-block;
+          font-size: 10px;
+          font-weight: 600;
+          border-radius: 5px;
+          padding: 2px 8px;
+          letter-spacing: 0.04em;
         }
       `}</style>
 
       <div className="rpt-root">
 
-        {/* ── Header ─────────────────────────────────────────────────────── */}
-        <div style={{ marginBottom: '2.5rem' }}>
-          <h1
-            style={{
-              fontSize: '28px',
-              fontWeight: 600,
-              color: '#F5F5F7',
-              margin: '0 0 6px 0',
-              letterSpacing: '-0.02em',
-            }}
-          >
-            Reportes y Analytics
-          </h1>
-          <p style={{ fontSize: '13px', color: '#86868B', margin: 0 }}>
-            Metricas de negocio en tiempo real
-          </p>
+        {/* ── Header ─────────────────────────────────────────────────────────── */}
+        <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', flexWrap: 'wrap' }}>
+          <div>
+            <h1 style={{ fontSize: '28px', fontWeight: 600, color: '#F5F5F7', margin: '0 0 4px 0', letterSpacing: '-0.02em' }}>
+              Reportes y Analytics
+            </h1>
+            <p style={{ fontSize: '13px', color: '#48484A', margin: 0 }}>
+              {PERIOD_LABEL[period]}
+            </p>
+          </div>
+          <PeriodSelector currentPeriod={period} />
         </div>
 
-        {/* ── 1. Summary stat cards ──────────────────────────────────────── */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: '12px',
-            marginBottom: '32px',
-          }}
-        >
-          {/* Total leads */}
-          <div className="rpt-stat-card">
-            <p
-              style={{
-                fontSize: '11px',
-                fontWeight: 600,
-                color: '#86868B',
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-                margin: '0 0 12px 0',
-              }}
-            >
-              Total Leads
+        {/* ── Section 2: KPIs principales ──────────────────────────────────── */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '20px' }}>
+
+          {/* Revenue total */}
+          <div className="rpt-kpi-card" style={{ borderColor: 'rgba(48,209,88,0.2)' }}>
+            <p style={{ fontSize: '11px', fontWeight: 600, color: '#30D158', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 12px 0' }}>
+              Revenue Total
             </p>
-            <p
-              style={{
-                fontSize: '40px',
-                fontWeight: 700,
-                color: '#0071E3',
-                margin: '0 0 4px 0',
-                letterSpacing: '-0.03em',
-                lineHeight: 1,
-              }}
-            >
-              {totalLeads}
+            <p style={{ fontSize: totalRevenue >= 1_000_000 ? '26px' : '34px', fontWeight: 700, color: '#30D158', margin: '0 0 4px 0', letterSpacing: '-0.03em', lineHeight: 1 }}>
+              {formatMXNFull(totalRevenue)}
             </p>
             <p style={{ fontSize: '12px', color: '#48484A', margin: 0 }}>
-              captados en total
+              proyectos entregados
             </p>
           </div>
 
-          {/* Conversion rate */}
-          <div className="rpt-stat-card">
-            <p
-              style={{
-                fontSize: '11px',
-                fontWeight: 600,
-                color: '#86868B',
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-                margin: '0 0 12px 0',
-              }}
-            >
+          {/* Proyectos completados */}
+          <div className="rpt-kpi-card" style={{ borderColor: 'rgba(0,113,227,0.2)' }}>
+            <p style={{ fontSize: '11px', fontWeight: 600, color: '#0071E3', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 12px 0' }}>
+              Proyectos Completados
+            </p>
+            <p style={{ fontSize: '40px', fontWeight: 700, color: '#0071E3', margin: '0 0 4px 0', letterSpacing: '-0.03em', lineHeight: 1 }}>
+              {completedCount}
+            </p>
+            <p style={{ fontSize: '12px', color: '#48484A', margin: 0 }}>
+              {allProjects.length} en total (todos estados)
+            </p>
+          </div>
+
+          {/* Tasa de conversion */}
+          <div className="rpt-kpi-card" style={{ borderColor: 'rgba(255,159,10,0.2)' }}>
+            <p style={{ fontSize: '11px', fontWeight: 600, color: '#FF9F0A', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 12px 0' }}>
               Tasa de Conversion
             </p>
-            <p
-              style={{
-                fontSize: '40px',
-                fontWeight: 700,
-                color: '#30D158',
-                margin: '0 0 4px 0',
-                letterSpacing: '-0.03em',
-                lineHeight: 1,
-              }}
-            >
-              {formatPercent(conversionRate)}
+            <p style={{ fontSize: '40px', fontWeight: 700, color: conversionRate > 0 ? '#30D158' : '#F5F5F7', margin: '0 0 4px 0', letterSpacing: '-0.03em', lineHeight: 1 }}>
+              {conversionRate.toFixed(1)}%
             </p>
             <p style={{ fontSize: '12px', color: '#48484A', margin: 0 }}>
-              {wonLeads} leads ganados
+              {wonLeads} ganados · {lostLeads} perdidos de {totalLeads}
             </p>
           </div>
 
-          {/* Active clients */}
-          <div className="rpt-stat-card">
-            <p
-              style={{
-                fontSize: '11px',
-                fontWeight: 600,
-                color: '#86868B',
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-                margin: '0 0 12px 0',
-              }}
-            >
-              Clientes Activos
+          {/* Ticket promedio */}
+          <div className="rpt-kpi-card" style={{ borderColor: 'rgba(191,90,242,0.2)' }}>
+            <p style={{ fontSize: '11px', fontWeight: 600, color: '#BF5AF2', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 12px 0' }}>
+              Ticket Promedio
             </p>
-            <p
-              style={{
-                fontSize: '40px',
-                fontWeight: 700,
-                color: '#FF9F0A',
-                margin: '0 0 4px 0',
-                letterSpacing: '-0.03em',
-                lineHeight: 1,
-              }}
-            >
-              {activeClients}
+            <p style={{ fontSize: avgTicket >= 1_000_000 ? '22px' : avgTicket >= 100_000 ? '26px' : '34px', fontWeight: 700, color: '#BF5AF2', margin: '0 0 4px 0', letterSpacing: '-0.03em', lineHeight: 1 }}>
+              {completedCount > 0 ? formatMXNFull(avgTicket) : '—'}
             </p>
             <p style={{ fontSize: '12px', color: '#48484A', margin: 0 }}>
-              con proyectos en curso
-            </p>
-          </div>
-
-          {/* Presupuesto total — Fix 1 */}
-          <div className="rpt-stat-card">
-            <p
-              style={{
-                fontSize: '11px',
-                fontWeight: 600,
-                color: '#86868B',
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-                margin: '0 0 12px 0',
-              }}
-            >
-              Presupuesto Total
-            </p>
-            <p
-              style={{
-                fontSize: totalBudget >= 1_000_000 ? '28px' : '34px',
-                fontWeight: 700,
-                color: '#30D158',
-                margin: '0 0 4px 0',
-                letterSpacing: '-0.03em',
-                lineHeight: 1,
-              }}
-            >
-              {formatMXN(totalBudget)}
-            </p>
-            <p style={{ fontSize: '12px', color: '#48484A', margin: 0 }}>
-              suma de todos los proyectos
+              por proyecto entregado
             </p>
           </div>
         </div>
 
-        {/* ── 2 + 3: Two-column row — Pipeline + Proyectos ───────────────── */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '16px',
-            marginBottom: '16px',
-          }}
-        >
-          {/* ── Pipeline de leads — Fix 2 ────────────────────────────────── */}
-          <div className="rpt-card">
-            <div
-              style={{
-                padding: '18px 20px 14px',
-                borderBottom: '1px solid rgba(255,255,255,0.06)',
-              }}
-            >
-              <h2
-                style={{
-                  fontSize: '15px',
-                  fontWeight: 600,
-                  color: '#F5F5F7',
-                  margin: 0,
-                }}
-              >
-                Pipeline de Leads
-              </h2>
-            </div>
-
-            <div style={{ padding: '8px 0' }}>
-              {LEAD_STATUS_ORDER.map((status, idx) => {
-                const count = leadsByStatus[status]
-                // Fix 2: proportional to total (not to max), so widths sum to 100%
-                const pct = Math.round((count / totalLeadCount) * 100)
-                return (
-                  <div
-                    key={status}
-                    className="rpt-table-row"
-                    style={{
-                      padding: '12px 20px',
-                      borderBottom:
-                        idx < LEAD_STATUS_ORDER.length - 1
-                          ? '1px solid rgba(255,255,255,0.04)'
-                          : 'none',
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: '6px',
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: '13px',
-                          color: LEAD_STATUS_COLOR[status],
-                          fontWeight: 500,
-                        }}
-                      >
-                        {LEAD_STATUS_LABEL[status]}
-                      </span>
-                      <span
-                        style={{
-                          fontSize: '13px',
-                          fontWeight: 600,
-                          color: '#F5F5F7',
-                        }}
-                      >
-                        {count}
-                        <span
-                          style={{
-                            fontSize: '11px',
-                            color: '#48484A',
-                            fontWeight: 400,
-                            marginLeft: '4px',
-                          }}
-                        >
-                          {pct}%
-                        </span>
-                      </span>
-                    </div>
-                    <div className="rpt-progress-bar-track">
-                      <div
-                        style={{
-                          width: `${pct}%`,
-                          height: '100%',
-                          background: LEAD_STATUS_COLOR[status],
-                          borderRadius: '3px',
-                          transition: 'width 0.3s ease',
-                        }}
-                      />
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+        {/* ── Section 3: Revenue por mes (bar chart) ────────────────────────── */}
+        <div className="rpt-card" style={{ marginBottom: '20px' }}>
+          <div className="rpt-card-header">
+            <h2 className="rpt-card-title">Revenue por Mes</h2>
+            <p className="rpt-card-subtitle">Ultimos 6 meses — proyectos entregados</p>
           </div>
 
-          {/* ── Proyectos por estado ───────────────────────────────────────── */}
-          <div className="rpt-card">
-            <div
-              style={{
-                padding: '18px 20px 14px',
-                borderBottom: '1px solid rgba(255,255,255,0.06)',
-              }}
-            >
-              <h2
-                style={{
-                  fontSize: '15px',
-                  fontWeight: 600,
-                  color: '#F5F5F7',
-                  margin: 0,
-                }}
-              >
-                Proyectos por Estado
-              </h2>
-            </div>
-
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '12px',
-                padding: '16px',
-              }}
-            >
-              {PROJECT_STATUS_ORDER.map((status) => {
-                const count = projectsByStatus[status]
-                return (
-                  <div
-                    key={status}
-                    className="rpt-proj-status-card"
-                    style={{
-                      borderColor: `${PROJECT_STATUS_COLOR[status]}33`,
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: 'inline-block',
-                        fontSize: '10px',
-                        fontWeight: 600,
-                        color: PROJECT_STATUS_COLOR[status],
-                        background: PROJECT_STATUS_BG[status],
-                        borderRadius: '5px',
-                        padding: '2px 8px',
-                        letterSpacing: '0.04em',
-                        marginBottom: '10px',
-                      }}
-                    >
-                      {PROJECT_STATUS_LABEL[status].toUpperCase()}
-                    </div>
-                    <p
-                      style={{
-                        fontSize: '36px',
-                        fontWeight: 700,
-                        color: PROJECT_STATUS_COLOR[status],
-                        margin: 0,
-                        letterSpacing: '-0.03em',
-                        lineHeight: 1,
-                      }}
-                    >
-                      {count}
-                    </p>
-                    <p
-                      style={{
-                        fontSize: '11px',
-                        color: '#48484A',
-                        margin: '6px 0 0 0',
-                      }}
-                    >
-                      {count === 1 ? 'proyecto' : 'proyectos'}
-                    </p>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* ── Fix 3: Presupuesto por estado ─────────────────────────────── */}
-        <div className="rpt-card" style={{ marginBottom: '16px' }}>
-          <div
-            style={{
-              padding: '18px 20px 14px',
-              borderBottom: '1px solid rgba(255,255,255,0.06)',
-            }}
-          >
-            <h2
-              style={{
-                fontSize: '15px',
-                fontWeight: 600,
-                color: '#F5F5F7',
-                margin: 0,
-              }}
-            >
-              Presupuesto por Estado
-            </h2>
-          </div>
-
-          {hasBudgetData ? (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '12px',
-                padding: '16px',
-              }}
-            >
-              {PROJECT_STATUS_ORDER.map((status) => {
-                const amount = budgetByStatus[status]
-                return (
-                  <div
-                    key={status}
-                    className="rpt-proj-status-card"
-                    style={{
-                      borderColor: `${PROJECT_STATUS_COLOR[status]}33`,
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: 'inline-block',
-                        fontSize: '10px',
-                        fontWeight: 600,
-                        color: PROJECT_STATUS_COLOR[status],
-                        background: PROJECT_STATUS_BG[status],
-                        borderRadius: '5px',
-                        padding: '2px 8px',
-                        letterSpacing: '0.04em',
-                        marginBottom: '10px',
-                      }}
-                    >
-                      {PROJECT_STATUS_LABEL[status].toUpperCase()}
-                    </div>
-                    <p
-                      style={{
-                        fontSize: amount >= 1_000_000 ? '22px' : '26px',
-                        fontWeight: 700,
-                        color: PROJECT_STATUS_COLOR[status],
-                        margin: 0,
-                        letterSpacing: '-0.02em',
-                        lineHeight: 1.1,
-                      }}
-                    >
-                      {formatMXN(amount)}
-                    </p>
-                    <p
-                      style={{
-                        fontSize: '11px',
-                        color: '#48484A',
-                        margin: '6px 0 0 0',
-                      }}
-                    >
-                      presupuesto acumulado
-                    </p>
-                  </div>
-                )
-              })}
-            </div>
-          ) : (
-            <p
-              style={{
-                color: '#48484A',
-                fontSize: '13px',
-                padding: '24px 20px',
-                margin: 0,
-              }}
-            >
-              Sin datos de presupuesto todavia
-            </p>
-          )}
-        </div>
-
-        {/* ── 4 + 5: Two-column row — Fuentes + Actividad mensual ───────── */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1.6fr',
-            gap: '16px',
-            marginBottom: '16px',
-          }}
-        >
-          {/* ── Leads por fuente ────────────────────────────────────────────── */}
-          <div className="rpt-card">
-            <div
-              style={{
-                padding: '18px 20px 14px',
-                borderBottom: '1px solid rgba(255,255,255,0.06)',
-              }}
-            >
-              <h2
-                style={{
-                  fontSize: '15px',
-                  fontWeight: 600,
-                  color: '#F5F5F7',
-                  margin: 0,
-                }}
-              >
-                Leads por Fuente
-              </h2>
-            </div>
-
-            <div style={{ padding: '8px 0' }}>
-              {LEAD_SOURCES.map((source, idx) => {
-                const count = leadsBySource[source]
-                const pct = Math.round((count / maxSourceCount) * 100)
-                return (
-                  <div
-                    key={source}
-                    className="rpt-table-row"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      padding: '11px 20px',
-                      borderBottom:
-                        idx < LEAD_SOURCES.length - 1
-                          ? '1px solid rgba(255,255,255,0.04)'
-                          : 'none',
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: '13px',
-                        color: '#F5F5F7',
-                        width: '80px',
-                        flexShrink: 0,
-                      }}
-                    >
-                      {LEAD_SOURCE_LABEL[source]}
-                    </span>
-                    <div className="rpt-source-bar-track">
-                      <div
-                        style={{
-                          width: `${pct}%`,
-                          height: '100%',
-                          background: '#0071E3',
-                          borderRadius: '3px',
-                        }}
-                      />
-                    </div>
-                    <span
-                      style={{
-                        fontSize: '13px',
-                        fontWeight: 600,
-                        color: count > 0 ? '#F5F5F7' : '#48484A',
-                        width: '24px',
-                        textAlign: 'right',
-                        flexShrink: 0,
-                      }}
-                    >
-                      {count}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* ── Actividad por mes ───────────────────────────────────────────── */}
-          <div className="rpt-card">
-            <div
-              style={{
-                padding: '18px 20px 14px',
-                borderBottom: '1px solid rgba(255,255,255,0.06)',
-              }}
-            >
-              <h2
-                style={{
-                  fontSize: '15px',
-                  fontWeight: 600,
-                  color: '#F5F5F7',
-                  margin: 0,
-                }}
-              >
-                Actividad — Ultimos 6 Meses
-              </h2>
-            </div>
-
-            {/* Table header */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr 1fr',
-                padding: '10px 20px',
-                borderBottom: '1px solid rgba(255,255,255,0.06)',
-              }}
-            >
-              {['Mes', 'Leads nuevos', 'Proyectos'].map((col) => (
-                <span
-                  key={col}
-                  style={{
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    color: '#48484A',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
-                  }}
-                >
-                  {col}
+          <div style={{ padding: '20px 20px 0' }}>
+            {/* Y-axis labels */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', paddingLeft: '4px' }}>
+              {[1, 0.75, 0.5, 0.25, 0].map((pct) => (
+                <span key={pct} style={{ fontSize: '10px', color: '#48484A' }}>
+                  {formatMXN(maxRevenue * pct)}
                 </span>
               ))}
             </div>
-
-            {monthlyActivity.map((row, idx) => (
-              <div
-                key={row.label}
-                className="rpt-table-row"
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr 1fr',
-                  padding: '13px 20px',
-                  borderBottom:
-                    idx < monthlyActivity.length - 1
-                      ? '1px solid rgba(255,255,255,0.04)'
-                      : 'none',
-                }}
+            {/* SVG gridlines + bars */}
+            <div style={{ position: 'relative', height: '180px', paddingBottom: '28px' }}>
+              {/* Gridlines */}
+              <svg
+                width="100%"
+                height="152"
+                style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}
+                preserveAspectRatio="none"
               >
-                <span style={{ fontSize: '13px', color: '#86868B' }}>
-                  {row.label}
-                </span>
-                <span
-                  style={{
-                    fontSize: '13px',
-                    fontWeight: row.newLeads > 0 ? 600 : 400,
-                    color: row.newLeads > 0 ? '#0071E3' : '#48484A',
-                  }}
-                >
-                  {row.newLeads > 0 ? `+${row.newLeads}` : '—'}
-                </span>
-                <span
-                  style={{
-                    fontSize: '13px',
-                    fontWeight: row.newProjects > 0 ? 600 : 400,
-                    color: row.newProjects > 0 ? '#30D158' : '#48484A',
-                  }}
-                >
-                  {row.newProjects > 0 ? `+${row.newProjects}` : '—'}
-                </span>
+                {[0, 0.25, 0.5, 0.75, 1].map((pct) => (
+                  <line
+                    key={pct}
+                    x1="0"
+                    y1={`${(1 - pct) * 152}`}
+                    x2="100%"
+                    y2={`${(1 - pct) * 152}`}
+                    stroke="rgba(255,255,255,0.05)"
+                    strokeWidth="1"
+                  />
+                ))}
+              </svg>
+              {/* Bars */}
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', height: '152px', position: 'relative', zIndex: 1 }}>
+                {monthlyRevenue.map((m) => {
+                  const heightPct = maxRevenue > 0 ? (m.revenue / maxRevenue) * 100 : 0
+                  return (
+                    <div key={m.label} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0, height: '100%', justifyContent: 'flex-end' }}>
+                      {m.revenue > 0 && (
+                        <span style={{ fontSize: '9px', color: '#0071E3', fontWeight: 600, marginBottom: '3px', letterSpacing: '-0.01em' }}>
+                          {formatMXN(m.revenue)}
+                        </span>
+                      )}
+                      <div
+                        className="rpt-col-bar"
+                        style={{ height: `${Math.max(heightPct, 1)}%`, width: '100%', minHeight: m.revenue > 0 ? '6px' : '2px', opacity: m.revenue > 0 ? 1 : 0.2 }}
+                        title={`${m.label}: ${formatMXNFull(m.revenue)}`}
+                      />
+                    </div>
+                  )
+                })}
               </div>
-            ))}
+              {/* X-axis labels */}
+              <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                {monthlyRevenue.map((m) => (
+                  <div key={m.label} style={{ flex: 1, textAlign: 'center' }}>
+                    <span className="rpt-col-label">{m.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* ── Fix 4: Top clientes por presupuesto ───────────────────────── */}
-        <div className="rpt-card" style={{ marginBottom: '16px' }}>
-          <div
-            style={{
-              padding: '18px 20px 14px',
-              borderBottom: '1px solid rgba(255,255,255,0.06)',
-            }}
-          >
-            <h2
-              style={{
-                fontSize: '15px',
-                fontWeight: 600,
-                color: '#F5F5F7',
-                margin: 0,
-              }}
-            >
-              Top Clientes por Presupuesto
-            </h2>
+        {/* ── Section 4 + 6: Pipeline funnel + Fuentes de leads ────────────── */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+
+          {/* Pipeline funnel */}
+          <div className="rpt-card">
+            <div className="rpt-card-header">
+              <h2 className="rpt-card-title">Pipeline Funnel</h2>
+              <p className="rpt-card-subtitle">Conversion entre etapas</p>
+            </div>
+            <div style={{ padding: '20px' }}>
+              {LEAD_STATUS_FUNNEL.map((status, idx) => {
+                const count = leadsByStatus[status]
+                const widthPct = Math.max((count / funnelMax) * 100, 8)
+                const nextStatus = LEAD_STATUS_FUNNEL[idx + 1]
+                const nextCount = nextStatus ? leadsByStatus[nextStatus] : null
+                const convPct = count > 0 && nextCount !== null
+                  ? Math.round((nextCount / count) * 100)
+                  : null
+
+                return (
+                  <div key={status} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    {/* Funnel bar */}
+                    <div style={{ width: `${widthPct}%`, transition: 'width 0.4s ease' }}>
+                      <div
+                        className="rpt-funnel-bar"
+                        style={{ background: `${LEAD_STATUS_COLOR[status]}22`, border: `1px solid ${LEAD_STATUS_COLOR[status]}44`, width: '100%' }}
+                      >
+                        <span style={{ fontSize: '12px', fontWeight: 600, color: LEAD_STATUS_COLOR[status], flex: 1 }}>
+                          {LEAD_STATUS_LABEL[status]}
+                        </span>
+                        <span style={{ fontSize: '14px', fontWeight: 700, color: '#F5F5F7', marginLeft: '8px' }}>
+                          {count}
+                        </span>
+                      </div>
+                    </div>
+                    {/* Conversion arrow between stages */}
+                    {convPct !== null && (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '3px 0' }}>
+                        <svg width="12" height="16" viewBox="0 0 12 16">
+                          <path d="M6 0 L6 10 M2 7 L6 13 L10 7" stroke="#48484A" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        <span style={{ fontSize: '10px', color: convPct >= 50 ? '#30D158' : '#48484A', fontWeight: 500 }}>
+                          {convPct}%
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+              {/* Lost */}
+              <div style={{ marginTop: '12px', padding: '10px 14px', background: 'rgba(72,72,74,0.15)', borderRadius: '8px', border: '1px solid rgba(72,72,74,0.3)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '12px', color: '#48484A', fontWeight: 500 }}>Perdidos</span>
+                <span style={{ fontSize: '13px', fontWeight: 700, color: '#48484A' }}>{leadsByStatus['lost']}</span>
+              </div>
+            </div>
           </div>
 
-          {topClients.length === 0 ? (
-            <p
-              style={{
-                color: '#48484A',
-                fontSize: '13px',
-                padding: '24px 20px',
-                margin: 0,
-              }}
-            >
-              Sin datos de presupuesto por cliente todavia.
+          {/* Section 6: Fuentes de leads — donut */}
+          <div className="rpt-card">
+            <div className="rpt-card-header">
+              <h2 className="rpt-card-title">Fuentes de Leads</h2>
+              <p className="rpt-card-subtitle">Distribucion por canal de origen</p>
+            </div>
+            <div style={{ padding: '20px', display: 'flex', gap: '20px', alignItems: 'center' }}>
+              {/* Donut */}
+              <div style={{ flexShrink: 0, position: 'relative', width: '120px', height: '120px' }}>
+                <div style={{
+                  width: '120px',
+                  height: '120px',
+                  borderRadius: '50%',
+                  background: conicGradient,
+                }} />
+                {/* Hole */}
+                <div style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%,-50%)',
+                  width: '68px',
+                  height: '68px',
+                  borderRadius: '50%',
+                  background: '#111111',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <span style={{ fontSize: '16px', fontWeight: 700, color: '#F5F5F7', lineHeight: 1 }}>{totalLeads}</span>
+                  <span style={{ fontSize: '9px', color: '#48484A', marginTop: '2px' }}>leads</span>
+                </div>
+              </div>
+              {/* Legend */}
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {(sourcesWithData.length > 0 ? sourcesWithData : LEAD_SOURCES.map((s) => ({ source: s, count: 0, pct: 0, color: LEAD_SOURCE_COLOR[s] }))).slice(0, 6).map((s) => (
+                  <div key={s.source} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: s.color, flexShrink: 0 }} />
+                    <span style={{ fontSize: '12px', color: '#86868B', flex: 1 }}>{LEAD_SOURCE_LABEL[s.source]}</span>
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: s.count > 0 ? '#F5F5F7' : '#48484A' }}>{s.count}</span>
+                    <span style={{ fontSize: '11px', color: '#48484A', width: '32px', textAlign: 'right' }}>{s.pct}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Section 5: Top 5 proyectos por presupuesto ───────────────────── */}
+        <div className="rpt-card" style={{ marginBottom: '20px' }}>
+          <div className="rpt-card-header">
+            <h2 className="rpt-card-title">Top 5 Proyectos por Presupuesto</h2>
+            <p className="rpt-card-subtitle">Del periodo seleccionado</p>
+          </div>
+
+          {top5Projects.length === 0 ? (
+            <p style={{ color: '#48484A', fontSize: '13px', padding: '24px 20px', margin: 0 }}>
+              Sin proyectos con presupuesto en este periodo.
             </p>
           ) : (
             <div style={{ padding: '8px 0' }}>
-              {topClients.map((client, idx) => {
-                const barPct = Math.round((client.totalBudget / maxClientBudget) * 100)
+              {/* Header */}
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 120px', padding: '8px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                {['Proyecto', 'Cliente', 'Estado', 'Presupuesto'].map((col) => (
+                  <span key={col} style={{ fontSize: '11px', fontWeight: 600, color: '#48484A', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    {col}
+                  </span>
+                ))}
+              </div>
+              {top5Projects.map((project, idx) => {
+                const barPct = Math.round(((project.budget ?? 0) / maxProjectBudget) * 100)
+                const clientName = project.client_id ? (clientMap.get(project.client_id) ?? '—') : '—'
                 return (
-                  <div
-                    key={client.clientId}
-                    className="rpt-table-row"
-                    style={{
-                      padding: '14px 20px',
-                      borderBottom:
-                        idx < topClients.length - 1
-                          ? '1px solid rgba(255,255,255,0.04)'
-                          : 'none',
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'flex-start',
-                        marginBottom: '8px',
-                      }}
-                    >
+                  <div key={project.id} className="rpt-table-row">
+                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 120px', padding: '12px 20px', alignItems: 'center', borderBottom: idx < top5Projects.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                      <div>
+                        <span style={{ fontSize: '13px', color: '#F5F5F7', fontWeight: 500, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: '8px' }}>
+                          {project.title}
+                        </span>
+                        <div className="rpt-bar-track" style={{ marginTop: '6px' }}>
+                          <div className="rpt-bar-fill" style={{ width: `${barPct}%`, background: '#0071E3' }} />
+                        </div>
+                      </div>
+                      <span style={{ fontSize: '12px', color: '#86868B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: '8px' }}>
+                        {clientName}
+                      </span>
                       <div>
                         <span
-                          style={{
-                            fontSize: '14px',
-                            fontWeight: 500,
-                            color: '#F5F5F7',
-                            display: 'block',
-                          }}
+                          className="rpt-status-badge"
+                          style={{ color: PROJECT_STATUS_COLOR[project.status], background: PROJECT_STATUS_BG[project.status] }}
                         >
-                          {client.clientName}
-                        </span>
-                        <span
-                          style={{
-                            fontSize: '11px',
-                            color: '#48484A',
-                            marginTop: '2px',
-                            display: 'block',
-                          }}
-                        >
-                          {client.projectCount === 1
-                            ? '1 proyecto'
-                            : `${client.projectCount} proyectos`}
+                          {PROJECT_STATUS_LABEL[project.status]}
                         </span>
                       </div>
-                      <span
-                        style={{
-                          fontSize: '15px',
-                          fontWeight: 700,
-                          color: '#30D158',
-                          letterSpacing: '-0.02em',
-                        }}
-                      >
-                        {formatMXN(client.totalBudget)}
+                      <span style={{ fontSize: '13px', fontWeight: 700, color: '#30D158', textAlign: 'right' }}>
+                        {formatMXNFull(project.budget ?? 0)}
                       </span>
-                    </div>
-                    <div className="rpt-client-bar-track">
-                      <div
-                        style={{
-                          width: `${barPct}%`,
-                          height: '100%',
-                          background: '#30D158',
-                          borderRadius: '3px',
-                          transition: 'width 0.3s ease',
-                        }}
-                      />
                     </div>
                   </div>
                 )
@@ -1098,118 +775,54 @@ export default async function ReportesPage() {
           )}
         </div>
 
-        {/* ── 6. Proyectos recientes (top 10) ───────────────────────────── */}
-        <div className="rpt-card" style={{ marginBottom: '16px' }}>
-          <div
-            style={{
-              padding: '18px 20px 14px',
-              borderBottom: '1px solid rgba(255,255,255,0.06)',
-            }}
-          >
-            <h2
-              style={{
-                fontSize: '15px',
-                fontWeight: 600,
-                color: '#F5F5F7',
-                margin: 0,
-              }}
-            >
-              Ultimos 10 Proyectos
-            </h2>
+        {/* ── Section 7: Distribucion de proyectos por estado ──────────────── */}
+        <div className="rpt-card" style={{ marginBottom: '0' }}>
+          <div className="rpt-card-header">
+            <h2 className="rpt-card-title">Distribucion por Estado</h2>
+            <p className="rpt-card-subtitle">Todos los proyectos del periodo</p>
           </div>
-
-          {/* Table header */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '2fr 1fr 1fr',
-              padding: '10px 20px',
-              borderBottom: '1px solid rgba(255,255,255,0.06)',
-            }}
-          >
-            {['Titulo', 'Estado', 'Fecha'].map((col) => (
-              <span
-                key={col}
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  color: '#48484A',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                }}
-              >
-                {col}
-              </span>
-            ))}
-          </div>
-
-          {top10Projects.length === 0 && (
-            <p
-              style={{
-                color: '#48484A',
-                fontSize: '13px',
-                padding: '20px',
-                margin: 0,
-              }}
-            >
-              Sin proyectos registrados.
-            </p>
-          )}
-
-          {top10Projects.map((project, idx) => {
-            const dateStr = new Date(project.created_at).toLocaleDateString(
-              'es-MX',
-              { day: '2-digit', month: '2-digit', year: '2-digit' },
-            )
-            return (
-              <div
-                key={project.id}
-                className="rpt-table-row"
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '2fr 1fr 1fr',
-                  alignItems: 'center',
-                  padding: '13px 20px',
-                  borderBottom:
-                    idx < top10Projects.length - 1
-                      ? '1px solid rgba(255,255,255,0.04)'
-                      : 'none',
-                }}
-              >
-                <span
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', padding: '16px' }}>
+            {PROJECT_STATUS_ORDER.map((status) => {
+              const count = projectsByStatus[status]
+              const pct = Math.round((count / totalProjects) * 100)
+              return (
+                <div
+                  key={status}
                   style={{
-                    fontSize: '13px',
-                    color: '#F5F5F7',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    paddingRight: '12px',
+                    background: '#111111',
+                    border: `1px solid ${PROJECT_STATUS_COLOR[status]}33`,
+                    borderRadius: '12px',
+                    padding: '18px 20px',
+                    transition: 'border-color 0.2s',
                   }}
                 >
-                  {project.title}
-                </span>
-
-                <span
-                  style={{
-                    display: 'inline-block',
-                    fontSize: '11px',
-                    fontWeight: 500,
-                    color: PROJECT_STATUS_COLOR[project.status],
-                    background: PROJECT_STATUS_BG[project.status],
-                    borderRadius: '6px',
-                    padding: '3px 9px',
-                    width: 'fit-content',
-                  }}
-                >
-                  {PROJECT_STATUS_LABEL[project.status]}
-                </span>
-
-                <span style={{ fontSize: '12px', color: '#48484A' }}>
-                  {dateStr}
-                </span>
-              </div>
-            )
-          })}
+                  <div
+                    className="rpt-status-badge"
+                    style={{
+                      color: PROJECT_STATUS_COLOR[status],
+                      background: PROJECT_STATUS_BG[status],
+                      marginBottom: '12px',
+                    }}
+                  >
+                    {PROJECT_STATUS_LABEL[status].toUpperCase()}
+                  </div>
+                  <p style={{ fontSize: '40px', fontWeight: 700, color: PROJECT_STATUS_COLOR[status], margin: '0 0 2px 0', letterSpacing: '-0.03em', lineHeight: 1 }}>
+                    {count}
+                  </p>
+                  <p style={{ fontSize: '12px', color: '#48484A', margin: '6px 0 10px 0' }}>
+                    {count === 1 ? 'proyecto' : 'proyectos'}
+                  </p>
+                  {/* Percentage bar */}
+                  <div style={{ height: '4px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px', overflow: 'hidden' }}>
+                    <div style={{ width: `${pct}%`, height: '100%', background: PROJECT_STATUS_COLOR[status], borderRadius: '2px', transition: 'width 0.4s ease' }} />
+                  </div>
+                  <p style={{ fontSize: '11px', color: PROJECT_STATUS_COLOR[status], margin: '5px 0 0 0', fontWeight: 600 }}>
+                    {pct}% del total
+                  </p>
+                </div>
+              )
+            })}
+          </div>
         </div>
 
       </div>

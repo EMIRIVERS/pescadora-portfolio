@@ -1,7 +1,9 @@
+import React from 'react'
 import Link from 'next/link'
 import { createServiceClient } from '@/lib/supabase/server'
 import type { Client, ProjectStatus } from '@/lib/supabase/types'
 import { InviteClientButton } from '@/components/admin/clients/invite-client-button'
+import { PROJECT_STATUS_STYLES } from '@/lib/status-colors'
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 
@@ -44,15 +46,6 @@ interface ClientCard extends Client {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function initials(name: string): string {
-  return name
-    .split(' ')
-    .map((n) => n[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase()
-}
-
 function avatarColor(name: string): string {
   let hash = 0
   for (let i = 0; i < name.length; i++) {
@@ -61,49 +54,13 @@ function avatarColor(name: string): string {
   return AVATAR_PALETTE[hash % AVATAR_PALETTE.length]
 }
 
-function statusLabel(status: ProjectStatus): string {
-  const map: Record<ProjectStatus, string> = {
-    pre_production: 'Pre-produccion',
-    production: 'Produccion',
-    post_production: 'Post-produccion',
-    delivered: 'Entregado',
-  }
-  return map[status]
-}
-
-interface StatusStyle {
-  color: string
-  backgroundColor: string
-  border: string
-}
-
-function statusStyle(status: ProjectStatus): StatusStyle {
-  if (status === 'delivered') {
-    return {
-      color: '#30D158',
-      backgroundColor: 'rgba(48,209,88,0.1)',
-      border: '1px solid rgba(48,209,88,0.2)',
-    }
-  }
-  if (status === 'post_production') {
-    return {
-      color: '#BF5AF2',
-      backgroundColor: 'rgba(191,90,242,0.1)',
-      border: '1px solid rgba(191,90,242,0.2)',
-    }
-  }
-  if (status === 'production') {
-    return {
-      color: '#0071E3',
-      backgroundColor: 'rgba(0,113,227,0.1)',
-      border: '1px solid rgba(0,113,227,0.2)',
-    }
-  }
-  return {
-    color: '#FF9F0A',
-    backgroundColor: 'rgba(255,159,10,0.1)',
-    border: '1px solid rgba(255,159,10,0.2)',
-  }
+function initials(name: string): string {
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
 }
 
 function formatDate(iso: string): string {
@@ -384,26 +341,80 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
         >
           {q ? (
             <>
-              <p style={{ fontSize: '15px', color: '#48484A' }}>
+              {/* Search empty — magnifying glass */}
+              <svg
+                width="80"
+                height="80"
+                viewBox="0 0 80 80"
+                fill="none"
+                aria-hidden="true"
+                style={{ display: 'block', margin: '0 auto 20px' }}
+              >
+                <circle cx="34" cy="34" r="18" fill="#2C2C2E" stroke="#3A3A3C" strokeWidth="1.5" />
+                <line x1="47" y1="47" x2="62" y2="62" stroke="#3A3A3C" strokeWidth="2.5" strokeLinecap="round" />
+                <line x1="28" y1="34" x2="40" y2="34" stroke="#48484A" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              <h3
+                style={{
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  color: '#86868B',
+                  margin: '0 0 8px',
+                  letterSpacing: '-0.01em',
+                }}
+              >
+                Sin resultados
+              </h3>
+              <p style={{ fontSize: '13px', color: '#48484A', margin: '0 0 20px' }}>
                 No se encontraron clientes para &ldquo;{q}&rdquo;.
               </p>
-              <p style={{ fontSize: '13px', color: '#2C2C2E', marginTop: '6px' }}>
-                <Link
-                  href="/admin/clients"
-                  style={{ color: '#0071E3', textDecoration: 'none' }}
-                >
-                  Ver todos los clientes
-                </Link>
-              </p>
+              <Link
+                href="/admin/clients"
+                style={{ color: '#0071E3', textDecoration: 'none', fontSize: '13px', fontWeight: 500 }}
+              >
+                Ver todos los clientes
+              </Link>
             </>
           ) : (
             <>
-              <p style={{ fontSize: '15px', color: '#48484A' }}>
-                No hay clientes todavia.
+              {/* True empty — person with + */}
+              <svg
+                width="80"
+                height="80"
+                viewBox="0 0 80 80"
+                fill="none"
+                aria-hidden="true"
+                style={{ display: 'block', margin: '0 auto 20px' }}
+              >
+                {/* Person silhouette */}
+                <circle cx="36" cy="28" r="12" fill="#2C2C2E" stroke="#3A3A3C" strokeWidth="1.5" />
+                <path
+                  d="M14 62c0-12.15 9.85-22 22-22s22 9.85 22 22"
+                  stroke="#3A3A3C"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  fill="none"
+                />
+                {/* Plus badge */}
+                <circle cx="60" cy="56" r="12" fill="#1C1C1E" stroke="#3A3A3C" strokeWidth="1.5" />
+                <line x1="60" y1="50" x2="60" y2="62" stroke="#48484A" strokeWidth="1.5" strokeLinecap="round" />
+                <line x1="54" y1="56" x2="66" y2="56" stroke="#48484A" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              <h3
+                style={{
+                  fontSize: '17px',
+                  fontWeight: 600,
+                  color: '#F5F5F7',
+                  margin: '0 0 8px',
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                Sin clientes registrados
+              </h3>
+              <p style={{ fontSize: '13px', color: '#86868B', margin: '0 0 24px', lineHeight: 1.5 }}>
+                Invita a tu primer cliente para empezar a gestionar proyectos juntos.
               </p>
-              <p style={{ fontSize: '13px', color: '#2C2C2E', marginTop: '6px' }}>
-                Invita al primer cliente usando el boton de arriba.
-              </p>
+              <InviteClientButton />
             </>
           )}
         </div>
@@ -416,7 +427,7 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
             gap: '12px',
           }}
         >
-          {enrichedCards.map((client) => {
+          {enrichedCards.map((client, index) => {
             const color = avatarColor(client.name)
             return (
               <ClientCardItem
@@ -434,6 +445,22 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
 }
 
 // ── Client card (separate component for hover state) ──────────────────────────
+
+function statusStyle(status: string): React.CSSProperties {
+  const s = PROJECT_STATUS_STYLES[status as keyof typeof PROJECT_STATUS_STYLES]
+  return s ?? { color: '#86868B', backgroundColor: 'rgba(134,134,139,0.1)', border: '1px solid rgba(134,134,139,0.2)' }
+}
+
+function statusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    active: 'Activo',
+    completed: 'Completado',
+    paused: 'Pausado',
+    cancelled: 'Cancelado',
+    draft: 'Borrador',
+  }
+  return labels[status] ?? status
+}
 
 interface ClientCardItemProps {
   client: ClientCard

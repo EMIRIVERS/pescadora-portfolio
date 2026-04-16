@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useTransition } from 'react'
+import React, { useEffect, useRef, useState, useTransition } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import {
   updateLeadStatus,
@@ -9,6 +9,14 @@ import {
   convertLeadToClient,
 } from '@/lib/actions/leads'
 import { sendLeadEmail } from '../../../../app/actions/send-lead-email'
+import {
+  FileText,
+  Mail,
+  Phone,
+  MessageCircle,
+  Users,
+  ArrowLeftRight,
+} from 'lucide-react'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -120,6 +128,15 @@ const ACTIVITY_TYPES: LeadActivity['type'][] = [
   'meeting',
 ]
 
+const ACTIVITY_ICONS: Record<LeadActivity['type'], React.ReactElement> = {
+  note:          <FileText size={12} />,
+  email:         <Mail size={12} />,
+  call:          <Phone size={12} />,
+  whatsapp:      <MessageCircle size={12} />,
+  meeting:       <Users size={12} />,
+  status_change: <ArrowLeftRight size={12} />,
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -132,6 +149,23 @@ function formatDateTime(dateStr: string): string {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+function formatRelativeTime(dateStr: string): string {
+  const now = Date.now()
+  const then = new Date(dateStr).getTime()
+  const diffMs = now - then
+  const diffSec = Math.floor(diffMs / 1000)
+  const diffMin = Math.floor(diffSec / 60)
+  const diffHour = Math.floor(diffMin / 60)
+  const diffDay = Math.floor(diffHour / 24)
+
+  if (diffSec < 60) return 'hace un momento'
+  if (diffMin < 60) return `hace ${diffMin} min`
+  if (diffHour < 24) return `hace ${diffHour} h`
+  if (diffDay === 1) return 'ayer'
+  if (diffDay < 7) return `hace ${diffDay} dias`
+  return formatDateTime(dateStr)
 }
 
 function formatDate(dateStr: string): string {
@@ -919,7 +953,7 @@ export default function LeadDetailModal({
             <textarea
               value={activityContent}
               onChange={(e) => setActivityContent(e.target.value)}
-              placeholder="Describe la actividad..."
+              placeholder="Añade una nota sobre este lead..."
               rows={3}
               className="ldm-textarea"
               style={{
@@ -1333,26 +1367,32 @@ export default function LeadDetailModal({
                         }}
                       />
 
-                      {/* Date */}
+                      {/* Date — relative, with absolute on title attr */}
                       <span
+                        title={formatDateTime(act.created_at)}
                         style={{
                           fontFamily: T.font,
                           fontSize: 11,
                           color: T.textTertiary,
+                          cursor: 'default',
                         }}
                       >
-                        {formatDateTime(act.created_at)}
+                        {formatRelativeTime(act.created_at)}
                       </span>
 
-                      {/* Type label */}
+                      {/* Type label with icon */}
                       <span
                         style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 5,
                           fontFamily: T.font,
                           fontSize: 12,
                           color: T.textSecondary,
                           fontWeight: 500,
                         }}
                       >
+                        {ACTIVITY_ICONS[act.type]}
                         {ACTIVITY_TYPE_LABELS[act.type]}
                       </span>
 

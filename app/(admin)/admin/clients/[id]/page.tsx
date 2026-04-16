@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createServiceClient } from '@/lib/supabase/server'
 import type { Client, ProjectStatus, LeadStatus } from '@/lib/supabase/types'
 import { LinkClientButton } from '@/components/admin/clients/link-client-button'
+import { PROJECT_STATUS_STYLES } from '@/lib/status-colors'
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 
@@ -81,30 +82,21 @@ function formatBudget(amount: number, currency: string | null): string {
   }).format(amount)
 }
 
-interface StatusStyleResult {
-  color: string
-  backgroundColor: string
-  border: string
+function statusStyle(status: ProjectStatus): { color: string; backgroundColor: string; border: string } {
+  const s = PROJECT_STATUS_STYLES[status] ?? {
+    color: '#86868B',
+    bg: 'rgba(134,134,139,0.1)',
+    border: 'rgba(134,134,139,0.2)',
+  }
+  return {
+    color: s.color,
+    backgroundColor: s.bg,
+    border: `1px solid ${s.border}`,
+  }
 }
 
-function statusStyle(status: ProjectStatus): StatusStyleResult {
-  if (status === 'delivered') {
-    return { color: '#30D158', backgroundColor: 'rgba(48,209,88,0.1)', border: '1px solid rgba(48,209,88,0.2)' }
-  }
-  if (status === 'post_production') {
-    return { color: '#BF5AF2', backgroundColor: 'rgba(191,90,242,0.1)', border: '1px solid rgba(191,90,242,0.2)' }
-  }
-  if (status === 'production') {
-    return { color: '#0071E3', backgroundColor: 'rgba(0,113,227,0.1)', border: '1px solid rgba(0,113,227,0.2)' }
-  }
-  return { color: '#FF9F0A', backgroundColor: 'rgba(255,159,10,0.1)', border: '1px solid rgba(255,159,10,0.2)' }
-}
-
-const STATUS_LABELS: Record<ProjectStatus, string> = {
-  pre_production: 'Pre-produccion',
-  production: 'Produccion',
-  post_production: 'Post-produccion',
-  delivered: 'Entregado',
+function statusLabel(status: ProjectStatus): string {
+  return PROJECT_STATUS_STYLES[status]?.label ?? status
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -446,7 +438,7 @@ export default async function ClientDetailPage({ params }: PageProps) {
                           ...sStyle,
                         }}
                       >
-                        {STATUS_LABELS[project.status]}
+                        {statusLabel(project.status)}
                       </span>
                     </Link>
                   )

@@ -417,6 +417,18 @@ function DeliverableRow({
               {deliverable.url}
             </a>
           )}
+          {deliverable.due_date && (
+            <p
+              style={{
+                fontSize: 11,
+                color: S.textTertiary,
+                margin: 0,
+                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+              }}
+            >
+              Fecha limite: {formatDate(deliverable.due_date)}
+            </p>
+          )}
           <p
             style={{
               fontSize: 11,

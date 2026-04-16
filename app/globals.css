@@ -163,6 +163,208 @@ div:hover > .video-title {
   }
 }
 
+/* ─── Admin Dashboard Theme Variables ──────────────────────────────────────── */
+
+:root {
+  --dash-bg: #000000;
+  --dash-surface-1: #111111;
+  --dash-surface-2: #1C1C1E;
+  --dash-surface-3: #2C2C2E;
+  --dash-border: rgba(255,255,255,0.08);
+  --dash-border-strong: rgba(255,255,255,0.14);
+  --dash-text-primary: #F5F5F7;
+  --dash-text-secondary: #86868B;
+  --dash-text-tertiary: #48484A;
+  --dash-accent: #0071E3;
+  --dash-accent-hover: #0077ED;
+  --dash-success: #30D158;
+  --dash-warning: #FF9F0A;
+  --dash-danger: #FF453A;
+  --dash-info: #64D2FF;
+}
+
+[data-theme="obsidian"] {
+  --dash-bg: #000000; --dash-surface-1: #111111; --dash-surface-2: #1C1C1E;
+  --dash-surface-3: #2C2C2E; --dash-border: rgba(255,255,255,0.08);
+  --dash-border-strong: rgba(255,255,255,0.14);
+  --dash-text-primary: #F5F5F7; --dash-text-secondary: #86868B; --dash-text-tertiary: #48484A;
+  --dash-accent: #0071E3; --dash-accent-hover: #0077ED;
+  --dash-success: #30D158; --dash-warning: #FF9F0A; --dash-danger: #FF453A;
+}
+[data-theme="midnight"] {
+  --dash-bg: #0A0A1A; --dash-surface-1: #12122A; --dash-surface-2: #1E1E3A;
+  --dash-surface-3: #2A2A4A; --dash-border: rgba(140,140,255,0.1);
+  --dash-border-strong: rgba(140,140,255,0.18);
+  --dash-text-primary: #E8E8FF; --dash-text-secondary: #8888BB; --dash-text-tertiary: #5555AA;
+  --dash-accent: #5E5CE6; --dash-accent-hover: #6E6CF6;
+  --dash-success: #30D158; --dash-warning: #FF9F0A; --dash-danger: #FF453A;
+}
+[data-theme="forest"] {
+  --dash-bg: #050F07; --dash-surface-1: #0A1A0D; --dash-surface-2: #122018;
+  --dash-surface-3: #1A2E20; --dash-border: rgba(48,209,88,0.1);
+  --dash-border-strong: rgba(48,209,88,0.18);
+  --dash-text-primary: #E8FFE8; --dash-text-secondary: #6B9B72; --dash-text-tertiary: #3A6B42;
+  --dash-accent: #30D158; --dash-accent-hover: #40E168;
+  --dash-success: #30D158; --dash-warning: #FF9F0A; --dash-danger: #FF453A;
+}
+[data-theme="sunset"] {
+  --dash-bg: #0F0804; --dash-surface-1: #1A1008; --dash-surface-2: #241A10;
+  --dash-surface-3: #2E2218; --dash-border: rgba(255,107,53,0.12);
+  --dash-border-strong: rgba(255,107,53,0.22);
+  --dash-text-primary: #FFE8D6; --dash-text-secondary: #9B7060; --dash-text-tertiary: #6B4030;
+  --dash-accent: #FF6B35; --dash-accent-hover: #FF7B45;
+  --dash-success: #30D158; --dash-warning: #FFD60A; --dash-danger: #FF453A;
+}
+[data-theme="rose"] {
+  --dash-bg: #0F0508; --dash-surface-1: #1A080F; --dash-surface-2: #24101A;
+  --dash-surface-3: #2E1824; --dash-border: rgba(255,55,95,0.12);
+  --dash-border-strong: rgba(255,55,95,0.22);
+  --dash-text-primary: #FFE0E8; --dash-text-secondary: #9B6070; --dash-text-tertiary: #6B3040;
+  --dash-accent: #FF375F; --dash-accent-hover: #FF476F;
+  --dash-success: #30D158; --dash-warning: #FF9F0A; --dash-danger: #FF453A;
+}
+[data-theme="aurora"] {
+  --dash-bg: #030A10; --dash-surface-1: #071520; --dash-surface-2: #0D1F2D;
+  --dash-surface-3: #132A3A; --dash-border: rgba(100,210,255,0.1);
+  --dash-border-strong: rgba(100,210,255,0.18);
+  --dash-text-primary: #D6F0FF; --dash-text-secondary: #6090A0; --dash-text-tertiary: #305060;
+  --dash-accent: #64D2FF; --dash-accent-hover: #74E2FF;
+  --dash-success: #30D158; --dash-warning: #FF9F0A; --dash-danger: #FF453A;
+}
+[data-theme="amber"] {
+  --dash-bg: #0F0B00; --dash-surface-1: #1A1400; --dash-surface-2: #24200A;
+  --dash-surface-3: #2E2A12; --dash-border: rgba(255,214,10,0.1);
+  --dash-border-strong: rgba(255,214,10,0.18);
+  --dash-text-primary: #FFF8D6; --dash-text-secondary: #9B9060; --dash-text-tertiary: #6B6030;
+  --dash-accent: #FFD60A; --dash-accent-hover: #FFE61A;
+  --dash-success: #30D158; --dash-warning: #FF9F0A; --dash-danger: #FF453A;
+}
+[data-theme="violet"] {
+  --dash-bg: #0A0510; --dash-surface-1: #12081C; --dash-surface-2: #1C1028;
+  --dash-surface-3: #261834; --dash-border: rgba(191,90,242,0.1);
+  --dash-border-strong: rgba(191,90,242,0.18);
+  --dash-text-primary: #F0DAFF; --dash-text-secondary: #907AAA; --dash-text-tertiary: #604A7A;
+  --dash-accent: #BF5AF2; --dash-accent-hover: #CF6AFF;
+  --dash-success: #30D158; --dash-warning: #FF9F0A; --dash-danger: #FF453A;
+}
+[data-theme="slate"] {
+  --dash-bg: #0A0A0A; --dash-surface-1: #141414; --dash-surface-2: #1E1E1E;
+  --dash-surface-3: #282828; --dash-border: rgba(152,152,157,0.1);
+  --dash-border-strong: rgba(152,152,157,0.18);
+  --dash-text-primary: #EBEBF5; --dash-text-secondary: #8E8E93; --dash-text-tertiary: #5E5E63;
+  --dash-accent: #98989D; --dash-accent-hover: #A8A8AD;
+  --dash-success: #30D158; --dash-warning: #FF9F0A; --dash-danger: #FF453A;
+}
+[data-theme="crimson"] {
+  --dash-bg: #0F0302; --dash-surface-1: #1A0804; --dash-surface-2: #241008;
+  --dash-surface-3: #2E1810; --dash-border: rgba(232,52,26,0.12);
+  --dash-border-strong: rgba(232,52,26,0.22);
+  --dash-text-primary: #FFE0D6; --dash-text-secondary: #9B6050; --dash-text-tertiary: #6B3020;
+  --dash-accent: #E8341A; --dash-accent-hover: #F8442A;
+  --dash-success: #30D158; --dash-warning: #FF9F0A; --dash-danger: #FF453A;
+}
+
+/* ─── Admin Dashboard Theme Overrides (!important) ──────────────────────────── */
+
+/* Base: html/body/admin-root */
+[data-theme] body,
+[data-theme] html {
+  background-color: var(--dash-bg) !important;
+  color: var(--dash-text-primary) !important;
+}
+
+[data-theme] .admin-root {
+  background: var(--dash-bg) !important;
+  background-color: var(--dash-bg) !important;
+  color: var(--dash-text-primary) !important;
+}
+
+[data-theme] [data-dash-sidebar] {
+  background: var(--dash-surface-1) !important;
+  background-color: var(--dash-surface-1) !important;
+}
+
+/* BG principal: #000000 */
+[data-theme] [style*="background-color: #000000"],
+[data-theme] [style*="background: #000000"],
+[data-theme] [style*="background-color:#000000"],
+[data-theme] [style*="background:#000000"],
+[data-theme] [style*="backgroundColor: #000000"] {
+  background-color: var(--dash-bg) !important;
+  background: var(--dash-bg) !important;
+}
+
+/* BG secundario: #050505 */
+[data-theme] [style*="background-color: #050505"],
+[data-theme] [style*="background: #050505"],
+[data-theme] [style*="background-color:#050505"] {
+  background-color: var(--dash-bg) !important;
+  background: var(--dash-bg) !important;
+}
+
+/* Surface 1: #111111 */
+[data-theme] [style*="background-color: #111111"],
+[data-theme] [style*="background: #111111"],
+[data-theme] [style*="background-color:#111111"],
+[data-theme] [style*="backgroundColor: #111111"] {
+  background-color: var(--dash-surface-1) !important;
+  background: var(--dash-surface-1) !important;
+}
+
+/* Surface 2: #1C1C1E */
+[data-theme] [style*="background-color: #1C1C1E"],
+[data-theme] [style*="background: #1C1C1E"],
+[data-theme] [style*="background-color:#1C1C1E"],
+[data-theme] [style*="backgroundColor: #1C1C1E"] {
+  background-color: var(--dash-surface-2) !important;
+  background: var(--dash-surface-2) !important;
+}
+
+/* Surface 3: #2C2C2E */
+[data-theme] [style*="background-color: #2C2C2E"],
+[data-theme] [style*="background: #2C2C2E"],
+[data-theme] [style*="background-color:#2C2C2E"],
+[data-theme] [style*="backgroundColor: #2C2C2E"] {
+  background-color: var(--dash-surface-3) !important;
+  background: var(--dash-surface-3) !important;
+}
+
+/* Accent azul: #0071E3 */
+[data-theme] [style*="background-color: #0071E3"],
+[data-theme] [style*="background: #0071E3"],
+[data-theme] [style*="background-color:#0071E3"],
+[data-theme] [style*="backgroundColor: #0071E3"] {
+  background-color: var(--dash-accent) !important;
+  background: var(--dash-accent) !important;
+}
+[data-theme] [style*="color: #0071E3"] { color: var(--dash-accent) !important; }
+[data-theme] [style*="borderLeft: 2px solid #0071E3"],
+[data-theme] [style*="border-left: 2px solid #0071E3"] {
+  border-left-color: var(--dash-accent) !important;
+}
+[data-theme] [style*="borderColor: #0071E3"],
+[data-theme] [style*="border-color: #0071E3"] {
+  border-color: var(--dash-accent) !important;
+}
+
+/* Text colours */
+[data-theme] [style*="color: #F5F5F7"] { color: var(--dash-text-primary) !important; }
+[data-theme] [style*="color: #86868B"] { color: var(--dash-text-secondary) !important; }
+[data-theme] [style*="color: #48484A"] { color: var(--dash-text-tertiary) !important; }
+[data-theme] [style*="color: #3A3A3C"] { color: var(--dash-text-tertiary) !important; }
+
+/* CSS-class-level overrides for admin utility classes */
+[data-theme] .admin-root { background: var(--dash-bg) !important; color: var(--dash-text-primary) !important; }
+[data-theme] .apple-card { background: var(--dash-surface-1) !important; border-color: var(--dash-border) !important; }
+[data-theme] .apple-input { background: var(--dash-surface-2) !important; color: var(--dash-text-primary) !important; }
+[data-theme] .apple-input:focus { border-color: var(--dash-accent) !important; }
+[data-theme] .apple-btn-primary { background: var(--dash-accent) !important; }
+[data-theme] .apple-btn-primary:hover { background: var(--dash-accent-hover) !important; }
+[data-theme] .apple-btn-ghost:hover { background: var(--dash-surface-2) !important; color: var(--dash-text-primary) !important; }
+[data-theme] .apple-table-row:hover { background: var(--dash-surface-2) !important; }
+[data-theme] .admin-scrollbar::-webkit-scrollbar-thumb { background: var(--dash-surface-3) !important; }
+[data-theme] .mobile-nav-trigger { background: var(--dash-bg) !important; border-color: var(--dash-border) !important; }
+
 /* Admin Apple Dark Design System */
 .admin-root {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
@@ -259,4 +461,43 @@ div:hover > .video-title {
 .admin-scrollbar::-webkit-scrollbar-thumb {
   background: #2C2C2E;
   border-radius: 3px;
+}
+
+/* ─── Admin responsive sidebar ─────────────────────────────────────────────── */
+
+/* Mobile-only trigger bar: fixed top strip */
+.mobile-nav-trigger {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 900;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: #000000;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@media (max-width: 768px) {
+  .mobile-nav-trigger {
+    display: flex;
+  }
+
+  .sidebar-wrapper {
+    display: none !important;
+  }
+
+  .admin-main-content {
+    padding: 80px 16px 24px !important; /* 80px leaves room for the fixed trigger bar */
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-nav-trigger {
+    display: none !important;
+  }
+
+  /* Overlay is always invisible on desktop — the drawer is never shown */
 }

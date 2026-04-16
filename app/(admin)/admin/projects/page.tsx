@@ -2,7 +2,8 @@ import Link from 'next/link'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import type { ProjectStatus, ProjectWithClient, Client } from '@/lib/supabase/types'
 import { ProjectsFilterBar } from '@/components/admin/projects/projects-filter-bar'
-import { ProjectsTable } from '@/components/admin/projects/ProjectsTable'
+import { ProjectsTable, formatBudget } from '@/components/admin/projects/ProjectsTable'
+import { PROJECT_STATUS_STYLES } from '@/lib/status-colors'
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
@@ -20,20 +21,6 @@ const T = {
   accent:        '#0071E3',
   font:          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
 } as const
-
-// ── Status config ─────────────────────────────────────────────────────────────
-
-type StatusConfig = {
-  label: string
-  color: string
-}
-
-const STATUS_CONFIG: Record<ProjectStatus, StatusConfig> = {
-  pre_production:  { label: 'Pre-produccion',  color: '#FF9F0A' },
-  production:      { label: 'Produccion',       color: '#0071E3' },
-  post_production: { label: 'Post-produccion',  color: '#BF5AF2' },
-  delivered:       { label: 'Entregado',        color: '#30D158' },
-}
 
 // ── Stats row config ──────────────────────────────────────────────────────────
 
@@ -96,6 +83,8 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
       end_date,
       created_at,
       updated_at,
+      budget,
+      currency,
       client:clients(
         id,
         name,
@@ -122,7 +111,13 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
   }
 
   const { data: projects, error } = await query
-  const rows = (projects ?? []) as ProjectWithClient[]
+  const rows = (projects ?? []) as unknown as ProjectWithClient[]
+
+  // Sum budgets of delivered projects (budget/currency are not in the TS type yet)
+  type ProjectAny = ProjectWithClient & { budget: number | null; currency: string | null }
+  const totalRevenue = (rows as ProjectAny[])
+    .filter((p) => p.status === 'delivered' && p.budget != null)
+    .reduce((sum, p) => sum + (p.budget ?? 0), 0)
 
   const hasFilters =
     (q && q.trim().length > 0) ||
@@ -217,7 +212,7 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
         </div>
 
         {STAT_CARDS.map((s) => {
-          const { color } = STATUS_CONFIG[s.key]
+          const { color } = PROJECT_STATUS_STYLES[s.key] ?? { color: '#86868B' }
           return (
             <div
               key={s.key}
@@ -254,6 +249,42 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
             </div>
           )
         })}
+
+        {/* Revenue total — sum of delivered project budgets */}
+        <div
+          style={{
+            background: T.surface1,
+            borderRadius: '12px',
+            padding: '14px 20px',
+            minWidth: '140px',
+          }}
+        >
+          <p
+            style={{
+              fontSize: '11px',
+              fontWeight: 500,
+              margin: 0,
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+              color: T.textTertiary,
+            }}
+          >
+            Revenue total
+          </p>
+          <p
+            style={{
+              fontSize: '18px',
+              fontWeight: 700,
+              color: '#30D158',
+              margin: '4px 0 0',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            {totalRevenue > 0
+              ? formatBudget(totalRevenue, 'MXN')
+              : '—'}
+          </p>
+        </div>
       </div>
 
       {/* Filter bar */}
@@ -286,20 +317,116 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
 
       {/* Empty state */}
       {rows.length === 0 && !error ? (
-        <div
-          style={{
-            padding: '80px 20px',
-            textAlign: 'center',
-            background: T.surface1,
-            borderRadius: '16px',
-          }}
-        >
-          <p style={{ fontSize: '14px', color: T.textTertiary, margin: 0 }}>
-            {hasFilters
-              ? 'No hay proyectos que coincidan con los filtros.'
-              : 'No hay proyectos todavia.'}
-          </p>
-        </div>
+        hasFilters ? (
+          /* Filtered empty */
+          <div
+            style={{
+              padding: '80px 20px',
+              textAlign: 'center',
+              background: T.surface1,
+              borderRadius: '16px',
+            }}
+          >
+            <svg
+              width="80"
+              height="80"
+              viewBox="0 0 80 80"
+              fill="none"
+              aria-hidden="true"
+              style={{ display: 'block', margin: '0 auto 20px' }}
+            >
+              <rect x="16" y="12" width="48" height="56" rx="6" fill="#2C2C2E" stroke="#3A3A3C" strokeWidth="1.5" />
+              <line x1="26" y1="26" x2="54" y2="26" stroke="#3A3A3C" strokeWidth="1.5" strokeLinecap="round" />
+              <line x1="26" y1="34" x2="46" y2="34" stroke="#3A3A3C" strokeWidth="1.5" strokeLinecap="round" />
+              <line x1="26" y1="42" x2="50" y2="42" stroke="#3A3A3C" strokeWidth="1.5" strokeLinecap="round" />
+              <circle cx="57" cy="57" r="13" fill="#1C1C1E" stroke="#3A3A3C" strokeWidth="1.5" />
+              <line x1="52" y1="57" x2="62" y2="57" stroke="#48484A" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            <h3
+              style={{
+                fontSize: '16px',
+                fontWeight: 600,
+                color: T.textSecondary,
+                margin: '0 0 8px',
+                letterSpacing: '-0.01em',
+              }}
+            >
+              Sin resultados
+            </h3>
+            <p style={{ fontSize: '13px', color: T.textTertiary, margin: 0 }}>
+              No hay proyectos que coincidan con los filtros aplicados.
+            </p>
+          </div>
+        ) : (
+          /* True empty */
+          <div
+            style={{
+              padding: '80px 20px',
+              textAlign: 'center',
+              background: T.surface1,
+              borderRadius: '16px',
+            }}
+          >
+            <svg
+              width="80"
+              height="80"
+              viewBox="0 0 80 80"
+              fill="none"
+              aria-hidden="true"
+              style={{ display: 'block', margin: '0 auto 20px' }}
+            >
+              {/* Clapperboard icon */}
+              <rect x="12" y="28" width="56" height="40" rx="6" fill="#2C2C2E" stroke="#3A3A3C" strokeWidth="1.5" />
+              <rect x="12" y="14" width="56" height="16" rx="4" fill="#2C2C2E" stroke="#3A3A3C" strokeWidth="1.5" />
+              {/* Clap stripes */}
+              <line x1="24" y1="14" x2="20" y2="30" stroke="#3A3A3C" strokeWidth="1.5" strokeLinecap="round" />
+              <line x1="34" y1="14" x2="30" y2="30" stroke="#3A3A3C" strokeWidth="1.5" strokeLinecap="round" />
+              <line x1="44" y1="14" x2="40" y2="30" stroke="#3A3A3C" strokeWidth="1.5" strokeLinecap="round" />
+              <line x1="54" y1="14" x2="50" y2="30" stroke="#3A3A3C" strokeWidth="1.5" strokeLinecap="round" />
+              {/* Play triangle */}
+              <path d="M35 44l14 8-14 8V44z" fill="#3A3A3C" />
+            </svg>
+            <h3
+              style={{
+                fontSize: '17px',
+                fontWeight: 600,
+                color: T.textPrimary,
+                margin: '0 0 8px',
+                letterSpacing: '-0.02em',
+              }}
+            >
+              Sin proyectos todavia
+            </h3>
+            <p
+              style={{
+                fontSize: '13px',
+                color: T.textSecondary,
+                margin: '0 0 24px',
+                lineHeight: 1.5,
+              }}
+            >
+              Crea tu primer proyecto para empezar a gestionar tu trabajo.
+            </p>
+            <Link
+              href="/admin/projects/new"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '10px 20px',
+                background: T.accent,
+                color: '#fff',
+                fontSize: '14px',
+                fontWeight: 600,
+                borderRadius: '8px',
+                textDecoration: 'none',
+                letterSpacing: '-0.01em',
+              }}
+            >
+              + Nuevo proyecto
+            </Link>
+          </div>
+        )
       ) : (
         <ProjectsTable rows={rows} pageSize={15} />
       )}

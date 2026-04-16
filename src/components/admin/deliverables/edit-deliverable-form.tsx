@@ -15,6 +15,7 @@ interface FormValues {
   title: string
   description: string
   url: string
+  due_date: string
   type: DeliverableType
   status: DeliverableStatus
 }
@@ -100,6 +101,7 @@ export function EditDeliverableForm({ deliverable, onSuccess, onCancel }: Props)
     title:       deliverable.title,
     description: deliverable.description ?? '',
     url:         deliverable.url ?? '',
+    due_date:    deliverable.due_date ?? '',
     type:        deliverable.type,
     status:      deliverable.status,
   })
@@ -132,6 +134,7 @@ export function EditDeliverableForm({ deliverable, onSuccess, onCancel }: Props)
           title:       values.title.trim(),
           description: values.description.trim() || null,
           url:         values.url.trim() || null,
+          due_date:    values.due_date.trim() || null,
           type:        values.type,
           status:      values.status,
         })
@@ -254,6 +257,29 @@ export function EditDeliverableForm({ deliverable, onSuccess, onCancel }: Props)
             {errors.url}
           </p>
         )}
+      </div>
+
+      {/* Due date */}
+      <div>
+        <label htmlFor="ed-due_date" style={labelStyle}>
+          Fecha limite
+        </label>
+        <input
+          id="ed-due_date"
+          name="due_date"
+          type="date"
+          value={values.due_date}
+          onChange={handleChange}
+          onFocus={() => setFocused('due_date')}
+          onBlur={() => setFocused(null)}
+          disabled={isPending}
+          style={{
+            ...inputStyle,
+            ...focusStyle('due_date'),
+            opacity: isPending ? 0.5 : 1,
+            colorScheme: 'dark',
+          }}
+        />
       </div>
 
       {/* Type + Status */}

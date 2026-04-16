@@ -116,9 +116,73 @@ export default async function AdminTeamPage() {
       </div>
 
       {team.length === 0 && (
-        <p style={{ fontSize: '14px', color: '#48484A' }}>
-          No hay miembros registrados.
-        </p>
+        <div
+          style={{
+            padding: '80px 20px',
+            textAlign: 'center',
+            backgroundColor: '#1C1C1E',
+            border: '1px solid rgba(255,255,255,0.06)',
+            borderRadius: '16px',
+            marginBottom: '32px',
+          }}
+        >
+          {/* Group of people SVG */}
+          <svg
+            width="80"
+            height="80"
+            viewBox="0 0 80 80"
+            fill="none"
+            aria-hidden="true"
+            style={{ display: 'block', margin: '0 auto 20px' }}
+          >
+            {/* Left person */}
+            <circle cx="26" cy="28" r="9" fill="#2C2C2E" stroke="#3A3A3C" strokeWidth="1.5" />
+            <path
+              d="M8 60c0-9.94 8.06-18 18-18s18 8.06 18 18"
+              stroke="#3A3A3C"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              fill="none"
+            />
+            {/* Right person (offset) */}
+            <circle cx="54" cy="28" r="9" fill="#2C2C2E" stroke="#3A3A3C" strokeWidth="1.5" />
+            <path
+              d="M36 60c0-9.94 8.06-18 18-18s18 8.06 18 18"
+              stroke="#3A3A3C"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              fill="none"
+            />
+            {/* Plus badge */}
+            <circle cx="64" cy="18" r="9" fill="#1C1C1E" stroke="#3A3A3C" strokeWidth="1.5" />
+            <line x1="64" y1="13" x2="64" y2="23" stroke="#48484A" strokeWidth="1.5" strokeLinecap="round" />
+            <line x1="59" y1="18" x2="69" y2="18" stroke="#48484A" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          <h3
+            style={{
+              fontSize: '17px',
+              fontWeight: 600,
+              color: '#F5F5F7',
+              margin: '0 0 8px',
+              letterSpacing: '-0.02em',
+              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+            }}
+          >
+            Sin miembros en el equipo
+          </h3>
+          <p
+            style={{
+              fontSize: '13px',
+              color: '#86868B',
+              margin: '0 0 24px',
+              lineHeight: 1.5,
+              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+            }}
+          >
+            Invita al primer miembro para construir tu equipo de produccion.
+          </p>
+          <InviteMemberForm />
+        </div>
       )}
 
       {/* Admin group */}
