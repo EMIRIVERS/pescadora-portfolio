@@ -1,37 +1,30 @@
 'use client'
 
-import { Suspense, useState, useEffect, useActionState } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { signInWithPassword, signInWithMagicLink } from '../../actions/auth'
-
-type FormMode = 'password' | 'magic-link'
+import { Suspense, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 
 function LoginPageInner() {
-  const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirectTo')
+  const [email, setEmail]       = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError]       = useState<string | null>(null)
+  const [pending, setPending]   = useState(false)
 
-  const [mode, setMode] = useState<FormMode>('password')
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setPending(true)
+    setError(null)
 
-  const [passwordState, passwordAction, passwordPending] = useActionState(
-    signInWithPassword,
-    { error: null },
-  )
+    const supabase = createClient()
+    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
 
-  // When server action returns a redirectTo URL, navigate via full HTTP redirect
-  // so the browser sends session cookies on the next request
-  useEffect(() => {
-    if (passwordState.redirectTo) {
-      window.location.href = passwordState.redirectTo
+    if (authError) {
+      setError(authError.message)
+      setPending(false)
+      return
     }
-  }, [passwordState.redirectTo])
 
-  const [magicState, magicAction, magicPending] = useActionState(
-    signInWithMagicLink,
-    { error: null, sent: false },
-  )
-
-  const switchMode = (next: FormMode) => {
-    setMode(next)
+    // Cookies are already in the browser — let middleware decide the destination
+    window.location.href = '/admin'
   }
 
   return (
@@ -54,145 +47,65 @@ function LoginPageInner() {
 
         {/* Card */}
         <div className="border border-[#1a1a1a] rounded-sm bg-[#0d0d0d] p-8">
-          {/* Mode toggle */}
-          <div className="flex gap-1 mb-8 p-1 bg-[#111] rounded-sm">
-            <button
-              type="button"
-              onClick={() => switchMode('password')}
-              className={`flex-1 py-1.5 text-xs font-mono tracking-widest uppercase transition-colors rounded-sm ${
-                mode === 'password'
-                  ? 'bg-[#1c1c1c] text-[#e8e8e8]'
-                  : 'text-[#555] hover:text-[#888]'
-              }`}
-            >
-              Password
-            </button>
-            <button
-              type="button"
-              onClick={() => switchMode('magic-link')}
-              className={`flex-1 py-1.5 text-xs font-mono tracking-widest uppercase transition-colors rounded-sm ${
-                mode === 'magic-link'
-                  ? 'bg-[#1c1c1c] text-[#e8e8e8]'
-                  : 'text-[#555] hover:text-[#888]'
-              }`}
-            >
-              Magic link
-            </button>
-          </div>
+          <form onSubmit={handleSubmit} noValidate>
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <label
+                  htmlFor="email"
+                  className="block text-[10px] font-mono tracking-[0.2em] uppercase text-[#555]"
+                >
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={pending}
+                  className="w-full bg-[#111] border border-[#222] rounded-sm px-3 py-2.5 text-sm text-[#e8e8e8] font-mono placeholder-[#333] focus:outline-none focus:border-[#444] transition-colors disabled:opacity-40"
+                  placeholder="you@example.com"
+                />
+              </div>
 
-          {/* ── Password form ── */}
-          {mode === 'password' && (
-            <form action={passwordAction} noValidate>
-              {redirectTo && (
-                <input type="hidden" name="redirectTo" value={redirectTo} />
+              <div className="space-y-1">
+                <label
+                  htmlFor="password"
+                  className="block text-[10px] font-mono tracking-[0.2em] uppercase text-[#555]"
+                >
+                  Password
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={pending}
+                  className="w-full bg-[#111] border border-[#222] rounded-sm px-3 py-2.5 text-sm text-[#e8e8e8] font-mono placeholder-[#333] focus:outline-none focus:border-[#444] transition-colors disabled:opacity-40"
+                  placeholder="••••••••"
+                />
+              </div>
+
+              {error && (
+                <p className="text-[11px] font-mono text-red-400/80 pt-1">
+                  {error === 'Invalid login credentials'
+                    ? 'Email o contraseña incorrectos.'
+                    : error}
+                </p>
               )}
-              <fieldset disabled={passwordPending} className="space-y-4">
-                <div className="space-y-1">
-                  <label
-                    htmlFor="email"
-                    className="block text-[10px] font-mono tracking-[0.2em] uppercase text-[#555]"
-                  >
-                    Email
-                  </label>
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    className="w-full bg-[#111] border border-[#222] rounded-sm px-3 py-2.5 text-sm text-[#e8e8e8] font-mono placeholder-[#333] focus:outline-none focus:border-[#444] transition-colors"
-                    placeholder="you@example.com"
-                  />
-                </div>
 
-                <div className="space-y-1">
-                  <label
-                    htmlFor="password"
-                    className="block text-[10px] font-mono tracking-[0.2em] uppercase text-[#555]"
-                  >
-                    Password
-                  </label>
-                  <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    autoComplete="current-password"
-                    required
-                    className="w-full bg-[#111] border border-[#222] rounded-sm px-3 py-2.5 text-sm text-[#e8e8e8] font-mono placeholder-[#333] focus:outline-none focus:border-[#444] transition-colors"
-                    placeholder="••••••••"
-                  />
-                </div>
-
-                {passwordState.error && (
-                  <p className="text-[11px] font-mono text-red-400/80 pt-1">
-                    {passwordState.error}
-                  </p>
-                )}
-
-                <button
-                  type="submit"
-                  className="w-full mt-2 py-2.5 bg-[#e8e8e8] hover:bg-white text-[#080808] text-xs font-mono tracking-[0.2em] uppercase rounded-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  {passwordPending ? 'Signing in...' : 'Sign in'}
-                </button>
-              </fieldset>
-            </form>
-          )}
-
-          {/* ── Magic link form ── */}
-          {mode === 'magic-link' && !magicState.sent && (
-            <form action={magicAction} noValidate>
-              <fieldset disabled={magicPending} className="space-y-4">
-                <div className="space-y-1">
-                  <label
-                    htmlFor="email-magic"
-                    className="block text-[10px] font-mono tracking-[0.2em] uppercase text-[#555]"
-                  >
-                    Email
-                  </label>
-                  <input
-                    id="email-magic"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    className="w-full bg-[#111] border border-[#222] rounded-sm px-3 py-2.5 text-sm text-[#e8e8e8] font-mono placeholder-[#333] focus:outline-none focus:border-[#444] transition-colors"
-                    placeholder="you@example.com"
-                  />
-                </div>
-
-                {magicState.error && (
-                  <p className="text-[11px] font-mono text-red-400/80 pt-1">
-                    {magicState.error}
-                  </p>
-                )}
-
-                <button
-                  type="submit"
-                  className="w-full mt-2 py-2.5 bg-[#e8e8e8] hover:bg-white text-[#080808] text-xs font-mono tracking-[0.2em] uppercase rounded-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  {magicPending ? 'Sending...' : 'Send magic link'}
-                </button>
-              </fieldset>
-            </form>
-          )}
-
-          {/* ── Magic link sent ── */}
-          {mode === 'magic-link' && magicState.sent && (
-            <div className="text-center space-y-3 py-2">
-              <p className="text-sm font-mono text-[#e8e8e8]">Link sent.</p>
-              <p className="text-xs font-mono text-[#555] leading-relaxed">
-                Revisa tu email. El link expira en 60 minutos.
-              </p>
               <button
-                type="button"
-                onClick={() => switchMode('magic-link')}
-                className="mt-2 text-[10px] font-mono tracking-[0.2em] uppercase text-[#444] hover:text-[#888] transition-colors"
+                type="submit"
+                disabled={pending}
+                className="w-full mt-2 py-2.5 bg-[#e8e8e8] hover:bg-white text-[#080808] text-xs font-mono tracking-[0.2em] uppercase rounded-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                Usar otro email
+                {pending ? 'Entrando...' : 'Entrar'}
               </button>
             </div>
-          )}
+          </form>
         </div>
 
         <p className="mt-6 text-center text-[10px] font-mono tracking-widest uppercase text-[#333]">

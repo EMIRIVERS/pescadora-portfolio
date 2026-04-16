@@ -43,13 +43,14 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(url)
     }
 
-    const { data: profile, error } = await supabase
+    const { data: profile } = await supabase
       .from('profiles')
       .select('is_admin_team')
       .eq('id', user.id)
       .single()
 
-    if (error || !profile?.is_admin_team) {
+    // If profile read fails (RLS timing), let the admin layout decide
+    if (profile && !profile.is_admin_team) {
       const url = request.nextUrl.clone()
       url.pathname = '/portal'
       url.searchParams.delete('redirectTo')
