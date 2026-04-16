@@ -48,11 +48,12 @@ export function Hero() {
         padding: '0 1.5rem',
       }}>
         <p style={{
-          fontFamily: 'var(--font-geist-sans)',
-          fontWeight: 900,
-          fontSize: 'clamp(5rem, 20vw, 16rem)',
-          letterSpacing: '-0.02em',
-          lineHeight: 0.9,
+          fontFamily: 'var(--font-cormorant)',
+          fontWeight: 300,
+          fontStyle: 'italic',
+          fontSize: 'clamp(5.5rem, 22vw, 18rem)',
+          letterSpacing: '0.01em',
+          lineHeight: 0.85,
           textTransform: 'uppercase',
           color: '#ffffff',
           margin: 0,
@@ -82,6 +83,18 @@ export function Hero() {
           FILMS
         </p>
       </div>
+
+      {/* Fade gradient — difumina el fondo animado hacia el contenido */}
+      <div style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: '45%',
+        background: 'linear-gradient(to bottom, transparent 0%, rgba(5,5,5,0.6) 50%, #050505 100%)',
+        pointerEvents: 'none',
+        zIndex: 2,
+      }} />
 
       {/* Scroll hint */}
       <div style={{

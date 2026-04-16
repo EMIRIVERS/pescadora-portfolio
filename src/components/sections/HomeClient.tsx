@@ -78,10 +78,13 @@ export default function HomeClient({ cmsProjects, videos }: Props) {
 
       <main style={{ position: 'relative', zIndex: 1 }}>
         <Hero />
-        <PortfolioSection cmsProjects={cmsProjects} videos={videos} />
-        <ManifestoSection />
-        <ServiciosSection />
-        <ContactoSection />
+        {/* Fondo sólido para las secciones de contenido — oculta los dots */}
+        <div style={{ backgroundColor: '#050505' }}>
+          <PortfolioSection cmsProjects={cmsProjects} videos={videos} />
+          <ManifestoSection />
+          <ServiciosSection />
+          <ContactoSection />
+        </div>
       </main>
     </>
   )
