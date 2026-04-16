@@ -209,6 +209,8 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
       .proj-title-link:hover { color: #0071E3 !important; }
       .proj-arrow-btn { color: #48484A; background: transparent; transition: color 0.15s, background 0.15s; }
       .proj-arrow-btn:hover { color: #F5F5F7 !important; background: #2C2C2E !important; }
+      .proj-new-btn { opacity: 1; transition: opacity 0.15s ease; }
+      .proj-new-btn:hover { opacity: 0.88 !important; }
     `}</style>
     <div
       style={{
@@ -247,6 +249,7 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
         </div>
         <Link
           href="/admin/projects/new"
+          className="proj-new-btn"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -259,13 +262,6 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
             borderRadius: '8px',
             textDecoration: 'none',
             letterSpacing: '-0.01em',
-            transition: 'opacity 0.15s ease',
-          }}
-          onMouseOver={(e) => {
-            ;(e.currentTarget as HTMLAnchorElement).style.opacity = '0.88'
-          }}
-          onMouseOut={(e) => {
-            ;(e.currentTarget as HTMLAnchorElement).style.opacity = '1'
           }}
         >
           + Nuevo proyecto

@@ -110,6 +110,11 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   const statusLabel = STATUS_LABELS[typedProject.status]
 
   return (
+    <>
+    <style>{`
+      .proj-back-link { color: #86868B; transition: color 0.15s; }
+      .proj-back-link:hover { color: #F5F5F7 !important; }
+    `}</style>
     <div
       className="min-h-screen"
       style={{
@@ -129,10 +134,8 @@ export default async function ProjectDetailPage({ params }: PageProps) {
         <div className="mx-auto max-w-5xl px-6 h-14 flex items-center justify-between">
           <Link
             href="/admin/projects"
-            className="flex items-center gap-1.5 transition-colors"
-            style={{ fontSize: '14px', color: '#86868B' }}
-            onMouseOver={(e) => (e.currentTarget.style.color = '#F5F5F7')}
-            onMouseOut={(e) => (e.currentTarget.style.color = '#86868B')}
+            className="proj-back-link flex items-center gap-1.5"
+            style={{ fontSize: '14px' }}
           >
             <ChevronLeft className="w-4 h-4" />
             Proyectos
@@ -333,5 +336,6 @@ export default async function ProjectDetailPage({ params }: PageProps) {
         </section>
       </div>
     </div>
+    </>
   )
 }
