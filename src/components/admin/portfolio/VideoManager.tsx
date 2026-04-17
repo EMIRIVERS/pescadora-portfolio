@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useState, useTransition, useCallback } from 'react'
+import React, { useState, useTransition, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Pencil, Trash2, Eye, EyeOff, X, GripVertical, Play } from 'lucide-react'
+import { Plus, Pencil, Trash2, Eye, EyeOff, X, GripVertical, Play, Upload } from 'lucide-react'
 import {
   DndContext,
   closestCenter,
@@ -604,6 +604,12 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
   const [activeFilter, setActiveFilter] = useState<string>('todos')
   const [formError, setFormError] = useState<string | null>(null)
 
+  // Cover upload
+  const [formCoverUrl, setFormCoverUrl] = useState('')
+  const [coverUploading, setCoverUploading] = useState(false)
+  const [coverDropOver, setCoverDropOver] = useState(false)
+  const coverFileRef = useRef<HTMLInputElement>(null)
+
   // Bulk selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkPending, setBulkPending] = useState(false)
@@ -640,12 +646,30 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
 
   // ── form helpers ──────────────────────────────────────────────────────────
 
+  async function uploadVideoCover(file: File) {
+    const supabase = createClient()
+    const ext = file.name.split('.').pop() ?? 'jpg'
+    const path = `video-covers/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+    setCoverUploading(true)
+    try {
+      const { error } = await supabase.storage.from('media').upload(path, file, { upsert: false })
+      if (error) throw new Error(error.message)
+      const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/media/${path}`
+      setFormCoverUrl(url)
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Error al subir miniatura')
+    } finally {
+      setCoverUploading(false)
+    }
+  }
+
   function openCreateForm() {
     setEditingVideo(null)
     setFormMode('create')
     setFormCategory('videoclips')
     setFormVimeoId('')
     setFormPreviewVimeoId('')
+    setFormCoverUrl('')
     setShowForm(true)
   }
 
@@ -655,6 +679,7 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
     setFormCategory(video.category)
     setFormVimeoId(video.vimeo_id)
     setFormPreviewVimeoId('')
+    setFormCoverUrl(video.cover_url ?? '')
     setShowForm(true)
   }
 
@@ -662,11 +687,13 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
     setShowForm(false)
     setEditingVideo(null)
     setFormError(null)
+    setFormCoverUrl('')
   }
 
   function resetFormState() {
     setFormCategory('videoclips')
     setFormVimeoId('')
+    setFormCoverUrl('')
     setFormPreviewVimeoId('')
     setEditingVideo(null)
   }
@@ -1210,22 +1237,91 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
               </div>
             </div>
 
-            {/* Cover URL (solo para videos de Vimeo) */}
-            {!isPhoto && (
-              <div>
-                <label htmlFor="cover_url" style={LABEL_STYLE}>Miniatura personalizada</label>
+            {/* Cover — drag-and-drop upload o URL (para videos y fotos) */}
+            <div>
+              <label style={LABEL_STYLE}>
+                {isPhoto ? 'Imagen de portada' : 'Miniatura personalizada'}
+                {!isPhoto && <span style={{ color: 'var(--dash-text-tertiary)', marginLeft: 4 }}>(opcional — usa Vimeo si vacío)</span>}
+              </label>
+              <input name="cover_url" type="hidden" value={formCoverUrl} onChange={() => {}} />
+              <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                {/* Drop zone / preview */}
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setCoverDropOver(true) }}
+                  onDragLeave={() => setCoverDropOver(false)}
+                  onDrop={(e) => {
+                    e.preventDefault()
+                    setCoverDropOver(false)
+                    const file = e.dataTransfer.files[0]
+                    if (file && (file.type.startsWith('image/') || file.type === 'image/gif')) uploadVideoCover(file)
+                  }}
+                  onClick={() => !coverUploading && coverFileRef.current?.click()}
+                  style={{
+                    width: 90,
+                    height: 64,
+                    borderRadius: 8,
+                    flexShrink: 0,
+                    background: 'var(--dash-surface-2)',
+                    border: `1.5px dashed ${coverDropOver ? 'rgba(255,255,255,0.4)' : formCoverUrl ? 'transparent' : 'rgba(255,255,255,0.15)'}`,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: coverUploading ? 'wait' : 'pointer',
+                    overflow: 'hidden',
+                    position: 'relative',
+                    transition: 'border-color 0.15s',
+                    gap: 3,
+                  }}
+                >
+                  {formCoverUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={formCoverUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+                  ) : coverUploading ? (
+                    <span style={{ fontSize: 10, color: 'var(--dash-text-tertiary)', fontFamily: FONT }}>Subiendo…</span>
+                  ) : (
+                    <>
+                      <Upload size={14} strokeWidth={1.5} color="rgba(255,255,255,0.25)" />
+                      <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', fontFamily: FONT, textAlign: 'center', lineHeight: 1.3 }}>
+                        Subir o<br />arrastrar
+                      </span>
+                    </>
+                  )}
+                </div>
                 <input
-                  id="cover_url"
-                  name="cover_url"
-                  type="url"
-                  defaultValue={editingVideo?.cover_url ?? ''}
-                  placeholder="https://... (opcional, usa Vimeo si vacío)"
-                  style={INPUT_STYLE}
-                  onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--dash-border)' }}
+                  ref={coverFileRef}
+                  type="file"
+                  accept="image/*,image/gif"
+                  style={{ display: 'none' }}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) uploadVideoCover(file)
+                    e.target.value = ''
+                  }}
                 />
+                {/* URL paste input */}
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <input
+                    type="url"
+                    value={formCoverUrl}
+                    onChange={(e) => setFormCoverUrl(e.target.value)}
+                    placeholder="O pega una URL de imagen / GIF..."
+                    style={{ ...INPUT_STYLE }}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--dash-border)' }}
+                  />
+                  {formCoverUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setFormCoverUrl('')}
+                      style={{ alignSelf: 'flex-start', fontSize: 11, color: '#FF453A', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, fontFamily: FONT }}
+                    >
+                      Quitar miniatura
+                    </button>
+                  )}
+                </div>
               </div>
-            )}
+            </div>
 
             {/* Row 2: Categoria + Cliente + Ano */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>

@@ -12,6 +12,7 @@ import {
   toggleCategoryVisibility,
   reorderCategories,
 } from '@/lib/actions/categories'
+import PhotoManager, { type Album } from './PhotoManager'
 
 const COVER_BUCKET = 'media'
 
@@ -37,6 +38,7 @@ interface Category {
 interface Props {
   initialCategories: Category[]
   videoCounts?: Record<string, number>
+  photoAlbums?: Album[]
 }
 
 const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
@@ -53,7 +55,7 @@ const INPUT: React.CSSProperties = {
   boxSizing: 'border-box',
 }
 
-export default function CategoryManager({ initialCategories, videoCounts = {} }: Props) {
+export default function CategoryManager({ initialCategories, videoCounts = {}, photoAlbums }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [cats, setCats] = useState<Category[]>(initialCategories)
@@ -72,6 +74,9 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
   const [coverUploading, setCoverUploading] = useState(false)
   const [coverDropOver, setCoverDropOver] = useState(false)
   const coverFileRef = useRef<HTMLInputElement>(null)
+
+  // Photo albums panel (expanded for photo-type categories)
+  const [albumsOpenFor, setAlbumsOpenFor] = useState<string | null>(null)
 
   async function handleCoverFileUpload(file: File, cat: Category) {
     if (!file.type.startsWith('image/')) return
@@ -504,10 +509,35 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
                     >
                       <Trash2 size={13} strokeWidth={1.5} />
                     </button>
+                    {cat.type === 'photo' && photoAlbums !== undefined && (
+                      <button
+                        className="cm-btn"
+                        onClick={() => setAlbumsOpenFor(albumsOpenFor === cat.id ? null : cat.id)}
+                        title={albumsOpenFor === cat.id ? 'Cerrar álbumes' : 'Gestionar álbumes'}
+                        style={{ padding: '0 10px', height: 28, background: albumsOpenFor === cat.id ? 'rgba(191,90,242,0.15)' : 'transparent', border: albumsOpenFor === cat.id ? '1px solid rgba(191,90,242,0.3)' : 'none', color: albumsOpenFor === cat.id ? '#BF5AF2' : 'var(--dash-text-secondary)', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontFamily: FONT, whiteSpace: 'nowrap' }}
+                      >
+                        <Upload size={11} strokeWidth={1.5} />
+                        Álbumes
+                      </button>
+                    )}
                   </>
                 )}
               </div>
             </div>
+
+            {/* Photo albums panel — inline below the row for photo categories */}
+            {cat.type === 'photo' && albumsOpenFor === cat.id && photoAlbums !== undefined && (
+              <div
+                style={{
+                  padding: '20px 16px 24px',
+                  background: 'rgba(191,90,242,0.04)',
+                  borderTop: '1px solid rgba(191,90,242,0.15)',
+                  borderBottom: idx < sorted.length - 1 ? '1px solid var(--dash-surface-2)' : undefined,
+                }}
+              >
+                <PhotoManager initialAlbums={photoAlbums} />
+              </div>
+            )}
 
             {/* Cover edit panel — inline below the row */}
             {coverEditingId === cat.id && (

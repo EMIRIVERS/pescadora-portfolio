@@ -1,7 +1,7 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import VideoManager from '@/components/admin/portfolio/VideoManager'
 import CategoryManager from '@/components/admin/portfolio/CategoryManager'
-import PhotoManager, { type Album } from '@/components/admin/portfolio/PhotoManager'
+import type { Album } from '@/components/admin/portfolio/PhotoManager'
 
 interface PortfolioVideo {
   id: string
@@ -201,46 +201,17 @@ export default async function PortfolioAdminPage() {
         <StatCard label="Ocultos"  count={hiddenCount}  categoryKey="ocultos" />
       </div>
 
-      {/* ── Category manager ──────────────────────────────────────────────── */}
+      {/* ── Category manager (con albums de fotografía integrados) ──────── */}
       <div style={{ marginBottom: 32 }}>
-        <CategoryManager initialCategories={allCategories} videoCounts={videoCountsBySlug} />
+        <CategoryManager
+          initialCategories={allCategories}
+          videoCounts={videoCountsBySlug}
+          photoAlbums={allAlbums}
+        />
       </div>
 
       {/* ── Video manager ─────────────────────────────────────────────────── */}
       <VideoManager initialVideos={allVideos} />
-
-      {/* ── Fotografías ───────────────────────────────────────────────────── */}
-      <div style={{ marginTop: 48 }}>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            marginBottom: 20,
-            paddingBottom: 16,
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
-          }}
-        >
-          <div>
-            <h2
-              style={{
-                margin: 0,
-                fontSize: 18,
-                fontWeight: 600,
-                color: 'var(--dash-text-primary)',
-                fontFamily: FONT,
-                letterSpacing: '-0.01em',
-              }}
-            >
-              Fotografias
-            </h2>
-            <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--dash-text-tertiary)', fontFamily: FONT }}>
-              Albums almacenados en la plataforma — arrastra para reordenar fotos dentro de cada album
-            </p>
-          </div>
-        </div>
-        <PhotoManager initialAlbums={allAlbums} />
-      </div>
     </div>
   )
 }
