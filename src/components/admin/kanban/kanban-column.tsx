@@ -7,7 +7,7 @@ import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { KanbanBoardWithTasks, TaskPriority } from '@/lib/supabase/types'
 import { TaskCard } from './task-card'
-import { useCreateTask } from '@/lib/queries/tasks'
+import { useCreateTask, useTaskCategories, useCreateCategory } from '@/lib/queries/tasks'
 
 // ── Shared field style ─────────────────────────────────────────────────────────
 
@@ -30,22 +30,29 @@ const fieldStyle: React.CSSProperties = {
 interface KanbanColumnProps {
   board: KanbanBoardWithTasks
   projectId?: string
+  projects?: { id: string; title: string }[]
   onOpenTaskDetail?: (taskId: string) => void
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function KanbanColumn({ board, projectId, onOpenTaskDetail }: KanbanColumnProps) {
+export function KanbanColumn({ board, projectId, projects = [], onOpenTaskDetail }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: board.id })
 
   const [isAdding, setIsAdding] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [newPriority, setNewPriority] = useState<TaskPriority>('medium')
   const [newDueDate, setNewDueDate] = useState('')
+  const [newProjectId, setNewProjectId] = useState(projectId ?? '')
+  const [newCategory, setNewCategory] = useState('')
+  const [creatingCategory, setCreatingCategory] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState('')
 
   const titleRef = useRef<HTMLTextAreaElement>(null)
 
   const createTask = useCreateTask(projectId)
+  const { data: categories = [] } = useTaskCategories()
+  const createCategory = useCreateCategory()
 
   const taskIds = board.tasks.map((t) => t.id)
 
@@ -59,11 +66,15 @@ export function KanbanColumn({ board, projectId, onOpenTaskDetail }: KanbanColum
     setNewTitle('')
     setNewPriority('medium')
     setNewDueDate('')
+    setNewProjectId(projectId ?? '')
+    setNewCategory('')
     await createTask.mutateAsync({
       boardId: board.id,
       title,
       priority: newPriority,
       due_date: newDueDate || null,
+      project_id: newProjectId || null,
+      category: newCategory || null,
       projectId,
     })
   }
@@ -72,7 +83,20 @@ export function KanbanColumn({ board, projectId, onOpenTaskDetail }: KanbanColum
     setNewTitle('')
     setNewPriority('medium')
     setNewDueDate('')
+    setNewProjectId(projectId ?? '')
+    setNewCategory('')
+    setCreatingCategory(false)
+    setNewCategoryName('')
     setIsAdding(false)
+  }
+
+  async function handleCreateCategory() {
+    const name = newCategoryName.trim()
+    if (!name) return
+    const cat = await createCategory.mutateAsync(name)
+    setNewCategory(cat.name)
+    setCreatingCategory(false)
+    setNewCategoryName('')
   }
 
   // Enter (without Shift) saves; Escape cancels
@@ -251,6 +275,74 @@ export function KanbanColumn({ board, projectId, onOpenTaskDetail }: KanbanColum
                     <option value="medium">Normal</option>
                     <option value="high">Alta</option>
                   </select>
+
+                  {/* Project */}
+                  {projects.length > 0 && (
+                    <select
+                      value={newProjectId}
+                      onChange={(e) => setNewProjectId(e.target.value)}
+                      style={{ ...fieldStyle, appearance: 'none', cursor: 'pointer' }}
+                    >
+                      <option value="">Sin proyecto</option>
+                      {projects.map((p) => (
+                        <option key={p.id} value={p.id}>{p.title}</option>
+                      ))}
+                    </select>
+                  )}
+
+                  {/* Category */}
+                  {creatingCategory ? (
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      <input
+                        autoFocus
+                        type="text"
+                        value={newCategoryName}
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') { e.preventDefault(); void handleCreateCategory() }
+                          if (e.key === 'Escape') { setCreatingCategory(false); setNewCategoryName('') }
+                        }}
+                        placeholder="Nueva categoría..."
+                        style={{ ...fieldStyle, flex: 1 }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => void handleCreateCategory()}
+                        disabled={createCategory.isPending}
+                        style={{
+                          backgroundColor: 'var(--dash-accent)',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '8px',
+                          padding: '0 10px',
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          fontFamily: 'inherit',
+                          flexShrink: 0,
+                        }}
+                      >
+                        Crear
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      <select
+                        value={newCategory}
+                        onChange={(e) => {
+                          if (e.target.value === '__new__') { setCreatingCategory(true) }
+                          else { setNewCategory(e.target.value) }
+                        }}
+                        style={{ ...fieldStyle, appearance: 'none', cursor: 'pointer', flex: 1 }}
+                      >
+                        <option value="">Sin categoría</option>
+                        {categories.map((c) => (
+                          <option key={c.id} value={c.name}>{c.name}</option>
+                        ))}
+                        <option value="__new__">+ Nueva categoría...</option>
+                      </select>
+                    </div>
+                  )}
 
                   {/* Due date */}
                   <input

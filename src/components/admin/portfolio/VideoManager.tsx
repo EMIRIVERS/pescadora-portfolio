@@ -701,6 +701,8 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
+    // Garantizar que cover_url refleja el estado React (no el DOM del input hidden)
+    formData.set('cover_url', formCoverUrl)
     setFormError(null)
 
     startTransition(async () => {

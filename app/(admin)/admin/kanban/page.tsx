@@ -136,6 +136,7 @@ export default async function KanbanPage({ searchParams }: PageProps) {
         <KanbanBoard
           projectId={projectId}
           initialBoards={boards}
+          projects={projects}
         />
       </div>
     </div>

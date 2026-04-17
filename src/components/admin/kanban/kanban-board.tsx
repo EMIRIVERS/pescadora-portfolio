@@ -26,11 +26,12 @@ import { useTaskBoards, useMoveTask, taskKeys } from '@/lib/queries/tasks'
 interface KanbanBoardProps {
   projectId?: string
   initialBoards: KanbanBoardWithTasks[]
+  projects?: { id: string; title: string }[]
 }
 
 // ── KanbanBoard ───────────────────────────────────────────────────────────────
 
-export function KanbanBoard({ projectId, initialBoards }: KanbanBoardProps) {
+export function KanbanBoard({ projectId, initialBoards, projects = [] }: KanbanBoardProps) {
   const queryClient = useQueryClient()
 
   // Hydrate cache with SSR data on first render
@@ -140,6 +141,7 @@ export function KanbanBoard({ projectId, initialBoards }: KanbanBoardProps) {
               key={board.id}
               board={board}
               projectId={projectId}
+              projects={projects}
               onOpenTaskDetail={(id) => setOpenTaskId(id)}
             />
           ))}
@@ -178,6 +180,7 @@ export function KanbanBoard({ projectId, initialBoards }: KanbanBoardProps) {
         <TaskDetailModal
           taskId={openTaskId}
           projectId={projectId}
+          projects={projects}
           onClose={() => setOpenTaskId(null)}
         />
       )}

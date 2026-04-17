@@ -3,7 +3,7 @@
 import { useEffect, useRef, useTransition, useCallback, useId, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import { taskKeys } from '@/lib/queries/tasks'
+import { taskKeys, useTaskCategories, useCreateCategory } from '@/lib/queries/tasks'
 import type {
   KanbanBoardWithTasks,
   KanbanTaskWithAssignee,
@@ -25,6 +25,7 @@ const PRIORITY_OPTIONS: { value: TaskPriority; label: string; color: string }[] 
 interface TaskDetailModalProps {
   taskId: string
   projectId?: string
+  projects?: { id: string; title: string }[]
   onClose: () => void
 }
 
@@ -34,6 +35,8 @@ interface FormState {
   priority: TaskPriority
   due_date: string
   assignee_id: string
+  project_id: string
+  category: string
 }
 
 // ── Helper: find task in boards cache ─────────────────────────────────────────
@@ -78,16 +81,22 @@ const labelStyle: React.CSSProperties = {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalProps) {
+export function TaskDetailModal({ taskId, projectId, projects = [], onClose }: TaskDetailModalProps) {
   const queryClient = useQueryClient()
   const panelRef = useRef<HTMLDivElement>(null)
   const firstFocusableRef = useRef<HTMLButtonElement>(null)
   const [isPending, startTransition] = useTransition()
+  const { data: categories = [] } = useTaskCategories()
+  const createCategory = useCreateCategory()
+  const [creatingCategory, setCreatingCategory] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState('')
 
   const titleId = useId()
   const descId = useId()
   const dueDateId = useId()
   const assigneeId = useId()
+  const projectFieldId = useId()
+  const categoryFieldId = useId()
 
   // ── Derive task from cache ─────────────────────────────────────────────────
 
@@ -118,6 +127,8 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
     priority: cached?.task.priority ?? 'medium',
     due_date: cached?.task.due_date?.slice(0, 10) ?? '',
     assignee_id: cached?.task.assignee_id ?? '',
+    project_id: cached?.task.project_id ?? '',
+    category: cached?.task.category ?? '',
   }))
 
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -193,6 +204,8 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
           priority: form.priority,
           due_date: form.due_date || null,
           assignee_id: form.assignee_id || null,
+          project_id: form.project_id || null,
+          category: form.category || null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', taskId)
@@ -228,6 +241,17 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
       await queryClient.invalidateQueries({ queryKey: taskKeys.boards(projectId) })
       onClose()
     })
+  }
+
+  // ── Create category inline ─────────────────────────────────────────────────
+
+  async function handleCreateCategory() {
+    const name = newCategoryName.trim()
+    if (!name) return
+    const cat = await createCategory.mutateAsync(name)
+    setForm((f) => ({ ...f, category: cat.name }))
+    setCreatingCategory(false)
+    setNewCategoryName('')
   }
 
   // ── Overlay click ──────────────────────────────────────────────────────────
@@ -284,7 +308,7 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
             borderBottom: '1px solid rgba(255,255,255,0.06)',
             position: 'sticky',
             top: 0,
-            backgroundColor: 'rgba(17,17,17,0.95)',
+            backgroundColor: 'var(--dash-surface-1)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
             zIndex: 1,
@@ -550,6 +574,152 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
             </div>
           </div>
 
+          {/* Project */}
+          {projects.length > 0 && (
+            <div>
+              <label htmlFor={projectFieldId} style={labelStyle}>
+                Proyecto
+              </label>
+              <div style={{ position: 'relative' }}>
+                <select
+                  id={projectFieldId}
+                  value={form.project_id}
+                  onChange={(e) => setForm((f) => ({ ...f, project_id: e.target.value }))}
+                  disabled={isPending}
+                  style={{
+                    ...inputStyle,
+                    appearance: 'none',
+                    cursor: 'pointer',
+                    paddingRight: '32px',
+                  }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(0,113,227,0.6)' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--dash-border)' }}
+                >
+                  <option value="">Sin proyecto</option>
+                  {projects.map((p) => (
+                    <option key={p.id} value={p.id}>{p.title}</option>
+                  ))}
+                </select>
+                <span
+                  aria-hidden="true"
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    pointerEvents: 'none',
+                    color: 'var(--dash-text-tertiary)',
+                    fontSize: '10px',
+                    lineHeight: 1,
+                  }}
+                >
+                  &#8964;
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Category */}
+          <div>
+            <label htmlFor={categoryFieldId} style={labelStyle}>
+              Categoría
+            </label>
+            {creatingCategory ? (
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  autoFocus
+                  type="text"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') { e.preventDefault(); void handleCreateCategory() }
+                    if (e.key === 'Escape') { setCreatingCategory(false); setNewCategoryName('') }
+                  }}
+                  placeholder="Nombre de la categoría..."
+                  style={{ ...inputStyle, flex: 1 }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(0,113,227,0.6)' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--dash-border)' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => void handleCreateCategory()}
+                  disabled={createCategory.isPending || !newCategoryName.trim()}
+                  style={{
+                    backgroundColor: 'var(--dash-accent)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '10px',
+                    padding: '9px 16px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    opacity: createCategory.isPending || !newCategoryName.trim() ? 0.5 : 1,
+                  }}
+                >
+                  Crear
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setCreatingCategory(false); setNewCategoryName('') }}
+                  style={{
+                    backgroundColor: 'var(--dash-surface-3)',
+                    color: 'var(--dash-text-secondary)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '10px',
+                    padding: '9px 12px',
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  Cancelar
+                </button>
+              </div>
+            ) : (
+              <div style={{ position: 'relative' }}>
+                <select
+                  id={categoryFieldId}
+                  value={form.category}
+                  onChange={(e) => {
+                    if (e.target.value === '__new__') { setCreatingCategory(true) }
+                    else { setForm((f) => ({ ...f, category: e.target.value })) }
+                  }}
+                  disabled={isPending}
+                  style={{
+                    ...inputStyle,
+                    appearance: 'none',
+                    cursor: 'pointer',
+                    paddingRight: '32px',
+                  }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(0,113,227,0.6)' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--dash-border)' }}
+                >
+                  <option value="">Sin categoría</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.name}>{c.name}</option>
+                  ))}
+                  <option value="__new__">+ Nueva categoría...</option>
+                </select>
+                <span
+                  aria-hidden="true"
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    pointerEvents: 'none',
+                    color: 'var(--dash-text-tertiary)',
+                    fontSize: '10px',
+                    lineHeight: 1,
+                  }}
+                >
+                  &#8964;
+                </span>
+              </div>
+            )}
+          </div>
+
           {/* Save error */}
           {saveError && (
             <div
@@ -650,7 +820,7 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
           style={{
             padding: '16px 24px',
             borderTop: '1px solid rgba(255,255,255,0.06)',
-            backgroundColor: 'rgba(17,17,17,0.95)',
+            backgroundColor: 'var(--dash-surface-1)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
           }}
@@ -711,7 +881,7 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
                 transition: 'background-color 0.15s',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#3A3A3C'
+                e.currentTarget.style.backgroundColor = 'var(--dash-surface-3)'
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = 'var(--dash-surface-3)'

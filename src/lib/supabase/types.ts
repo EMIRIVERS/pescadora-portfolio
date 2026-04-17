@@ -271,6 +271,25 @@ export interface Database {
           },
         ]
       }
+      task_categories: {
+        Row: {
+          id: string
+          name: string
+          color: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          color?: string
+          created_at?: string
+        }
+        Update: {
+          name?: string
+          color?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           id: string
@@ -283,6 +302,8 @@ export interface Database {
           priority: TaskPriority
           position: number
           due_date: string | null
+          project_id: string | null
+          category: string | null
         }
         Insert: {
           id?: string
@@ -295,6 +316,8 @@ export interface Database {
           priority?: TaskPriority
           position?: number
           due_date?: string | null
+          project_id?: string | null
+          category?: string | null
         }
         Update: {
           id?: string
@@ -307,6 +330,8 @@ export interface Database {
           priority?: TaskPriority
           position?: number
           due_date?: string | null
+          project_id?: string | null
+          category?: string | null
         }
         Relationships: [
           {
@@ -321,6 +346,13 @@ export interface Database {
             columns: ['assignee_id']
             isOneToOne: false
             referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'tasks_project_id_fkey'
+            columns: ['project_id']
+            isOneToOne: false
+            referencedRelation: 'projects'
             referencedColumns: ['id']
           },
         ]
@@ -955,6 +987,7 @@ export type LeadActivity = Tables<'lead_activities'>
 export type ClientUpload = Tables<'client_uploads'>
 export type ProjectExpense = Tables<'project_expenses'>
 export type DeliverableRevision = Tables<'deliverable_revisions'>
+export type TaskCategory = Tables<'task_categories'>
 
 
 

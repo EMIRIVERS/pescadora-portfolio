@@ -10,7 +10,10 @@ import { createClient } from '@/lib/supabase/client'
 import type {
   KanbanBoardWithTasks,
   KanbanTaskWithAssignee,
+  TaskCategory,
 } from '@/lib/supabase/types'
+
+export type { TaskCategory }
 
 // ── Query keys ────────────────────────────────────────────────────────────────
 
@@ -18,6 +21,7 @@ export const taskKeys = {
   all: ['tasks'] as const,
   boards: (projectId?: string) =>
     [...taskKeys.all, 'boards', projectId ?? 'all'] as const,
+  categories: ['task_categories'] as const,
 } as const
 
 // ── Fetchers ──────────────────────────────────────────────────────────────────
@@ -193,6 +197,45 @@ export function useMoveTask(projectId?: string) {
   })
 }
 
+// ── Task categories ───────────────────────────────────────────────────────────
+
+export function useTaskCategories() {
+  return useQuery({
+    queryKey: taskKeys.categories,
+    queryFn: async (): Promise<TaskCategory[]> => {
+      const supabase = createClient()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
+        .from('task_categories')
+        .select('*')
+        .order('name', { ascending: true })
+      if (error) throw error
+      return (data ?? []) as TaskCategory[]
+    },
+    staleTime: 60_000,
+  })
+}
+
+export function useCreateCategory() {
+  const queryClient: QueryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (name: string): Promise<TaskCategory> => {
+      const supabase = createClient()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
+        .from('task_categories')
+        .insert({ name: name.trim() })
+        .select()
+        .single()
+      if (error) throw error
+      return data as TaskCategory
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: taskKeys.categories })
+    },
+  })
+}
+
 // ── Create task payload ───────────────────────────────────────────────────────
 
 export interface CreateTaskPayload {
@@ -200,6 +243,8 @@ export interface CreateTaskPayload {
   title: string
   priority: 'low' | 'medium' | 'high'
   due_date?: string | null
+  project_id?: string | null
+  category?: string | null
   projectId?: string
 }
 
@@ -225,6 +270,8 @@ export function useCreateTask(projectId?: string) {
           title: variables.title,
           priority: variables.priority,
           due_date: variables.due_date ?? null,
+          project_id: variables.project_id ?? null,
+          category: variables.category ?? null,
           position: nextPosition,
         })
         .select('*, assignee:profiles(*)')
@@ -249,6 +296,8 @@ export function useCreateTask(projectId?: string) {
         priority: variables.priority,
         assignee_id: null,
         due_date: variables.due_date ?? null,
+        project_id: variables.project_id ?? null,
+        category: variables.category ?? null,
         position: 0,
         assignee: null,
       }
