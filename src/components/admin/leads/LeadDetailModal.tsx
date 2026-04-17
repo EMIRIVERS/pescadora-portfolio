@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useRef, useState, useTransition } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import {
   updateLeadStatus,
@@ -65,18 +66,18 @@ interface Props {
 // ---------------------------------------------------------------------------
 
 const T = {
-  bg: '#000000',
-  surface1: '#111111',
-  surface2: '#1C1C1E',
-  surface3: '#2C2C2E',
-  surface3Hover: '#3A3A3C',
-  border: 'rgba(255,255,255,0.08)',
-  textPrimary: '#F5F5F7',
-  textSecondary: '#86868B',
-  textTertiary: '#48484A',
+  bg: 'var(--dash-bg)',
+  surface1: 'var(--dash-surface-1)',
+  surface2: 'var(--dash-surface-2)',
+  surface3: 'var(--dash-surface-3)',
+  surface3Hover: 'var(--dash-text-tertiary)',
+  border: 'var(--dash-border)',
+  textPrimary: 'var(--dash-text-primary)',
+  textSecondary: 'var(--dash-text-secondary)',
+  textTertiary: 'var(--dash-text-tertiary)',
   accent: '#0071E3',
-  accentRed: '#FF453A',
-  accentGreen: '#30D158',
+  accentRed: 'var(--dash-danger)',
+  accentGreen: 'var(--dash-success)',
   font: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
 } as const
 
@@ -90,7 +91,7 @@ const STATUS_COLORS: Record<Lead['status'], string> = {
   qualified: '#f59e0b',
   proposal: '#f97316',
   won: '#30D158',
-  lost: '#86868B',
+  lost: 'var(--dash-text-secondary)',
 }
 
 const STATUS_LABELS: Record<Lead['status'], string> = {
@@ -294,8 +295,111 @@ export default function LeadDetailModal({
   const [convertPending, startConvertTransition] = useTransition()
   const [emailPending, startEmailTransition] = useTransition()
 
+  // Editable source state
+  const [sourceValue, setSourceValue] = useState<Lead['source']>(lead.source)
+  const [sourceSaving, setSourceSaving] = useState(false)
+
+  // Editable assigned_to state
+  const [assignedTo, setAssignedTo] = useState<string>(lead.assigned_to ?? '')
+  const [assignedSaving, setAssignedSaving] = useState(false)
+
+  // Optimistic last_contacted_at: updated locally after logging a contact activity
+  const [localLastContacted, setLocalLastContacted] = useState<string | null>(
+    lead.last_contacted_at
+  )
+
   // Next action state — seeded from lead if fields exist
   const leadAny = lead as unknown as Record<string, unknown>
+  // WA templates
+  const [waTemplateType, setWaTemplateType] = useState<'paid' | 'trade' | null>(null)
+  const [waCopied, setWaCopied] = useState(false)
+
+  function getWaTemplate(type: 'paid' | 'trade'): string {
+    const biz = lead.company ?? lead.name
+    const category = (lead.project_type ?? '').toLowerCase()
+
+    // Personalización por tipo de negocio
+    let bizLine = ''
+    let tradeFor = 'the experience'
+    let serviceType = 'photography & video content'
+
+    if (category.includes('hotel') || category.includes('hospedaje') || category.includes('cabana') || category.includes('resort')) {
+      bizLine = `I love the vibe of ${biz} — boutique properties like yours deserve stunning visuals.`
+      tradeFor = 'a few nights\' stay'
+      serviceType = 'property photography & social media content'
+    } else if (category.includes('restaurante') || category.includes('café') || category.includes('bar') || category.includes('cocina') || category.includes('kitchen') || category.includes('pizza') || category.includes('cafe')) {
+      bizLine = `The food and atmosphere at ${biz} look amazing — exactly the kind of place I love shooting.`
+      tradeFor = 'meals / dining credit'
+      serviceType = 'food photography & ambiance shots'
+    } else if (category.includes('tour') || category.includes('buceo') || category.includes('snorkel') || category.includes('sailing') || category.includes('diving') || category.includes('fishing') || category.includes('pesca')) {
+      bizLine = `The experiences you offer at ${biz} are exactly the kind of thing that goes viral with great visuals.`
+      tradeFor = 'a tour experience'
+      serviceType = 'action & lifestyle video content'
+    } else if (category.includes('spa') || category.includes('yoga') || category.includes('wellness') || category.includes('bienestar') || category.includes('massage')) {
+      bizLine = `${biz} has the kind of calm, beautiful energy that makes for incredible content.`
+      tradeFor = 'a session / treatment'
+      serviceType = 'lifestyle & wellness photography'
+    } else if (category.includes('real estate') || category.includes('realty')) {
+      bizLine = `High-quality visuals are everything in real estate — I'd love to help ${biz} stand out.`
+      tradeFor = 'a referral or commission'
+      serviceType = 'property & architectural photography'
+    } else {
+      bizLine = `I came across ${biz} and I think there's real potential for strong visual content.`
+      tradeFor = 'products / store credit'
+      serviceType = 'brand photography & content'
+    }
+
+    if (type === 'paid') {
+      return `Hi! My name is Emi, I'm a professional photographer & content creator.
+
+${bizLine}
+
+I'd love to create ${serviceType} for ${biz} — content you can use on Instagram, Google, and your website.
+
+What I deliver:
+• Professional photos & video (edited, ready to post)
+• Social media content package
+• Quick turnaround
+
+Would you be open to a quick chat this week?
+
+— Emi | Pescadora
+pescadora.mx`
+    }
+
+    return `Hi! I'm Emi, a professional photographer visiting Caye Caulker.
+
+${bizLine}
+
+I'd like to propose a collaboration: I'll create professional ${serviceType} for ${biz} — photos and video you can use across all your platforms — in exchange for ${tradeFor}.
+
+No cost to you. You get content that brings in more customers; I get to build my portfolio in Belize.
+
+Interested? I'm flexible on dates.
+
+— Emi | Pescadora
+pescadora.mx`
+  }
+
+  function handleCopyWa(type: 'paid' | 'trade') {
+    const text = getWaTemplate(type)
+    navigator.clipboard.writeText(text).then(() => {
+      setWaCopied(true)
+      setTimeout(() => setWaCopied(false), 2000)
+    })
+  }
+
+  function handleOpenWa(type: 'paid' | 'trade') {
+    const text = getWaTemplate(type)
+    const phone = lead.phone?.replace(/\D/g, '') ?? ''
+    const encoded = encodeURIComponent(text)
+    if (phone) {
+      window.open(`https://wa.me/${phone}?text=${encoded}`, '_blank')
+    } else {
+      window.open(`https://wa.me/?text=${encoded}`, '_blank')
+    }
+  }
+
   const [nextAction, setNextAction] = useState<string>(
     typeof leadAny.next_action === 'string' ? leadAny.next_action : ''
   )
@@ -393,6 +497,10 @@ export default function LeadDetailModal({
         setActivityError(result.error)
       } else {
         setActivityContent('')
+        // Optimistically reflect last_contacted_at for contact-type activities
+        if (['whatsapp', 'call', 'email', 'meeting'].includes(activityType)) {
+          setLocalLastContacted(new Date().toISOString())
+        }
         const supabase = createClient()
         const { data } = await supabase
           .from('lead_activities')
@@ -509,6 +617,34 @@ export default function LeadDetailModal({
     setBudgetEditing(false)
   }
 
+  async function handleSourceChange(newSource: Lead['source']) {
+    setSourceValue(newSource)
+    setSourceSaving(true)
+    const supabase = createClient()
+    await supabase.from('leads').update({ source: newSource }).eq('id', lead.id)
+    setSourceSaving(false)
+  }
+
+  async function handleAssignedChange(value: string) {
+    setAssignedTo(value)
+    setAssignedSaving(true)
+    const supabase = createClient()
+    await supabase
+      .from('leads')
+      .update({ assigned_to: value.trim() || null })
+      .eq('id', lead.id)
+    setAssignedSaving(false)
+  }
+
+  function getDiasSinContacto(): { days: number; color: string } {
+    const ref = localLastContacted ?? lead.created_at
+    const diffMs = Date.now() - new Date(ref).getTime()
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+    const color =
+      days > 14 ? 'var(--dash-danger)' : days > 7 ? 'var(--dash-warning)' : T.textTertiary
+    return { days, color }
+  }
+
   function getNextActionDateColor(): string {
     if (!nextActionDate) return T.textPrimary
     const today = new Date()
@@ -517,9 +653,9 @@ export default function LeadDetailModal({
     const diffDays = Math.ceil(
       (target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
     )
-    if (diffDays < 0) return '#FF453A'
-    if (diffDays <= 2) return '#FF9F0A'
-    return '#30D158'
+    if (diffDays < 0) return 'var(--dash-danger)'
+    if (diffDays <= 2) return 'var(--dash-warning)'
+    return 'var(--dash-success)'
   }
 
   const statusColor = STATUS_COLORS[currentStatus]
@@ -577,6 +713,10 @@ export default function LeadDetailModal({
         .ldm-pencil-btn:hover {
           color: ${T.textPrimary} !important;
         }
+        .ldm-source-select:focus {
+          outline: none;
+          border-color: rgba(255,255,255,0.2) !important;
+        }
       `}</style>
 
       <div
@@ -589,7 +729,11 @@ export default function LeadDetailModal({
         }}
       >
         {/* Overlay */}
-        <div
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
           onClick={onClose}
           style={{
             position: 'absolute',
@@ -601,8 +745,12 @@ export default function LeadDetailModal({
         />
 
         {/* Panel */}
-        <div
+        <motion.div
           ref={panelRef}
+          initial={{ x: '100%' }}
+          animate={{ x: 0 }}
+          exit={{ x: '100%' }}
+          transition={{ type: 'spring', damping: 30, stiffness: 300 }}
           style={{
             position: 'fixed',
             right: 0,
@@ -679,8 +827,8 @@ export default function LeadDetailModal({
               </button>
             </div>
 
-            {/* Status badge + pending indicator */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {/* Status badge + WA quick-link + pending indicator */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <span
                 style={{
                   fontFamily: T.font,
@@ -695,6 +843,38 @@ export default function LeadDetailModal({
               >
                 {STATUS_LABELS[currentStatus]}
               </span>
+
+              {/* WhatsApp quick-open button — Fix 3 */}
+              {lead.phone && (
+                <a
+                  href={`https://wa.me/${lead.phone.replace(/\D/g, '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    fontFamily: T.font,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: '#ffffff',
+                    background: '#25D366',
+                    borderRadius: 20,
+                    padding: '4px 12px',
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    transition: 'opacity 0.15s',
+                  }}
+                  onMouseEnter={(e) => {
+                    ;(e.currentTarget as HTMLAnchorElement).style.opacity = '0.85'
+                  }}
+                  onMouseLeave={(e) => {
+                    ;(e.currentTarget as HTMLAnchorElement).style.opacity = '1'
+                  }}
+                >
+                  Abrir WA
+                </a>
+              )}
+
               {statusPending && (
                 <span
                   style={{
@@ -730,26 +910,114 @@ export default function LeadDetailModal({
           {/* ---------------------------------------------------------------- */}
           {/* Section 1 — Info basica                                          */}
           {/* ---------------------------------------------------------------- */}
-          <div style={{ padding: '20px 24px' }}>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.10, duration: 0.25 }}
+            style={{ padding: '20px 24px' }}
+          >
             <InfoGrid>
               <InfoCell label="Email" value={lead.email} />
               <InfoCell label="Telefono" value={lead.phone} />
               <InfoCell label="Empresa" value={lead.company} />
-              <InfoCell label="Fuente" value={lead.source} />
+
+              {/* Fix 5 — Editable source select */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span
+                  style={{
+                    fontFamily: T.font,
+                    fontSize: 11,
+                    fontWeight: 500,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    color: T.textSecondary,
+                  }}
+                >
+                  Fuente
+                </span>
+                <select
+                  value={sourceValue}
+                  disabled={sourceSaving}
+                  onChange={(e) =>
+                    handleSourceChange(e.target.value as Lead['source'])
+                  }
+                  style={{
+                    fontFamily: T.font,
+                    fontSize: 14,
+                    color: T.textPrimary,
+                    background: T.surface2,
+                    border: `1px solid ${T.border}`,
+                    borderRadius: 6,
+                    padding: '5px 8px',
+                    cursor: sourceSaving ? 'not-allowed' : 'pointer',
+                    opacity: sourceSaving ? 0.6 : 1,
+                    outline: 'none',
+                    width: '100%',
+                    colorScheme: 'dark',
+                  }}
+                >
+                  <option value="manual">Manual</option>
+                  <option value="referral">Referido</option>
+                  <option value="instagram">Instagram</option>
+                  <option value="web">Web</option>
+                  <option value="whatsapp">WhatsApp</option>
+                  <option value="other">Otro</option>
+                </select>
+              </div>
+
               <InfoCell label="Presupuesto" value={lead.budget_range} />
               <InfoCell label="Tipo de proyecto" value={lead.project_type} />
               <InfoCell
                 label="Creado"
                 value={formatDateTime(lead.created_at)}
               />
-              <InfoCell
-                label="Ultimo contacto"
-                value={
-                  lead.last_contacted_at
-                    ? formatDate(lead.last_contacted_at)
-                    : null
-                }
-              />
+
+              {/* Fix 4 — last_contacted_at with Dias sin contacto badge */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span
+                  style={{
+                    fontFamily: T.font,
+                    fontSize: 11,
+                    fontWeight: 500,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    color: T.textSecondary,
+                  }}
+                >
+                  Ultimo contacto
+                </span>
+                <span
+                  style={{
+                    fontFamily: T.font,
+                    fontSize: 14,
+                    color: T.textPrimary,
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {localLastContacted ? formatDate(localLastContacted) : 'Sin contacto'}
+                </span>
+                {(() => {
+                  const { days, color } = getDiasSinContacto()
+                  if (color === T.textTertiary) return null
+                  return (
+                    <span
+                      style={{
+                        fontFamily: T.font,
+                        fontSize: 11,
+                        fontWeight: 600,
+                        color,
+                        background: `${color}22`,
+                        borderRadius: 10,
+                        padding: '2px 8px',
+                        alignSelf: 'flex-start',
+                      }}
+                    >
+                      {days}d sin contacto
+                    </span>
+                  )
+                })()}
+              </div>
+
               <InfoCell
                 label="Cierre estimado"
                 value={
@@ -758,6 +1026,50 @@ export default function LeadDetailModal({
                     : null
                 }
               />
+
+              {/* Fix 2 — Assigned to editable field */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span
+                  style={{
+                    fontFamily: T.font,
+                    fontSize: 11,
+                    fontWeight: 500,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    color: T.textSecondary,
+                  }}
+                >
+                  Asignado a
+                </span>
+                <input
+                  type="text"
+                  value={assignedTo}
+                  disabled={assignedSaving}
+                  onChange={(e) => setAssignedTo(e.target.value)}
+                  onBlur={() => handleAssignedChange(assignedTo)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      ;(e.currentTarget as HTMLInputElement).blur()
+                    }
+                  }}
+                  placeholder="Sin asignar"
+                  className="ldm-next-action-input"
+                  style={{
+                    fontFamily: T.font,
+                    fontSize: 14,
+                    color: T.textPrimary,
+                    background: T.surface2,
+                    border: `1px solid ${T.border}`,
+                    borderRadius: 6,
+                    padding: '5px 8px',
+                    outline: 'none',
+                    opacity: assignedSaving ? 0.6 : 1,
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    transition: 'border-color 0.15s',
+                  }}
+                />
+              </div>
 
               {/* Presupuesto estimado — editable inline */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -788,7 +1100,7 @@ export default function LeadDetailModal({
                     className="ldm-budget-input"
                     style={{
                       background: T.surface2,
-                      border: `1px solid rgba(255,255,255,0.1)`,
+                      border: `1px solid var(--dash-border)`,
                       borderRadius: 6,
                       color: T.textPrimary,
                       fontFamily: T.font,
@@ -870,24 +1182,30 @@ export default function LeadDetailModal({
                 </div>
               </div>
             )}
-          </div>
+          </motion.div>
 
           {/* ---------------------------------------------------------------- */}
           {/* Section 2 — Cambiar estado                                       */}
           {/* ---------------------------------------------------------------- */}
           <SectionDivider />
-          <div style={{ padding: '20px 24px' }}>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15, duration: 0.25 }}
+            style={{ padding: '20px 24px' }}
+          >
             <SectionHeader>Cambiar estado</SectionHeader>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {ALL_STATUSES.map((s) => {
                 const active = s === currentStatus
                 const color = STATUS_COLORS[s]
                 return (
-                  <button
+                  <motion.button
                     key={s}
                     type="button"
                     onClick={() => handleStatusClick(s)}
                     disabled={statusPending}
+                    whileTap={{ scale: 0.95 }}
                     style={{
                       fontFamily: T.font,
                       fontSize: 12,
@@ -908,17 +1226,22 @@ export default function LeadDetailModal({
                     }}
                   >
                     {STATUS_LABELS[s]}
-                  </button>
+                  </motion.button>
                 )
               })}
             </div>
-          </div>
+          </motion.div>
 
           {/* ---------------------------------------------------------------- */}
           {/* Section 3 — Agregar nota / actividad                             */}
           {/* ---------------------------------------------------------------- */}
           <SectionDivider />
-          <div style={{ padding: '20px 24px' }}>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.20, duration: 0.25 }}
+            style={{ padding: '20px 24px' }}
+          >
             <SectionHeader>Agregar actividad</SectionHeader>
 
             {/* Activity type selector */}
@@ -960,7 +1283,7 @@ export default function LeadDetailModal({
                 width: '100%',
                 boxSizing: 'border-box',
                 background: T.surface2,
-                border: `1px solid rgba(255,255,255,0.1)`,
+                border: `1px solid var(--dash-border)`,
                 borderRadius: 8,
                 color: T.textPrimary,
                 fontFamily: T.font,
@@ -1008,13 +1331,18 @@ export default function LeadDetailModal({
             >
               {activityPending ? 'Guardando...' : 'Guardar nota'}
             </button>
-          </div>
+          </motion.div>
 
           {/* ---------------------------------------------------------------- */}
           {/* Section 3b — Redactar email                                      */}
           {/* ---------------------------------------------------------------- */}
           <SectionDivider />
-          <div style={{ padding: '20px 24px' }}>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25, duration: 0.25 }}
+            style={{ padding: '20px 24px' }}
+          >
             <SectionHeader>Redactar email</SectionHeader>
 
             {!lead.email ? (
@@ -1074,7 +1402,7 @@ export default function LeadDetailModal({
                     width: '100%',
                     boxSizing: 'border-box',
                     background: T.surface2,
-                    border: `1px solid rgba(255,255,255,0.1)`,
+                    border: `1px solid var(--dash-border)`,
                     borderRadius: 8,
                     color: T.textPrimary,
                     fontFamily: T.font,
@@ -1096,7 +1424,7 @@ export default function LeadDetailModal({
                     width: '100%',
                     boxSizing: 'border-box',
                     background: T.surface2,
-                    border: `1px solid rgba(255,255,255,0.1)`,
+                    border: `1px solid var(--dash-border)`,
                     borderRadius: 8,
                     color: T.textPrimary,
                     fontFamily: T.font,
@@ -1198,13 +1526,154 @@ export default function LeadDetailModal({
                 </div>
               </div>
             )}
-          </div>
+          </motion.div>
+
+          {/* ---------------------------------------------------------------- */}
+          {/* Section 3b2 — Mensajes WA                                        */}
+          {/* ---------------------------------------------------------------- */}
+          <SectionDivider />
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.30, duration: 0.25 }}
+            style={{ padding: '20px 24px' }}
+          >
+            <SectionHeader>Mensaje WhatsApp</SectionHeader>
+
+            {/* Template selector */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+              {(['paid', 'trade'] as const).map((type) => {
+                const active = waTemplateType === type
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setWaTemplateType(active ? null : type)}
+                    style={{
+                      fontFamily: T.font,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      padding: '6px 14px',
+                      borderRadius: 20,
+                      border: 'none',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s',
+                      background: active
+                        ? type === 'paid' ? '#0071E3' : 'var(--dash-success)'
+                        : T.surface3,
+                      color: active ? '#fff' : T.textSecondary,
+                    }}
+                  >
+                    {type === 'paid' ? 'Cobrar' : 'Intercambio'}
+                  </button>
+                )
+              })}
+            </div>
+
+            <AnimatePresence>
+              {waTemplateType && (
+                <motion.div
+                  key={waTemplateType}
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.22, ease: 'easeInOut' }}
+                  style={{ overflow: 'hidden' }}
+                >
+                  <div
+                    style={{
+                      background: T.surface2,
+                      border: `1px solid ${T.border}`,
+                      borderRadius: 10,
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {/* Message preview */}
+                    <pre
+                      style={{
+                        margin: 0,
+                        padding: '14px 16px',
+                        fontFamily: T.font,
+                        fontSize: 13,
+                        color: T.textPrimary,
+                        lineHeight: 1.7,
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word',
+                        maxHeight: 280,
+                        overflowY: 'auto',
+                      }}
+                    >
+                      {getWaTemplate(waTemplateType)}
+                    </pre>
+
+                    {/* Actions bar */}
+                    <div
+                      style={{
+                        display: 'flex',
+                        gap: 8,
+                        padding: '10px 14px',
+                        borderTop: `1px solid ${T.border}`,
+                        background: T.surface3,
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => handleCopyWa(waTemplateType)}
+                        style={{
+                          fontFamily: T.font,
+                          fontSize: 12,
+                          fontWeight: 500,
+                          padding: '6px 14px',
+                          borderRadius: 7,
+                          border: `1px solid ${T.border}`,
+                          background: waCopied ? 'rgba(48,209,88,0.15)' : 'transparent',
+                          color: waCopied ? '#30D158' : T.textSecondary,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s',
+                        }}
+                      >
+                        {waCopied ? 'Copiado!' : 'Copiar'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenWa(waTemplateType)}
+                        style={{
+                          fontFamily: T.font,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          padding: '6px 16px',
+                          borderRadius: 7,
+                          border: 'none',
+                          background: '#25D366',
+                          color: '#fff',
+                          cursor: 'pointer',
+                          transition: 'opacity 0.15s',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                        }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.85' }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = '1' }}
+                      >
+                        {lead.phone ? 'Abrir en WA' : 'WA (sin tel.)'}
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
 
           {/* ---------------------------------------------------------------- */}
           {/* Section 3c — Proxima accion                                      */}
           {/* ---------------------------------------------------------------- */}
           <SectionDivider />
-          <div style={{ padding: '20px 24px' }}>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35, duration: 0.25 }}
+            style={{ padding: '20px 24px' }}
+          >
             <SectionHeader>Proxima accion</SectionHeader>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <input
@@ -1217,7 +1686,7 @@ export default function LeadDetailModal({
                   width: '100%',
                   boxSizing: 'border-box',
                   background: T.surface2,
-                  border: `1px solid rgba(255,255,255,0.1)`,
+                  border: `1px solid var(--dash-border)`,
                   borderRadius: 8,
                   color: T.textPrimary,
                   fontFamily: T.font,
@@ -1236,7 +1705,7 @@ export default function LeadDetailModal({
                   width: '100%',
                   boxSizing: 'border-box',
                   background: T.surface2,
-                  border: `1px solid rgba(255,255,255,0.1)`,
+                  border: `1px solid var(--dash-border)`,
                   borderRadius: 8,
                   color: nextActionDate ? getNextActionDateColor() : T.textSecondary,
                   fontFamily: T.font,
@@ -1263,7 +1732,7 @@ export default function LeadDetailModal({
                   style={{
                     fontFamily: T.font,
                     fontSize: 13,
-                    color: '#30D158',
+                    color: 'var(--dash-success)',
                   }}
                 >
                   Guardado
@@ -1292,13 +1761,18 @@ export default function LeadDetailModal({
                 {nextActionSaving ? 'Guardando...' : 'Guardar'}
               </button>
             </div>
-          </div>
+          </motion.div>
 
           {/* ---------------------------------------------------------------- */}
           {/* Section 4 — Feed de actividad                                    */}
           {/* ---------------------------------------------------------------- */}
           <SectionDivider />
-          <div style={{ padding: '20px 24px' }}>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.40, duration: 0.25 }}
+            style={{ padding: '20px 24px' }}
+          >
             <SectionHeader>Actividad</SectionHeader>
 
             {activitiesLoading ? (
@@ -1343,9 +1817,12 @@ export default function LeadDetailModal({
                 />
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-                  {activities.map((act) => (
-                    <div
+                  {activities.map((act, actIndex) => (
+                    <motion.div
                       key={act.id}
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: actIndex * 0.04, duration: 0.2 }}
                       style={{
                         position: 'relative',
                         display: 'flex',
@@ -1409,18 +1886,23 @@ export default function LeadDetailModal({
                       >
                         {act.content}
                       </p>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               </div>
             )}
-          </div>
+          </motion.div>
 
           {/* ---------------------------------------------------------------- */}
           {/* Section 5 — Acciones peligrosas                                  */}
           {/* ---------------------------------------------------------------- */}
           <SectionDivider />
-          <div style={{ padding: '20px 24px' }}>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45, duration: 0.25 }}
+            style={{ padding: '20px 24px' }}
+          >
             <SectionHeader>Acciones</SectionHeader>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
@@ -1607,11 +2089,11 @@ export default function LeadDetailModal({
                 )}
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Bottom spacer */}
           <div style={{ height: 32, flexShrink: 0 }} />
-        </div>
+        </motion.div>
       </div>
     </>
   )

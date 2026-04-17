@@ -26,8 +26,8 @@ export default function LeadSourceBadge({ source }: Props) {
         letterSpacing: '0.02em',
         padding: '3px 10px',
         borderRadius: 20,
-        background: '#2C2C2E',
-        color: '#86868B',
+        background: 'var(--dash-surface-3)',
+        color: 'var(--dash-text-secondary)',
       }}
     >
       {label}

@@ -4,6 +4,7 @@ import type { Client, ProjectStatus } from '@/lib/supabase/types'
 import { InviteClientButton } from '@/components/admin/clients/invite-client-button'
 import { ClientCardItem } from '@/components/admin/clients/ClientCardItem'
 import type { ClientCard as ClientCardType } from '@/components/admin/clients/ClientCardItem'
+import { AnimatedEmptyState } from '@/components/admin/AnimatedEmptyState'
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 
@@ -30,6 +31,7 @@ interface ProjectRow {
   status: ProjectStatus
   created_at: string
   client_id: string | null
+  budget: number | null
 }
 
 // LeadRow used only to count converted leads
@@ -43,6 +45,7 @@ interface ClientCard extends Client {
   delivered_count: number
   converted_lead_count: number
   most_recent_project_status: ProjectStatus | null
+  lifetime_value: number
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -82,14 +85,14 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
     })(),
     supabase
       .from('projects')
-      .select('id, status, created_at, client_id'),
+      .select('id, status, created_at, client_id, budget'),
     supabase
       .from('leads')
       .select('converted_to_client_id')
       .not('converted_to_client_id', 'is', null),
   ])
 
-  const clients: Client[] = clientsData ?? []
+  const clients: Client[] = (clientsData ?? []) as unknown as Client[]
   const projects: ProjectRow[] = (projectsData ?? []) as ProjectRow[]
 
   // Index projects by client_id
@@ -122,6 +125,7 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     )
     const most_recent_project_status: ProjectStatus | null = sorted[0]?.status ?? null
+    const lifetime_value = clientProjects.reduce((sum, p) => sum + (p.budget ?? 0), 0)
     return {
       ...client,
       project_count: clientProjects.length,
@@ -129,6 +133,7 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
       delivered_count,
       converted_lead_count: convertedLeadsByClient.get(client.id) ?? 0,
       most_recent_project_status,
+      lifetime_value,
     }
   })
 
@@ -146,25 +151,25 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
   return (
     <>
     <style>{`
-      .client-card { background-color: #111111; border: 1px solid rgba(255,255,255,0.06); transition: background-color 0.15s ease, border-color 0.15s ease; }
-      .client-card:hover { background-color: #1C1C1E !important; border-color: rgba(255,255,255,0.1) !important; }
-      .client-email-link { color: #86868B; transition: color 0.15s ease; }
+      .client-card { background-color: var(--dash-surface-1); border: 1px solid var(--dash-border); transition: background-color 0.15s ease, border-color 0.15s ease; }
+      .client-card:hover { background-color: var(--dash-surface-2) !important; border-color: var(--dash-border) !important; }
+      .client-email-link { color: var(--dash-text-secondary); transition: color 0.15s ease; }
       .client-email-link:hover { color: #0071E3 !important; }
-      .client-detail-link { color: #F5F5F7; transition: color 0.15s ease; }
+      .client-detail-link { color: var(--dash-text-primary); transition: color 0.15s ease; }
       .client-detail-link:hover { color: #0071E3 !important; }
-      .search-input { background-color: #1C1C1E; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px 16px; color: #F5F5F7; outline: none; width: 100%; font-size: 14px; box-sizing: border-box; }
-      .search-input::placeholder { color: #48484A; }
+      .search-input { background-color: var(--dash-surface-2); border: 1px solid var(--dash-border); border-radius: 10px; padding: 10px 16px; color: var(--dash-text-primary); outline: none; width: 100%; font-size: 14px; box-sizing: border-box; }
+      .search-input::placeholder { color: var(--dash-text-tertiary); }
       .search-input:focus { border-color: rgba(0,113,227,0.5); }
       .search-btn { background-color: #0071E3; color: #ffffff; border: none; border-radius: 8px; padding: 10px 20px; font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: background-color 0.15s ease; }
       .search-btn:hover { background-color: #0077ED !important; }
-      .search-clear-link { color: #86868B; font-size: 13px; text-decoration: none; white-space: nowrap; transition: color 0.15s ease; }
-      .search-clear-link:hover { color: #F5F5F7 !important; }
+      .search-clear-link { color: var(--dash-text-secondary); font-size: 13px; text-decoration: none; white-space: nowrap; transition: color 0.15s ease; }
+      .search-clear-link:hover { color: var(--dash-text-primary) !important; }
     `}</style>
     <div
       style={{
         padding: '40px 32px',
         minHeight: '100%',
-        backgroundColor: '#000000',
+        backgroundColor: 'var(--dash-bg)',
         fontFamily: SF,
       }}
     >
@@ -182,7 +187,7 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
             style={{
               fontSize: '28px',
               fontWeight: 600,
-              color: '#F5F5F7',
+              color: 'var(--dash-text-primary)',
               letterSpacing: '-0.02em',
               lineHeight: 1.1,
               margin: 0,
@@ -194,13 +199,13 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
             style={{
               marginTop: '6px',
               fontSize: '13px',
-              color: '#86868B',
+              color: 'var(--dash-text-secondary)',
               letterSpacing: '-0.01em',
             }}
           >
             {totalClients} cliente{totalClients !== 1 ? 's' : ''}
             {q ? (
-              <span style={{ color: '#48484A' }}>
+              <span style={{ color: 'var(--dash-text-tertiary)' }}>
                 {' · '}busqueda: &ldquo;{q}&rdquo;
               </span>
             ) : (
@@ -243,8 +248,8 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
           <div
             key={label}
             style={{
-              backgroundColor: '#111111',
-              border: '1px solid rgba(255,255,255,0.08)',
+              backgroundColor: 'var(--dash-surface-1)',
+              border: '1px solid var(--dash-border)',
               borderRadius: '12px',
               padding: '18px 20px',
             }}
@@ -253,7 +258,7 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
               style={{
                 fontSize: '11px',
                 fontWeight: 500,
-                color: '#48484A',
+                color: 'var(--dash-text-tertiary)',
                 letterSpacing: '0.02em',
                 textTransform: 'uppercase',
                 marginBottom: '8px',
@@ -265,7 +270,7 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
               style={{
                 fontSize: '28px',
                 fontWeight: 600,
-                color: '#F5F5F7',
+                color: 'var(--dash-text-primary)',
                 letterSpacing: '-0.02em',
                 fontVariantNumeric: 'tabular-nums',
               }}
@@ -314,25 +319,27 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
 
       {/* Empty state */}
       {enrichedCards.length === 0 && !clientsError ? (
+        <AnimatedEmptyState>
         <div
           style={{
             padding: '80px 20px',
             textAlign: 'center',
-            backgroundColor: '#111111',
-            border: '1px solid rgba(255,255,255,0.06)',
+            backgroundColor: 'var(--dash-surface-1)',
+            border: '1px solid var(--dash-border)',
             borderRadius: '16px',
           }}
         >
           {q ? (
-            <p style={{ fontSize: '14px', color: '#48484A', margin: 0 }}>
+            <p style={{ fontSize: '14px', color: 'var(--dash-text-tertiary)', margin: 0 }}>
               No se encontraron clientes para &ldquo;{q}&rdquo;.
             </p>
           ) : (
-            <p style={{ fontSize: '14px', color: '#48484A', margin: 0 }}>
+            <p style={{ fontSize: '14px', color: 'var(--dash-text-tertiary)', margin: 0 }}>
               No hay clientes todavia. Invita al primer cliente usando el boton de arriba.
             </p>
           )}
         </div>
+        </AnimatedEmptyState>
       ) : (
         /* Client cards grid */
         <div

@@ -117,7 +117,7 @@ export function ConfirmModal({
           aria-describedby={description ? 'confirm-modal-desc' : undefined}
           onClick={(e) => e.stopPropagation()}
           style={{
-            background:   '#1C1C1E',
+            background:   'var(--dash-surface-2)',
             borderRadius: '16px',
             border:       '1px solid rgba(255,255,255,0.10)',
             maxWidth:     '400px',
@@ -136,7 +136,7 @@ export function ConfirmModal({
               margin:     0,
               fontSize:   '17px',
               fontWeight: 600,
-              color:      '#F5F5F7',
+              color:      'var(--dash-text-primary)',
               lineHeight: '1.3',
             }}
           >
@@ -150,7 +150,7 @@ export function ConfirmModal({
               style={{
                 margin:     '10px 0 0',
                 fontSize:   '14px',
-                color:      '#86868B',
+                color:      'var(--dash-text-secondary)',
                 lineHeight: '1.5',
               }}
             >
@@ -175,8 +175,8 @@ export function ConfirmModal({
                 padding:      '9px 18px',
                 borderRadius: '10px',
                 border:       '1px solid rgba(255,255,255,0.12)',
-                background:   'rgba(255,255,255,0.06)',
-                color:        '#F5F5F7',
+                background:   'var(--dash-border)',
+                color:        'var(--dash-text-primary)',
                 fontSize:     '14px',
                 fontWeight:   500,
                 cursor:       'pointer',
@@ -188,7 +188,7 @@ export function ConfirmModal({
               }
               onMouseLeave={(e) =>
                 ((e.currentTarget as HTMLButtonElement).style.background =
-                  'rgba(255,255,255,0.06)')
+                  'var(--dash-border)')
               }
             >
               {cancelLabel}

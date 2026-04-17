@@ -130,8 +130,8 @@ export default function TeamMemberCard({ member, currentUserId }: Props) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        backgroundColor: hovered ? '#1C1C1E' : '#111111',
-        border: '1px solid rgba(255,255,255,0.08)',
+        backgroundColor: hovered ? 'var(--dash-surface-2)' : 'var(--dash-surface-1)',
+        border: '1px solid var(--dash-border)',
         borderRadius: '16px',
         padding: '20px',
         display: 'flex',
@@ -186,7 +186,7 @@ export default function TeamMemberCard({ member, currentUserId }: Props) {
           marginBottom: 0,
           fontSize: '16px',
           fontWeight: 600,
-          color: '#F5F5F7',
+          color: 'var(--dash-text-primary)',
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
@@ -203,7 +203,7 @@ export default function TeamMemberCard({ member, currentUserId }: Props) {
             marginTop: '4px',
             marginBottom: 0,
             fontSize: '13px',
-            color: '#86868B',
+            color: 'var(--dash-text-secondary)',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -245,10 +245,10 @@ export default function TeamMemberCard({ member, currentUserId }: Props) {
             disabled={rolePending}
             style={{
               width: '100%',
-              backgroundColor: '#2C2C2E',
+              backgroundColor: 'var(--dash-surface-3)',
               border: `1px solid ${roleBadgeColor}`,
               borderRadius: '8px',
-              color: '#F5F5F7',
+              color: 'var(--dash-text-primary)',
               fontSize: '13px',
               fontWeight: 500,
               padding: '6px 10px',
@@ -259,7 +259,7 @@ export default function TeamMemberCard({ member, currentUserId }: Props) {
             }}
           >
             {ROLE_OPTIONS.map((r) => (
-              <option key={r} value={r} style={{ backgroundColor: '#2C2C2E', color: '#F5F5F7' }}>
+              <option key={r} value={r} style={{ backgroundColor: 'var(--dash-surface-3)', color: 'var(--dash-text-primary)' }}>
                 {r}
               </option>
             ))}
@@ -316,7 +316,7 @@ export default function TeamMemberCard({ member, currentUserId }: Props) {
               transform: 'translateY(-50%)',
               width: '11px',
               height: '11px',
-              border: '2px solid rgba(255,255,255,0.15)',
+              border: '2px solid var(--dash-border-strong)',
               borderTop: '2px solid #F5F5F7',
               borderRadius: '50%',
               animation: 'spin 0.6s linear infinite',
@@ -367,7 +367,7 @@ export default function TeamMemberCard({ member, currentUserId }: Props) {
           marginTop: '12px',
           marginBottom: 0,
           fontSize: '11px',
-          color: '#48484A',
+          color: 'var(--dash-text-tertiary)',
         }}
       >
         Desde {formatDate(member.created_at)}

@@ -90,7 +90,7 @@ function LinkModal({ clientId, onClose, onSuccess }: ModalProps) {
           position: 'relative',
           width: '100%',
           maxWidth: '440px',
-          backgroundColor: '#1C1C1E',
+          backgroundColor: 'var(--dash-surface-2)',
           border: '1px solid rgba(255,255,255,0.08)',
           borderRadius: '20px',
           boxShadow: '0 32px 80px rgba(0,0,0,0.6), 0 8px 24px rgba(0,0,0,0.4)',
@@ -112,7 +112,7 @@ function LinkModal({ clientId, onClose, onSuccess }: ModalProps) {
               fontFamily: SF,
               fontSize: '17px',
               fontWeight: 600,
-              color: '#F5F5F7',
+              color: 'var(--dash-text-primary)',
               margin: 0,
               letterSpacing: '-0.01em',
             }}
@@ -132,8 +132,8 @@ function LinkModal({ clientId, onClose, onSuccess }: ModalProps) {
               height: '28px',
               borderRadius: '50%',
               border: 'none',
-              backgroundColor: 'rgba(255,255,255,0.08)',
-              color: '#86868B',
+              backgroundColor: 'var(--dash-border)',
+              color: 'var(--dash-text-secondary)',
               cursor: isPending ? 'not-allowed' : 'pointer',
               opacity: isPending ? 0.5 : 1,
               transition: 'background-color 0.15s ease',
@@ -162,10 +162,10 @@ function LinkModal({ clientId, onClose, onSuccess }: ModalProps) {
             >
               <CheckCircle2 className="w-8 h-8" style={{ color: '#30D158' }} strokeWidth={1.5} />
               <div>
-                <p style={{ fontFamily: SF, fontSize: '15px', fontWeight: 600, color: '#F5F5F7', marginBottom: '4px' }}>
+                <p style={{ fontFamily: SF, fontSize: '15px', fontWeight: 600, color: 'var(--dash-text-primary)', marginBottom: '4px' }}>
                   Cuenta vinculada
                 </p>
-                <p style={{ fontFamily: SF, fontSize: '13px', color: '#86868B' }}>
+                <p style={{ fontFamily: SF, fontSize: '13px', color: 'var(--dash-text-secondary)' }}>
                   El cliente ya tiene acceso al portal.
                 </p>
               </div>
@@ -188,7 +188,7 @@ function LinkModal({ clientId, onClose, onSuccess }: ModalProps) {
             </div>
           ) : (
             <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <p style={{ fontFamily: SF, fontSize: '13px', color: '#86868B', margin: 0, lineHeight: 1.5 }}>
+              <p style={{ fontFamily: SF, fontSize: '13px', color: 'var(--dash-text-secondary)', margin: 0, lineHeight: 1.5 }}>
                 Introduce el email con el que el cliente tiene cuenta en Supabase Auth. Si aun no tiene cuenta, usa &ldquo;Invitar cliente&rdquo; primero.
               </p>
 
@@ -215,7 +215,7 @@ function LinkModal({ clientId, onClose, onSuccess }: ModalProps) {
                     fontFamily: SF,
                     fontSize: '12px',
                     fontWeight: 500,
-                    color: '#86868B',
+                    color: 'var(--dash-text-secondary)',
                     letterSpacing: '0.01em',
                   }}
                 >
@@ -234,8 +234,8 @@ function LinkModal({ clientId, onClose, onSuccess }: ModalProps) {
                   style={{
                     fontFamily: SF,
                     fontSize: '15px',
-                    color: '#F5F5F7',
-                    backgroundColor: '#2C2C2E',
+                    color: 'var(--dash-text-primary)',
+                    backgroundColor: 'var(--dash-surface-3)',
                     border: focused
                       ? '1px solid rgba(0,113,227,0.7)'
                       : error
@@ -269,7 +269,7 @@ function LinkModal({ clientId, onClose, onSuccess }: ModalProps) {
                     fontFamily: SF,
                     fontSize: '15px',
                     fontWeight: 500,
-                    color: '#86868B',
+                    color: 'var(--dash-text-secondary)',
                     backgroundColor: 'transparent',
                     border: 'none',
                     cursor: isPending ? 'not-allowed' : 'pointer',

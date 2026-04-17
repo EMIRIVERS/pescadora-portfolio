@@ -3,6 +3,7 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import Image from 'next/image'
+import { motion } from 'framer-motion'
 import type { KanbanTaskWithAssignee, TaskPriority } from '@/lib/supabase/types'
 
 // ── Priority config ────────────────────────────────────────────────────────────
@@ -16,7 +17,7 @@ const PRIORITY_BORDER_COLOR: Record<TaskPriority, string> = {
 
 // Small dot color shown next to the label
 const PRIORITY_DOT_COLOR: Record<TaskPriority, string> = {
-  low: '#48484A',
+  low: 'var(--dash-text-tertiary)',
   medium: '#FF9F0A',
   high: '#FF453A',
 }
@@ -42,10 +43,9 @@ function getDueDateColor(due: string): string {
   const dueDate = new Date(`${due}T00:00:00`)
   const diff = dueDate.getTime() - today.getTime()
   const dayMs = 86_400_000
-  if (diff < 0) return '#FF453A'           // overdue
-  if (diff === 0) return '#FF9F0A'         // today
-  if (diff <= 6 * dayMs) return '#FFD60A' // this week
-  return '#48484A'                          // future
+  if (diff < 0) return '#FF453A'              // overdue — red
+  if (diff <= 2 * dayMs) return '#FF9F0A'     // within 2 days — amber
+  return '#30D158'                            // future — green
 }
 
 // ── Props ─────────────────────────────────────────────────────────────────────
@@ -72,7 +72,7 @@ export function TaskCard({ task, onOpenDetail }: TaskCardProps) {
     transition,
     opacity: isDragging ? 0.3 : 1,
     // Card base styles (applied here to allow isDragging override)
-    backgroundColor: isDragging ? '#2C2C2E' : '#1C1C1E',
+    backgroundColor: isDragging ? 'var(--dash-surface-3)' : 'var(--dash-surface-2)',
     borderRadius: '12px',
     border: '1px solid rgba(255,255,255,0.06)',
     borderLeft: `3px solid ${PRIORITY_BORDER_COLOR[task.priority]}`,
@@ -96,27 +96,18 @@ export function TaskCard({ task, onOpenDetail }: TaskCardProps) {
   }
 
   return (
-    <div
+    <motion.div
       ref={setNodeRef}
       style={style}
+      whileHover={
+        isDragging
+          ? undefined
+          : { y: -2, boxShadow: '0 6px 20px rgba(0,0,0,0.3)' }
+      }
+      whileTap={isDragging ? undefined : { scale: 0.98 }}
+      transition={{ duration: 0.12 }}
       {...attributes}
       {...listeners}
-      onMouseEnter={(e) => {
-        if (!isDragging) {
-          e.currentTarget.style.backgroundColor = '#2C2C2E'
-          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
-          e.currentTarget.style.borderLeft = `3px solid ${PRIORITY_BORDER_COLOR[task.priority]}`
-          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.4)'
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!isDragging) {
-          e.currentTarget.style.backgroundColor = '#1C1C1E'
-          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'
-          e.currentTarget.style.borderLeft = `3px solid ${PRIORITY_BORDER_COLOR[task.priority]}`
-          e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.4)'
-        }
-      }}
     >
       {/* Invisible click target — separated from drag listeners so click still fires */}
       <button
@@ -133,7 +124,7 @@ export function TaskCard({ task, onOpenDetail }: TaskCardProps) {
         {/* Title */}
         <p
           style={{
-            color: '#F5F5F7',
+            color: 'var(--dash-text-primary)',
             fontSize: '14px',
             fontWeight: 600,
             lineHeight: '1.35',
@@ -149,7 +140,7 @@ export function TaskCard({ task, onOpenDetail }: TaskCardProps) {
         {task.description && (
           <p
             style={{
-              color: '#86868B',
+              color: 'var(--dash-text-secondary)',
               fontSize: '12px',
               lineHeight: '1.45',
               marginBottom: '10px',
@@ -181,7 +172,7 @@ export function TaskCard({ task, onOpenDetail }: TaskCardProps) {
             />
             <span
               style={{
-                color: '#48484A',
+                color: 'var(--dash-text-tertiary)',
                 fontSize: '11px',
                 fontWeight: 500,
               }}
@@ -248,9 +239,9 @@ export function TaskCard({ task, onOpenDetail }: TaskCardProps) {
                     style={{
                       width: '24px',
                       height: '24px',
-                      backgroundColor: '#2C2C2E',
+                      backgroundColor: 'var(--dash-surface-3)',
                       border: '1.5px solid rgba(255,255,255,0.1)',
-                      color: '#86868B',
+                      color: 'var(--dash-text-secondary)',
                       fontSize: '10px',
                       fontWeight: 600,
                     }}
@@ -265,6 +256,6 @@ export function TaskCard({ task, onOpenDetail }: TaskCardProps) {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 }

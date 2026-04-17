@@ -78,14 +78,14 @@ export function ProjectComments({ projectId, initialComments, currentUserId }: P
 
   return (
     <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#F5F5F7', fontFamily: FONT }}>
+      <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--dash-text-primary)', fontFamily: FONT }}>
         Comentarios internos
       </h2>
 
       {/* Thread */}
       <div
         style={{
-          backgroundColor: '#1C1C1E',
+          backgroundColor: 'var(--dash-surface-2)',
           border: '1px solid rgba(255,255,255,0.08)',
           borderRadius: 16,
           overflow: 'hidden',
@@ -112,9 +112,9 @@ export function ProjectComments({ projectId, initialComments, currentUserId }: P
               <div
                 style={{
                   width: 28, height: 28, borderRadius: '50%',
-                  background: '#2C2C2E', border: '1px solid rgba(255,255,255,0.08)',
+                  background: 'var(--dash-surface-3)', border: '1px solid rgba(255,255,255,0.08)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0, fontSize: 10, fontWeight: 600, color: '#86868B', fontFamily: FONT,
+                  flexShrink: 0, fontSize: 10, fontWeight: 600, color: 'var(--dash-text-secondary)', fontFamily: FONT,
                 }}
               >
                 {c.author?.avatar_url ? (
@@ -132,7 +132,7 @@ export function ProjectComments({ projectId, initialComments, currentUserId }: P
               {/* Bubble */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: '#F5F5F7', fontFamily: FONT }}>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--dash-text-primary)', fontFamily: FONT }}>
                     {c.author?.full_name ?? 'Tú'}
                   </span>
                   <span style={{ fontSize: 11, color: '#3A3A3C', fontFamily: FONT }}>
@@ -141,7 +141,7 @@ export function ProjectComments({ projectId, initialComments, currentUserId }: P
                 </div>
                 <p
                   style={{
-                    margin: 0, fontSize: 13, color: '#86868B', fontFamily: FONT,
+                    margin: 0, fontSize: 13, color: 'var(--dash-text-secondary)', fontFamily: FONT,
                     lineHeight: 1.55, whiteSpace: 'pre-wrap', wordBreak: 'break-word',
                   }}
                 >
@@ -189,8 +189,8 @@ export function ProjectComments({ projectId, initialComments, currentUserId }: P
             placeholder="Escribe un comentario... (Enter para enviar)"
             rows={1}
             style={{
-              flex: 1, background: '#2C2C2E', border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: 8, padding: '7px 10px', fontSize: 13, color: '#F5F5F7',
+              flex: 1, background: 'var(--dash-surface-3)', border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: 8, padding: '7px 10px', fontSize: 13, color: 'var(--dash-text-primary)',
               fontFamily: FONT, outline: 'none', resize: 'none', lineHeight: 1.5,
               boxSizing: 'border-box',
             }}
@@ -200,7 +200,7 @@ export function ProjectComments({ projectId, initialComments, currentUserId }: P
             disabled={isPending || !draft.trim()}
             style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              width: 32, height: 32, background: draft.trim() ? '#0071E3' : '#2C2C2E',
+              width: 32, height: 32, background: draft.trim() ? '#0071E3' : 'var(--dash-surface-3)',
               border: 'none', borderRadius: 8, cursor: draft.trim() ? 'pointer' : 'not-allowed',
               color: '#fff', flexShrink: 0, transition: 'background 0.15s',
             }}

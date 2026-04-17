@@ -1,15 +1,20 @@
-import Link from 'next/link'
 import { createServiceClient } from '@/lib/supabase/server'
+import ActivityFilter from './ActivityFilter'
+import type { ActivityItem } from './ActivityFilter'
 
 // ─── Raw query shapes ─────────────────────────────────────────────────────────
 
 interface RawLeadActivity {
   id: string
   lead_id: string
+  user_id: string | null
   type: string
   content: string | null
+  old_status: string | null
+  new_status: string | null
   created_at: string
-  lead: { name: string; email: string | null } | { name: string; email: string | null }[] | null
+  lead: { name: string; email: string | null; company: string | null } | { name: string; email: string | null; company: string | null }[] | null
+  profile: { full_name: string | null; email: string | null } | { full_name: string | null; email: string | null }[] | null
 }
 
 interface RawTaskActivity {
@@ -25,6 +30,7 @@ interface RawLead {
   id: string
   name: string
   email: string | null
+  company: string | null
   created_at: string
 }
 
@@ -36,15 +42,13 @@ interface RawDeliverable {
   project: { title: string } | { title: string }[] | null
 }
 
-// ─── Normalised item ──────────────────────────────────────────────────────────
-
-interface ActivityItem {
+interface RawEmailLog {
   id: string
-  type: 'lead_action' | 'project_action' | 'lead_new' | 'deliverable_new'
-  title: string
-  subtitle: string
-  createdAt: string
-  linkHref: string
+  created_at: string
+  to_email: string
+  subject: string
+  template_name: string | null
+  status: string | null
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -55,172 +59,42 @@ function resolveJoined<T>(raw: T | T[] | null): T | null {
   return raw
 }
 
-function formatRelativeTime(isoDate: string): string {
-  const now = new Date()
-  const date = new Date(isoDate)
-  const diffMs = now.getTime() - date.getTime()
-  const diffHours = diffMs / (1000 * 60 * 60)
-
-  if (diffHours < 24) {
-    const hours = Math.floor(diffHours)
-    if (hours < 1) {
-      const minutes = Math.floor(diffMs / (1000 * 60))
-      return `hace ${minutes} min`
-    }
-    return `hace ${hours}h`
-  }
-
-  const toLocal = (d: Date) =>
-    new Date(d.toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' }))
-
-  const localNow = toLocal(now)
-  const localDate = toLocal(date)
-
-  const todayStart = new Date(localNow)
-  todayStart.setHours(0, 0, 0, 0)
-  const itemStart = new Date(localDate)
-  itemStart.setHours(0, 0, 0, 0)
-
-  const diffDays = Math.round((todayStart.getTime() - itemStart.getTime()) / 86_400_000)
-
-  if (diffDays === 0) return 'hoy'
-  if (diffDays === 1) return 'ayer'
-
-  return localDate.toLocaleDateString('es-AR', {
-    day: 'numeric',
-    month: 'short',
-    year: localDate.getFullYear() !== localNow.getFullYear() ? 'numeric' : undefined,
-  })
-}
-
-function dayLabel(isoDate: string): string {
-  const ref = new Date(isoDate)
-  const now = new Date()
-
-  const toLocal = (d: Date) =>
-    new Date(d.toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' }))
-
-  const item = toLocal(ref)
-  const today = toLocal(now)
-
-  const todayStart = new Date(today)
-  todayStart.setHours(0, 0, 0, 0)
-  const itemStart = new Date(item)
-  itemStart.setHours(0, 0, 0, 0)
-
-  const diffDays = Math.round((todayStart.getTime() - itemStart.getTime()) / 86_400_000)
-
-  if (diffDays === 0) return 'Hoy'
-  if (diffDays === 1) return 'Ayer'
-  return `Hace ${diffDays} dias`
-}
-
-function thirtyDaysAgo(): string {
-  const d = new Date()
-  d.setDate(d.getDate() - 30)
-  return d.toISOString()
-}
-
-// ─── Pill config ──────────────────────────────────────────────────────────────
-
-const PILL_LABEL: Record<ActivityItem['type'], string> = {
-  lead_action: 'Lead',
-  project_action: 'Proyecto',
-  lead_new: 'Nuevo lead',
-  deliverable_new: 'Entregable',
-}
-
-const PILL_COLOR: Record<ActivityItem['type'], string> = {
-  lead_action: '#0071E3',
-  project_action: '#BF5AF2',
-  lead_new: '#30D158',
-  deliverable_new: '#FF9F0A',
-}
-
-const PILL_BG: Record<ActivityItem['type'], string> = {
-  lead_action: 'rgba(0,113,227,0.13)',
-  project_action: 'rgba(191,90,242,0.13)',
-  lead_new: 'rgba(48,209,88,0.13)',
-  deliverable_new: 'rgba(255,159,10,0.13)',
-}
-
-const DOT_COLOR: Record<ActivityItem['type'], string> = {
-  lead_action: '#0071E3',
-  project_action: '#BF5AF2',
-  lead_new: '#30D158',
-  deliverable_new: '#FF9F0A',
-}
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-function IconDot({ color }: { color: string }) {
-  return (
-    <span
-      style={{
-        display: 'block',
-        width: '10px',
-        height: '10px',
-        borderRadius: '50%',
-        background: color,
-        flexShrink: 0,
-        boxShadow: `0 0 6px ${color}80`,
-      }}
-    />
-  )
-}
-
-function ClockIcon() {
-  return (
-    <svg
-      width="80"
-      height="80"
-      viewBox="0 0 80 80"
-      fill="none"
-      aria-hidden="true"
-      style={{ display: 'block' }}
-    >
-      {/* Clock face */}
-      <circle cx="40" cy="40" r="26" fill="#2C2C2E" stroke="#3A3A3C" strokeWidth="1.5" />
-      {/* Hour hand */}
-      <line x1="40" y1="40" x2="40" y2="24" stroke="#48484A" strokeWidth="2" strokeLinecap="round" />
-      {/* Minute hand */}
-      <line x1="40" y1="40" x2="52" y2="48" stroke="#48484A" strokeWidth="2" strokeLinecap="round" />
-      {/* Center dot */}
-      <circle cx="40" cy="40" r="2.5" fill="#3A3A3C" />
-      {/* Tick marks at 12, 3, 6, 9 */}
-      <line x1="40" y1="16" x2="40" y2="20" stroke="#3A3A3C" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="64" y1="40" x2="60" y2="40" stroke="#3A3A3C" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="40" y1="64" x2="40" y2="60" stroke="#3A3A3C" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="16" y1="40" x2="20" y2="40" stroke="#3A3A3C" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  )
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function ActividadPage() {
   const supabase = createServiceClient()
-  const cutoff = thirtyDaysAgo()
 
-  // ── Query 1: lead_activities joined with leads ─────────────────────────────
+  // ── Query 1: lead_activities joined with leads + profiles ─────────────────
   let leadActivities: ActivityItem[] = []
   try {
     const { data } = await supabase
       .from('lead_activities')
-      .select('id, lead_id, type, content, created_at, lead:leads(name, email)')
+      .select(
+        'id, lead_id, user_id, type, content, old_status, new_status, created_at, lead:leads(name, email, company), profile:profiles(full_name, email)'
+      )
       .order('created_at', { ascending: false })
-      .limit(30)
+      .limit(200)
 
     for (const row of (data ?? []) as unknown as RawLeadActivity[]) {
       const lead = resolveJoined(row.lead)
+      const profile = resolveJoined(row.profile)
       const leadName = lead?.name ?? 'Lead desconocido'
+      const userName = profile?.full_name ?? profile?.email ?? null
+
       leadActivities.push({
         id: `lead-act-${row.id}`,
         type: 'lead_action',
-        title: `Actividad en lead: ${leadName}`,
+        activitySubType: row.type as ActivityItem['activitySubType'],
+        title: `Actividad en lead`,
         subtitle: row.content ?? row.type,
         createdAt: row.created_at,
-        linkHref: '/admin/leads',
+        linkHref: `/admin/leads?lead=${row.lead_id}`,
+        userName: userName,
+        leadName: leadName,
+        leadId: row.lead_id,
+        leadCompany: lead?.company ?? null,
+        oldStatus: row.old_status ?? null,
+        newStatus: row.new_status ?? null,
       })
     }
   } catch {
@@ -234,7 +108,7 @@ export default async function ActividadPage() {
       .from('task_activity_log')
       .select('id, project_id, action, metadata, created_at, project:projects(title)')
       .order('created_at', { ascending: false })
-      .limit(20)
+      .limit(100)
 
     for (const row of (data ?? []) as unknown as RawTaskActivity[]) {
       const project = resolveJoined(row.project)
@@ -242,49 +116,61 @@ export default async function ActividadPage() {
       taskActivities.push({
         id: `task-act-${row.id}`,
         type: 'project_action',
+        activitySubType: null,
         title: row.action,
         subtitle: `Proyecto: ${projectTitle}`,
         createdAt: row.created_at,
         linkHref: `/admin/projects/${row.project_id}`,
+        userName: null,
+        leadName: null,
+        leadId: null,
+        leadCompany: null,
+        oldStatus: null,
+        newStatus: null,
       })
     }
   } catch {
     taskActivities = []
   }
 
-  // ── Query 3: leads recientes (ultimos 30 dias) ─────────────────────────────
+  // ── Query 3: leads recientes ───────────────────────────────────────────────
   let recentLeads: ActivityItem[] = []
   try {
     const { data } = await supabase
       .from('leads')
-      .select('id, name, email, created_at')
-      .gte('created_at', cutoff)
+      .select('id, name, email, company, created_at')
       .order('created_at', { ascending: false })
-      .limit(20)
+      .limit(100)
 
     for (const row of (data ?? []) as unknown as RawLead[]) {
       recentLeads.push({
         id: `lead-new-${row.id}`,
         type: 'lead_new',
+        activitySubType: null,
         title: `Nuevo lead: ${row.name}`,
         subtitle: row.email ?? 'Sin email',
         createdAt: row.created_at,
-        linkHref: '/admin/leads',
+        linkHref: `/admin/leads?lead=${row.id}`,
+        userName: null,
+        leadName: row.name,
+        leadId: row.id,
+        leadCompany: row.company ?? null,
+        oldStatus: null,
+        newStatus: null,
       })
     }
   } catch {
     recentLeads = []
   }
 
-  // ── Query 4: project_deliverables recientes (ultimos 30 dias) ─────────────
+  // ── Query 4: project_deliverables recientes ────────────────────────────────
   let recentDeliverables: ActivityItem[] = []
   try {
     const { data } = await supabase
       .from('project_deliverables')
       .select('id, project_id, title, created_at, project:projects(title)')
-      .gte('created_at', cutoff)
       .order('created_at', { ascending: false })
-      .limit(20)
+      .limit(100)
 
     for (const row of (data ?? []) as unknown as RawDeliverable[]) {
       const project = resolveJoined(row.project)
@@ -292,14 +178,51 @@ export default async function ActividadPage() {
       recentDeliverables.push({
         id: `deliverable-new-${row.id}`,
         type: 'deliverable_new',
+        activitySubType: null,
         title: `Entregable: ${row.title}`,
         subtitle: `Proyecto: ${projectTitle}`,
         createdAt: row.created_at,
         linkHref: `/admin/projects/${row.project_id}`,
+        userName: null,
+        leadName: null,
+        leadId: null,
+        leadCompany: null,
+        oldStatus: null,
+        newStatus: null,
       })
     }
   } catch {
     recentDeliverables = []
+  }
+
+  // ── Query 5: email_log ─────────────────────────────────────────────────────
+  let emailItems: ActivityItem[] = []
+  try {
+    const { data } = await supabase
+      .from('email_log')
+      .select('id, created_at, to_email, subject, template_name, status')
+      .order('created_at', { ascending: false })
+      .limit(100)
+
+    for (const row of (data ?? []) as unknown as RawEmailLog[]) {
+      emailItems.push({
+        id: `email-${row.id}`,
+        type: 'email_sent',
+        activitySubType: null,
+        title: `Email: ${row.subject}`,
+        subtitle: `Para: ${row.to_email}`,
+        createdAt: row.created_at,
+        linkHref: '#',
+        userName: 'Sistema',
+        leadName: null,
+        leadId: null,
+        leadCompany: null,
+        oldStatus: null,
+        newStatus: null,
+      })
+    }
+  } catch {
+    emailItems = []
   }
 
   // ── Merge and sort ─────────────────────────────────────────────────────────
@@ -309,9 +232,10 @@ export default async function ActividadPage() {
     ...taskActivities,
     ...recentLeads,
     ...recentDeliverables,
+    ...emailItems,
   ]
 
-  // Deduplicate by id (in case a lead appears in both lead_activities and leads)
+  // Deduplicate by id
   const seen = new Set<string>()
   const items: ActivityItem[] = []
   for (const item of allItems) {
@@ -323,36 +247,16 @@ export default async function ActividadPage() {
 
   items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
-  // ── Group by day ───────────────────────────────────────────────────────────
-
-  interface DayGroup {
-    label: string
-    items: ActivityItem[]
-  }
-
-  const groups: DayGroup[] = []
-  const seenDays = new Map<string, DayGroup>()
-
-  for (const item of items) {
-    const label = dayLabel(item.createdAt)
-    if (!seenDays.has(label)) {
-      const group: DayGroup = { label, items: [] }
-      groups.push(group)
-      seenDays.set(label, group)
-    }
-    seenDays.get(label)!.items.push(item)
-  }
-
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <>
       <style>{`
         .act-root {
-          background-color: #000000;
+          background-color: var(--dash-bg);
           min-height: 100vh;
           padding: 2.5rem 2rem;
           font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
-          color: #F5F5F7;
+          color: var(--dash-text-primary);
           box-sizing: border-box;
           max-width: 860px;
         }
@@ -366,16 +270,16 @@ export default async function ActividadPage() {
           position: relative;
         }
         .act-item-row:hover .act-card {
-          background: rgba(255,255,255,0.04);
+          background: var(--dash-surface-2);
           border-color: rgba(255,255,255,0.12);
         }
         .act-item-row:hover .act-title {
-          color: #F5F5F7;
+          color: var(--dash-text-primary);
         }
         .act-card {
           flex: 1;
-          background: #111111;
-          border: 1px solid rgba(255,255,255,0.08);
+          background: var(--dash-surface-1);
+          border: 1px solid var(--dash-border);
           border-radius: 12px;
           padding: 12px 16px;
           transition: background 0.15s, border-color 0.15s;
@@ -384,7 +288,7 @@ export default async function ActividadPage() {
         .act-title {
           font-size: 14px;
           font-weight: 400;
-          color: #D1D1D6;
+          color: var(--dash-text-secondary);
           margin: 0 0 4px 0;
           line-height: 1.4;
           word-break: break-word;
@@ -392,7 +296,7 @@ export default async function ActividadPage() {
         }
         .act-subtitle {
           font-size: 12px;
-          color: #86868B;
+          color: var(--dash-text-secondary);
           margin: 0;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -403,6 +307,7 @@ export default async function ActividadPage() {
           align-items: center;
           gap: 8px;
           margin-bottom: 6px;
+          flex-wrap: wrap;
         }
         .act-pill {
           font-size: 10px;
@@ -415,48 +320,37 @@ export default async function ActividadPage() {
         }
         .act-time {
           font-size: 11px;
-          color: #48484A;
+          color: var(--dash-text-tertiary);
           flex-shrink: 0;
           margin-left: auto;
         }
-        .act-day-label {
+        .act-attribution {
+          font-size: 11px;
+          color: var(--dash-text-tertiary);
+          margin-top: 4px;
+        }
+        .act-lead-link {
+          color: #64D2FF;
+          text-decoration: none;
+          font-size: 12px;
+          font-weight: 500;
+        }
+        .act-lead-link:hover {
+          text-decoration: underline;
+        }
+        .act-status-arrow {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          margin-top: 4px;
+          flex-wrap: wrap;
+        }
+        .act-status-badge {
           font-size: 11px;
           font-weight: 600;
-          color: #48484A;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-          padding: 24px 0 10px 0;
-          margin: 0;
-        }
-        .act-day-label:first-child {
-          padding-top: 0;
-        }
-        .act-empty {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 16px;
-          background: #111111;
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 16px;
-          padding: 64px 32px;
-          margin-top: 40px;
-          text-align: center;
-        }
-        .act-empty-title {
-          font-size: 17px;
-          font-weight: 600;
-          color: #F5F5F7;
-          margin: 0;
-          letter-spacing: -0.02em;
-        }
-        .act-empty-desc {
-          font-size: 13px;
-          color: #86868B;
-          margin: 0;
-          max-width: 340px;
-          line-height: 1.6;
+          border-radius: 5px;
+          padding: 2px 8px;
+          letter-spacing: 0.02em;
         }
       `}</style>
 
@@ -468,7 +362,7 @@ export default async function ActividadPage() {
             style={{
               fontSize: '28px',
               fontWeight: 600,
-              color: '#F5F5F7',
+              color: 'var(--dash-text-primary)',
               margin: '0 0 6px 0',
               letterSpacing: '-0.02em',
             }}
@@ -478,7 +372,7 @@ export default async function ActividadPage() {
           <p
             style={{
               fontSize: '13px',
-              color: '#86868B',
+              color: 'var(--dash-text-secondary)',
               margin: 0,
             }}
           >
@@ -486,92 +380,8 @@ export default async function ActividadPage() {
           </p>
         </div>
 
-        {/* ── Empty state ── */}
-        {items.length === 0 && (
-          <div className="act-empty">
-            <ClockIcon />
-            <p className="act-empty-title">Sin actividad reciente</p>
-            <p className="act-empty-desc">
-              Todo quieto por ahora. La actividad aparecera aqui cuando se registren leads, se actualicen proyectos o se suban entregables.
-            </p>
-          </div>
-        )}
-
-        {/* ── Timeline ── */}
-        {groups.map((group) => (
-          <div key={group.label}>
-            {/* Day separator */}
-            <p className="act-day-label">{group.label}</p>
-
-            {/* Items in this day */}
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                position: 'relative',
-              }}
-            >
-              {/* Vertical line */}
-              <div
-                aria-hidden="true"
-                style={{
-                  position: 'absolute',
-                  left: '4px',
-                  top: '20px',
-                  bottom: '20px',
-                  width: '1px',
-                  background: 'rgba(255,255,255,0.07)',
-                  pointerEvents: 'none',
-                }}
-              />
-
-              {group.items.map((item) => {
-                const dotColor = DOT_COLOR[item.type]
-                const inner = (
-                  <>
-                    {/* Dot column */}
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        paddingTop: '16px',
-                        width: '10px',
-                        flexShrink: 0,
-                      }}
-                    >
-                      <IconDot color={dotColor} />
-                    </div>
-
-                    {/* Card */}
-                    <div className="act-card">
-                      <div className="act-meta">
-                        <span
-                          className="act-pill"
-                          style={{
-                            color: PILL_COLOR[item.type],
-                            background: PILL_BG[item.type],
-                          }}
-                        >
-                          {PILL_LABEL[item.type]}
-                        </span>
-                        <span className="act-time">{formatRelativeTime(item.createdAt)}</span>
-                      </div>
-                      <p className="act-title">{item.title}</p>
-                      <p className="act-subtitle">{item.subtitle}</p>
-                    </div>
-                  </>
-                )
-
-                return (
-                  <Link key={item.id} href={item.linkHref} className="act-item-row">
-                    {inner}
-                  </Link>
-                )
-              })}
-            </div>
-          </div>
-        ))}
+        {/* ── Filters + Timeline (client-side) ── */}
+        <ActivityFilter initialActivities={items} />
 
       </div>
     </>

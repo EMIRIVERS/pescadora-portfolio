@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import type { Deliverable, Project, ProjectStatus } from '@/lib/supabase/types'
 import ProjectTimeline from '@/components/portal/project-timeline'
 import DeliverableCard from '@/components/portal/deliverable-card'
+import ClientUploader from '@/components/portal/ClientUploader'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -66,7 +67,7 @@ export default async function ProjectPage({ params }: PageProps) {
   // Resolve the client record for this authenticated user
   const { data: client } = await supabase
     .from('clients')
-    .select('id')
+    .select('id, name')
     .eq('profile_id', user.id)
     .single()
 
@@ -98,6 +99,21 @@ export default async function ProjectPage({ params }: PageProps) {
 
   const deliverables: Deliverable[] = (deliverableRows ?? []) as Deliverable[]
   const approvedCount = deliverables.filter((d) => d.status === 'approved').length
+
+  // Fetch revision counts for each deliverable to show the current version badge
+  const revisionCountMap: Record<string, number> = {}
+  if (deliverables.length > 0) {
+    const deliverableIds = deliverables.map((d) => d.id)
+    const { data: revisionRows } = await supabase
+      .from('deliverable_revisions')
+      .select('deliverable_id')
+      .in('deliverable_id', deliverableIds)
+
+    for (const row of revisionRows ?? []) {
+      const rid = (row as { deliverable_id: string }).deliverable_id
+      revisionCountMap[rid] = (revisionCountMap[rid] ?? 0) + 1
+    }
+  }
 
   const statusCfg = STATUS_CONFIG[project.status]
 
@@ -161,7 +177,7 @@ export default async function ProjectPage({ params }: PageProps) {
         </section>
 
         {/* Deliverables */}
-        <section>
+        <section className="mb-12">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-zinc-300 text-xs font-medium uppercase tracking-widest">
               Entregables
@@ -182,10 +198,22 @@ export default async function ProjectPage({ params }: PageProps) {
           ) : (
             <div className="space-y-3">
               {deliverables.map((deliverable) => (
-                <DeliverableCard key={deliverable.id} deliverable={deliverable} />
+                <DeliverableCard
+                  key={deliverable.id}
+                  deliverable={deliverable}
+                  revisionCount={revisionCountMap[deliverable.id] ?? 0}
+                />
               ))}
             </div>
           )}
+        </section>
+
+        {/* Client uploads */}
+        <section>
+          <h2 className="text-zinc-300 text-xs font-medium uppercase tracking-widest mb-5">
+            Tus archivos
+          </h2>
+          <ClientUploader projectId={project.id} clientId={client.id} />
         </section>
       </div>
     </main>

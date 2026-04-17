@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import type { ProjectStatus, ProjectWithClient } from '@/lib/supabase/types'
@@ -26,19 +27,32 @@ export function formatBudget(
   }
 }
 
+/** Compact format: $1.2M, $850k, $12k */
+export function formatBudgetCompact(amount: number): string {
+  if (amount >= 1_000_000) {
+    const v = amount / 1_000_000
+    return `$${v % 1 === 0 ? v.toFixed(0) : v.toFixed(1)}M`
+  }
+  if (amount >= 1_000) {
+    const v = amount / 1_000
+    return `$${v % 1 === 0 ? v.toFixed(0) : v.toFixed(1)}k`
+  }
+  return `$${amount.toLocaleString('es-MX')}`
+}
+
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
 const T = {
-  bg:            '#000000',
-  surface1:      '#111111',
-  surface2:      '#1C1C1E',
-  surface3:      '#2C2C2E',
-  border:        'rgba(255,255,255,0.08)',
-  borderSubtle:  'rgba(255,255,255,0.04)',
-  borderHeader:  'rgba(255,255,255,0.06)',
-  textPrimary:   '#F5F5F7',
-  textSecondary: '#86868B',
-  textTertiary:  '#48484A',
+  bg:            'var(--dash-bg)',
+  surface1:      'var(--dash-surface-1)',
+  surface2:      'var(--dash-surface-2)',
+  surface3:      'var(--dash-surface-3)',
+  border:        'var(--dash-border)',
+  borderSubtle:  'var(--dash-border)',
+  borderHeader:  'var(--dash-border)',
+  textPrimary:   'var(--dash-text-primary)',
+  textSecondary: 'var(--dash-text-secondary)',
+  textTertiary:  'var(--dash-text-tertiary)',
   accent:        '#0071E3',
   font:          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
 } as const
@@ -48,7 +62,7 @@ const T = {
 function StatusPill({ status }: { status: ProjectStatus }) {
   const { label, color, bg } = PROJECT_STATUS_STYLES[status] ?? {
     label: status,
-    color: '#86868B',
+    color: 'var(--dash-text-secondary)',
     bg: 'rgba(134,134,139,0.1)',
   }
   return (
@@ -75,6 +89,16 @@ export { StatusPill }
 
 // ── Date formatting ───────────────────────────────────────────────────────────
 
+/** Short format: "15 ene" (no year) */
+export function formatDateShort(iso: string | null): string {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString('es-MX', {
+    day:   'numeric',
+    month: 'short',
+  })
+}
+
+/** Long format: "15 ene. 2026" */
 export function formatDate(iso: string | null): string {
   if (!iso) return '—'
   return new Date(iso).toLocaleDateString('es-MX', {
@@ -103,15 +127,15 @@ export function DaysRemaining({ endDate }: { endDate: string | null }) {
 
   if (diffDays < 0) {
     return (
-      <span style={{ fontSize: '12px', fontWeight: 600, color: '#FF453A', fontFamily: T.font }}>
+      <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--dash-danger)', fontFamily: T.font }}>
         Vencido
       </span>
     )
   }
 
-  let color = '#30D158'
-  if (diffDays < 7)  color = '#FF453A'
-  else if (diffDays < 14) color = '#FF9F0A'
+  let color = 'var(--dash-success)'
+  if (diffDays < 7)  color = 'var(--dash-danger)'
+  else if (diffDays < 14) color = 'var(--dash-warning)'
 
   return (
     <span style={{ fontSize: '12px', fontWeight: 600, color, fontFamily: T.font }}>
@@ -122,13 +146,203 @@ export function DaysRemaining({ endDate }: { endDate: string | null }) {
 
 // ── Table columns ─────────────────────────────────────────────────────────────
 
-const TABLE_COLS = 'grid-cols-[1fr_160px_160px_110px_110px_100px_80px_36px]'
+// Proyecto | Cliente | Presupuesto | Estado | Inicio | Entrega | Dias rest. | ->
+const TABLE_COLS = 'grid-cols-[1fr_140px_120px_160px_90px_90px_80px_36px]'
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 interface ProjectsTableProps {
   rows: ProjectWithClient[]
   pageSize?: number
+}
+
+// ── Row component ─────────────────────────────────────────────────────────────
+
+function ProjectRow({
+  project,
+  idx,
+  isLast,
+}: {
+  project: ProjectWithClient
+  idx: number
+  isLast: boolean
+}) {
+  const router = useRouter()
+
+  const now = new Date()
+  now.setHours(0, 0, 0, 0)
+  const endDate = project.end_date ? new Date(project.end_date) : null
+  if (endDate) endDate.setHours(0, 0, 0, 0)
+  const endIsOverdue =
+    endDate != null &&
+    endDate.getTime() < now.getTime() &&
+    project.status !== 'delivered'
+
+  function handleRowClick(e: React.MouseEvent<HTMLDivElement>) {
+    // Don't navigate if the click was on an interactive element inside the row
+    const target = e.target as HTMLElement
+    if (
+      target.closest('a') ||
+      target.closest('button') ||
+      target.closest('select')
+    ) {
+      return
+    }
+    router.push(`/admin/projects/${project.id}`)
+  }
+
+  return (
+    <motion.div
+      key={project.id}
+      className={`proj-row grid ${TABLE_COLS} gap-4 items-center`}
+      initial={{ opacity: 0, x: -12 }}
+      animate={{ opacity: 1, x: 0 }}
+      whileHover={{ x: 2 }}
+      transition={{ duration: 0.25, delay: Math.min(idx, 8) * 0.04, ease: [0.25, 0.1, 0.25, 1] }}
+      onClick={handleRowClick}
+      style={{
+        padding: '16px 20px',
+        borderBottom: !isLast ? `1px solid ${T.borderSubtle}` : undefined,
+        cursor: 'pointer',
+      }}
+    >
+      {/* Title + description */}
+      <div className="min-w-0">
+        <Link
+          href={`/admin/projects/${project.id}`}
+          className="proj-title-link"
+          style={{
+            display: 'block',
+            fontSize: '14px',
+            fontWeight: 600,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            letterSpacing: '-0.01em',
+          }}
+        >
+          {project.title}
+        </Link>
+        {project.description && (
+          <p
+            style={{
+              marginTop: '2px',
+              fontSize: '12px',
+              color: T.textSecondary,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              margin: '2px 0 0',
+            }}
+          >
+            {project.description}
+          </p>
+        )}
+      </div>
+
+      {/* Client */}
+      <div className="min-w-0">
+        {project.client ? (
+          <p
+            style={{
+              fontSize: '13px',
+              color: T.textSecondary,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              margin: 0,
+            }}
+          >
+            {project.client.name}
+          </p>
+        ) : (
+          <span style={{ fontSize: '13px', color: T.textTertiary }}>—</span>
+        )}
+      </div>
+
+      {/* Budget */}
+      <p
+        style={{
+          fontSize: '12px',
+          color: project.budget != null ? T.textSecondary : T.textTertiary,
+          margin: 0,
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {formatBudget(project.budget, project.currency)}
+      </p>
+
+      {/* Status */}
+      <div>
+        <StatusChanger projectId={project.id} currentStatus={project.status} />
+      </div>
+
+      {/* Start date */}
+      <p
+        style={{
+          fontSize: '12px',
+          color: T.textSecondary,
+          margin: 0,
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {formatDateShort(project.start_date)}
+      </p>
+
+      {/* End date — red if overdue and not delivered */}
+      <p
+        style={{
+          fontSize: '12px',
+          color: endIsOverdue ? 'var(--dash-danger)' : T.textSecondary,
+          fontWeight: endIsOverdue ? 600 : 400,
+          margin: 0,
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {formatDateShort(project.end_date)}
+      </p>
+
+      {/* Days remaining */}
+      <div>
+        {project.status === 'delivered' ? (
+          <span style={{ fontSize: '12px', color: T.textTertiary, fontFamily: T.font }}>—</span>
+        ) : (
+          <DaysRemaining endDate={project.end_date} />
+        )}
+      </div>
+
+      {/* Chevron link */}
+      <Link
+        href={`/admin/projects/${project.id}`}
+        className="proj-arrow-btn"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '28px',
+          height: '28px',
+          borderRadius: '8px',
+          textDecoration: 'none',
+          flexShrink: 0,
+        }}
+        aria-label={`Ver proyecto ${project.title}`}
+      >
+        <svg
+          width="13"
+          height="13"
+          viewBox="0 0 12 12"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M2 6h8M6 2l4 4-4 4" />
+        </svg>
+      </Link>
+    </motion.div>
+  )
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -155,7 +369,7 @@ export function ProjectsTable({ rows, pageSize = 15 }: ProjectsTableProps) {
           borderBottom: `1px solid ${T.borderHeader}`,
         }}
       >
-        {['Proyecto', 'Cliente', 'Estado', 'Inicio', 'Entrega', 'Presupuesto', 'Dias rest.', ''].map(
+        {['Proyecto', 'Cliente', 'Presupuesto', 'Estado', 'Inicio', 'Entrega', 'Dias rest.', ''].map(
           (col) => (
             <span
               key={col}
@@ -176,157 +390,12 @@ export function ProjectsTable({ rows, pageSize = 15 }: ProjectsTableProps) {
       {/* Table rows */}
       <div>
         {paginatedRows.map((project, idx) => (
-          <motion.div
+          <ProjectRow
             key={project.id}
-            className={`proj-row grid ${TABLE_COLS} gap-4 items-center`}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2, delay: idx * 0.03 }}
-            style={{
-              padding: '16px 20px',
-              borderBottom:
-                idx < paginatedRows.length - 1
-                  ? `1px solid ${T.borderSubtle}`
-                  : undefined,
-              cursor: 'default',
-            }}
-          >
-            {/* Title + description */}
-            <div className="min-w-0">
-              <Link
-                href={`/admin/projects/${project.id}`}
-                className="proj-title-link"
-                style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  letterSpacing: '-0.01em',
-                }}
-              >
-                {project.title}
-              </Link>
-              {project.description && (
-                <p
-                  style={{
-                    marginTop: '2px',
-                    fontSize: '12px',
-                    color: T.textSecondary,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    margin: '2px 0 0',
-                  }}
-                >
-                  {project.description}
-                </p>
-              )}
-            </div>
-
-            {/* Client */}
-            <div className="min-w-0">
-              {project.client ? (
-                <p
-                  style={{
-                    fontSize: '13px',
-                    color: T.textSecondary,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    margin: 0,
-                  }}
-                >
-                  {project.client.name}
-                </p>
-              ) : (
-                <span style={{ fontSize: '13px', color: T.textTertiary }}>—</span>
-              )}
-            </div>
-
-            {/* Status */}
-            <div>
-              <StatusChanger projectId={project.id} currentStatus={project.status} />
-            </div>
-
-            {/* Start date */}
-            <p
-              style={{
-                fontSize: '12px',
-                color: T.textSecondary,
-                margin: 0,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {formatDate(project.start_date)}
-            </p>
-
-            {/* End date */}
-            <p
-              style={{
-                fontSize: '12px',
-                color: T.textSecondary,
-                margin: 0,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {formatDate(project.end_date)}
-            </p>
-
-            {/* Budget */}
-            <p
-              style={{
-                fontSize: '12px',
-                color: (project as unknown as { budget: number | null }).budget != null
-                  ? T.textSecondary
-                  : T.textTertiary,
-                margin: 0,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {formatBudget(
-                (project as unknown as { budget: number | null }).budget,
-                (project as unknown as { currency: string | null }).currency,
-              )}
-            </p>
-
-            {/* Days remaining */}
-            <div>
-              <DaysRemaining endDate={project.end_date} />
-            </div>
-
-            {/* Chevron link */}
-            <Link
-              href={`/admin/projects/${project.id}`}
-              className="proj-arrow-btn"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '28px',
-                height: '28px',
-                borderRadius: '8px',
-                textDecoration: 'none',
-                flexShrink: 0,
-              }}
-              aria-label={`Ver proyecto ${project.title}`}
-            >
-              <svg
-                width="13"
-                height="13"
-                viewBox="0 0 12 12"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M2 6h8M6 2l4 4-4 4" />
-              </svg>
-            </Link>
-          </motion.div>
+            project={project}
+            idx={idx}
+            isLast={idx === paginatedRows.length - 1}
+          />
         ))}
       </div>
 
@@ -345,9 +414,9 @@ export function ProjectsTable({ rows, pageSize = 15 }: ProjectsTableProps) {
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
             style={{
-              background: '#1C1C1E',
-              border: '1px solid rgba(255,255,255,0.1)',
-              color: '#F5F5F7',
+              background: 'var(--dash-surface-2)',
+              border: '1px solid var(--dash-border)',
+              color: 'var(--dash-text-primary)',
               borderRadius: '8px',
               padding: '8px 16px',
               fontSize: '13px',
@@ -362,7 +431,7 @@ export function ProjectsTable({ rows, pageSize = 15 }: ProjectsTableProps) {
           <span
             style={{
               fontSize: '12px',
-              color: '#86868B',
+              color: 'var(--dash-text-secondary)',
               fontFamily: T.font,
             }}
           >
@@ -373,9 +442,9 @@ export function ProjectsTable({ rows, pageSize = 15 }: ProjectsTableProps) {
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
             style={{
-              background: '#1C1C1E',
-              border: '1px solid rgba(255,255,255,0.1)',
-              color: '#F5F5F7',
+              background: 'var(--dash-surface-2)',
+              border: '1px solid var(--dash-border)',
+              color: 'var(--dash-text-primary)',
               borderRadius: '8px',
               padding: '8px 16px',
               fontSize: '13px',

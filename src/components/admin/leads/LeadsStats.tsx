@@ -16,7 +16,7 @@ const STATS = [
   { key: 'qualified', label: 'Calificado', color: '#FF9F0A' },
   { key: 'proposal',  label: 'Propuesta',  color: '#FF453A' },
   { key: 'won',       label: 'Ganado',     color: '#30D158' },
-  { key: 'lost',      label: 'Perdido',    color: '#636366' },
+  { key: 'lost',      label: 'Perdido',    color: 'var(--dash-text-tertiary)' },
 ] as const
 
 export default function LeadsStats({ counts, total }: Props) {
@@ -46,8 +46,8 @@ export default function LeadsStats({ counts, total }: Props) {
               style={{
                 flex: 1,
                 minWidth: 100,
-                background: '#111111',
-                border: '1px solid rgba(255,255,255,0.08)',
+                background: 'var(--dash-surface-1)',
+                border: '1px solid var(--dash-border)',
                 borderRadius: 12,
                 padding: '16px 20px',
                 fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
@@ -59,7 +59,7 @@ export default function LeadsStats({ counts, total }: Props) {
                   fontWeight: 500,
                   letterSpacing: '0.06em',
                   textTransform: 'uppercase',
-                  color: '#86868B',
+                  color: 'var(--dash-text-secondary)',
                   margin: '0 0 10px 0',
                 }}
               >
@@ -80,7 +80,7 @@ export default function LeadsStats({ counts, total }: Props) {
               <p
                 style={{
                   fontSize: 11,
-                  color: '#48484A',
+                  color: 'var(--dash-text-tertiary)',
                   margin: 0,
                   fontVariantNumeric: 'tabular-nums',
                 }}
@@ -98,8 +98,8 @@ export default function LeadsStats({ counts, total }: Props) {
           display: 'inline-flex',
           alignItems: 'center',
           gap: 10,
-          background: '#1C1C1E',
-          border: '1px solid rgba(255,255,255,0.08)',
+          background: 'var(--dash-surface-2)',
+          border: '1px solid var(--dash-border)',
           borderRadius: 12,
           padding: '10px 16px',
           marginBottom: '1.5rem',
@@ -112,7 +112,7 @@ export default function LeadsStats({ counts, total }: Props) {
             fontWeight: 500,
             letterSpacing: '0.06em',
             textTransform: 'uppercase',
-            color: '#86868B',
+            color: 'var(--dash-text-secondary)',
           }}
         >
           Tasa de conversion
@@ -130,7 +130,7 @@ export default function LeadsStats({ counts, total }: Props) {
         <span
           style={{
             fontSize: 11,
-            color: '#48484A',
+            color: 'var(--dash-text-tertiary)',
             fontVariantNumeric: 'tabular-nums',
           }}
         >

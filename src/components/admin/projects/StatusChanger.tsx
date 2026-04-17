@@ -1,6 +1,7 @@
 'use client'
 
 import { useTransition, useState } from 'react'
+import { motion } from 'framer-motion'
 import { updateProjectStatus } from '@/lib/actions/projects'
 import type { ProjectStatus } from '@/lib/supabase/types'
 
@@ -47,6 +48,11 @@ export function StatusChanger({ projectId, currentStatus }: Props) {
 
   return (
     <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '4px' }}>
+      <motion.div
+        whileTap={{ scale: 0.95 }}
+        transition={{ duration: 0.12 }}
+        style={{ display: 'inline-flex' }}
+      >
       <select
         value={optimisticStatus}
         onChange={handleChange}
@@ -76,7 +82,7 @@ export function StatusChanger({ projectId, currentStatus }: Props) {
             key={s}
             value={s}
             style={{
-              background: '#1C1C1E',
+              background: 'var(--dash-surface-2)',
               color: STATUS_CONFIG[s].color,
               fontWeight: 600,
             }}
@@ -85,6 +91,7 @@ export function StatusChanger({ projectId, currentStatus }: Props) {
           </option>
         ))}
       </select>
+      </motion.div>
 
       {errorMsg && (
         <span

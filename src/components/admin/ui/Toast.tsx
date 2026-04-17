@@ -109,7 +109,7 @@ function ToastItem({ toast, onRemove }: ToastItemProps) {
         display: 'flex',
         alignItems: 'flex-start',
         gap: '10px',
-        background: '#1C1C1E',
+        background: 'var(--dash-surface-2)',
         border: `1px solid ${color}33`,
         borderLeft: `3px solid ${color}`,
         borderRadius: '12px',
@@ -133,7 +133,7 @@ function ToastItem({ toast, onRemove }: ToastItemProps) {
           flex: 1,
           fontSize: '14px',
           lineHeight: '1.45',
-          color: '#F5F5F7',
+          color: 'var(--dash-text-primary)',
           fontFamily:
             "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif",
         }}
@@ -148,17 +148,17 @@ function ToastItem({ toast, onRemove }: ToastItemProps) {
           border: 'none',
           cursor: 'pointer',
           padding: '0',
-          color: '#86868B',
+          color: 'var(--dash-text-secondary)',
           flexShrink: 0,
           display: 'flex',
           alignItems: 'center',
           transition: 'color 0.15s',
         }}
         onMouseEnter={(e) =>
-          ((e.currentTarget as HTMLButtonElement).style.color = '#F5F5F7')
+          ((e.currentTarget as HTMLButtonElement).style.color = 'var(--dash-text-primary)')
         }
         onMouseLeave={(e) =>
-          ((e.currentTarget as HTMLButtonElement).style.color = '#86868B')
+          ((e.currentTarget as HTMLButtonElement).style.color = 'var(--dash-text-secondary)')
         }
       >
         <X size={14} strokeWidth={2.2} />

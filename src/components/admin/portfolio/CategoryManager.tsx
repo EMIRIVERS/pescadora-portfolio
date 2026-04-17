@@ -29,12 +29,12 @@ interface Props {
 const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
 
 const INPUT: React.CSSProperties = {
-  backgroundColor: '#1C1C1E',
-  border: '1px solid rgba(255,255,255,0.1)',
+  backgroundColor: 'var(--dash-surface-2)',
+  border: '1px solid var(--dash-border)',
   borderRadius: 8,
   padding: '8px 12px',
   fontSize: 14,
-  color: '#F5F5F7',
+  color: 'var(--dash-text-primary)',
   fontFamily: FONT,
   outline: 'none',
   boxSizing: 'border-box',
@@ -224,7 +224,7 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
         .cm-row { transition: background 0.12s; }
         .cm-row:hover { background: rgba(255,255,255,0.03) !important; }
         .cm-btn { transition: background 0.12s, color 0.12s; }
-        .cm-btn:hover { background: #2C2C2E !important; color: #F5F5F7 !important; }
+        .cm-btn:hover { background: var(--dash-surface-3) !important; color: var(--dash-text-primary) !important; }
         .cm-del:hover { background: rgba(255,69,58,0.15) !important; color: #FF453A !important; }
         .cm-cover-input:focus { border-color: rgba(255,255,255,0.25) !important; }
       `}</style>
@@ -232,16 +232,16 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div>
-          <h3 style={{ margin: 0, fontSize: 13, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#86868B' }}>
+          <h3 style={{ margin: 0, fontSize: 13, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--dash-text-secondary)' }}>
             Categorías del portfolio
           </h3>
-          <p style={{ margin: '4px 0 0', fontSize: 12, color: '#48484A' }}>
+          <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--dash-text-tertiary)' }}>
             Arrastra para reordenar — el orden se refleja en el sitio público
           </p>
         </div>
         <button
           onClick={() => { setShowNew(true); setError(null) }}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: '#1C1C1E', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 13, color: '#F5F5F7', cursor: 'pointer', fontFamily: FONT }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: 'var(--dash-surface-2)', border: '1px solid var(--dash-border)', borderRadius: 8, fontSize: 13, color: 'var(--dash-text-primary)', cursor: 'pointer', fontFamily: FONT }}
         >
           <Plus size={13} strokeWidth={2} />
           Nueva categoría
@@ -256,7 +256,7 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
       {showNew && (
         <form
           onSubmit={handleCreate}
-          style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12, padding: 12, background: '#1C1C1E', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)' }}
+          style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12, padding: 12, background: 'var(--dash-surface-2)', borderRadius: 10, border: '1px solid var(--dash-border)' }}
         >
           <div style={{ flex: 1 }}>
             <input
@@ -268,7 +268,7 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
               style={{ ...INPUT, width: '100%' }}
             />
             {newSlug && (
-              <p style={{ margin: '4px 0 0', fontSize: 11, color: '#48484A' }}>slug: {newSlug}</p>
+              <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--dash-text-tertiary)' }}>slug: {newSlug}</p>
             )}
           </div>
           <button
@@ -281,7 +281,7 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
           <button
             type="button"
             onClick={() => { setShowNew(false); setNewLabel(''); setNewSlug('') }}
-            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, background: 'transparent', border: 'none', color: '#48484A', cursor: 'pointer', borderRadius: 6 }}
+            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, background: 'transparent', border: 'none', color: 'var(--dash-text-tertiary)', cursor: 'pointer', borderRadius: 6 }}
           >
             <X size={14} />
           </button>
@@ -289,7 +289,7 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
       )}
 
       {/* Category list */}
-      <div style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, overflow: 'hidden' }}>
+      <div style={{ background: 'var(--dash-surface-1)', border: '1px solid var(--dash-border)', borderRadius: 12, overflow: 'hidden' }}>
         {sorted.map((cat, idx) => (
           <div key={cat.id}>
             {/* Main row */}
@@ -301,7 +301,7 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
                 gap: 12,
                 padding: '12px 16px',
                 borderBottom: (idx < sorted.length - 1 && coverEditingId !== cat.id)
-                  ? '1px solid rgba(255,255,255,0.04)'
+                  ? '1px solid var(--dash-surface-2)'
                   : undefined,
                 opacity: cat.is_visible ? 1 : 0.45,
               }}
@@ -312,13 +312,13 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
                   className="cm-btn"
                   onClick={() => handleReorder(cat, 'up')}
                   disabled={idx === 0 || isPending || reorderingId === cat.id}
-                  style={{ width: 20, height: 20, background: 'transparent', border: 'none', color: idx === 0 ? '#2C2C2E' : '#48484A', cursor: idx === 0 ? 'not-allowed' : 'pointer', fontSize: 9, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  style={{ width: 20, height: 20, background: 'transparent', border: 'none', color: idx === 0 ? 'var(--dash-surface-3)' : 'var(--dash-text-tertiary)', cursor: idx === 0 ? 'not-allowed' : 'pointer', fontSize: 9, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >▲</button>
                 <button
                   className="cm-btn"
                   onClick={() => handleReorder(cat, 'down')}
                   disabled={idx === sorted.length - 1 || isPending || reorderingId === cat.id}
-                  style={{ width: 20, height: 20, background: 'transparent', border: 'none', color: idx === sorted.length - 1 ? '#2C2C2E' : '#48484A', cursor: idx === sorted.length - 1 ? 'not-allowed' : 'pointer', fontSize: 9, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  style={{ width: 20, height: 20, background: 'transparent', border: 'none', color: idx === sorted.length - 1 ? 'var(--dash-surface-3)' : 'var(--dash-text-tertiary)', cursor: idx === sorted.length - 1 ? 'not-allowed' : 'pointer', fontSize: 9, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >▼</button>
               </div>
 
@@ -330,7 +330,7 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
                   borderRadius: 6,
                   overflow: 'hidden',
                   flexShrink: 0,
-                  background: '#1C1C1E',
+                  background: 'var(--dash-surface-2)',
                   border: '1px solid rgba(255,255,255,0.07)',
                   display: 'flex',
                   alignItems: 'center',
@@ -368,7 +368,7 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
                   </div>
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: '#F5F5F7' }}>{cat.label}</span>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--dash-text-primary)' }}>{cat.label}</span>
                     {/* Tipo: Foto vs Video */}
                     <span
                       style={{
@@ -389,8 +389,8 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
                     <span
                       style={{
                         fontSize: 11,
-                        color: '#86868B',
-                        backgroundColor: 'rgba(255,255,255,0.06)',
+                        color: 'var(--dash-text-secondary)',
+                        backgroundColor: 'var(--dash-border)',
                         borderRadius: 20,
                         padding: '1px 8px',
                         lineHeight: '18px',
@@ -434,7 +434,7 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
                     <button
                       className="cm-btn"
                       onClick={() => setEditingId(null)}
-                      style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: '#48484A', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: 'var(--dash-text-tertiary)', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                     >
                       <X size={13} strokeWidth={2} />
                     </button>
@@ -446,7 +446,7 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
                       onClick={() => handleToggle(cat)}
                       disabled={isPending}
                       title={cat.is_visible ? 'Ocultar' : 'Mostrar'}
-                      style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: cat.is_visible ? '#86868B' : '#3A3A3C', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: cat.is_visible ? 'var(--dash-text-secondary)' : '#3A3A3C', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                     >
                       {cat.is_visible ? <Eye size={13} strokeWidth={1.5} /> : <EyeOff size={13} strokeWidth={1.5} />}
                     </button>
@@ -454,7 +454,7 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
                       className="cm-btn"
                       onClick={() => handleOpenCoverEdit(cat)}
                       title="Cambiar miniatura"
-                      style={{ width: 28, height: 28, background: coverEditingId === cat.id ? '#2C2C2E' : 'transparent', border: 'none', color: cat.cover_url ? '#30D158' : '#86868B', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      style={{ width: 28, height: 28, background: coverEditingId === cat.id ? 'var(--dash-surface-3)' : 'transparent', border: 'none', color: cat.cover_url ? '#30D158' : 'var(--dash-text-secondary)', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                     >
                       <ImageIcon size={13} strokeWidth={1.5} />
                     </button>
@@ -462,7 +462,7 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
                       className="cm-btn"
                       onClick={() => handleEdit(cat)}
                       title="Renombrar"
-                      style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: '#86868B', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: 'var(--dash-text-secondary)', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                     >
                       <Pencil size={13} strokeWidth={1.5} />
                     </button>
@@ -471,7 +471,7 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
                       onClick={() => handleDelete(cat)}
                       disabled={isPending}
                       title="Eliminar categoría"
-                      style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: '#86868B', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: 'var(--dash-text-secondary)', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                     >
                       <Trash2 size={13} strokeWidth={1.5} />
                     </button>
@@ -486,11 +486,11 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
                 style={{
                   padding: '12px 16px 16px',
                   background: '#161616',
-                  borderBottom: idx < sorted.length - 1 ? '1px solid rgba(255,255,255,0.04)' : undefined,
-                  borderTop: '1px solid rgba(255,255,255,0.06)',
+                  borderBottom: idx < sorted.length - 1 ? '1px solid var(--dash-surface-2)' : undefined,
+                  borderTop: '1px solid var(--dash-border)',
                 }}
               >
-                <p style={{ margin: '0 0 8px', fontSize: 11, color: '#86868B', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                <p style={{ margin: '0 0 8px', fontSize: 11, color: 'var(--dash-text-secondary)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                   Miniatura de portada — {cat.label}
                 </p>
 
@@ -503,8 +503,8 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
                       borderRadius: 6,
                       overflow: 'hidden',
                       flexShrink: 0,
-                      background: '#1C1C1E',
-                      border: '1px solid rgba(255,255,255,0.08)',
+                      background: 'var(--dash-surface-2)',
+                      border: '1px solid var(--dash-border)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -574,7 +574,7 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
                         style={{
                           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                           width: 28, height: 28, background: 'transparent', border: 'none',
-                          color: '#48484A', cursor: 'pointer', borderRadius: 6,
+                          color: 'var(--dash-text-tertiary)', cursor: 'pointer', borderRadius: 6,
                         }}
                       >
                         <X size={13} strokeWidth={2} />
@@ -591,7 +591,7 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
         ))}
 
         {sorted.length === 0 && (
-          <p style={{ padding: '32px 16px', textAlign: 'center', fontSize: 13, color: '#48484A', margin: 0 }}>
+          <p style={{ padding: '32px 16px', textAlign: 'center', fontSize: 13, color: 'var(--dash-text-tertiary)', margin: 0 }}>
             No hay categorías. Crea una para empezar.
           </p>
         )}

@@ -69,17 +69,17 @@ const fieldLabel: React.CSSProperties = {
   fontWeight: 600,
   letterSpacing: '0.06em',
   textTransform: 'uppercase',
-  color: '#86868B',
+  color: 'var(--dash-text-secondary)',
   marginBottom: '6px',
 }
 
 const inputBase: React.CSSProperties = {
   width: '100%',
-  backgroundColor: '#1C1C1E',
+  backgroundColor: 'var(--dash-surface-2)',
   border: '1px solid rgba(255,255,255,0.1)',
   borderRadius: '8px',
   padding: '10px 14px',
-  color: '#F5F5F7',
+  color: 'var(--dash-text-primary)',
   fontSize: '14px',
   outline: 'none',
   boxSizing: 'border-box',
@@ -184,7 +184,7 @@ export function EditProjectForm({ project, clients }: Props) {
             borderRadius: '8px',
             padding: '12px 14px',
             fontSize: '13px',
-            color: '#FF453A',
+            color: 'var(--dash-danger)',
           }}
         >
           {errors.general}
@@ -194,7 +194,7 @@ export function EditProjectForm({ project, clients }: Props) {
       {/* Title */}
       <div>
         <label htmlFor="title" style={fieldLabel}>
-          Titulo <span style={{ color: '#FF453A' }}>*</span>
+          Titulo <span style={{ color: 'var(--dash-danger)' }}>*</span>
         </label>
         <input
           id="title"
@@ -209,7 +209,7 @@ export function EditProjectForm({ project, clients }: Props) {
           style={getInputStyle('title')}
         />
         {errors.title && (
-          <p style={{ fontSize: '12px', color: '#FF453A', marginTop: '5px' }}>{errors.title}</p>
+          <p style={{ fontSize: '12px', color: 'var(--dash-danger)', marginTop: '5px' }}>{errors.title}</p>
         )}
       </div>
 
@@ -319,7 +319,7 @@ export function EditProjectForm({ project, clients }: Props) {
             style={{ ...getInputStyle('end_date'), colorScheme: 'dark' }}
           />
           {errors.end_date && (
-            <p style={{ fontSize: '12px', color: '#FF453A', marginTop: '5px' }}>{errors.end_date}</p>
+            <p style={{ fontSize: '12px', color: 'var(--dash-danger)', marginTop: '5px' }}>{errors.end_date}</p>
           )}
         </div>
       </div>
@@ -405,7 +405,7 @@ export function EditProjectForm({ project, clients }: Props) {
           onBlur={() => setFocusedField(null)}
           style={getInputStyle('cover_url')}
         />
-        <p style={{ fontSize: '12px', color: '#48484A', marginTop: '5px' }}>
+        <p style={{ fontSize: '12px', color: 'var(--dash-text-tertiary)', marginTop: '5px' }}>
           Se usa como imagen en la tarjeta del portfolio publico.
         </p>
       </div>
@@ -413,7 +413,7 @@ export function EditProjectForm({ project, clients }: Props) {
       {/* Portfolio visibility */}
       <div
         style={{
-          backgroundColor: '#1C1C1E',
+          backgroundColor: 'var(--dash-surface-2)',
           border: '1px solid rgba(255,255,255,0.08)',
           borderRadius: '12px',
           padding: '18px 20px',
@@ -425,7 +425,7 @@ export function EditProjectForm({ project, clients }: Props) {
             fontWeight: 600,
             letterSpacing: '0.06em',
             textTransform: 'uppercase',
-            color: '#48484A',
+            color: 'var(--dash-text-tertiary)',
             marginBottom: '14px',
           }}
         >
@@ -448,7 +448,7 @@ export function EditProjectForm({ project, clients }: Props) {
               cursor: isPending ? 'not-allowed' : 'pointer',
             }}
           />
-          <span style={{ fontSize: '14px', color: '#F5F5F7' }}>
+          <span style={{ fontSize: '14px', color: 'var(--dash-text-primary)' }}>
             Mostrar en el portfolio publico
           </span>
         </label>
@@ -482,11 +482,11 @@ export function EditProjectForm({ project, clients }: Props) {
                 width: '120px',
               }}
             />
-            <p style={{ fontSize: '12px', color: '#48484A', marginTop: '5px' }}>
+            <p style={{ fontSize: '12px', color: 'var(--dash-text-tertiary)', marginTop: '5px' }}>
               Los numeros menores aparecen primero.
             </p>
             {errors.portfolio_order && (
-              <p style={{ fontSize: '12px', color: '#FF453A', marginTop: '5px' }}>{errors.portfolio_order}</p>
+              <p style={{ fontSize: '12px', color: 'var(--dash-danger)', marginTop: '5px' }}>{errors.portfolio_order}</p>
             )}
           </div>
         )}
@@ -505,7 +505,7 @@ export function EditProjectForm({ project, clients }: Props) {
             borderRadius: '8px',
             backgroundColor: 'transparent',
             border: '1px solid rgba(255,255,255,0.12)',
-            color: '#86868B',
+            color: 'var(--dash-text-secondary)',
             cursor: isPending ? 'not-allowed' : 'pointer',
             opacity: isPending ? 0.45 : 1,
             transition: 'all 0.15s ease',

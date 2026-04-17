@@ -111,14 +111,14 @@ export default function NotificationBell() {
           height: 36,
           borderRadius: 8,
           border: 'none',
-          background: open ? 'rgba(255,255,255,0.08)' : 'transparent',
-          color: '#86868B',
+          background: open ? 'var(--dash-border)' : 'transparent',
+          color: 'var(--dash-text-secondary)',
           cursor: 'pointer',
           transition: 'background 0.15s, color 0.15s',
           fontFamily: FONT,
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = '#F5F5F7' }}
-        onMouseLeave={(e) => { if (!open) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#86868B' } }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--dash-border)'; e.currentTarget.style.color = 'var(--dash-text-primary)' }}
+        onMouseLeave={(e) => { if (!open) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--dash-text-secondary)' } }}
         title="Notificaciones"
       >
         <Bell size={16} strokeWidth={1.5} />
@@ -143,7 +143,7 @@ export default function NotificationBell() {
           top: 44,
           right: 0,
           width: 320,
-          backgroundColor: '#1C1C1E',
+          backgroundColor: 'var(--dash-surface-2)',
           border: '1px solid rgba(255,255,255,0.1)',
           borderRadius: 16,
           boxShadow: '0 16px 48px rgba(0,0,0,0.6)',
@@ -160,7 +160,7 @@ export default function NotificationBell() {
             borderBottom: '1px solid rgba(255,255,255,0.06)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 14, fontWeight: 600, color: '#F5F5F7' }}>Notificaciones</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--dash-text-primary)' }}>Notificaciones</span>
               {unread > 0 && (
                 <span style={{
                   backgroundColor: '#FF453A',
@@ -200,7 +200,7 @@ export default function NotificationBell() {
           {/* List */}
           <div style={{ maxHeight: 360, overflowY: 'auto' }}>
             {notifications.length === 0 ? (
-              <div style={{ padding: '32px 16px', textAlign: 'center', color: '#48484A', fontSize: 13 }}>
+              <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--dash-text-tertiary)', fontSize: 13 }}>
                 Sin notificaciones
               </div>
             ) : (
@@ -230,11 +230,11 @@ export default function NotificationBell() {
                     marginTop: 5,
                   }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: 0, fontSize: 13, fontWeight: n.is_read ? 400 : 500, color: n.is_read ? '#86868B' : '#F5F5F7', lineHeight: 1.4 }}>
+                    <p style={{ margin: 0, fontSize: 13, fontWeight: n.is_read ? 400 : 500, color: n.is_read ? 'var(--dash-text-secondary)' : 'var(--dash-text-primary)', lineHeight: 1.4 }}>
                       {n.title}
                     </p>
                     {n.body && (
-                      <p style={{ margin: '2px 0 0', fontSize: 12, color: '#48484A', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--dash-text-tertiary)', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {n.body}
                       </p>
                     )}

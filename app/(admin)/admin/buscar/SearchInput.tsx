@@ -6,11 +6,11 @@ import { useRouter } from 'next/navigation'
 // ── Design tokens (mirrored from page.tsx so this file is self-contained) ──
 
 const T = {
-  surface1:      '#111111',
+  surface1:      'var(--dash-surface-1)',
   border:        'rgba(255,255,255,0.10)',
   borderFocus:   'rgba(0,113,227,0.60)',
-  textPrimary:   '#F5F5F7',
-  textTertiary:  '#48484A',
+  textPrimary:   'var(--dash-text-primary)',
+  textTertiary:  'var(--dash-text-tertiary)',
   accent:        '#0071E3',
   font:          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
 } as const
@@ -106,8 +106,8 @@ export default function SearchInput({ defaultValue }: SearchInputProps) {
           right: 14px;
           top: 50%;
           transform: translateY(-50%);
-          background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.08);
+          background: var(--dash-border);
+          border: 1px solid var(--dash-border);
           border-radius: 6px;
           padding: 3px 8px;
           font-size: 11px;

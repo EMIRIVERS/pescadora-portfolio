@@ -60,6 +60,26 @@ export default async function PortalLayout({
 
           {/* Right side */}
           <div className="flex items-center gap-4">
+            <nav className="hidden sm:flex items-center gap-1">
+              <a
+                href="/portal"
+                className="text-zinc-400 hover:text-white text-sm px-3 py-1.5 rounded-lg hover:bg-zinc-800/60 transition-colors"
+              >
+                Proyectos
+              </a>
+              <a
+                href="/portal/invoices"
+                className="text-zinc-400 hover:text-white text-sm px-3 py-1.5 rounded-lg hover:bg-zinc-800/60 transition-colors"
+              >
+                Facturas
+              </a>
+              <a
+                href="/portal/archivos"
+                className="text-zinc-400 hover:text-white text-sm px-3 py-1.5 rounded-lg hover:bg-zinc-800/60 transition-colors"
+              >
+                Archivos
+              </a>
+            </nav>
             <div className="hidden sm:flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-sky-500" />
               <span className="text-zinc-300 text-sm">

@@ -283,6 +283,14 @@ export async function addLeadActivity(
     return { error: error.message }
   }
 
+  // Auto-update last_contacted_at for contact-type activities
+  if (['whatsapp', 'call', 'email', 'meeting'].includes(type)) {
+    await db
+      .from('leads')
+      .update({ last_contacted_at: new Date().toISOString() })
+      .eq('id', leadId)
+  }
+
   revalidateLeads()
   return {}
 }

@@ -46,12 +46,12 @@ interface StatCardProps {
 }
 
 function StatCard({ label, count, categoryKey }: StatCardProps) {
-  const accent = CATEGORY_ACCENT[categoryKey] ?? '#86868B'
+  const accent = CATEGORY_ACCENT[categoryKey] ?? 'var(--dash-text-secondary)'
   return (
     <div
       style={{
         flex: '1 1 120px',
-        backgroundColor: '#1C1C1E',
+        backgroundColor: 'var(--dash-surface-2)',
         border: '1px solid rgba(255,255,255,0.08)',
         borderRadius: 12,
         padding: '16px 20px',
@@ -77,7 +77,7 @@ function StatCard({ label, count, categoryKey }: StatCardProps) {
           fontSize: 11,
           letterSpacing: '0.07em',
           textTransform: 'uppercase',
-          color: '#86868B',
+          color: 'var(--dash-text-secondary)',
           fontFamily: FONT,
         }}
       >
@@ -88,7 +88,7 @@ function StatCard({ label, count, categoryKey }: StatCardProps) {
           margin: 0,
           fontSize: 28,
           fontWeight: 600,
-          color: '#F5F5F7',
+          color: 'var(--dash-text-primary)',
           lineHeight: 1,
           fontFamily: FONT,
           letterSpacing: '-0.02em',
@@ -153,7 +153,7 @@ export default async function PortfolioAdminPage() {
         padding: '40px 32px',
         fontFamily: FONT,
         minHeight: '100vh',
-        backgroundColor: '#111111',
+        backgroundColor: 'var(--dash-surface-1)',
       }}
     >
       {/* ── Header ────────────────────────────────────────────────────────── */}
@@ -163,7 +163,7 @@ export default async function PortfolioAdminPage() {
             margin: 0,
             fontSize: 28,
             fontWeight: 600,
-            color: '#F5F5F7',
+            color: 'var(--dash-text-primary)',
             fontFamily: FONT,
             letterSpacing: '-0.02em',
           }}
@@ -174,7 +174,7 @@ export default async function PortfolioAdminPage() {
           style={{
             margin: '6px 0 0',
             fontSize: 14,
-            color: '#86868B',
+            color: 'var(--dash-text-secondary)',
             fontFamily: FONT,
           }}
         >
@@ -231,14 +231,14 @@ export default async function PortfolioAdminPage() {
                   margin: 0,
                   fontSize: 18,
                   fontWeight: 600,
-                  color: '#F5F5F7',
+                  color: 'var(--dash-text-primary)',
                   fontFamily: FONT,
                   letterSpacing: '-0.01em',
                 }}
               >
                 Fotografías
               </h2>
-              <p style={{ margin: '4px 0 0', fontSize: 13, color: '#48484A', fontFamily: FONT }}>
+              <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--dash-text-tertiary)', fontFamily: FONT }}>
                 {registry.photos.length} fotos · {photoProjects.length} proyectos — desde el registro local
               </p>
             </div>
@@ -256,7 +256,7 @@ export default async function PortfolioAdminPage() {
               <div
                 key={project}
                 style={{
-                  backgroundColor: '#1C1C1E',
+                  backgroundColor: 'var(--dash-surface-2)',
                   border: '1px solid rgba(255,255,255,0.06)',
                   borderRadius: 12,
                   overflow: 'hidden',
@@ -272,7 +272,7 @@ export default async function PortfolioAdminPage() {
                     height: 160,
                     objectFit: 'cover',
                     display: 'block',
-                    backgroundColor: '#2C2C2E',
+                    backgroundColor: 'var(--dash-surface-3)',
                   }}
                 />
                 {/* Project info */}
@@ -282,7 +282,7 @@ export default async function PortfolioAdminPage() {
                       margin: 0,
                       fontSize: 14,
                       fontWeight: 600,
-                      color: '#F5F5F7',
+                      color: 'var(--dash-text-primary)',
                       fontFamily: FONT,
                       letterSpacing: '-0.01em',
                       textTransform: 'capitalize',
@@ -290,7 +290,7 @@ export default async function PortfolioAdminPage() {
                   >
                     {project.toLowerCase()}
                   </p>
-                  <p style={{ margin: '4px 0 0', fontSize: 12, color: '#48484A', fontFamily: FONT }}>
+                  <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--dash-text-tertiary)', fontFamily: FONT }}>
                     {photos.length} foto{photos.length !== 1 ? 's' : ''}
                   </p>
                 </div>
@@ -314,7 +314,7 @@ export default async function PortfolioAdminPage() {
                           flex: '1 1 0',
                           height: 48,
                           objectFit: 'cover',
-                          backgroundColor: '#2C2C2E',
+                          backgroundColor: 'var(--dash-surface-3)',
                         }}
                       />
                     ))}
@@ -323,13 +323,13 @@ export default async function PortfolioAdminPage() {
                         style={{
                           flex: '1 1 0',
                           height: 48,
-                          backgroundColor: '#2C2C2E',
+                          backgroundColor: 'var(--dash-surface-3)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           fontSize: 11,
                           fontFamily: FONT,
-                          color: '#48484A',
+                          color: 'var(--dash-text-tertiary)',
                         }}
                       >
                         +{photos.length - 6}

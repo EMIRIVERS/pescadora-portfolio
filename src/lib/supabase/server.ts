@@ -4,6 +4,40 @@ import { cookies } from 'next/headers'
 import type { Database } from '@/lib/supabase/types'
 
 /**
+ * Verifies the current request comes from an authenticated admin team member.
+ * Use at the top of every admin server action.
+ *
+ * Returns `{ userId }` on success, or `{ error }` if unauthenticated / unauthorized.
+ */
+export async function requireAdmin(): Promise<{ userId: string } | { error: string }> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return { error: 'No autenticado.' }
+
+  const service = createServiceClient()
+  const { data: profile } = await service
+    .from('profiles')
+    .select('is_admin_team')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile?.is_admin_team) return { error: 'No autorizado.' }
+  return { userId: user.id }
+}
+
+/**
+ * Escapes special HTML characters to prevent XSS in email templates.
+ */
+export function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+}
+
+/**
  * Creates a Supabase service-role client that bypasses RLS.
  * Only use in trusted server-side contexts (admin pages, server actions).
  */

@@ -50,8 +50,8 @@ export default function MobileNav({ profile }: MobileNavProps) {
             height: '40px',
             borderRadius: '8px',
             border: '1px solid rgba(255,255,255,0.1)',
-            background: 'rgba(255,255,255,0.05)',
-            color: '#F5F5F7',
+            background: 'var(--dash-border)',
+            color: 'var(--dash-text-primary)',
             cursor: 'pointer',
             flexShrink: 0,
           }}
@@ -64,7 +64,7 @@ export default function MobileNav({ profile }: MobileNavProps) {
             fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
             fontWeight: 700,
             fontSize: '16px',
-            color: '#F5F5F7',
+            color: 'var(--dash-text-primary)',
             letterSpacing: '-0.01em',
             lineHeight: 1,
           }}
@@ -74,7 +74,7 @@ export default function MobileNav({ profile }: MobileNavProps) {
             style={{
               display: 'block',
               fontSize: '9px',
-              color: '#86868B',
+              color: 'var(--dash-text-secondary)',
               letterSpacing: '0.3em',
               marginTop: '2px',
               textTransform: 'uppercase',

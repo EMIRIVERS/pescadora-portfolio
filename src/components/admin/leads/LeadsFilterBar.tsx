@@ -120,11 +120,11 @@ export default function LeadsFilterBar({ leads, onFiltered }: Props) {
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         style={{
-          background: '#1C1C1E',
+          background: 'var(--dash-surface-2)',
           border: '1px solid rgba(255,255,255,0.08)',
           borderRadius: 12,
           padding: '7px 14px',
-          color: '#F5F5F7',
+          color: 'var(--dash-text-primary)',
           fontFamily: FONT,
           fontSize: 12,
           outline: 'none',
@@ -155,9 +155,9 @@ export default function LeadsFilterBar({ leads, onFiltered }: Props) {
                 background: active
                   ? '#0071E3'
                   : hovered
-                  ? '#2C2C2E'
+                  ? 'var(--dash-surface-3)'
                   : 'transparent',
-                color: active ? '#FFFFFF' : '#86868B',
+                color: active ? '#FFFFFF' : 'var(--dash-text-secondary)',
                 transition: 'background 0.15s, color 0.15s',
               }}
             >
@@ -172,11 +172,11 @@ export default function LeadsFilterBar({ leads, onFiltered }: Props) {
         value={source}
         onChange={(e) => setSource(e.target.value as SourceOption)}
         style={{
-          background: '#1C1C1E',
+          background: 'var(--dash-surface-2)',
           border: '1px solid rgba(255,255,255,0.08)',
           borderRadius: 20,
           padding: '6px 14px',
-          color: source === 'all' ? '#86868B' : '#F5F5F7',
+          color: source === 'all' ? 'var(--dash-text-secondary)' : 'var(--dash-text-primary)',
           fontFamily: FONT,
           fontSize: 12,
           outline: 'none',
@@ -187,7 +187,7 @@ export default function LeadsFilterBar({ leads, onFiltered }: Props) {
         }}
       >
         {SOURCE_OPTIONS.map((s) => (
-          <option key={s} value={s} style={{ background: '#1C1C1E', color: '#F5F5F7' }}>
+          <option key={s} value={s} style={{ background: 'var(--dash-surface-2)', color: 'var(--dash-text-primary)' }}>
             {SOURCE_LABELS[s]}
           </option>
         ))}
@@ -206,8 +206,8 @@ export default function LeadsFilterBar({ leads, onFiltered }: Props) {
             fontFamily: FONT,
             cursor: 'pointer',
             border: '1px solid rgba(255,255,255,0.08)',
-            background: hoveredClear ? '#2C2C2E' : 'transparent',
-            color: '#86868B',
+            background: hoveredClear ? 'var(--dash-surface-3)' : 'transparent',
+            color: 'var(--dash-text-secondary)',
             transition: 'background 0.15s',
           }}
         >

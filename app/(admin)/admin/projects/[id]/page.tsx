@@ -14,6 +14,9 @@ import { StatusChanger } from '@/components/admin/projects/StatusChanger'
 import { InternalNotesEditor } from '@/components/admin/projects/InternalNotesEditor'
 import { ProjectComments } from '@/components/admin/projects/ProjectComments'
 import { getProjectComments } from '@/lib/actions/projects'
+import { getExpenses } from '@/lib/actions/expenses'
+import { BudgetTracker } from '@/components/admin/projects/BudgetTracker'
+import type { ProjectExpense } from '@/lib/supabase/types'
 import {
   Calendar,
   Columns,
@@ -91,7 +94,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  const [{ data: deliverables }, { data: tasks }, comments] = await Promise.all([
+  const [{ data: deliverables }, { data: tasks }, comments, initialExpenses] = await Promise.all([
     supabase
       .from('project_deliverables')
       .select('*')
@@ -102,7 +105,9 @@ export default async function ProjectDetailPage({ params }: PageProps) {
       .select('id, assignee_id')
       .eq('board_id', id),
     getProjectComments(id),
+    getExpenses(id),
   ])
+  const safeExpenses: ProjectExpense[] = initialExpenses as ProjectExpense[]
 
   const safeDeliverables: Deliverable[] = (deliverables ?? []) as Deliverable[]
   const safeTasks: Pick<KanbanTask, 'id' | 'assignee_id'>[] =
@@ -151,19 +156,19 @@ export default async function ProjectDetailPage({ params }: PageProps) {
           {typedProject.client.name}
         </Link>
       ) : (
-        <span style={{ color: '#48484A' }}>Sin asignar</span>
+        <span style={{ color: 'var(--dash-text-tertiary)' }}>Sin asignar</span>
       ),
       icon: null,
     },
     {
       label: 'Inicio',
       value: formatDate(typedProject.start_date),
-      icon: <Calendar className="w-3.5 h-3.5" style={{ color: '#48484A' }} />,
+      icon: <Calendar className="w-3.5 h-3.5" style={{ color: 'var(--dash-text-tertiary)' }} />,
     },
     {
       label: 'Cierre',
       value: formatDate(typedProject.end_date),
-      icon: <Calendar className="w-3.5 h-3.5" style={{ color: '#48484A' }} />,
+      icon: <Calendar className="w-3.5 h-3.5" style={{ color: 'var(--dash-text-tertiary)' }} />,
     },
     {
       label: 'Entregables',
@@ -184,14 +189,14 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   return (
     <>
     <style>{`
-      .proj-back-link { color: #86868B; transition: color 0.15s; }
-      .proj-back-link:hover { color: #F5F5F7 !important; }
+      .proj-back-link { color: var(--dash-text-secondary); transition: color 0.15s; }
+      .proj-back-link:hover { color: var(--dash-text-primary) !important; }
     `}</style>
     <div
       className="min-h-screen"
       style={{
-        backgroundColor: '#111111',
-        color: '#F5F5F7',
+        backgroundColor: 'var(--dash-surface-1)',
+        color: 'var(--dash-text-primary)',
         fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
       }}
     >
@@ -199,7 +204,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
       <div
         className="sticky top-0 z-10 backdrop-blur-md"
         style={{
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          borderBottom: '1px solid var(--dash-border)',
           backgroundColor: 'rgba(17,17,17,0.85)',
         }}
       >
@@ -236,7 +241,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
           <div className="flex items-start gap-4 flex-wrap">
             <h1
               className="flex-1 min-w-0"
-              style={{ fontSize: '32px', fontWeight: 700, color: '#F5F5F7', letterSpacing: '-0.01em', lineHeight: 1.15 }}
+              style={{ fontSize: '32px', fontWeight: 700, color: 'var(--dash-text-primary)', letterSpacing: '-0.01em', lineHeight: 1.15 }}
             >
               {typedProject.title}
             </h1>
@@ -248,7 +253,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
           {typedProject.description && (
             <p
               className="max-w-2xl leading-relaxed"
-              style={{ fontSize: '15px', color: '#86868B' }}
+              style={{ fontSize: '15px', color: 'var(--dash-text-secondary)' }}
             >
               {typedProject.description}
             </p>
@@ -260,8 +265,8 @@ export default async function ProjectDetailPage({ params }: PageProps) {
               <div
                 key={card.label}
                 style={{
-                  backgroundColor: '#1C1C1E',
-                  border: '1px solid rgba(255,255,255,0.08)',
+                  backgroundColor: 'var(--dash-surface-2)',
+                  border: '1px solid var(--dash-border)',
                   borderRadius: '12px',
                   padding: '14px 16px',
                 }}
@@ -272,7 +277,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                     fontWeight: 600,
                     letterSpacing: '0.06em',
                     textTransform: 'uppercase',
-                    color: '#48484A',
+                    color: 'var(--dash-text-tertiary)',
                     marginBottom: '6px',
                   }}
                 >
@@ -280,7 +285,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                 </dt>
                 <dd
                   className="flex items-center gap-1.5"
-                  style={{ fontSize: '14px', fontWeight: 500, color: '#F5F5F7' }}
+                  style={{ fontSize: '14px', fontWeight: 500, color: 'var(--dash-text-primary)' }}
                 >
                   {card.icon}
                   {card.value}
@@ -292,19 +297,19 @@ export default async function ProjectDetailPage({ params }: PageProps) {
 
         {/* Historial de estados */}
         <section className="space-y-4">
-          <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#F5F5F7' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--dash-text-primary)' }}>
             Historial
           </h2>
           <div
             style={{
-              backgroundColor: '#1C1C1E',
-              border: '1px solid rgba(255,255,255,0.08)',
+              backgroundColor: 'var(--dash-surface-2)',
+              border: '1px solid var(--dash-border)',
               borderRadius: '16px',
               padding: '20px 24px',
             }}
           >
             {safeActivityLog.length === 0 ? (
-              <p style={{ fontSize: '13px', color: '#48484A' }}>Sin historial de cambios.</p>
+              <p style={{ fontSize: '13px', color: 'var(--dash-text-tertiary)' }}>Sin historial de cambios.</p>
             ) : (
               <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {safeActivityLog.map((entry) => (
@@ -318,8 +323,8 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                         flexShrink: 0,
                       }}
                     />
-                    <span style={{ fontSize: '13px', color: '#F5F5F7', flex: 1 }}>{entry.action}</span>
-                    <span style={{ fontSize: '12px', color: '#48484A', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: '13px', color: 'var(--dash-text-primary)', flex: 1 }}>{entry.action}</span>
+                    <span style={{ fontSize: '12px', color: 'var(--dash-text-tertiary)', whiteSpace: 'nowrap' }}>
                       {formatDateTime(entry.created_at)}
                     </span>
                   </li>
@@ -332,16 +337,16 @@ export default async function ProjectDetailPage({ params }: PageProps) {
         {/* Deliverables section */}
         <section className="space-y-5">
           <div className="flex items-center justify-between">
-            <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#F5F5F7' }}>
+            <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--dash-text-primary)' }}>
               Entregables
             </h2>
-            <div className="flex items-center gap-4" style={{ fontSize: '12px', color: '#48484A' }}>
+            <div className="flex items-center gap-4" style={{ fontSize: '12px', color: 'var(--dash-text-tertiary)' }}>
               <span>
-                <span style={{ color: '#86868B', fontWeight: 500 }}>{deliverableStatusCounts.pending}</span>
+                <span style={{ color: 'var(--dash-text-secondary)', fontWeight: 500 }}>{deliverableStatusCounts.pending}</span>
                 {' '}pendientes
               </span>
               <span>
-                <span style={{ color: '#86868B', fontWeight: 500 }}>{deliverableStatusCounts.review}</span>
+                <span style={{ color: 'var(--dash-text-secondary)', fontWeight: 500 }}>{deliverableStatusCounts.review}</span>
                 {' '}en revision
               </span>
               <span>
@@ -361,11 +366,11 @@ export default async function ProjectDetailPage({ params }: PageProps) {
               placeholder="Título del entregable"
               style={{
                 flex: '1 1 160px',
-                backgroundColor: '#1C1C1E',
-                border: '1px solid rgba(255,255,255,0.08)',
+                backgroundColor: 'var(--dash-surface-2)',
+                border: '1px solid var(--dash-border)',
                 borderRadius: '8px',
                 padding: '8px 12px',
-                color: '#F5F5F7',
+                color: 'var(--dash-text-primary)',
                 fontSize: '13px',
                 outline: 'none',
               }}
@@ -375,11 +380,11 @@ export default async function ProjectDetailPage({ params }: PageProps) {
               placeholder="URL opcional"
               style={{
                 flex: '1 1 160px',
-                backgroundColor: '#1C1C1E',
-                border: '1px solid rgba(255,255,255,0.08)',
+                backgroundColor: 'var(--dash-surface-2)',
+                border: '1px solid var(--dash-border)',
                 borderRadius: '8px',
                 padding: '8px 12px',
-                color: '#F5F5F7',
+                color: 'var(--dash-text-primary)',
                 fontSize: '13px',
                 outline: 'none',
               }}
@@ -404,6 +409,14 @@ export default async function ProjectDetailPage({ params }: PageProps) {
           <DeliverableList projectId={id} initialDeliverables={safeDeliverables} />
         </section>
 
+        {/* Presupuesto y gastos */}
+        <BudgetTracker
+          projectId={id}
+          budget={typedProject.budget}
+          currency={typedProject.currency}
+          initialExpenses={safeExpenses}
+        />
+
         {/* Notas internas — editable */}
         <InternalNotesEditor
           projectId={id}
@@ -419,7 +432,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
 
         {/* Team section */}
         <section className="space-y-5">
-          <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#F5F5F7' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--dash-text-primary)' }}>
             Equipo
           </h2>
           <ProjectAssignments projectId={id} />
@@ -427,14 +440,14 @@ export default async function ProjectDetailPage({ params }: PageProps) {
 
         {/* Kanban tasks */}
         <section className="space-y-5">
-          <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#F5F5F7' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--dash-text-primary)' }}>
             Tareas Kanban
           </h2>
           <div
             className="flex items-center justify-between"
             style={{
-              backgroundColor: '#1C1C1E',
-              border: '1px solid rgba(255,255,255,0.08)',
+              backgroundColor: 'var(--dash-surface-2)',
+              border: '1px solid var(--dash-border)',
               borderRadius: '16px',
               padding: '20px 24px',
             }}
@@ -446,18 +459,18 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                   width: '40px',
                   height: '40px',
                   borderRadius: '50%',
-                  backgroundColor: '#2C2C2E',
+                  backgroundColor: 'var(--dash-surface-3)',
                 }}
               >
-                <Columns className="w-4 h-4" style={{ color: '#86868B' }} />
+                <Columns className="w-4 h-4" style={{ color: 'var(--dash-text-secondary)' }} />
               </div>
               <div>
-                <p style={{ fontSize: '14px', fontWeight: 500, color: '#F5F5F7' }}>
+                <p style={{ fontSize: '14px', fontWeight: 500, color: 'var(--dash-text-primary)' }}>
                   {taskCount === 0
                     ? 'Sin tareas vinculadas'
                     : `${taskCount} tarea${taskCount !== 1 ? 's' : ''} en total`}
                 </p>
-                <p style={{ fontSize: '12px', color: '#48484A', marginTop: '2px' }}>
+                <p style={{ fontSize: '12px', color: 'var(--dash-text-tertiary)', marginTop: '2px' }}>
                   {uniqueAssignees} asignado{uniqueAssignees !== 1 ? 's' : ''}
                 </p>
               </div>

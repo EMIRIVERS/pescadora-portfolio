@@ -2,22 +2,23 @@ import Link from 'next/link'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import type { ProjectStatus, ProjectWithClient, Client } from '@/lib/supabase/types'
 import { ProjectsFilterBar } from '@/components/admin/projects/projects-filter-bar'
-import { ProjectsTable, formatBudget } from '@/components/admin/projects/ProjectsTable'
+import { ProjectsTable, formatBudget, formatBudgetCompact } from '@/components/admin/projects/ProjectsTable'
 import { PROJECT_STATUS_STYLES } from '@/lib/status-colors'
+import { AnimatedEmptyState } from '@/components/admin/AnimatedEmptyState'
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
 const T = {
-  bg:            '#000000',
-  surface1:      '#111111',
-  surface2:      '#1C1C1E',
-  surface3:      '#2C2C2E',
-  border:        'rgba(255,255,255,0.08)',
-  borderSubtle:  'rgba(255,255,255,0.04)',
-  borderHeader:  'rgba(255,255,255,0.06)',
-  textPrimary:   '#F5F5F7',
-  textSecondary: '#86868B',
-  textTertiary:  '#48484A',
+  bg:            'var(--dash-bg)',
+  surface1:      'var(--dash-surface-1)',
+  surface2:      'var(--dash-surface-2)',
+  surface3:      'var(--dash-surface-3)',
+  border:        'var(--dash-border)',
+  borderSubtle:  'var(--dash-surface-2)',
+  borderHeader:  'var(--dash-border)',
+  textPrimary:   'var(--dash-text-primary)',
+  textSecondary: 'var(--dash-text-secondary)',
+  textTertiary:  'var(--dash-text-tertiary)',
   accent:        '#0071E3',
   font:          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
 } as const
@@ -42,11 +43,11 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
 
   const serviceClient = createServiceClient()
 
-  const [supabase, counts] = await Promise.all([
+  const [supabase, { counts, totalBudgetAll, totalBudgetDelivered }] = await Promise.all([
     createClient(),
     serviceClient
       .from('projects')
-      .select('status')
+      .select('status, budget')
       .then(({ data }) => {
         const c: Record<string, number> = {
           pre_production:  0,
@@ -54,10 +55,16 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
           post_production: 0,
           delivered:       0,
         }
+        let budgetAll = 0
+        let budgetDelivered = 0
         for (const row of data ?? []) {
           if (row.status in c) c[row.status]++
+          if (row.budget != null) {
+            budgetAll += row.budget as number
+            if (row.status === 'delivered') budgetDelivered += row.budget as number
+          }
         }
-        return c
+        return { counts: c, totalBudgetAll: budgetAll, totalBudgetDelivered: budgetDelivered }
       }),
   ])
 
@@ -113,12 +120,6 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
   const { data: projects, error } = await query
   const rows = (projects ?? []) as unknown as ProjectWithClient[]
 
-  // Sum budgets of delivered projects (budget/currency are not in the TS type yet)
-  type ProjectAny = ProjectWithClient & { budget: number | null; currency: string | null }
-  const totalRevenue = (rows as ProjectAny[])
-    .filter((p) => p.status === 'delivered' && p.budget != null)
-    .reduce((sum, p) => sum + (p.budget ?? 0), 0)
-
   const hasFilters =
     (q && q.trim().length > 0) ||
     (status && status !== 'all') ||
@@ -128,11 +129,11 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
     <>
     <style>{`
       .proj-row { transition: background 0.1s ease; }
-      .proj-row:hover { background: #1C1C1E !important; }
-      .proj-title-link { color: #F5F5F7; text-decoration: none; transition: color 0.15s; }
+      .proj-row:hover { background: var(--dash-surface-2) !important; }
+      .proj-title-link { color: var(--dash-text-primary); text-decoration: none; transition: color 0.15s; }
       .proj-title-link:hover { color: #0071E3 !important; }
-      .proj-arrow-btn { color: #48484A; background: transparent; transition: color 0.15s, background 0.15s; }
-      .proj-arrow-btn:hover { color: #F5F5F7 !important; background: #2C2C2E !important; }
+      .proj-arrow-btn { color: var(--dash-text-tertiary); background: transparent; transition: color 0.15s, background 0.15s; }
+      .proj-arrow-btn:hover { color: var(--dash-text-primary) !important; background: var(--dash-surface-3) !important; }
       .proj-new-btn { opacity: 1; transition: opacity 0.15s ease; }
       .proj-new-btn:hover { opacity: 0.88 !important; }
     `}</style>
@@ -212,7 +213,7 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
         </div>
 
         {STAT_CARDS.map((s) => {
-          const { color } = PROJECT_STATUS_STYLES[s.key] ?? { color: '#86868B' }
+          const { color } = PROJECT_STATUS_STYLES[s.key] ?? { color: 'var(--dash-text-secondary)' }
           return (
             <div
               key={s.key}
@@ -250,13 +251,13 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
           )
         })}
 
-        {/* Revenue total — sum of delivered project budgets */}
+        {/* Revenue — total budget and delivered budget */}
         <div
           style={{
             background: T.surface1,
             borderRadius: '12px',
             padding: '14px 20px',
-            minWidth: '140px',
+            minWidth: '200px',
           }}
         >
           <p
@@ -269,19 +270,20 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
               color: T.textTertiary,
             }}
           >
-            Revenue total
+            Presupuesto
           </p>
           <p
             style={{
-              fontSize: '18px',
+              fontSize: '15px',
               fontWeight: 700,
               color: '#30D158',
               margin: '4px 0 0',
-              letterSpacing: '-0.02em',
+              letterSpacing: '-0.01em',
+              whiteSpace: 'nowrap',
             }}
           >
-            {totalRevenue > 0
-              ? formatBudget(totalRevenue, 'MXN')
+            {totalBudgetAll > 0
+              ? `${formatBudgetCompact(totalBudgetAll)} total | ${formatBudgetCompact(totalBudgetDelivered)} entregado`
               : '—'}
           </p>
         </div>
@@ -319,6 +321,7 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
       {rows.length === 0 && !error ? (
         hasFilters ? (
           /* Filtered empty */
+          <AnimatedEmptyState>
           <div
             style={{
               padding: '80px 20px',
@@ -335,12 +338,12 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
               aria-hidden="true"
               style={{ display: 'block', margin: '0 auto 20px' }}
             >
-              <rect x="16" y="12" width="48" height="56" rx="6" fill="#2C2C2E" stroke="#3A3A3C" strokeWidth="1.5" />
+              <rect x="16" y="12" width="48" height="56" rx="6" fill="var(--dash-surface-3)" stroke="#3A3A3C" strokeWidth="1.5" />
               <line x1="26" y1="26" x2="54" y2="26" stroke="#3A3A3C" strokeWidth="1.5" strokeLinecap="round" />
               <line x1="26" y1="34" x2="46" y2="34" stroke="#3A3A3C" strokeWidth="1.5" strokeLinecap="round" />
               <line x1="26" y1="42" x2="50" y2="42" stroke="#3A3A3C" strokeWidth="1.5" strokeLinecap="round" />
-              <circle cx="57" cy="57" r="13" fill="#1C1C1E" stroke="#3A3A3C" strokeWidth="1.5" />
-              <line x1="52" y1="57" x2="62" y2="57" stroke="#48484A" strokeWidth="1.5" strokeLinecap="round" />
+              <circle cx="57" cy="57" r="13" fill="var(--dash-surface-2)" stroke="#3A3A3C" strokeWidth="1.5" />
+              <line x1="52" y1="57" x2="62" y2="57" stroke="var(--dash-text-tertiary)" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
             <h3
               style={{
@@ -357,8 +360,10 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
               No hay proyectos que coincidan con los filtros aplicados.
             </p>
           </div>
+          </AnimatedEmptyState>
         ) : (
           /* True empty */
+          <AnimatedEmptyState>
           <div
             style={{
               padding: '80px 20px',
@@ -376,8 +381,8 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
               style={{ display: 'block', margin: '0 auto 20px' }}
             >
               {/* Clapperboard icon */}
-              <rect x="12" y="28" width="56" height="40" rx="6" fill="#2C2C2E" stroke="#3A3A3C" strokeWidth="1.5" />
-              <rect x="12" y="14" width="56" height="16" rx="4" fill="#2C2C2E" stroke="#3A3A3C" strokeWidth="1.5" />
+              <rect x="12" y="28" width="56" height="40" rx="6" fill="var(--dash-surface-3)" stroke="#3A3A3C" strokeWidth="1.5" />
+              <rect x="12" y="14" width="56" height="16" rx="4" fill="var(--dash-surface-3)" stroke="#3A3A3C" strokeWidth="1.5" />
               {/* Clap stripes */}
               <line x1="24" y1="14" x2="20" y2="30" stroke="#3A3A3C" strokeWidth="1.5" strokeLinecap="round" />
               <line x1="34" y1="14" x2="30" y2="30" stroke="#3A3A3C" strokeWidth="1.5" strokeLinecap="round" />
@@ -426,6 +431,7 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
               + Nuevo proyecto
             </Link>
           </div>
+          </AnimatedEmptyState>
         )
       ) : (
         <ProjectsTable rows={rows} pageSize={15} />

@@ -53,12 +53,12 @@ function findTaskInBoards(
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  backgroundColor: '#2C2C2E',
+  backgroundColor: 'var(--dash-surface-3)',
   border: '1px solid rgba(255,255,255,0.08)',
   borderRadius: '10px',
   padding: '9px 12px',
   fontSize: '14px',
-  color: '#F5F5F7',
+  color: 'var(--dash-text-primary)',
   outline: 'none',
   boxSizing: 'border-box',
   fontFamily: 'inherit',
@@ -67,7 +67,7 @@ const inputStyle: React.CSSProperties = {
 
 const labelStyle: React.CSSProperties = {
   display: 'block',
-  color: '#48484A',
+  color: 'var(--dash-text-tertiary)',
   fontSize: '11px',
   fontWeight: 600,
   letterSpacing: '0.06em',
@@ -267,7 +267,7 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
           width: '460px',
           maxWidth: '100vw',
           height: '100%',
-          backgroundColor: '#111111',
+          backgroundColor: 'var(--dash-surface-1)',
           borderLeft: '1px solid rgba(255,255,255,0.08)',
           transform: panelVisible ? 'translateX(0)' : 'translateX(100%)',
           transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -294,7 +294,7 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
             {boardTitle && (
               <p
                 style={{
-                  color: '#48484A',
+                  color: 'var(--dash-text-tertiary)',
                   fontSize: '11px',
                   fontWeight: 500,
                   letterSpacing: '0.04em',
@@ -308,7 +308,7 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
             <h2
               id={titleId}
               style={{
-                color: '#F5F5F7',
+                color: 'var(--dash-text-primary)',
                 fontSize: '20px',
                 fontWeight: 600,
                 letterSpacing: '-0.02em',
@@ -331,18 +331,18 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
               width: '32px',
               height: '32px',
               borderRadius: '50%',
-              backgroundColor: 'rgba(255,255,255,0.06)',
+              backgroundColor: 'var(--dash-border)',
               border: 'none',
-              color: '#86868B',
+              color: 'var(--dash-text-secondary)',
               cursor: 'pointer',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)'
-              e.currentTarget.style.color = '#F5F5F7'
+              e.currentTarget.style.color = 'var(--dash-text-primary)'
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)'
-              e.currentTarget.style.color = '#86868B'
+              e.currentTarget.style.backgroundColor = 'var(--dash-border)'
+              e.currentTarget.style.color = 'var(--dash-text-secondary)'
             }}
           >
             <X size={16} aria-hidden="true" />
@@ -372,7 +372,7 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
                 e.currentTarget.style.borderColor = 'rgba(0,113,227,0.6)'
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
+                e.currentTarget.style.borderColor = 'var(--dash-border)'
               }}
             />
           </div>
@@ -398,7 +398,7 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
                 e.currentTarget.style.borderColor = 'rgba(0,113,227,0.6)'
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
+                e.currentTarget.style.borderColor = 'var(--dash-border)'
               }}
             />
           </div>
@@ -425,8 +425,8 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
                       border: isActive
                         ? `1px solid ${color}60`
                         : '1px solid rgba(255,255,255,0.06)',
-                      backgroundColor: isActive ? `${color}18` : '#2C2C2E',
-                      color: isActive ? color : '#48484A',
+                      backgroundColor: isActive ? `${color}18` : 'var(--dash-surface-3)',
+                      color: isActive ? color : 'var(--dash-text-tertiary)',
                       cursor: 'pointer',
                       fontFamily: 'inherit',
                       justifyContent: 'center',
@@ -455,7 +455,7 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
               <div
                 className="flex items-center gap-2"
                 style={{
-                  backgroundColor: '#2C2C2E',
+                  backgroundColor: 'var(--dash-surface-3)',
                   borderRadius: '10px',
                   padding: '9px 12px',
                   border: '1px solid rgba(255,255,255,0.06)',
@@ -470,7 +470,7 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
                   }}
                   aria-hidden="true"
                 />
-                <span style={{ color: '#86868B', fontSize: '14px' }}>{boardTitle}</span>
+                <span style={{ color: 'var(--dash-text-secondary)', fontSize: '14px' }}>{boardTitle}</span>
               </div>
             </div>
           )}
@@ -495,7 +495,7 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
                 e.currentTarget.style.borderColor = 'rgba(0,113,227,0.6)'
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
+                e.currentTarget.style.borderColor = 'var(--dash-border)'
               }}
             />
           </div>
@@ -521,7 +521,7 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
                   e.currentTarget.style.borderColor = 'rgba(0,113,227,0.6)'
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
+                  e.currentTarget.style.borderColor = 'var(--dash-border)'
                 }}
               >
                 <option value="">Unassigned</option>
@@ -540,7 +540,7 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
                   top: '50%',
                   transform: 'translateY(-50%)',
                   pointerEvents: 'none',
-                  color: '#48484A',
+                  color: 'var(--dash-text-tertiary)',
                   fontSize: '10px',
                   lineHeight: 1,
                 }}
@@ -625,8 +625,8 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
                   disabled={isPending}
                   style={{
                     flex: 1,
-                    backgroundColor: '#2C2C2E',
-                    color: '#F5F5F7',
+                    backgroundColor: 'var(--dash-surface-3)',
+                    color: 'var(--dash-text-primary)',
                     border: '1px solid rgba(255,255,255,0.08)',
                     borderRadius: '8px',
                     padding: '9px 12px',
@@ -666,7 +666,7 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
               style={{
                 backgroundColor: 'transparent',
                 border: 'none',
-                color: '#48484A',
+                color: 'var(--dash-text-tertiary)',
                 fontSize: '13px',
                 fontWeight: 500,
                 cursor: 'pointer',
@@ -680,7 +680,7 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
                 e.currentTarget.style.backgroundColor = 'rgba(255,69,58,0.08)'
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.color = '#48484A'
+                e.currentTarget.style.color = 'var(--dash-text-tertiary)'
                 e.currentTarget.style.backgroundColor = 'transparent'
               }}
             >
@@ -698,9 +698,9 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
               onClick={onClose}
               disabled={isPending}
               style={{
-                backgroundColor: '#2C2C2E',
+                backgroundColor: 'var(--dash-surface-3)',
                 border: '1px solid rgba(255,255,255,0.08)',
-                color: '#86868B',
+                color: 'var(--dash-text-secondary)',
                 borderRadius: '8px',
                 padding: '8px 16px',
                 fontSize: '14px',
@@ -714,7 +714,7 @@ export function TaskDetailModal({ taskId, projectId, onClose }: TaskDetailModalP
                 e.currentTarget.style.backgroundColor = '#3A3A3C'
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#2C2C2E'
+                e.currentTarget.style.backgroundColor = 'var(--dash-surface-3)'
               }}
             >
               Cancel

@@ -14,6 +14,7 @@ import {
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { useState, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { motion } from 'framer-motion'
 import type { KanbanBoardWithTasks, KanbanTaskWithAssignee } from '@/lib/supabase/types'
 import { KanbanColumn } from './kanban-column'
 import { TaskCard } from './task-card'
@@ -146,7 +147,7 @@ export function KanbanBoard({ projectId, initialBoards }: KanbanBoardProps) {
           {boards.length === 0 && (
             <div
               className="flex items-center justify-center w-full py-24 text-sm"
-              style={{ color: '#48484A' }}
+              style={{ color: 'var(--dash-text-tertiary)' }}
             >
               No boards found for this project.
             </div>
@@ -156,9 +157,18 @@ export function KanbanBoard({ projectId, initialBoards }: KanbanBoardProps) {
         {/* Drag overlay — renders a ghost card while dragging */}
         <DragOverlay>
           {activeTask ? (
-            <div style={{ transform: 'rotate(1deg) scale(1.04)', opacity: 0.95 }}>
+            <motion.div
+              initial={{ scale: 1, rotate: 0 }}
+              animate={{ scale: 1.04, rotate: 1.5 }}
+              transition={{ duration: 0.15 }}
+              style={{
+                boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+                borderRadius: '12px',
+                opacity: 0.95,
+              }}
+            >
               <TaskCard task={activeTask} />
-            </div>
+            </motion.div>
           ) : null}
         </DragOverlay>
       </DndContext>

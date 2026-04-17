@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   DndContext,
   DragEndEvent,
@@ -12,13 +13,18 @@ import {
   closestCenter,
 } from '@dnd-kit/core';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
+import { LayoutGrid, List, Columns3 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { updateLeadStatus } from '@/lib/actions/leads';
 import LeadCard from './LeadCard';
 import LeadDetailModal from './LeadDetailModal';
 import AddLeadModal from './AddLeadModal';
+import LeadsImporter from './LeadsImporter';
 import type { LeadStatus } from '@/lib/supabase/types';
 import { LEAD_STATUS_STYLES } from '@/lib/status-colors';
+
+type ViewMode = 'kanban' | 'list' | 'gallery';
+const VIEW_STORAGE_KEY = 'leads-view-mode';
 
 export interface Lead {
   id: string;
@@ -59,6 +65,7 @@ const COLUMNS: Column[] = [
 type FilterSource = 'all' | 'web' | 'referral' | 'instagram' | 'whatsapp' | 'manual' | 'other';
 type FilterBudget = 'all' | 'none' | 'lt10k' | '10k-50k' | '50k-100k' | 'gt100k';
 type FilterAge   = 'all' | 'plus3' | 'plus7' | 'plus14';
+type SortOption  = 'date_desc' | 'date_asc' | 'priority_desc' | 'rating_desc' | 'stale_desc';
 
 const SOURCE_LABELS_FILTER: Record<FilterSource, string> = {
   all:       'Todos los orígenes',
@@ -84,6 +91,14 @@ const AGE_LABELS: Record<FilterAge, string> = {
   plus3:  'Sin contactar +3 días',
   plus7:  'Sin contactar +7 días',
   plus14: 'Sin contactar +14 días',
+};
+
+const SORT_LABELS: Record<SortOption, string> = {
+  date_desc:     'Más reciente',
+  date_asc:      'Más antiguo',
+  priority_desc: 'Mayor prioridad',
+  rating_desc:   'Mayor rating',
+  stale_desc:    'Más tiempo sin mover',
 };
 
 // ── Budget range matching ─────────────────────────────────────────────────────
@@ -123,18 +138,81 @@ function daysSinceContact(lead: Lead): number {
   return diffMs / (1000 * 60 * 60 * 24);
 }
 
+// ── Parse priority from notes ─────────────────────────────────────────────────
+
+function parsePriority(notes: string | null): number {
+  if (!notes) return 0;
+  const m = notes.match(/PRIORIDAD\s+(\d)/i);
+  return m ? parseInt(m[1], 10) : 0;
+}
+
+// ── Parse rating from notes ───────────────────────────────────────────────────
+
+function parseRating(notes: string | null): number {
+  if (!notes) return 0;
+  const m = notes.match(/Rating:\s*([\d.]+)/i);
+  return m ? parseFloat(m[1]) : 0;
+}
+
+// ── Format budget total for column header ─────────────────────────────────────
+
+function formatBudgetTotal(total: number): string {
+  if (total === 0) return '';
+  const k = total / 1000;
+  if (k < 10) {
+    return `$${k.toFixed(1)}k`;
+  }
+  return `$${Math.round(k)}k`;
+}
+
+// ── Sort leads ────────────────────────────────────────────────────────────────
+
+function sortLeads(leads: Lead[], sort: SortOption): Lead[] {
+  const copy = [...leads];
+  switch (sort) {
+    case 'date_desc':
+      return copy.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    case 'date_asc':
+      return copy.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    case 'priority_desc':
+      return copy.sort((a, b) => parsePriority(b.notes) - parsePriority(a.notes));
+    case 'rating_desc':
+      return copy.sort((a, b) => parseRating(b.notes) - parseRating(a.notes));
+    case 'stale_desc':
+      return copy.sort((a, b) => new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime());
+  }
+}
+
+// ── WA templates ─────────────────────────────────────────────────────────────
+
+const WA_TEMPLATE_COBRAR =
+  `Hi! My name is Emi, I'm a professional photographer & content creator based in Mexico, currently visiting Caye Caulker.\n\nI'd love to create professional photography & video content for your business — photos and video you can use on Instagram, Google, and your website.\n\nWould you be open to a quick chat?\n\n— Emi | Pescadora\npescadora.mx`;
+
+const WA_TEMPLATE_INTERCAMBIO =
+  `Hi! I'm Emi, a professional photographer visiting Caye Caulker.\n\nI'd like to propose a collaboration: I'll create professional photos & video content for your business in exchange for [accommodation / meals / a tour / store credit].\n\nNo cost to you. You get content that brings in more customers.\n\nInterested?\n\n— Emi | Pescadora\npescadora.mx`;
+
 // ── Shared input/select style ─────────────────────────────────────────────────
 
 const CONTROL_STYLE: React.CSSProperties = {
-  background: '#1C1C1E',
+  background: 'var(--dash-surface-2)',
   border: '1px solid rgba(255,255,255,0.1)',
   borderRadius: '8px',
-  color: '#F5F5F7',
+  color: 'var(--dash-text-primary)',
   fontSize: '13px',
   fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
   padding: '7px 12px',
   outline: 'none',
   transition: 'border-color 0.15s',
+};
+
+const SELECT_DROPDOWN_STYLE: React.CSSProperties = {
+  ...CONTROL_STYLE,
+  cursor: 'pointer',
+  appearance: 'none' as const,
+  paddingRight: '28px',
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2386868B' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 10px center',
 };
 
 interface LeadsPipelineProps {
@@ -188,6 +266,196 @@ function FilterChip({ label, onRemove }: FilterChipProps) {
   );
 }
 
+// ── WA Bulk Modal ─────────────────────────────────────────────────────────────
+
+interface WABulkModalProps {
+  selectedLeads: Lead[];
+  onClose: () => void;
+}
+
+function WABulkModal({ selectedLeads, onClose }: WABulkModalProps) {
+  const [template, setTemplate] = useState<'cobrar' | 'intercambio'>('cobrar');
+  const [copied, setCopied] = useState(false);
+
+  const templateText = template === 'cobrar' ? WA_TEMPLATE_COBRAR : WA_TEMPLATE_INTERCAMBIO;
+
+  function handleOpenAll() {
+    const withPhone = selectedLeads.filter((l) => l.phone);
+    const toOpen = withPhone.slice(0, 10);
+    if (withPhone.length > 10) {
+      alert(`Solo se abriran los primeros 10 de ${withPhone.length} leads con telefono.`);
+    }
+    for (const lead of toOpen) {
+      const phone = lead.phone!.replace(/\D/g, '');
+      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(templateText)}`, '_blank');
+    }
+  }
+
+  function handleCopy() {
+    navigator.clipboard.writeText(templateText).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 2000,
+        background: 'rgba(0,0,0,0.7)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: '520px',
+          maxWidth: '92vw',
+          background: 'var(--dash-surface-1)',
+          border: '1px solid var(--dash-border)',
+          borderRadius: '16px',
+          padding: '28px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '18px',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+        }}
+      >
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontSize: '17px', fontWeight: 700, color: 'var(--dash-text-primary)', letterSpacing: '-0.01em' }}>
+              Envio WA masivo
+            </div>
+            <div style={{ fontSize: '12px', color: 'var(--dash-text-tertiary)', marginTop: '2px' }}>
+              {selectedLeads.filter((l) => l.phone).length} de {selectedLeads.length} leads tienen telefono
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--dash-text-tertiary)',
+              fontSize: '20px',
+              cursor: 'pointer',
+              lineHeight: 1,
+              padding: '4px',
+            }}
+          >
+            &times;
+          </button>
+        </div>
+
+        {/* Template selector */}
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {(['cobrar', 'intercambio'] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTemplate(t)}
+              style={{
+                flex: 1,
+                padding: '10px',
+                borderRadius: '10px',
+                border: `1px solid ${template === t ? 'var(--dash-accent, #0071E3)' : 'var(--dash-border)'}`,
+                background: template === t ? 'rgba(0,113,227,0.12)' : 'var(--dash-surface-2)',
+                color: template === t ? 'var(--dash-accent, #0071E3)' : 'var(--dash-text-secondary)',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+                transition: 'all 0.15s',
+                textTransform: 'capitalize',
+              }}
+            >
+              {t === 'cobrar' ? 'Cobrar' : 'Intercambio'}
+            </button>
+          ))}
+        </div>
+
+        {/* Template preview */}
+        <div
+          style={{
+            background: 'var(--dash-surface-2)',
+            border: '1px solid var(--dash-border)',
+            borderRadius: '10px',
+            padding: '14px',
+            fontSize: '13px',
+            color: 'var(--dash-text-secondary)',
+            lineHeight: 1.6,
+            whiteSpace: 'pre-wrap',
+            maxHeight: '220px',
+            overflowY: 'auto',
+          }}
+        >
+          {templateText}
+        </div>
+
+        {/* Actions */}
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <button
+            onClick={handleOpenAll}
+            style={{
+              flex: '1 1 auto',
+              padding: '10px 16px',
+              borderRadius: '10px',
+              border: 'none',
+              background: '#25D366',
+              color: '#fff',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#1da851'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#25D366'; }}
+          >
+            Abrir todos en WA
+          </button>
+          <button
+            onClick={handleCopy}
+            style={{
+              flex: '0 0 auto',
+              padding: '10px 16px',
+              borderRadius: '10px',
+              border: '1px solid var(--dash-border)',
+              background: 'var(--dash-surface-2)',
+              color: copied ? '#25D366' : 'var(--dash-text-secondary)',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+              transition: 'all 0.15s',
+            }}
+          >
+            {copied ? 'Copiado' : 'Copiar mensaje'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Kanban animation variants ─────────────────────────────────────────────────
+
+const colVariants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.04 } },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, scale: 0.95, y: 8 },
+  show: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.2 } },
+};
+
 // ── DroppableColumn ──────────────────────────────────────────────────────────
 
 interface DroppableColumnProps {
@@ -195,16 +463,33 @@ interface DroppableColumnProps {
   colLeads: Lead[];
   onCardClick: (lead: Lead) => void;
   onColumnAdd: (status: LeadStatus) => void;
+  selectionMode: boolean;
+  selectedIds: Set<string>;
+  onSelectLead: (id: string) => void;
 }
 
-function DroppableColumn({ col, colLeads, onCardClick, onColumnAdd }: DroppableColumnProps) {
+function DroppableColumn({ col, colLeads, onCardClick, onColumnAdd, selectionMode, selectedIds, onSelectLead }: DroppableColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: col.status });
+
+  // Compute budget total
+  const budgetTotal = useMemo(() => {
+    let total = 0;
+    for (const lead of colLeads) {
+      if (lead.budget_range) {
+        const n = parseBudgetNumber(lead.budget_range);
+        if (n !== null) total += n;
+      }
+    }
+    return total;
+  }, [colLeads]);
+
+  const budgetLabel = formatBudgetTotal(budgetTotal);
 
   return (
     <div
       style={{
-        background: isOver ? `${col.color}0D` : '#111111',
-        border: '1px solid rgba(255,255,255,0.08)',
+        background: isOver ? `${col.color}0D` : 'var(--dash-surface-1)',
+        border: '1px solid var(--dash-border)',
         borderRadius: '16px',
         display: 'flex',
         flexDirection: 'column',
@@ -222,7 +507,7 @@ function DroppableColumn({ col, colLeads, onCardClick, onColumnAdd }: DroppableC
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '14px 16px',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          borderBottom: '1px solid var(--dash-border)',
           flexShrink: 0,
         }}
       >
@@ -240,7 +525,7 @@ function DroppableColumn({ col, colLeads, onCardClick, onColumnAdd }: DroppableC
             style={{
               fontSize: '12px',
               fontWeight: 600,
-              color: '#F5F5F7',
+              color: 'var(--dash-text-primary)',
               letterSpacing: '0.06em',
               textTransform: 'uppercase',
             }}
@@ -249,25 +534,40 @@ function DroppableColumn({ col, colLeads, onCardClick, onColumnAdd }: DroppableC
           </span>
         </div>
 
-        <span
-          style={{
-            background: '#1C1C1E',
-            color: '#86868B',
-            borderRadius: '10px',
-            padding: '1px 8px',
-            fontSize: '11px',
-            fontWeight: 500,
-            minWidth: '22px',
-            textAlign: 'center',
-          }}
-        >
-          {colLeads.length}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {budgetLabel && (
+            <span
+              style={{
+                fontSize: '10px',
+                color: 'var(--dash-text-tertiary)',
+              }}
+            >
+              {budgetLabel}
+            </span>
+          )}
+          <span
+            style={{
+              background: 'var(--dash-surface-2)',
+              color: 'var(--dash-text-secondary)',
+              borderRadius: '10px',
+              padding: '1px 8px',
+              fontSize: '11px',
+              fontWeight: 500,
+              minWidth: '22px',
+              textAlign: 'center',
+            }}
+          >
+            {colLeads.length}
+          </span>
+        </div>
       </div>
 
       {/* Cards area — this is the actual droppable zone */}
-      <div
+      <motion.div
         ref={setNodeRef}
+        variants={colVariants}
+        initial="hidden"
+        animate="show"
         style={{
           flex: 1,
           padding: '10px',
@@ -285,7 +585,7 @@ function DroppableColumn({ col, colLeads, onCardClick, onColumnAdd }: DroppableC
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#2C2C2E',
+              color: 'var(--dash-surface-3)',
               fontSize: '11px',
               letterSpacing: '0.05em',
               padding: '24px 0',
@@ -296,14 +596,18 @@ function DroppableColumn({ col, colLeads, onCardClick, onColumnAdd }: DroppableC
         )}
 
         {colLeads.map((lead) => (
-          <DraggableLeadCard
-            key={lead.id}
-            lead={lead}
-            accentColor={col.color}
-            onClick={() => onCardClick(lead)}
-          />
+          <motion.div key={lead.id} variants={cardVariants}>
+            <DraggableLeadCard
+              lead={lead}
+              accentColor={col.color}
+              onClick={() => onCardClick(lead)}
+              isSelected={selectedIds.has(lead.id)}
+              selectionMode={selectionMode}
+              onSelect={onSelectLead}
+            />
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       {/* Add button at column bottom */}
       <div style={{ padding: '8px 10px', flexShrink: 0 }}>
@@ -312,9 +616,9 @@ function DroppableColumn({ col, colLeads, onCardClick, onColumnAdd }: DroppableC
           style={{
             width: '100%',
             background: 'transparent',
-            border: '1px dashed rgba(255,255,255,0.1)',
+            border: '1px dashed var(--dash-border)',
             borderRadius: '8px',
-            color: '#48484A',
+            color: 'var(--dash-text-tertiary)',
             fontSize: '12px',
             fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
             padding: '6px',
@@ -332,8 +636,8 @@ function DroppableColumn({ col, colLeads, onCardClick, onColumnAdd }: DroppableC
           }}
           onMouseLeave={(e) => {
             const el = e.currentTarget as HTMLButtonElement;
-            el.style.borderColor = 'rgba(255,255,255,0.1)';
-            el.style.color = '#48484A';
+            el.style.borderColor = 'var(--dash-border)';
+            el.style.color = 'var(--dash-text-tertiary)';
           }}
         >
           <span style={{ fontSize: '14px', lineHeight: 1 }}>+</span>
@@ -350,9 +654,12 @@ interface DraggableLeadCardProps {
   lead: Lead;
   accentColor: string;
   onClick: () => void;
+  isSelected: boolean;
+  selectionMode: boolean;
+  onSelect: (id: string) => void;
 }
 
-function DraggableLeadCard({ lead, accentColor, onClick }: DraggableLeadCardProps) {
+function DraggableLeadCard({ lead, accentColor, onClick, isSelected, selectionMode, onSelect }: DraggableLeadCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: lead.id,
   });
@@ -369,11 +676,37 @@ function DraggableLeadCard({ lead, accentColor, onClick }: DraggableLeadCardProp
         opacity: isDragging ? 0.45 : 1,
         cursor: isDragging ? 'grabbing' : 'grab',
         zIndex: isDragging ? 1000 : undefined,
-        position: isDragging ? 'relative' : undefined,
+        position: 'relative',
         transition: isDragging ? undefined : 'opacity 0.15s',
         touchAction: 'none',
       }}
     >
+      {selectionMode && (
+        <div
+          onClick={(e) => { e.stopPropagation(); onSelect(lead.id); }}
+          style={{
+            position: 'absolute',
+            top: '8px',
+            left: '8px',
+            zIndex: 10,
+            width: '18px',
+            height: '18px',
+            borderRadius: '4px',
+            border: `2px solid ${isSelected ? 'var(--dash-accent, #0071E3)' : 'rgba(255,255,255,0.4)'}`,
+            background: isSelected ? 'var(--dash-accent, #0071E3)' : 'rgba(0,0,0,0.4)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {isSelected && (
+            <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+              <path d="M1 4l2.5 2.5L9 1" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </div>
+      )}
       <LeadCard lead={lead} accentColor={accentColor} onClick={onClick} />
     </div>
   );
@@ -387,6 +720,15 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
   const [showAdd, setShowAdd] = useState(false);
   const [addPresetStatus, setAddPresetStatus] = useState<LeadStatus>('new');
   const [activeLead, setActiveLead] = useState<Lead | null>(null);
+  const [view, setView] = useState<ViewMode>(() => {
+    if (typeof window === 'undefined') return 'kanban';
+    return (localStorage.getItem(VIEW_STORAGE_KEY) as ViewMode) ?? 'kanban';
+  });
+
+  function changeView(v: ViewMode) {
+    setView(v);
+    localStorage.setItem(VIEW_STORAGE_KEY, v);
+  }
 
   // ── Filter state ────────────────────────────────────────────────────────────
   const [searchRaw, setSearchRaw]       = useState('');
@@ -394,6 +736,38 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
   const [filterSource, setFilterSource] = useState<FilterSource>('all');
   const [filterBudget, setFilterBudget] = useState<FilterBudget>('all');
   const [filterAge, setFilterAge]       = useState<FilterAge>('all');
+  const [sortBy, setSortBy]             = useState<SortOption>('date_desc');
+  const [segmentFilter, setSegmentFilter] = useState<string | null>(null);
+
+  // ── Selection state ─────────────────────────────────────────────────────────
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds]     = useState<Set<string>>(new Set());
+  const [showWAModal, setShowWAModal]     = useState(false);
+
+  function toggleSelectionMode() {
+    setSelectionMode((prev) => {
+      if (prev) {
+        setSelectedIds(new Set());
+      }
+      return !prev;
+    });
+  }
+
+  function toggleSelectId(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set());
+  }
 
   // debounce 200ms
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -405,7 +779,7 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
 
   // ── Filtered leads (client-side) ────────────────────────────────────────────
   const filteredLeads = useMemo<Lead[]>(() => {
-    return localLeads.filter((lead) => {
+    let result = localLeads.filter((lead) => {
       // search
       if (search.trim()) {
         const q = search.trim().toLowerCase();
@@ -426,9 +800,38 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
       }
       return true;
     });
-  }, [localLeads, search, filterSource, filterBudget, filterAge]);
+
+    // Apply segment filter
+    if (segmentFilter === 'p5_sin_contactar') {
+      result = result.filter(
+        (l) => l.notes?.includes('PRIORIDAD 5') && l.status === 'new'
+      );
+    } else if (segmentFilter === 'hoteles') {
+      result = result.filter((l) =>
+        /(hotel|hospedaje)/i.test(l.project_type ?? '')
+      );
+    } else if (segmentFilter === 'tours') {
+      result = result.filter((l) =>
+        /(tour|buceo)/i.test(l.project_type ?? '')
+      );
+    } else if (segmentFilter === 'restaurantes') {
+      result = result.filter((l) =>
+        /(restaurante|bar|caf[ée])/i.test(l.project_type ?? '')
+      );
+    } else if (segmentFilter === 'con_tel') {
+      result = result.filter((l) => l.phone !== null);
+    }
+
+    return sortLeads(result, sortBy);
+  }, [localLeads, search, filterSource, filterBudget, filterAge, segmentFilter, sortBy]);
 
   const hasActiveFilters = search.trim() !== '' || filterSource !== 'all' || filterBudget !== 'all' || filterAge !== 'all';
+
+  // Selected leads objects
+  const selectedLeadsArr = useMemo(
+    () => filteredLeads.filter((l) => selectedIds.has(l.id)),
+    [filteredLeads, selectedIds]
+  );
 
   // dnd-kit sensors — distance:8 lets normal clicks through
   const sensors = useSensors(
@@ -571,6 +974,16 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
     ? COLUMNS.find((c) => c.status === activeLead.status)
     : null;
 
+  // ── Segment definitions ───────────────────────────────────────────────────
+
+  const SEGMENTS: { id: string; label: string }[] = [
+    { id: 'p5_sin_contactar', label: 'P5 sin contactar' },
+    { id: 'hoteles',          label: 'Hoteles' },
+    { id: 'tours',            label: 'Tours' },
+    { id: 'restaurantes',     label: 'Restaurantes' },
+    { id: 'con_tel',          label: 'Con tel.' },
+  ];
+
   return (
     <>
       {/* Top bar */}
@@ -589,7 +1002,7 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
               margin: 0,
               fontSize: '20px',
               fontWeight: 600,
-              color: '#F5F5F7',
+              color: 'var(--dash-text-primary)',
               letterSpacing: '-0.01em',
             }}
           >
@@ -597,37 +1010,121 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
           </h2>
         </div>
 
-        <button
-          onClick={() => {
-            setAddPresetStatus('new');
-            setShowAdd(true);
-          }}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            background: '#0071E3',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '8px 16px',
-            fontSize: '13px',
-            fontWeight: 600,
-            fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
-            cursor: 'pointer',
-            letterSpacing: '-0.01em',
-            transition: 'background 0.15s',
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.background = '#0062C4';
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.background = '#0071E3';
-          }}
-        >
-          <span style={{ fontSize: '16px', lineHeight: 1 }}>+</span>
-          Nuevo Lead
-        </button>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          {/* Seleccionar toggle */}
+          <button
+            onClick={toggleSelectionMode}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              padding: '6px 12px',
+              border: `1px solid ${selectionMode ? 'var(--dash-accent, #0071E3)' : 'var(--dash-border)'}`,
+              borderRadius: '8px',
+              background: selectionMode ? 'rgba(0,113,227,0.12)' : 'var(--dash-surface-2)',
+              color: selectionMode ? 'var(--dash-accent, #0071E3)' : 'var(--dash-text-secondary)',
+              fontSize: '12px',
+              fontWeight: 500,
+              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+              cursor: 'pointer',
+              transition: 'all 0.15s',
+              flexShrink: 0,
+            }}
+          >
+            Seleccionar
+          </button>
+
+          {/* View toggle */}
+          <div
+            style={{
+              display: 'flex',
+              background: 'var(--dash-surface-2)',
+              border: '1px solid var(--dash-border)',
+              borderRadius: '8px',
+              overflow: 'hidden',
+              flexShrink: 0,
+              position: 'relative',
+            }}
+          >
+            {([
+              { id: 'kanban', icon: <Columns3 size={14} />, label: 'Kanban' },
+              { id: 'list',   icon: <List size={14} />,     label: 'Lista' },
+              { id: 'gallery',icon: <LayoutGrid size={14} />,label: 'Galeria' },
+            ] as { id: ViewMode; icon: React.ReactNode; label: string }[]).map((v) => (
+              <button
+                key={v.id}
+                title={v.label}
+                aria-label={v.label}
+                onClick={() => changeView(v.id)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  border: 'none',
+                  background: 'transparent',
+                  color: view === v.id ? '#fff' : 'var(--dash-text-secondary)',
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+                  cursor: 'pointer',
+                  position: 'relative',
+                  zIndex: 1,
+                  transition: 'color 0.15s',
+                }}
+              >
+                {view === v.id && (
+                  <motion.div
+                    layoutId="view-indicator"
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background: 'var(--dash-accent, #0071E3)',
+                      borderRadius: '6px',
+                      zIndex: -1,
+                    }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+                  />
+                )}
+                {v.icon}
+                {v.label}
+              </button>
+            ))}
+          </div>
+          <LeadsImporter onDone={() => window.location.reload()} />
+          <button
+            onClick={() => {
+              setAddPresetStatus('new');
+              setShowAdd(true);
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: '#0071E3',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '8px 16px',
+              fontSize: '13px',
+              fontWeight: 600,
+              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+              cursor: 'pointer',
+              letterSpacing: '-0.01em',
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = '#0062C4';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = '#0071E3';
+            }}
+          >
+            <span style={{ fontSize: '16px', lineHeight: 1 }}>+</span>
+            Nuevo Lead
+          </button>
+        </div>
       </div>
 
       {/* ── Search + filter bar ─────────────────────────────────────────────── */}
@@ -636,7 +1133,7 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
           position: 'sticky',
           top: 0,
           zIndex: 20,
-          background: '#0A0A0A',
+          background: 'var(--dash-bg)',
           paddingBottom: '12px',
           marginBottom: '12px',
           fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
@@ -665,11 +1162,11 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
                 top: '50%',
                 transform: 'translateY(-50%)',
                 pointerEvents: 'none',
-                color: '#48484A',
+                color: 'var(--dash-text-tertiary)',
               }}
             >
-              <circle cx="6.5" cy="6.5" r="5" stroke="#48484A" strokeWidth="1.5" />
-              <line x1="10.5" y1="10.5" x2="14" y2="14" stroke="#48484A" strokeWidth="1.5" strokeLinecap="round" />
+              <circle cx="6.5" cy="6.5" r="5" stroke="var(--dash-text-tertiary)" strokeWidth="1.5" />
+              <line x1="10.5" y1="10.5" x2="14" y2="14" stroke="var(--dash-text-tertiary)" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
             <input
               type="text"
@@ -683,7 +1180,7 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
                 boxSizing: 'border-box',
               }}
               onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(0,113,227,0.5)'; }}
-              onBlur={(e)  => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+              onBlur={(e)  => { e.currentTarget.style.borderColor = 'var(--dash-border)'; }}
             />
           </div>
 
@@ -691,14 +1188,10 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
           <select
             value={filterSource}
             onChange={(e) => setFilterSource(e.target.value as FilterSource)}
-            style={{ ...CONTROL_STYLE, cursor: 'pointer', appearance: 'none' as const, paddingRight: '28px',
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2386868B' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 10px center',
-            }}
+            style={SELECT_DROPDOWN_STYLE}
           >
             {(Object.keys(SOURCE_LABELS_FILTER) as FilterSource[]).map((k) => (
-              <option key={k} value={k} style={{ background: '#1C1C1E' }}>
+              <option key={k} value={k} style={{ background: 'var(--dash-surface-2)' }}>
                 {SOURCE_LABELS_FILTER[k]}
               </option>
             ))}
@@ -708,14 +1201,10 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
           <select
             value={filterBudget}
             onChange={(e) => setFilterBudget(e.target.value as FilterBudget)}
-            style={{ ...CONTROL_STYLE, cursor: 'pointer', appearance: 'none' as const, paddingRight: '28px',
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2386868B' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 10px center',
-            }}
+            style={SELECT_DROPDOWN_STYLE}
           >
             {(Object.keys(BUDGET_LABELS) as FilterBudget[]).map((k) => (
-              <option key={k} value={k} style={{ background: '#1C1C1E' }}>
+              <option key={k} value={k} style={{ background: 'var(--dash-surface-2)' }}>
                 {BUDGET_LABELS[k]}
               </option>
             ))}
@@ -725,15 +1214,24 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
           <select
             value={filterAge}
             onChange={(e) => setFilterAge(e.target.value as FilterAge)}
-            style={{ ...CONTROL_STYLE, cursor: 'pointer', appearance: 'none' as const, paddingRight: '28px',
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2386868B' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 10px center',
-            }}
+            style={SELECT_DROPDOWN_STYLE}
           >
             {(Object.keys(AGE_LABELS) as FilterAge[]).map((k) => (
-              <option key={k} value={k} style={{ background: '#1C1C1E' }}>
+              <option key={k} value={k} style={{ background: 'var(--dash-surface-2)' }}>
                 {AGE_LABELS[k]}
+              </option>
+            ))}
+          </select>
+
+          {/* Sort select */}
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortOption)}
+            style={SELECT_DROPDOWN_STYLE}
+          >
+            {(Object.keys(SORT_LABELS) as SortOption[]).map((k) => (
+              <option key={k} value={k} style={{ background: 'var(--dash-surface-2)' }}>
+                {SORT_LABELS[k]}
               </option>
             ))}
           </select>
@@ -742,7 +1240,7 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
           <span
             style={{
               fontSize: '12px',
-              color: '#48484A',
+              color: 'var(--dash-text-tertiary)',
               marginLeft: 'auto',
               whiteSpace: 'nowrap',
               flexShrink: 0,
@@ -797,73 +1295,568 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
               style={{
                 background: 'transparent',
                 border: 'none',
-                color: '#48484A',
+                color: 'var(--dash-text-tertiary)',
                 fontSize: '11px',
                 cursor: 'pointer',
                 padding: '2px 4px',
                 fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
                 transition: 'color 0.15s',
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = '#86868B'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = '#48484A'; }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--dash-text-secondary)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--dash-text-tertiary)'; }}
             >
               Limpiar todo
             </button>
           </div>
         )}
-      </div>
 
-      {/* Kanban grid wrapped in DndContext */}
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
+        {/* Row 3: Segments */}
         <div
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(6, 260px)',
-            gap: '12px',
-            overflowX: 'auto',
-            paddingBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            flexWrap: 'wrap',
+            marginTop: '8px',
           }}
         >
-          {COLUMNS.map((col) => {
-            const colLeads = filteredLeads.filter((l) => l.status === col.status);
+          <span style={{ fontSize: '10px', color: 'var(--dash-text-tertiary)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', flexShrink: 0 }}>
+            Segmentos:
+          </span>
+          {SEGMENTS.map((seg) => {
+            const isActive = segmentFilter === seg.id;
             return (
-              <DroppableColumn
-                key={col.status}
-                col={col}
-                colLeads={colLeads}
-                onCardClick={handleCardClick}
-                onColumnAdd={handleColumnAdd}
-              />
+              <button
+                key={seg.id}
+                onClick={() => setSegmentFilter(isActive ? null : seg.id)}
+                style={{
+                  padding: '3px 10px',
+                  borderRadius: '20px',
+                  border: `1px solid ${isActive ? 'var(--dash-accent, #0071E3)' : 'var(--dash-border)'}`,
+                  background: isActive ? 'var(--dash-accent, #0071E3)' : 'var(--dash-surface-2)',
+                  color: isActive ? '#fff' : 'var(--dash-text-secondary)',
+                  fontSize: '11px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+                  transition: 'all 0.15s',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {seg.label}
+              </button>
             );
           })}
         </div>
+      </div>
 
-        {/* Drag overlay — ghost card that follows the pointer */}
-        <DragOverlay dropAnimation={null}>
-          {activeLead ? (
+      {/* ── Animated view container ───────────────────────────────────────── */}
+      <AnimatePresence mode="wait">
+        {view === 'kanban' && (
+          <motion.div
+            key="kanban"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.18 }}
+          >
+            {/* ── Kanban view ────────────────────────────────────────────── */}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(6, 260px)',
+                  gap: '12px',
+                  overflowX: 'auto',
+                  paddingBottom: '20px',
+                }}
+              >
+                {COLUMNS.map((col) => {
+                  const colLeads = filteredLeads.filter((l) => l.status === col.status);
+                  return (
+                    <DroppableColumn
+                      key={col.status}
+                      col={col}
+                      colLeads={colLeads}
+                      onCardClick={handleCardClick}
+                      onColumnAdd={handleColumnAdd}
+                      selectionMode={selectionMode}
+                      selectedIds={selectedIds}
+                      onSelectLead={toggleSelectId}
+                    />
+                  );
+                })}
+              </div>
+
+              {/* Drag overlay */}
+              <DragOverlay dropAnimation={null}>
+                {activeLead ? (
+                  <div style={{ transform: 'rotate(1.5deg) scale(1.03)', opacity: 0.92, pointerEvents: 'none' }}>
+                    <LeadCard
+                      lead={activeLead}
+                      accentColor={activeCol?.color ?? 'var(--dash-text-secondary)'}
+                      onClick={() => {/* no-op */}}
+                    />
+                  </div>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
+          </motion.div>
+        )}
+
+        {view === 'list' && (
+          <motion.div
+            key="list"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.18 }}
+          >
+            {/* ── List view ──────────────────────────────────────────────── */}
+            <div style={{ overflowX: 'auto', paddingBottom: '20px' }}>
+              <table
+                style={{
+                  width: '100%',
+                  borderCollapse: 'separate',
+                  borderSpacing: '0 4px',
+                  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+                  fontSize: '13px',
+                }}
+              >
+                <thead>
+                  <tr>
+                    {selectionMode && <th style={{ width: '36px', padding: '6px 8px', borderBottom: '1px solid var(--dash-border)' }} />}
+                    {['Nombre / Empresa', 'Tipo', 'Telefono', 'Estado', 'Origen', 'Budget', 'Creado'].map((h) => (
+                      <th
+                        key={h}
+                        style={{
+                          textAlign: 'left',
+                          padding: '6px 12px',
+                          fontSize: '10px',
+                          fontWeight: 600,
+                          letterSpacing: '0.07em',
+                          textTransform: 'uppercase',
+                          color: 'var(--dash-text-tertiary)',
+                          borderBottom: '1px solid var(--dash-border)',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredLeads.map((lead) => {
+                    const col = COLUMNS.find((c) => c.status === lead.status);
+                    const waPhone = lead.phone?.replace(/\D/g, '');
+                    const isSelected = selectedIds.has(lead.id);
+                    return (
+                      <tr
+                        key={lead.id}
+                        onClick={() => selectionMode ? toggleSelectId(lead.id) : handleCardClick(lead)}
+                        style={{ cursor: 'pointer', outline: isSelected ? '1px solid var(--dash-accent, #0071E3)' : undefined, borderRadius: '8px' }}
+                        onMouseEnter={(e) => {
+                          (e.currentTarget as HTMLTableRowElement).style.opacity = '0.8';
+                        }}
+                        onMouseLeave={(e) => {
+                          (e.currentTarget as HTMLTableRowElement).style.opacity = '1';
+                        }}
+                      >
+                        {/* Checkbox */}
+                        {selectionMode && (
+                          <td
+                            style={{ padding: '10px 8px', background: 'var(--dash-surface-1)', borderRadius: '8px 0 0 8px' }}
+                            onClick={(e) => { e.stopPropagation(); toggleSelectId(lead.id); }}
+                          >
+                            <div
+                              style={{
+                                width: '16px',
+                                height: '16px',
+                                borderRadius: '4px',
+                                border: `2px solid ${isSelected ? 'var(--dash-accent, #0071E3)' : 'rgba(255,255,255,0.3)'}`,
+                                background: isSelected ? 'var(--dash-accent, #0071E3)' : 'transparent',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0,
+                              }}
+                            >
+                              {isSelected && (
+                                <svg width="9" height="7" viewBox="0 0 10 8" fill="none">
+                                  <path d="M1 4l2.5 2.5L9 1" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                              )}
+                            </div>
+                          </td>
+                        )}
+                        {/* Name / Company */}
+                        <td
+                          style={{
+                            padding: '10px 12px',
+                            background: 'var(--dash-surface-1)',
+                            borderRadius: selectionMode ? '0' : '8px 0 0 8px',
+                            borderLeft: `3px solid ${col?.color ?? 'var(--dash-border)'}`,
+                            maxWidth: '220px',
+                          }}
+                        >
+                          <div style={{ fontWeight: 600, color: 'var(--dash-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {lead.name}
+                          </div>
+                          {lead.company && (
+                            <div style={{ fontSize: '11px', color: 'var(--dash-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {lead.company}
+                            </div>
+                          )}
+                        </td>
+                        {/* Type */}
+                        <td style={{ padding: '10px 12px', background: 'var(--dash-surface-1)', color: 'var(--dash-text-secondary)', maxWidth: '160px' }}>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
+                            {lead.project_type ?? '—'}
+                          </span>
+                        </td>
+                        {/* Phone */}
+                        <td style={{ padding: '10px 12px', background: 'var(--dash-surface-1)', whiteSpace: 'nowrap' }}>
+                          {lead.phone ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ color: 'var(--dash-text-secondary)', fontSize: '12px' }}>{lead.phone}</span>
+                              {waPhone && (
+                                <a
+                                  href={`https://wa.me/${waPhone}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '20px',
+                                    height: '20px',
+                                    borderRadius: '4px',
+                                    background: 'rgba(37,211,102,0.15)',
+                                    color: '#25D366',
+                                    flexShrink: 0,
+                                    textDecoration: 'none',
+                                    fontSize: '10px',
+                                    fontWeight: 700,
+                                  }}
+                                  title="WhatsApp"
+                                >
+                                  W
+                                </a>
+                              )}
+                            </div>
+                          ) : (
+                            <span style={{ color: 'var(--dash-text-tertiary)' }}>—</span>
+                          )}
+                        </td>
+                        {/* Status */}
+                        <td style={{ padding: '10px 12px', background: 'var(--dash-surface-1)', whiteSpace: 'nowrap' }}>
+                          <span
+                            style={{
+                              display: 'inline-block',
+                              fontSize: '10px',
+                              fontWeight: 600,
+                              letterSpacing: '0.06em',
+                              textTransform: 'uppercase',
+                              padding: '2px 8px',
+                              borderRadius: '6px',
+                              background: col ? `${col.color}1A` : 'var(--dash-border)',
+                              color: col?.color ?? 'var(--dash-text-secondary)',
+                            }}
+                          >
+                            {col?.label ?? lead.status}
+                          </span>
+                        </td>
+                        {/* Source */}
+                        <td style={{ padding: '10px 12px', background: 'var(--dash-surface-1)', color: 'var(--dash-text-tertiary)', fontSize: '11px', whiteSpace: 'nowrap' }}>
+                          {lead.source}
+                        </td>
+                        {/* Budget */}
+                        <td style={{ padding: '10px 12px', background: 'var(--dash-surface-1)', color: 'var(--dash-text-secondary)', whiteSpace: 'nowrap', fontSize: '12px' }}>
+                          {lead.budget_range ?? '—'}
+                        </td>
+                        {/* Created */}
+                        <td
+                          style={{
+                            padding: '10px 12px',
+                            background: 'var(--dash-surface-1)',
+                            borderRadius: '0 8px 8px 0',
+                            color: 'var(--dash-text-tertiary)',
+                            fontSize: '11px',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {new Date(lead.created_at).toLocaleDateString('es-MX', { month: 'short', day: 'numeric', year: '2-digit' })}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              {filteredLeads.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--dash-text-tertiary)', fontSize: '14px' }}>
+                  Sin leads que mostrar
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {view === 'gallery' && (
+          <motion.div
+            key="gallery"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.18 }}
+          >
+            {/* ── Gallery view ────────────────────────────────────────────── */}
             <div
               style={{
-                transform: 'rotate(1.5deg) scale(1.03)',
-                opacity: 0.92,
-                pointerEvents: 'none',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+                gap: '12px',
+                paddingBottom: '20px',
               }}
             >
-              <LeadCard
-                lead={activeLead}
-                accentColor={activeCol?.color ?? '#86868B'}
-                onClick={() => {
-                  /* no-op inside overlay */
-                }}
-              />
+              {filteredLeads.map((lead, idx) => {
+                const col = COLUMNS.find((c) => c.status === lead.status);
+                const waPhone = lead.phone?.replace(/\D/g, '');
+                const notesPreview = lead.notes
+                  ? lead.notes.slice(0, 80) + (lead.notes.length > 80 ? '...' : '')
+                  : null;
+                const isSelected = selectedIds.has(lead.id);
+                return (
+                  <motion.div
+                    key={lead.id}
+                    initial={{ opacity: 0, scale: 0.96 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    whileHover={{ y: -2, boxShadow: '0 6px 24px rgba(0,0,0,0.3)' }}
+                    transition={{ duration: 0.18, delay: idx * 0.03 }}
+                    onClick={() => selectionMode ? toggleSelectId(lead.id) : handleCardClick(lead)}
+                    style={{
+                      background: 'var(--dash-surface-1)',
+                      borderRadius: '14px',
+                      border: `1px solid ${isSelected ? 'var(--dash-accent, #0071E3)' : 'var(--dash-border)'}`,
+                      borderTop: `3px solid ${col?.color ?? 'var(--dash-border)'}`,
+                      padding: '16px',
+                      cursor: 'pointer',
+                      fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px',
+                      position: 'relative',
+                    }}
+                  >
+                    {/* Checkbox overlay */}
+                    {selectionMode && (
+                      <div
+                        onClick={(e) => { e.stopPropagation(); toggleSelectId(lead.id); }}
+                        style={{
+                          position: 'absolute',
+                          top: '10px',
+                          left: '10px',
+                          zIndex: 5,
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '4px',
+                          border: `2px solid ${isSelected ? 'var(--dash-accent, #0071E3)' : 'rgba(255,255,255,0.5)'}`,
+                          background: isSelected ? 'var(--dash-accent, #0071E3)' : 'rgba(0,0,0,0.5)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {isSelected && (
+                          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                            <path d="M1 4l2.5 2.5L9 1" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Status pill */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span
+                        style={{
+                          fontSize: '9px',
+                          fontWeight: 700,
+                          letterSpacing: '0.08em',
+                          textTransform: 'uppercase',
+                          padding: '2px 8px',
+                          borderRadius: '5px',
+                          background: col ? `${col.color}1A` : 'var(--dash-border)',
+                          color: col?.color ?? 'var(--dash-text-tertiary)',
+                        }}
+                      >
+                        {col?.label ?? lead.status}
+                      </span>
+                      <span style={{ fontSize: '10px', color: 'var(--dash-text-tertiary)' }}>
+                        {new Date(lead.created_at).toLocaleDateString('es-MX', { month: 'short', day: 'numeric' })}
+                      </span>
+                    </div>
+
+                    {/* Name */}
+                    <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--dash-text-primary)', lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {lead.name}
+                    </div>
+
+                    {/* Company */}
+                    {lead.company && (
+                      <div style={{ fontSize: '12px', color: 'var(--dash-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {lead.company}
+                      </div>
+                    )}
+
+                    {/* Type badge */}
+                    {lead.project_type && (
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          fontSize: '10px',
+                          color: 'var(--dash-text-secondary)',
+                          background: 'var(--dash-surface-2)',
+                          border: '1px solid var(--dash-border)',
+                          borderRadius: '5px',
+                          padding: '2px 7px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          maxWidth: '100%',
+                        }}
+                      >
+                        {lead.project_type}
+                      </span>
+                    )}
+
+                    {/* Notes preview */}
+                    {notesPreview && (
+                      <div style={{ fontSize: '11px', color: 'var(--dash-text-tertiary)', lineHeight: 1.5, flexGrow: 1 }}>
+                        {notesPreview}
+                      </div>
+                    )}
+
+                    {/* Bottom: phone + WA */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto', paddingTop: '4px', borderTop: '1px solid var(--dash-border)' }}>
+                      <span style={{ fontSize: '11px', color: 'var(--dash-text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '70%' }}>
+                        {lead.phone ?? lead.email ?? '—'}
+                      </span>
+                      {waPhone && (
+                        <a
+                          href={`https://wa.me/${waPhone}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '4px 10px',
+                            borderRadius: '6px',
+                            background: 'rgba(37,211,102,0.15)',
+                            color: '#25D366',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            textDecoration: 'none',
+                            flexShrink: 0,
+                            transition: 'background 0.15s',
+                          }}
+                          onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(37,211,102,0.28)'; }}
+                          onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(37,211,102,0.15)'; }}
+                        >
+                          WA
+                        </a>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
+              {filteredLeads.length === 0 && (
+                <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '48px 0', color: 'var(--dash-text-tertiary)', fontSize: '14px', fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif" }}>
+                  Sin leads que mostrar
+                </div>
+              )}
             </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Floating selection action bar ────────────────────────────────── */}
+      {selectionMode && selectedIds.size > 0 && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1500,
+            background: 'var(--dash-surface-1)',
+            border: '1px solid var(--dash-border)',
+            borderRadius: '14px',
+            padding: '12px 20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+            fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <span style={{ fontSize: '13px', color: 'var(--dash-text-secondary)', fontWeight: 500 }}>
+            {selectedIds.size} leads seleccionados
+          </span>
+          <button
+            onClick={() => setShowWAModal(true)}
+            style={{
+              padding: '7px 14px',
+              borderRadius: '8px',
+              border: 'none',
+              background: '#25D366',
+              color: '#fff',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#1da851'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#25D366'; }}
+          >
+            Enviar WA masivo
+          </button>
+          <button
+            onClick={clearSelection}
+            style={{
+              padding: '7px 14px',
+              borderRadius: '8px',
+              border: '1px solid var(--dash-border)',
+              background: 'var(--dash-surface-2)',
+              color: 'var(--dash-text-secondary)',
+              fontSize: '13px',
+              fontWeight: 500,
+              cursor: 'pointer',
+              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+            }}
+          >
+            Deseleccionar todo
+          </button>
+        </div>
+      )}
+
+      {/* WA Bulk Modal */}
+      {showWAModal && (
+        <WABulkModal
+          selectedLeads={selectedLeadsArr}
+          onClose={() => setShowWAModal(false)}
+        />
+      )}
 
       {/* Detail modal */}
       {selectedLead && (

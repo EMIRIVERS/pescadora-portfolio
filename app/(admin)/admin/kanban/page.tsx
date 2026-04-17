@@ -1,8 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { KanbanBoard } from '@/components/admin/kanban/kanban-board'
+import { ProjectFilterSelect } from '@/components/admin/kanban/project-filter-select'
 import type {
   KanbanBoardWithTasks,
   KanbanTaskWithAssignee,
+  Project,
 } from '@/lib/supabase/types'
 import { Plus } from 'lucide-react'
 
@@ -11,6 +13,15 @@ interface PageProps {
 }
 
 // ── Data fetching ─────────────────────────────────────────────────────────────
+
+async function fetchProjects(): Promise<Pick<Project, 'id' | 'title'>[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('projects')
+    .select('id, title')
+    .order('title', { ascending: true })
+  return (data ?? []) as Pick<Project, 'id' | 'title'>[]
+}
 
 async function fetchBoardsWithTasks(
   projectId?: string
@@ -61,13 +72,16 @@ async function fetchBoardsWithTasks(
 export default async function KanbanPage({ searchParams }: PageProps) {
   const { project: projectId } = await searchParams
 
-  const boards = await fetchBoardsWithTasks(projectId)
+  const [boards, projects] = await Promise.all([
+    fetchBoardsWithTasks(projectId),
+    fetchProjects(),
+  ])
 
   return (
     <div
       className="min-h-screen"
       style={{
-        backgroundColor: '#111111',
+        backgroundColor: 'var(--dash-surface-1)',
         fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
       }}
     >
@@ -85,18 +99,16 @@ export default async function KanbanPage({ searchParams }: PageProps) {
           <div className="flex items-center gap-3">
             <h1
               className="font-semibold"
-              style={{ color: '#F5F5F7', fontSize: '18px', letterSpacing: '-0.01em' }}
+              style={{ color: 'var(--dash-text-primary)', fontSize: '18px', letterSpacing: '-0.01em' }}
             >
               Kanban
             </h1>
-            {projectId && (
-              <span
-                className="text-xs font-mono"
-                style={{ color: '#48484A' }}
-              >
-                &mdash;&nbsp;{projectId}
-              </span>
-            )}
+
+            {/* Project filter */}
+            <ProjectFilterSelect
+              projects={projects}
+              currentProjectId={projectId}
+            />
           </div>
 
           <button

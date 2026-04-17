@@ -45,7 +45,7 @@ export function InternalNotesEditor({ projectId, initialNotes }: Props) {
   return (
     <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#F5F5F7', fontFamily: FONT }}>
+        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--dash-text-primary)', fontFamily: FONT }}>
           Notas internas
         </h2>
         {!editing && (
@@ -53,9 +53,9 @@ export function InternalNotesEditor({ projectId, initialNotes }: Props) {
             onClick={handleEdit}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 5,
-              padding: '5px 12px', background: '#1C1C1E',
+              padding: '5px 12px', background: 'var(--dash-surface-2)',
               border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8,
-              fontSize: 12, color: '#86868B', cursor: 'pointer', fontFamily: FONT,
+              fontSize: 12, color: 'var(--dash-text-secondary)', cursor: 'pointer', fontFamily: FONT,
             }}
           >
             <Pencil size={11} strokeWidth={1.5} />
@@ -67,7 +67,7 @@ export function InternalNotesEditor({ projectId, initialNotes }: Props) {
       {editing ? (
         <div
           style={{
-            backgroundColor: '#1C1C1E',
+            backgroundColor: 'var(--dash-surface-2)',
             border: '1px solid rgba(0,113,227,0.4)',
             borderRadius: 16,
             overflow: 'hidden',
@@ -85,7 +85,7 @@ export function InternalNotesEditor({ projectId, initialNotes }: Props) {
               background: 'transparent',
               border: 'none',
               outline: 'none',
-              color: '#F5F5F7',
+              color: 'var(--dash-text-primary)',
               fontSize: 14,
               fontFamily: FONT,
               lineHeight: 1.6,
@@ -119,7 +119,7 @@ export function InternalNotesEditor({ projectId, initialNotes }: Props) {
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 5,
                 padding: '6px 12px', background: 'transparent', border: 'none',
-                borderRadius: 8, fontSize: 12, color: '#48484A', cursor: 'pointer', fontFamily: FONT,
+                borderRadius: 8, fontSize: 12, color: 'var(--dash-text-tertiary)', cursor: 'pointer', fontFamily: FONT,
               }}
             >
               <X size={11} strokeWidth={2} />
@@ -131,12 +131,12 @@ export function InternalNotesEditor({ projectId, initialNotes }: Props) {
       ) : (
         <div
           style={{
-            backgroundColor: '#1C1C1E',
+            backgroundColor: 'var(--dash-surface-2)',
             border: '1px solid rgba(255,255,255,0.08)',
             borderRadius: 16,
             padding: '20px 24px',
             fontSize: 14,
-            color: notes ? '#86868B' : '#3A3A3C',
+            color: notes ? 'var(--dash-text-secondary)' : '#3A3A3C',
             lineHeight: 1.6,
             whiteSpace: 'pre-wrap',
             fontFamily: FONT,

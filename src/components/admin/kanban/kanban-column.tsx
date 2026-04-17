@@ -4,6 +4,7 @@ import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Plus, Check, X } from 'lucide-react'
 import { useState, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import type { KanbanBoardWithTasks, TaskPriority } from '@/lib/supabase/types'
 import { TaskCard } from './task-card'
 import { useCreateTask } from '@/lib/queries/tasks'
@@ -12,12 +13,12 @@ import { useCreateTask } from '@/lib/queries/tasks'
 
 const fieldStyle: React.CSSProperties = {
   width: '100%',
-  backgroundColor: '#1C1C1E',
+  backgroundColor: 'var(--dash-surface-2)',
   border: '1px solid rgba(255,255,255,0.1)',
   borderRadius: '8px',
   padding: '7px 10px',
   fontSize: '12px',
-  color: '#F5F5F7',
+  color: 'var(--dash-text-primary)',
   outline: 'none',
   boxSizing: 'border-box',
   fontFamily: 'inherit',
@@ -42,7 +43,7 @@ export function KanbanColumn({ board, projectId, onOpenTaskDetail }: KanbanColum
   const [newPriority, setNewPriority] = useState<TaskPriority>('medium')
   const [newDueDate, setNewDueDate] = useState('')
 
-  const titleRef = useRef<HTMLInputElement>(null)
+  const titleRef = useRef<HTMLTextAreaElement>(null)
 
   const createTask = useCreateTask(projectId)
 
@@ -74,14 +75,18 @@ export function KanbanColumn({ board, projectId, onOpenTaskDetail }: KanbanColum
     setIsAdding(false)
   }
 
-  function handleTitleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter') handleAddTask()
+  // Enter (without Shift) saves; Escape cancels
+  function handleTitleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      void handleAddTask()
+    }
     if (e.key === 'Escape') cancelAdding()
   }
 
   function openAdding() {
     setIsAdding(true)
-    // focus title on next frame
+    // focus textarea on next frame
     requestAnimationFrame(() => titleRef.current?.focus())
   }
 
@@ -91,16 +96,18 @@ export function KanbanColumn({ board, projectId, onOpenTaskDetail }: KanbanColum
       style={{ width: '240px' }}
     >
       {/* Column container */}
-      <div
+      <motion.div
+        animate={{
+          boxShadow: isOver
+            ? '0 0 0 2px var(--dash-accent), 0 0 20px rgba(0,113,227,0.2), 0 8px 32px rgba(0,0,0,0.5)'
+            : '0 2px 12px rgba(0,0,0,0.4)',
+        }}
+        transition={{ duration: 0.2, ease: 'easeInOut' }}
         style={{
-          backgroundColor: '#111111',
+          backgroundColor: 'var(--dash-surface-1)',
           borderRadius: '16px',
           border: '1px solid rgba(255,255,255,0.08)',
           overflow: 'hidden',
-          transition: 'box-shadow 0.2s',
-          boxShadow: isOver
-            ? '0 0 0 2px rgba(0,113,227,0.5), 0 8px 32px rgba(0,0,0,0.5)'
-            : '0 2px 12px rgba(0,0,0,0.4)',
         }}
       >
         {/* Column header — slightly different background */}
@@ -127,7 +134,7 @@ export function KanbanColumn({ board, projectId, onOpenTaskDetail }: KanbanColum
             <h3
               className="truncate"
               style={{
-                color: '#86868B',
+                color: 'var(--dash-text-secondary)',
                 fontSize: '11px',
                 fontWeight: 600,
                 letterSpacing: '0.06em',
@@ -142,160 +149,201 @@ export function KanbanColumn({ board, projectId, onOpenTaskDetail }: KanbanColum
           <span
             className="flex-shrink-0 tabular-nums"
             style={{
-              backgroundColor: 'rgba(255,255,255,0.06)',
-              color: '#48484A',
+              backgroundColor: 'var(--dash-border)',
+              color: 'var(--dash-text-tertiary)',
               fontSize: '11px',
               fontWeight: 600,
               borderRadius: '6px',
               padding: '1px 6px',
               minWidth: '20px',
               textAlign: 'center',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            {board.tasks.length}
+            <motion.span
+              key={board.tasks.length}
+              initial={{ scale: 1.3 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+            >
+              {board.tasks.length}
+            </motion.span>
           </span>
         </div>
 
         {/* Drop zone + sortable list */}
-        <div
+        <motion.div
           ref={setNodeRef}
           className="flex flex-col"
+          animate={{
+            backgroundColor: isOver ? 'rgba(0,113,227,0.04)' : 'rgba(0,0,0,0)',
+          }}
+          transition={{ duration: 0.15 }}
           style={{
             gap: '6px',
             padding: '8px 8px',
             minHeight: '80px',
-            transition: 'background-color 0.15s',
-            backgroundColor: isOver ? 'rgba(0,113,227,0.04)' : 'transparent',
           }}
         >
           <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
-            {board.tasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                onOpenDetail={onOpenTaskDetail}
-              />
-            ))}
+            <AnimatePresence initial={false}>
+              {board.tasks.map((task) => (
+                <motion.div
+                  key={task.id}
+                  layout
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.18, ease: 'easeOut' }}
+                >
+                  <TaskCard
+                    task={task}
+                    onOpenDetail={onOpenTaskDetail}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </SortableContext>
 
           {/* Inline add-task form */}
-          {isAdding ? (
-            <div
-              style={{
-                backgroundColor: '#1C1C1E',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '12px',
-                padding: '10px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '7px',
-              }}
-            >
-              {/* Title input */}
-              <input
-                ref={titleRef}
-                autoFocus
-                type="text"
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-                onKeyDown={handleTitleKeyDown}
-                placeholder="Titulo de la tarea..."
-                style={fieldStyle}
-              />
-
-              {/* Priority select */}
-              <select
-                value={newPriority}
-                onChange={(e) => setNewPriority(e.target.value as TaskPriority)}
-                style={{ ...fieldStyle, appearance: 'none', cursor: 'pointer' }}
+          <AnimatePresence initial={false}>
+            {isAdding ? (
+              <motion.div
+                key="add-form"
+                initial={{ opacity: 0, height: 0, y: -8 }}
+                animate={{ opacity: 1, height: 'auto', y: 0 }}
+                exit={{ opacity: 0, height: 0, y: -8 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                style={{ overflow: 'hidden' }}
               >
-                <option value="low">Baja</option>
-                <option value="medium">Normal</option>
-                <option value="high">Alta</option>
-              </select>
+                <div
+                  style={{
+                    backgroundColor: 'var(--dash-surface-2)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '12px',
+                    padding: '10px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '7px',
+                  }}
+                >
+                  {/* Title textarea */}
+                  <textarea
+                    ref={titleRef}
+                    autoFocus
+                    rows={2}
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    onKeyDown={handleTitleKeyDown}
+                    placeholder="Titulo de la tarea..."
+                    style={{ ...fieldStyle, resize: 'none', lineHeight: '1.4' }}
+                  />
 
-              {/* Due date */}
-              <input
-                type="date"
-                name="due_date"
-                value={newDueDate}
-                onChange={(e) => setNewDueDate(e.target.value)}
-                style={fieldStyle}
-              />
+                  {/* Priority select */}
+                  <select
+                    value={newPriority}
+                    onChange={(e) => setNewPriority(e.target.value as TaskPriority)}
+                    style={{ ...fieldStyle, appearance: 'none', cursor: 'pointer' }}
+                  >
+                    <option value="low">Baja</option>
+                    <option value="medium">Normal</option>
+                    <option value="high">Alta</option>
+                  </select>
 
-              {/* Action buttons */}
-              <div className="flex gap-2">
+                  {/* Due date */}
+                  <input
+                    type="date"
+                    name="due_date"
+                    value={newDueDate}
+                    onChange={(e) => setNewDueDate(e.target.value)}
+                    style={fieldStyle}
+                  />
+
+                  {/* Action buttons */}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleAddTask}
+                      className="flex items-center justify-center gap-1 flex-1 transition-opacity hover:opacity-80"
+                      style={{
+                        backgroundColor: '#0071E3',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '7px',
+                        padding: '6px 10px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      <Check size={12} aria-hidden="true" />
+                      Agregar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={cancelAdding}
+                      className="flex items-center justify-center transition-opacity hover:opacity-80"
+                      aria-label="Cancelar"
+                      style={{
+                        backgroundColor: 'var(--dash-border)',
+                        color: 'var(--dash-text-secondary)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: '7px',
+                        padding: '6px 10px',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      <X size={12} aria-hidden="true" />
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="add-button"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+              >
                 <button
                   type="button"
-                  onClick={handleAddTask}
-                  className="flex items-center justify-center gap-1 flex-1 transition-opacity hover:opacity-80"
+                  onClick={openAdding}
+                  className="flex items-center gap-1.5 w-full transition-colors"
                   style={{
-                    backgroundColor: '#0071E3',
-                    color: '#fff',
+                    color: 'var(--dash-text-tertiary)',
+                    fontSize: '12px',
+                    fontWeight: 500,
+                    padding: '6px 8px',
+                    borderRadius: '8px',
                     border: 'none',
-                    borderRadius: '7px',
-                    padding: '6px 10px',
-                    fontSize: '12px',
-                    fontWeight: 600,
+                    backgroundColor: 'transparent',
                     cursor: 'pointer',
+                    textAlign: 'left',
                     fontFamily: 'inherit',
                   }}
-                >
-                  <Check size={12} aria-hidden="true" />
-                  Agregar
-                </button>
-                <button
-                  type="button"
-                  onClick={cancelAdding}
-                  className="flex items-center justify-center transition-opacity hover:opacity-80"
-                  aria-label="Cancelar"
-                  style={{
-                    backgroundColor: 'rgba(255,255,255,0.06)',
-                    color: '#86868B',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: '7px',
-                    padding: '6px 10px',
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'
+                    e.currentTarget.style.color = 'var(--dash-text-secondary)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                    e.currentTarget.style.color = 'var(--dash-text-tertiary)'
                   }}
                 >
-                  <X size={12} aria-hidden="true" />
+                  <Plus size={12} aria-hidden="true" />
+                  Agregar tarea
                 </button>
-              </div>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={openAdding}
-              className="flex items-center gap-1.5 w-full transition-colors"
-              style={{
-                color: '#48484A',
-                fontSize: '12px',
-                fontWeight: 500,
-                padding: '6px 8px',
-                borderRadius: '8px',
-                border: 'none',
-                backgroundColor: 'transparent',
-                cursor: 'pointer',
-                textAlign: 'left',
-                fontFamily: 'inherit',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'
-                e.currentTarget.style.color = '#86868B'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-                e.currentTarget.style.color = '#48484A'
-              }}
-            >
-              <Plus size={12} aria-hidden="true" />
-              Agregar tarea
-            </button>
-          )}
-        </div>
-      </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      </motion.div>
     </div>
   )
 }

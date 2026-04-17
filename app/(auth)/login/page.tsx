@@ -3,9 +3,31 @@
 import { Suspense, useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
-// ── Cinematic background canvas ────────────────────────────────────────────
+// ── Timecode ────────────────────────────────────────────────────────────────
 
-function CinematicBg() {
+function useTimecode() {
+  const [tc, setTc] = useState('00:00:00:00')
+  useEffect(() => {
+    const start = Date.now()
+    const id = setInterval(() => {
+      const elapsed = Date.now() - start
+      const totalFrames = Math.floor(elapsed / (1000 / 24))
+      const frames = totalFrames % 24
+      const secs   = Math.floor(elapsed / 1000) % 60
+      const mins   = Math.floor(elapsed / 60000) % 60
+      const hrs    = Math.floor(elapsed / 3600000)
+      setTc(
+        `${String(hrs).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}:${String(frames).padStart(2,'0')}`
+      )
+    }, 1000 / 24)
+    return () => clearInterval(id)
+  }, [])
+  return tc
+}
+
+// ── Canvas background ───────────────────────────────────────────────────────
+
+function FilmBg() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -25,65 +47,39 @@ function CinematicBg() {
     resize()
     window.addEventListener('resize', resize)
 
-    // Floating particles — ultra-slow, large, barely visible
-    const PARTICLES = 28
-    const particles = Array.from({ length: PARTICLES }, () => ({
-      x:    Math.random() * window.innerWidth,
-      y:    Math.random() * window.innerHeight,
-      r:    Math.random() * 1.2 + 0.3,
-      vx:   (Math.random() - 0.5) * 0.12,
-      vy:   (Math.random() - 0.5) * 0.12,
-      a:    Math.random() * 0.18 + 0.04,
-    }))
-
     function draw() {
       if (!canvas || !ctx) return
       const w = canvas.width
       const h = canvas.height
 
-      // Background
       ctx.clearRect(0, 0, w, h)
       ctx.fillStyle = '#050505'
       ctx.fillRect(0, 0, w, h)
 
-      // Ambient radial glow — breathes slowly
-      const pulse = Math.sin(t * 0.003) * 0.5 + 0.5
-      const grad = ctx.createRadialGradient(w * 0.5, h * 0.42, 0, w * 0.5, h * 0.42, w * 0.55)
-      grad.addColorStop(0,   `rgba(0, 60, 130, ${0.055 + pulse * 0.025})`)
-      grad.addColorStop(0.5, `rgba(0, 20, 50,  ${0.03  + pulse * 0.01})`)
-      grad.addColorStop(1,   'rgba(0,0,0,0)')
-      ctx.fillStyle = grad
+      // Slow breathing vignette
+      const pulse = Math.sin(t * 0.002) * 0.5 + 0.5
+      const vig = ctx.createRadialGradient(w/2, h/2, h*0.1, w/2, h/2, h*0.85)
+      vig.addColorStop(0,   'rgba(0,0,0,0)')
+      vig.addColorStop(0.6, `rgba(0,0,0,${0.3 + pulse * 0.08})`)
+      vig.addColorStop(1,   `rgba(0,0,0,${0.75 + pulse * 0.05})`)
+      ctx.fillStyle = vig
       ctx.fillRect(0, 0, w, h)
 
-      // Corner accent — top left, warm amber
-      const cornerGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, w * 0.35)
-      cornerGrad.addColorStop(0,   `rgba(180, 100, 0, ${0.022 + pulse * 0.008})`)
-      cornerGrad.addColorStop(1,   'rgba(0,0,0,0)')
-      ctx.fillStyle = cornerGrad
+      // Warm accent glow — top right
+      const warmGrad = ctx.createRadialGradient(w, 0, 0, w, 0, w * 0.6)
+      warmGrad.addColorStop(0,   `rgba(232,52,26,${0.04 + pulse * 0.015})`)
+      warmGrad.addColorStop(1,   'rgba(0,0,0,0)')
+      ctx.fillStyle = warmGrad
       ctx.fillRect(0, 0, w, h)
 
-      // Floating particles
-      for (const p of particles) {
-        p.x += p.vx
-        p.y += p.vy
-        if (p.x < 0) p.x = w
-        if (p.x > w) p.x = 0
-        if (p.y < 0) p.y = h
-        if (p.y > h) p.y = 0
-        ctx.beginPath()
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(255,255,255,${p.a * (0.5 + pulse * 0.5)})`
-        ctx.fill()
-      }
-
-      // Horizontal scan line — very faint, slow drift
-      const lineY = ((t * 0.04) % (h + 60)) - 30
-      const lineGrad = ctx.createLinearGradient(0, lineY - 40, 0, lineY + 40)
+      // Horizontal scan line
+      const lineY = ((t * 0.3) % (h + 60)) - 30
+      const lineGrad = ctx.createLinearGradient(0, lineY - 60, 0, lineY + 60)
       lineGrad.addColorStop(0,   'rgba(255,255,255,0)')
-      lineGrad.addColorStop(0.5, 'rgba(255,255,255,0.025)')
+      lineGrad.addColorStop(0.5, 'rgba(255,255,255,0.018)')
       lineGrad.addColorStop(1,   'rgba(255,255,255,0)')
       ctx.fillStyle = lineGrad
-      ctx.fillRect(0, lineY - 40, w, 80)
+      ctx.fillRect(0, lineY - 60, w, 120)
 
       t++
       animId = requestAnimationFrame(draw)
@@ -99,19 +95,12 @@ function CinematicBg() {
   return (
     <canvas
       ref={canvasRef}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        width: '100%',
-        height: '100%',
-        display: 'block',
-        zIndex: 0,
-      }}
+      style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', zIndex: 0 }}
     />
   )
 }
 
-// ── Login form ─────────────────────────────────────────────────────────────
+// ── Login form ──────────────────────────────────────────────────────────────
 
 function LoginPageInner() {
   const [email, setEmail]       = useState('')
@@ -119,10 +108,10 @@ function LoginPageInner() {
   const [error, setError]       = useState<string | null>(null)
   const [pending, setPending]   = useState(false)
   const [mounted, setMounted]   = useState(false)
+  const timecode                = useTimecode()
 
   useEffect(() => {
-    // Small delay to trigger entrance animation
-    const t = setTimeout(() => setMounted(true), 60)
+    const t = setTimeout(() => setMounted(true), 80)
     return () => clearTimeout(t)
   }, [])
 
@@ -130,25 +119,22 @@ function LoginPageInner() {
     e.preventDefault()
     setPending(true)
     setError(null)
-
     const supabase = createClient()
     const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
-
     if (authError) {
       setError(
         authError.message === 'Invalid login credentials'
           ? 'Email o contraseña incorrectos.'
-          : authError.message
+          : authError.message,
       )
       setPending(false)
       return
     }
-
     window.location.href = '/admin'
   }
 
-  const SF = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
-  const CG = "var(--font-cormorant), 'Cormorant Garamond', Georgia, serif"
+  const GS = "var(--font-geist-sans), system-ui, sans-serif"
+  const GM = "var(--font-geist-mono), ui-monospace, monospace"
 
   return (
     <main
@@ -163,213 +149,282 @@ function LoginPageInner() {
       }}
     >
       <style>{`
-        @keyframes lp-fade-up {
-          from { opacity: 0; transform: translateY(24px); }
+        @keyframes lp-in {
+          from { opacity: 0; transform: translateY(20px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        .lp-enter { animation: lp-fade-up 0.9s cubic-bezier(0.16,1,0.3,1) forwards; }
-        .lp-enter-delay-1 { animation-delay: 0.05s; opacity: 0; }
-        .lp-enter-delay-2 { animation-delay: 0.15s; opacity: 0; }
-        .lp-enter-delay-3 { animation-delay: 0.25s; opacity: 0; }
+        @keyframes lp-title-in {
+          from { opacity: 0; transform: translateY(40px) scaleY(1.04); }
+          to   { opacity: 1; transform: translateY(0) scaleY(1); }
+        }
+        @keyframes lp-blink {
+          0%, 100% { opacity: 1; }
+          50%       { opacity: 0; }
+        }
+
+        .lp-title   { animation: lp-title-in 1.1s cubic-bezier(0.16,1,0.3,1) 0.05s both; }
+        .lp-form    { animation: lp-in 0.9s cubic-bezier(0.16,1,0.3,1) 0.3s both; }
+        .lp-meta    { animation: lp-in 0.9s cubic-bezier(0.16,1,0.3,1) 0.5s both; }
+        .lp-rec-dot { animation: lp-blink 1.8s ease-in-out infinite; }
 
         .lp-input {
           width: 100%;
           background: transparent;
           border: none;
           border-bottom: 1px solid rgba(255,255,255,0.1);
-          padding: 10px 0 10px;
+          padding: 10px 0;
           color: #F5F5F7;
           font-size: 15px;
-          font-family: ${SF};
+          font-family: ${GS};
           outline: none;
           transition: border-color 0.25s;
           box-sizing: border-box;
-          caret-color: #0071E3;
+          caret-color: #e8341a;
         }
-        .lp-input::placeholder { color: rgba(255,255,255,0.2); }
-        .lp-input:focus { border-bottom-color: rgba(0,113,227,0.7); }
+        .lp-input::placeholder { color: rgba(255,255,255,0.18); }
+        .lp-input:focus { border-bottom-color: rgba(232,52,26,0.6); }
         .lp-input:disabled { opacity: 0.4; cursor: not-allowed; }
 
-        .lp-submit {
+        .lp-btn {
           width: 100%;
           padding: 14px;
-          background: rgba(255,255,255,0.96);
-          color: #050505;
-          font-size: 12px;
+          background: #e8341a;
+          color: #fff;
+          font-size: 11px;
           font-weight: 600;
-          font-family: ${SF};
-          letter-spacing: 0.12em;
+          font-family: ${GS};
+          letter-spacing: 0.16em;
           text-transform: uppercase;
           border: none;
           border-radius: 2px;
           cursor: pointer;
           transition: background 0.2s, opacity 0.2s;
         }
-        .lp-submit:hover:not(:disabled) { background: #ffffff; }
-        .lp-submit:disabled { opacity: 0.35; cursor: not-allowed; }
+        .lp-btn:hover:not(:disabled) { background: #ff3d1f; }
+        .lp-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
         .lp-grain {
           position: fixed;
           inset: 0;
           pointer-events: none;
-          opacity: 0.035;
+          opacity: 0.04;
           z-index: 1;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+          background-size: 200px 200px;
+          animation: grain 0.5s steps(1) infinite;
+        }
+        @keyframes grain {
+          0%,100%{background-position:0 0}
+          20%{background-position:-30px 15px}
+          40%{background-position:15px -20px}
+          60%{background-position:-20px 10px}
+          80%{background-position:10px -15px}
         }
 
-        .lp-divider {
-          width: 1px;
-          height: 40px;
-          background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.15), transparent);
-          margin: 0 auto 32px;
+        /* Letterbox bars */
+        .lp-bar-top, .lp-bar-bottom {
+          position: fixed;
+          left: 0; right: 0;
+          height: clamp(28px, 5vh, 48px);
+          background: #000;
+          z-index: 10;
+          pointer-events: none;
         }
+        .lp-bar-top    { top: 0; }
+        .lp-bar-bottom { bottom: 0; }
+
+        /* Corner brackets — viewfinder */
+        .lp-bracket {
+          position: absolute;
+          width: 18px; height: 18px;
+          pointer-events: none;
+        }
+        .lp-bracket::before, .lp-bracket::after {
+          content: '';
+          position: absolute;
+          background: rgba(255,255,255,0.25);
+        }
+        .lp-bracket-tl { top: -1px; left: -1px; }
+        .lp-bracket-tl::before { top: 0; left: 0; width: 100%; height: 1px; }
+        .lp-bracket-tl::after  { top: 0; left: 0; width: 1px; height: 100%; }
+
+        .lp-bracket-tr { top: -1px; right: -1px; }
+        .lp-bracket-tr::before { top: 0; right: 0; width: 100%; height: 1px; }
+        .lp-bracket-tr::after  { top: 0; right: 0; width: 1px; height: 100%; }
+
+        .lp-bracket-bl { bottom: -1px; left: -1px; }
+        .lp-bracket-bl::before { bottom: 0; left: 0; width: 100%; height: 1px; }
+        .lp-bracket-bl::after  { bottom: 0; left: 0; width: 1px; height: 100%; }
+
+        .lp-bracket-br { bottom: -1px; right: -1px; }
+        .lp-bracket-br::before { bottom: 0; right: 0; width: 100%; height: 1px; }
+        .lp-bracket-br::after  { bottom: 0; right: 0; width: 1px; height: 100%; }
       `}</style>
 
-      {/* Animated background */}
-      <CinematicBg />
-
-      {/* Grain */}
+      {/* Background */}
+      <FilmBg />
       <div className="lp-grain" />
 
-      {/* Content */}
-      <div
-        style={{
-          position: 'relative',
-          zIndex: 2,
-          width: '100%',
-          maxWidth: '380px',
-          padding: '0 24px',
-          textAlign: 'center',
-        }}
-      >
-        {/* Wordmark */}
-        {mounted && (
-          <div className="lp-enter lp-enter-delay-1">
-            {/* Top line */}
-            <div style={{
-              width: '32px',
-              height: '1px',
-              background: 'rgba(255,255,255,0.2)',
-              margin: '0 auto 28px',
-            }} />
+      {/* Letterbox */}
+      <div className="lp-bar-top" />
+      <div className="lp-bar-bottom" />
 
-            {/* XICO */}
+      {/* REC indicator — top left inside bar */}
+      {mounted && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0,
+          height: 'clamp(28px, 5vh, 48px)',
+          display: 'flex', alignItems: 'center',
+          gap: 6, paddingLeft: 20, zIndex: 20,
+        }}>
+          <span
+            className="lp-rec-dot"
+            style={{ width: 6, height: 6, borderRadius: '50%', background: '#e8341a', display: 'block', flexShrink: 0 }}
+          />
+          <span style={{ fontFamily: GM, fontSize: 10, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.35)' }}>
+            REC
+          </span>
+        </div>
+      )}
+
+      {/* Timecode — top right inside bar */}
+      {mounted && (
+        <div style={{
+          position: 'fixed', top: 0, right: 0,
+          height: 'clamp(28px, 5vh, 48px)',
+          display: 'flex', alignItems: 'center',
+          paddingRight: 20, zIndex: 20,
+        }}>
+          <span style={{ fontFamily: GM, fontSize: 10, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.3)' }}>
+            {timecode}
+          </span>
+        </div>
+      )}
+
+      {/* Ratio indicator — bottom left */}
+      {mounted && (
+        <div style={{
+          position: 'fixed', bottom: 0, left: 0,
+          height: 'clamp(28px, 5vh, 48px)',
+          display: 'flex', alignItems: 'center',
+          paddingLeft: 20, zIndex: 20,
+        }}>
+          <span style={{ fontFamily: GM, fontSize: 10, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.2)' }}>
+            2.39:1
+          </span>
+        </div>
+      )}
+
+      {/* Film label — bottom right */}
+      {mounted && (
+        <div style={{
+          position: 'fixed', bottom: 0, right: 0,
+          height: 'clamp(28px, 5vh, 48px)',
+          display: 'flex', alignItems: 'center',
+          paddingRight: 20, zIndex: 20,
+        }}>
+          <span style={{ fontFamily: GM, fontSize: 10, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.2)' }}>
+            XICO FILMS © 2025
+          </span>
+        </div>
+      )}
+
+      {/* Main content */}
+      <div style={{ position: 'relative', zIndex: 2, width: '100%', maxWidth: 420, padding: '0 32px', textAlign: 'center' }}>
+
+        {/* Giant XICO */}
+        {mounted && (
+          <div className="lp-title">
             <h1
               style={{
-                fontFamily: CG,
-                fontStyle: 'italic',
-                fontWeight: 300,
-                fontSize: 'clamp(4.5rem, 18vw, 7.5rem)',
-                letterSpacing: '-0.02em',
-                lineHeight: 1,
+                fontFamily: GS,
+                fontWeight: 900,
+                fontSize: 'clamp(5.5rem, 24vw, 10rem)',
+                letterSpacing: '-0.03em',
+                lineHeight: 0.88,
+                textTransform: 'uppercase',
                 color: '#F5F5F7',
-                margin: '0 0 2px',
+                margin: '0 0 4px',
               }}
             >
               XICO
             </h1>
-
-            {/* FILMS subtitle */}
             <p
               style={{
-                fontFamily: SF,
-                fontSize: '10px',
+                fontFamily: GS,
+                fontSize: '9px',
                 fontWeight: 500,
-                letterSpacing: '0.38em',
+                letterSpacing: '0.55em',
                 textTransform: 'uppercase',
-                color: 'rgba(255,255,255,0.3)',
-                margin: '0 0 0 0.38em', // offset the tracking
+                color: 'rgba(255,255,255,0.25)',
+                margin: '0 0 0 0.55em',
               }}
             >
               FILMS
             </p>
-
-            {/* Divider */}
-            <div className="lp-divider" style={{ marginTop: '28px' }} />
           </div>
         )}
 
-        {/* Form card */}
+        {/* Divider line */}
         {mounted && (
-          <div className="lp-enter lp-enter-delay-2">
-            <form onSubmit={handleSubmit} noValidate style={{ textAlign: 'left' }}>
+          <div style={{
+            width: 1, height: 48,
+            background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.12), transparent)',
+            margin: '28px auto',
+          }} />
+        )}
+
+        {/* Form card with viewfinder brackets */}
+        {mounted && (
+          <div className="lp-form" style={{ position: 'relative', padding: '28px 2px 2px' }}>
+            {/* Corner brackets */}
+            <div className="lp-bracket lp-bracket-tl" />
+            <div className="lp-bracket lp-bracket-tr" />
+            <div className="lp-bracket lp-bracket-bl" />
+            <div className="lp-bracket lp-bracket-br" />
+
+            <form onSubmit={handleSubmit} noValidate style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 24 }}>
               {/* Email */}
-              <div style={{ marginBottom: '28px' }}>
-                <label
-                  htmlFor="email"
-                  style={{
-                    display: 'block',
-                    fontFamily: SF,
-                    fontSize: '10px',
-                    fontWeight: 500,
-                    letterSpacing: '0.14em',
-                    textTransform: 'uppercase',
-                    color: 'rgba(255,255,255,0.35)',
-                    marginBottom: '8px',
-                  }}
-                >
+              <div>
+                <label htmlFor="email" style={{
+                  display: 'block', fontFamily: GM, fontSize: 9,
+                  letterSpacing: '0.18em', textTransform: 'uppercase',
+                  color: 'rgba(255,255,255,0.3)', marginBottom: 8,
+                }}>
                   Email
                 </label>
                 <input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={pending}
-                  className="lp-input"
-                  placeholder="correo@ejemplo.com"
+                  id="email" type="email" autoComplete="email" required
+                  value={email} onChange={(e) => setEmail(e.target.value)}
+                  disabled={pending} className="lp-input" placeholder="correo@ejemplo.com"
                 />
               </div>
 
               {/* Password */}
-              <div style={{ marginBottom: '36px' }}>
-                <label
-                  htmlFor="password"
-                  style={{
-                    display: 'block',
-                    fontFamily: SF,
-                    fontSize: '10px',
-                    fontWeight: 500,
-                    letterSpacing: '0.14em',
-                    textTransform: 'uppercase',
-                    color: 'rgba(255,255,255,0.35)',
-                    marginBottom: '8px',
-                  }}
-                >
+              <div>
+                <label htmlFor="password" style={{
+                  display: 'block', fontFamily: GM, fontSize: 9,
+                  letterSpacing: '0.18em', textTransform: 'uppercase',
+                  color: 'rgba(255,255,255,0.3)', marginBottom: 8,
+                }}>
                   Contraseña
                 </label>
                 <input
-                  id="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={pending}
-                  className="lp-input"
-                  placeholder="••••••••••"
+                  id="password" type="password" autoComplete="current-password" required
+                  value={password} onChange={(e) => setPassword(e.target.value)}
+                  disabled={pending} className="lp-input" placeholder="••••••••"
                 />
               </div>
 
               {/* Error */}
               {error && (
-                <p
-                  style={{
-                    fontFamily: SF,
-                    fontSize: '12px',
-                    color: '#FF453A',
-                    marginBottom: '20px',
-                    lineHeight: 1.4,
-                  }}
-                >
+                <p style={{ fontFamily: GM, fontSize: 11, color: '#e8341a', margin: 0, lineHeight: 1.4 }}>
                   {error}
                 </p>
               )}
 
               {/* Submit */}
-              <button type="submit" disabled={pending} className="lp-submit">
+              <button type="submit" disabled={pending} className="lp-btn">
                 {pending ? 'Verificando...' : 'Acceder'}
               </button>
             </form>
@@ -378,17 +433,12 @@ function LoginPageInner() {
 
         {/* Footer */}
         {mounted && (
-          <div className="lp-enter lp-enter-delay-3">
-            <p
-              style={{
-                marginTop: '36px',
-                fontFamily: SF,
-                fontSize: '10px',
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                color: 'rgba(255,255,255,0.12)',
-              }}
-            >
+          <div className="lp-meta">
+            <p style={{
+              marginTop: 28, fontFamily: GM, fontSize: 9,
+              letterSpacing: '0.14em', textTransform: 'uppercase',
+              color: 'rgba(255,255,255,0.1)',
+            }}>
               Acceso privado &mdash; Solo equipo
             </p>
           </div>
@@ -397,8 +447,6 @@ function LoginPageInner() {
     </main>
   )
 }
-
-// ── Export ─────────────────────────────────────────────────────────────────
 
 export default function LoginPage() {
   return (

@@ -19,8 +19,8 @@ export default async function NewProjectPage() {
     <div
       className="min-h-screen"
       style={{
-        backgroundColor: '#111111',
-        color: '#F5F5F7',
+        backgroundColor: 'var(--dash-surface-1)',
+        color: 'var(--dash-text-primary)',
         fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
       }}
     >
@@ -36,7 +36,7 @@ export default async function NewProjectPage() {
           <Link
             href="/admin/projects"
             className="flex items-center gap-1.5 transition-colors"
-            style={{ fontSize: '14px', color: '#86868B' }}
+            style={{ fontSize: '14px', color: 'var(--dash-text-secondary)' }}
           >
             <ChevronLeft className="w-4 h-4" />
             Proyectos
@@ -48,11 +48,11 @@ export default async function NewProjectPage() {
         {/* Page heading */}
         <div className="space-y-1">
           <h1
-            style={{ fontSize: '24px', fontWeight: 600, color: '#F5F5F7', letterSpacing: '-0.01em' }}
+            style={{ fontSize: '24px', fontWeight: 600, color: 'var(--dash-text-primary)', letterSpacing: '-0.01em' }}
           >
             Nuevo proyecto
           </h1>
-          <p style={{ fontSize: '14px', color: '#86868B' }}>
+          <p style={{ fontSize: '14px', color: 'var(--dash-text-secondary)' }}>
             Crea un proyecto para gestionar entregables y tareas.
           </p>
         </div>
@@ -60,7 +60,7 @@ export default async function NewProjectPage() {
         {/* Form card */}
         <div
           style={{
-            backgroundColor: '#111111',
+            backgroundColor: 'var(--dash-surface-1)',
             border: '1px solid rgba(255,255,255,0.08)',
             borderRadius: '16px',
             padding: '32px',

@@ -47,18 +47,18 @@ const fieldLabel: React.CSSProperties = {
   fontWeight: 500,
   letterSpacing: '0.05em',
   textTransform: 'uppercase',
-  color: '#86868B',
+  color: 'var(--dash-text-secondary)',
   marginBottom: '6px',
   fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
 }
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  background: '#1C1C1E',
-  border: '1px solid rgba(255,255,255,0.1)',
+  background: 'var(--dash-surface-2)',
+  border: '1px solid var(--dash-border-strong)',
   borderRadius: '8px',
   padding: '10px 14px',
-  color: '#F5F5F7',
+  color: 'var(--dash-text-primary)',
   fontSize: '14px',
   fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
   outline: 'none',
@@ -151,9 +151,9 @@ export default function AddLeadModal({ onClose, onCreated, defaultStatus = 'new'
           width: '520px',
           maxWidth: 'calc(100vw - 32px)',
           maxHeight: '90vh',
-          background: '#111111',
+          background: 'var(--dash-surface-1)',
           borderRadius: '20px',
-          border: '1px solid rgba(255,255,255,0.1)',
+          border: '1px solid var(--dash-border-strong)',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
@@ -168,7 +168,7 @@ export default function AddLeadModal({ onClose, onCreated, defaultStatus = 'new'
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '24px 28px',
-            borderBottom: '1px solid rgba(255,255,255,0.08)',
+            borderBottom: '1px solid var(--dash-border)',
             flexShrink: 0,
           }}
         >
@@ -176,7 +176,7 @@ export default function AddLeadModal({ onClose, onCreated, defaultStatus = 'new'
             style={{
               fontSize: '18px',
               fontWeight: 600,
-              color: '#F5F5F7',
+              color: 'var(--dash-text-primary)',
               letterSpacing: '-0.01em',
             }}
           >
@@ -189,23 +189,23 @@ export default function AddLeadModal({ onClose, onCreated, defaultStatus = 'new'
               width: '32px',
               height: '32px',
               borderRadius: '50%',
-              background: '#1C1C1E',
+              background: 'var(--dash-surface-2)',
               border: 'none',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#86868B',
+              color: 'var(--dash-text-secondary)',
               fontSize: '16px',
               lineHeight: 1,
               transition: 'background 0.15s ease',
               flexShrink: 0,
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#2C2C2E'
+              e.currentTarget.style.background = 'var(--dash-surface-3)'
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#1C1C1E'
+              e.currentTarget.style.background = 'var(--dash-surface-2)'
             }}
             aria-label="Cerrar modal"
           >
@@ -230,7 +230,7 @@ export default function AddLeadModal({ onClose, onCreated, defaultStatus = 'new'
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
               <label htmlFor="add-name" style={fieldLabel}>
-                Nombre <span style={{ color: '#FF453A' }}>*</span>
+                Nombre <span style={{ color: 'var(--dash-danger)' }}>*</span>
               </label>
               <input
                 id="add-name"
@@ -399,7 +399,7 @@ export default function AddLeadModal({ onClose, onCreated, defaultStatus = 'new'
             <p
               style={{
                 fontSize: '13px',
-                color: '#FF453A',
+                color: 'var(--dash-danger)',
                 margin: 0,
                 fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
               }}
@@ -417,7 +417,7 @@ export default function AddLeadModal({ onClose, onCreated, defaultStatus = 'new'
             justifyContent: 'flex-end',
             gap: '12px',
             padding: '16px 28px',
-            borderTop: '1px solid rgba(255,255,255,0.08)',
+            borderTop: '1px solid var(--dash-border)',
             flexShrink: 0,
           }}
         >
@@ -427,9 +427,9 @@ export default function AddLeadModal({ onClose, onCreated, defaultStatus = 'new'
             style={{
               padding: '9px 18px',
               background: 'transparent',
-              border: '1px solid rgba(255,255,255,0.1)',
+              border: '1px solid var(--dash-border-strong)',
               borderRadius: '8px',
-              color: '#86868B',
+              color: 'var(--dash-text-secondary)',
               fontSize: '14px',
               fontWeight: 500,
               cursor: 'pointer',
@@ -438,11 +438,11 @@ export default function AddLeadModal({ onClose, onCreated, defaultStatus = 'new'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'
-              e.currentTarget.style.color = '#F5F5F7'
+              e.currentTarget.style.color = 'var(--dash-text-primary)'
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
-              e.currentTarget.style.color = '#86868B'
+              e.currentTarget.style.borderColor = 'var(--dash-border)'
+              e.currentTarget.style.color = 'var(--dash-text-secondary)'
             }}
           >
             Cancelar

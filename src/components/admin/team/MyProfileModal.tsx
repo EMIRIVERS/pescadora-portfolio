@@ -61,8 +61,8 @@ export default function MyProfileModal({ currentUser }: Props) {
       <button
         onClick={handleOpen}
         style={{
-          backgroundColor: '#2C2C2E',
-          color: '#F5F5F7',
+          backgroundColor: 'var(--dash-surface-3)',
+          color: 'var(--dash-text-primary)',
           borderRadius: '8px',
           padding: '9px 16px',
           fontSize: '14px',
@@ -89,13 +89,13 @@ export default function MyProfileModal({ currentUser }: Props) {
               width: '20px',
               height: '20px',
               borderRadius: '50%',
-              backgroundColor: '#48484A',
+              backgroundColor: 'var(--dash-text-tertiary)',
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '11px',
               fontWeight: 700,
-              color: '#F5F5F7',
+              color: 'var(--dash-text-primary)',
               flexShrink: 0,
             }}
           >
@@ -123,7 +123,7 @@ export default function MyProfileModal({ currentUser }: Props) {
         >
           <div
             style={{
-              backgroundColor: '#1C1C1E',
+              backgroundColor: 'var(--dash-surface-2)',
               border: '1px solid rgba(255,255,255,0.10)',
               borderRadius: '20px',
               padding: '32px',
@@ -146,7 +146,7 @@ export default function MyProfileModal({ currentUser }: Props) {
                   margin: 0,
                   fontSize: '20px',
                   fontWeight: 600,
-                  color: '#F5F5F7',
+                  color: 'var(--dash-text-primary)',
                   letterSpacing: '-0.2px',
                 }}
               >
@@ -157,7 +157,7 @@ export default function MyProfileModal({ currentUser }: Props) {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#86868B',
+                  color: 'var(--dash-text-secondary)',
                   cursor: 'pointer',
                   fontSize: '20px',
                   lineHeight: 1,
@@ -173,7 +173,7 @@ export default function MyProfileModal({ currentUser }: Props) {
               <div>
                 <label
                   htmlFor="mp-full-name"
-                  style={{ display: 'block', fontSize: '12px', color: '#86868B', marginBottom: '6px' }}
+                  style={{ display: 'block', fontSize: '12px', color: 'var(--dash-text-secondary)', marginBottom: '6px' }}
                 >
                   Nombre
                 </label>
@@ -186,11 +186,11 @@ export default function MyProfileModal({ currentUser }: Props) {
                   placeholder="Tu nombre"
                   style={{
                     width: '100%',
-                    backgroundColor: '#2C2C2E',
+                    backgroundColor: 'var(--dash-surface-3)',
                     border: '1px solid rgba(255,255,255,0.08)',
                     borderRadius: '8px',
                     padding: '10px 12px',
-                    color: '#F5F5F7',
+                    color: 'var(--dash-text-primary)',
                     fontSize: '14px',
                     outline: 'none',
                     boxSizing: 'border-box',
@@ -201,7 +201,7 @@ export default function MyProfileModal({ currentUser }: Props) {
               {/* Email (read-only) */}
               <div>
                 <label
-                  style={{ display: 'block', fontSize: '12px', color: '#86868B', marginBottom: '6px' }}
+                  style={{ display: 'block', fontSize: '12px', color: 'var(--dash-text-secondary)', marginBottom: '6px' }}
                 >
                   Email
                 </label>
@@ -211,11 +211,11 @@ export default function MyProfileModal({ currentUser }: Props) {
                   readOnly
                   style={{
                     width: '100%',
-                    backgroundColor: '#111111',
+                    backgroundColor: 'var(--dash-surface-1)',
                     border: '1px solid rgba(255,255,255,0.05)',
                     borderRadius: '8px',
                     padding: '10px 12px',
-                    color: '#48484A',
+                    color: 'var(--dash-text-tertiary)',
                     fontSize: '14px',
                     outline: 'none',
                     boxSizing: 'border-box',
@@ -227,7 +227,7 @@ export default function MyProfileModal({ currentUser }: Props) {
               {/* Role (read-only) */}
               <div>
                 <label
-                  style={{ display: 'block', fontSize: '12px', color: '#86868B', marginBottom: '6px' }}
+                  style={{ display: 'block', fontSize: '12px', color: 'var(--dash-text-secondary)', marginBottom: '6px' }}
                 >
                   Rol
                 </label>
@@ -237,11 +237,11 @@ export default function MyProfileModal({ currentUser }: Props) {
                   readOnly
                   style={{
                     width: '100%',
-                    backgroundColor: '#111111',
+                    backgroundColor: 'var(--dash-surface-1)',
                     border: '1px solid rgba(255,255,255,0.05)',
                     borderRadius: '8px',
                     padding: '10px 12px',
-                    color: '#48484A',
+                    color: 'var(--dash-text-tertiary)',
                     fontSize: '14px',
                     outline: 'none',
                     boxSizing: 'border-box',
@@ -254,7 +254,7 @@ export default function MyProfileModal({ currentUser }: Props) {
               <div>
                 <label
                   htmlFor="mp-avatar-url"
-                  style={{ display: 'block', fontSize: '12px', color: '#86868B', marginBottom: '6px' }}
+                  style={{ display: 'block', fontSize: '12px', color: 'var(--dash-text-secondary)', marginBottom: '6px' }}
                 >
                   URL de foto de perfil
                 </label>
@@ -267,11 +267,11 @@ export default function MyProfileModal({ currentUser }: Props) {
                   placeholder="https://..."
                   style={{
                     width: '100%',
-                    backgroundColor: '#2C2C2E',
+                    backgroundColor: 'var(--dash-surface-3)',
                     border: '1px solid rgba(255,255,255,0.08)',
                     borderRadius: '8px',
                     padding: '10px 12px',
-                    color: '#F5F5F7',
+                    color: 'var(--dash-text-primary)',
                     fontSize: '14px',
                     outline: 'none',
                     boxSizing: 'border-box',
@@ -290,7 +290,7 @@ export default function MyProfileModal({ currentUser }: Props) {
                     style={{ borderRadius: '50%', objectFit: 'cover' }}
                     onError={() => setAvatarUrl('')}
                   />
-                  <span style={{ fontSize: '12px', color: '#86868B' }}>Vista previa</span>
+                  <span style={{ fontSize: '12px', color: 'var(--dash-text-secondary)' }}>Vista previa</span>
                 </div>
               )}
 
@@ -309,7 +309,7 @@ export default function MyProfileModal({ currentUser }: Props) {
                   onClick={handleClose}
                   disabled={isPending}
                   style={{
-                    color: '#86868B',
+                    color: 'var(--dash-text-secondary)',
                     backgroundColor: 'transparent',
                     border: 'none',
                     borderRadius: '8px',

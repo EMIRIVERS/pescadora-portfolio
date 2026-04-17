@@ -42,9 +42,10 @@ const STATUS_BADGE: Record<DeliverableStatus, { label: string; className: string
 
 interface DeliverableCardProps {
   deliverable: Deliverable
+  revisionCount?: number
 }
 
-export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
+export default function DeliverableCard({ deliverable, revisionCount }: DeliverableCardProps) {
   const typeBadge = TYPE_BADGE[deliverable.type]
   const statusBadge = STATUS_BADGE[deliverable.status]
   const hasUrl = deliverable.url !== null && deliverable.url !== ''
@@ -64,6 +65,12 @@ export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
             >
               {typeBadge.label}
             </span>
+            {/* Revision badge — only shown when there is at least one revision */}
+            {typeof revisionCount === 'number' && revisionCount > 0 && (
+              <span className="inline-flex items-center text-xs font-medium px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700 font-mono tracking-tight">
+                v{revisionCount}
+              </span>
+            )}
           </div>
 
           {deliverable.description && (

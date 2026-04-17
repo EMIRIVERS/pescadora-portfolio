@@ -1,13 +1,28 @@
 'use client'
 
-import React, { useState, useTransition } from 'react'
+import React, { useState, useTransition, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Pencil, Trash2, Eye, EyeOff, X } from 'lucide-react'
+import { Plus, Pencil, Trash2, Eye, EyeOff, X, GripVertical, Play } from 'lucide-react'
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import {
   createPortfolioVideo,
   updatePortfolioVideo,
-  deletePortfolioVideo,
-  togglePortfolioVideoVisibility,
 } from '@/lib/actions/portfolio'
 import { createClient } from '@/lib/supabase/client'
 
@@ -34,8 +49,6 @@ interface VideoManagerProps {
 
 type FormMode = 'create' | 'edit'
 
-type CategoryFilter = 'todos' | 'videoclips' | 'corporativos' | 'restaurantes' | 'comerciales' | 'fotografia'
-
 // Apple-style category pill colours (bg + text as inline style objects)
 const CATEGORY_STYLES: Record<string, { background: string; color: string }> = {
   videoclips:   { background: 'rgba(191,90,242,0.15)', color: '#BF5AF2' },
@@ -46,20 +59,11 @@ const CATEGORY_STYLES: Record<string, { background: string; color: string }> = {
 }
 
 const DEFAULT_CATEGORY_STYLE: { background: string; color: string } = {
-  background: '#2C2C2E',
-  color: '#86868B',
+  background: 'var(--dash-surface-3)',
+  color: 'var(--dash-text-secondary)',
 }
 
 const CATEGORIES = [
-  { value: 'videoclips',   label: 'Videoclips' },
-  { value: 'corporativos', label: 'Corporativos' },
-  { value: 'restaurantes', label: 'Restaurantes' },
-  { value: 'comerciales',  label: 'Comerciales' },
-  { value: 'fotografia',   label: 'Fotografía' },
-]
-
-const FILTER_PILLS: { value: CategoryFilter; label: string }[] = [
-  { value: 'todos',        label: 'Todos' },
   { value: 'videoclips',   label: 'Videoclips' },
   { value: 'corporativos', label: 'Corporativos' },
   { value: 'restaurantes', label: 'Restaurantes' },
@@ -73,12 +77,12 @@ const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sa
 
 const INPUT_STYLE: React.CSSProperties = {
   width: '100%',
-  backgroundColor: '#1C1C1E',
-  border: '1px solid rgba(255,255,255,0.08)',
+  backgroundColor: 'var(--dash-surface-2)',
+  border: '1px solid var(--dash-border)',
   borderRadius: 8,
   padding: '10px 12px',
   fontSize: 14,
-  color: '#F5F5F7',
+  color: 'var(--dash-text-primary)',
   fontFamily: FONT,
   outline: 'none',
   boxSizing: 'border-box',
@@ -91,70 +95,488 @@ const LABEL_STYLE: React.CSSProperties = {
   fontFamily: FONT,
   letterSpacing: '0.08em',
   textTransform: 'uppercase',
-  color: '#86868B',
+  color: 'var(--dash-text-secondary)',
   marginBottom: 6,
 }
 
-// ─── sub-components ────────────────────────────────────────────────────────
+// ─── helpers ───────────────────────────────────────────────────────────────
 
-function CategoryPill({ category }: { category: string }) {
-  const s = CATEGORY_STYLES[category] ?? DEFAULT_CATEGORY_STYLE
+function extractVimeoId(raw: string): string {
+  const match = raw.match(/(?:vimeo\.com\/(?:video\/)?)(\d+)/)
+  return match ? match[1] : raw.trim()
+}
+
+// ─── Vimeo preview modal ────────────────────────────────────────────────────
+
+interface VimeoModalProps {
+  vimeoId: string
+  title: string
+  onClose: () => void
+}
+
+function VimeoModal({ vimeoId, title, onClose }: VimeoModalProps) {
   return (
-    <span
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Preview: ${title}`}
+      onClick={onClose}
       style={{
-        display: 'inline-block',
-        padding: '3px 10px',
-        borderRadius: 20,
-        fontSize: 11,
-        fontFamily: FONT,
-        fontWeight: 500,
-        letterSpacing: '0.02em',
-        background: s.background,
-        color: s.color,
-        whiteSpace: 'nowrap',
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        backgroundColor: 'rgba(0,0,0,0.8)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backdropFilter: 'blur(4px)',
       }}
     >
-      {category}
-    </span>
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: '90vw',
+          maxWidth: 900,
+          backgroundColor: '#000',
+          borderRadius: 16,
+          overflow: 'hidden',
+          boxShadow: '0 32px 80px rgba(0,0,0,0.7)',
+          position: 'relative',
+        }}
+      >
+        {/* Close button */}
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Cerrar preview"
+          style={{
+            position: 'absolute',
+            top: 12,
+            right: 12,
+            zIndex: 10,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 32,
+            height: 32,
+            borderRadius: 8,
+            border: 'none',
+            background: 'rgba(0,0,0,0.6)',
+            color: '#fff',
+            cursor: 'pointer',
+          }}
+        >
+          <X size={16} strokeWidth={2} />
+        </button>
+        {/* Title bar */}
+        <div style={{ padding: '14px 52px 0 16px' }}>
+          <p style={{
+            margin: 0,
+            fontSize: 13,
+            fontFamily: FONT,
+            fontWeight: 600,
+            color: 'rgba(255,255,255,0.7)',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}>
+            {title}
+          </p>
+        </div>
+        {/* 16:9 iframe container */}
+        <div style={{ position: 'relative', paddingTop: '56.25%', marginTop: 12 }}>
+          <iframe
+            src={`https://player.vimeo.com/video/${vimeoId}?autoplay=1&color=0071E3`}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              border: 'none',
+            }}
+            allow="autoplay; fullscreen; picture-in-picture"
+            title={`Preview: ${title}`}
+          />
+        </div>
+      </div>
+    </div>
   )
 }
 
-interface ReorderButtonProps {
-  direction: 'up' | 'down'
-  disabled: boolean
-  onClick: () => void
-  title: string
+// ─── Sortable row wrapper ────────────────────────────────────────────────────
+
+interface SortableRowProps {
+  video: PortfolioVideo
+  displayOrder: number
+  isChecked: boolean
+  isDraggingDisabled: boolean
+  onCheck: (id: string, checked: boolean) => void
+  onToggleVisibility: (video: PortfolioVideo) => void
+  onEdit: (video: PortfolioVideo) => void
+  onDelete: (video: PortfolioVideo) => void
+  onPreview: (video: PortfolioVideo) => void
+  onCategoryClick: (category: string) => void
+  activeCategory: string
+  togglingId: string | null
+  deletingId: string | null
+  isPending: boolean
 }
 
-function ReorderButton({ direction, disabled, onClick, title }: ReorderButtonProps) {
+function SortableRow({
+  video,
+  displayOrder,
+  isChecked,
+  isDraggingDisabled,
+  onCheck,
+  onToggleVisibility,
+  onEdit,
+  onDelete,
+  onPreview,
+  onCategoryClick,
+  activeCategory,
+  togglingId,
+  deletingId,
+  isPending,
+}: SortableRowProps) {
   const [hovered, setHovered] = useState(false)
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: video.id, disabled: isDraggingDisabled })
+
+  const catStyle = CATEGORY_STYLES[video.category] ?? DEFAULT_CATEGORY_STYLE
+
+  const rowStyle: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition: isDragging ? undefined : transition ?? 'background-color 0.12s',
+    backgroundColor: isDragging
+      ? 'var(--dash-surface-3)'
+      : isChecked
+        ? 'rgba(0,113,227,0.06)'
+        : hovered
+          ? 'var(--dash-surface-2)'
+          : 'transparent',
+    borderTop: '1px solid var(--dash-border)',
+    opacity: isDragging ? 0.85 : 1,
+    zIndex: isDragging ? 10 : undefined,
+    position: 'relative',
+  }
+
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      title={title}
+    <tr
+      ref={setNodeRef}
+      style={rowStyle}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: 28,
-        height: 28,
-        borderRadius: '50%',
-        border: 'none',
-        background: hovered && !disabled ? '#3A3A3C' : '#2C2C2E',
-        color: disabled ? '#3A3A3C' : '#86868B',
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        fontSize: 11,
-        lineHeight: 1,
-        transition: 'background 0.15s, color 0.15s',
-        flexShrink: 0,
-      }}
     >
-      {direction === 'up' ? '▲' : '▼'}
-    </button>
+      {/* Checkbox */}
+      <td style={{ padding: '10px 8px 10px 16px', width: 36 }}>
+        <input
+          type="checkbox"
+          checked={isChecked}
+          onChange={(e) => onCheck(video.id, e.target.checked)}
+          style={{ accentColor: '#0071E3', width: 14, height: 14, cursor: 'pointer' }}
+          aria-label={`Seleccionar ${video.title}`}
+        />
+      </td>
+
+      {/* Drag handle + sort badge */}
+      <td style={{ padding: '10px 6px', width: 52 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <button
+            type="button"
+            {...attributes}
+            {...listeners}
+            title="Arrastrar para reordenar"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 22,
+              height: 22,
+              border: 'none',
+              background: 'transparent',
+              color: hovered ? 'var(--dash-text-secondary)' : 'transparent',
+              cursor: isDraggingDisabled ? 'not-allowed' : 'grab',
+              borderRadius: 4,
+              padding: 0,
+              transition: 'color 0.15s',
+              flexShrink: 0,
+            }}
+          >
+            <GripVertical size={13} strokeWidth={1.5} />
+          </button>
+          <span
+            style={{
+              fontSize: 10,
+              fontFamily: 'ui-monospace, SFMono-Regular, monospace',
+              color: 'var(--dash-text-tertiary)',
+              minWidth: 22,
+              textAlign: 'right',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            #{displayOrder}
+          </span>
+        </div>
+      </td>
+
+      {/* Thumbnail + title */}
+      <td style={{ padding: '10px 16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={
+              video.category === 'fotografia'
+                ? video.vimeo_id
+                : (video.cover_url ?? `/api/vimeo-thumb?id=${video.vimeo_id}`)
+            }
+            alt={video.title}
+            width={60}
+            height={40}
+            style={{
+              width: 60,
+              height: 40,
+              objectFit: 'cover',
+              borderRadius: 6,
+              backgroundColor: 'var(--dash-surface-3)',
+              flexShrink: 0,
+            }}
+          />
+          <div style={{ minWidth: 0 }}>
+            <p
+              style={{
+                margin: 0,
+                fontSize: 14,
+                fontFamily: FONT,
+                fontWeight: 600,
+                color: 'var(--dash-text-primary)',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {video.title}
+            </p>
+            {video.client_name && (
+              <p
+                style={{
+                  margin: '2px 0 0',
+                  fontSize: 12,
+                  fontFamily: FONT,
+                  color: 'var(--dash-text-secondary)',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {video.client_name}
+                {video.year ? ` · ${video.year}` : ''}
+              </p>
+            )}
+          </div>
+        </div>
+      </td>
+
+      {/* Category pill — clickable to filter */}
+      <td style={{ padding: '10px 16px', width: 130 }}>
+        <span
+          role="button"
+          tabIndex={0}
+          onClick={() => onCategoryClick(video.category)}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onCategoryClick(video.category) }}
+          title={`Filtrar por: ${video.category}`}
+          style={{
+            display: 'inline-block',
+            padding: '3px 10px',
+            borderRadius: 20,
+            fontSize: 11,
+            fontFamily: FONT,
+            fontWeight: 500,
+            letterSpacing: '0.02em',
+            background: catStyle.background,
+            color: catStyle.color,
+            whiteSpace: 'nowrap',
+            cursor: 'pointer',
+            outline: activeCategory === video.category ? `2px solid ${catStyle.color}` : undefined,
+            outlineOffset: activeCategory === video.category ? 1 : undefined,
+            transition: 'outline 0.12s',
+          }}
+        >
+          {video.category}
+        </span>
+      </td>
+
+      {/* Vimeo ID */}
+      <td style={{ padding: '10px 16px', width: 100 }}>
+        <span
+          style={{
+            fontSize: 12,
+            fontFamily: 'ui-monospace, SFMono-Regular, monospace',
+            color: 'var(--dash-text-tertiary)',
+          }}
+        >
+          {video.category === 'fotografia'
+            ? 'imagen'
+            : video.vimeo_id.length > 12
+              ? `${video.vimeo_id.slice(0, 12)}...`
+              : video.vimeo_id}
+        </span>
+      </td>
+
+      {/* Visibility toggle */}
+      <td style={{ padding: '10px 16px', textAlign: 'center', width: 80 }}>
+        <button
+          type="button"
+          onClick={() => onToggleVisibility(video)}
+          disabled={togglingId === video.id || isPending}
+          title={video.is_visible ? 'Ocultar video' : 'Mostrar video'}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 28,
+            height: 28,
+            borderRadius: 8,
+            border: 'none',
+            background: 'transparent',
+            color: video.is_visible ? 'var(--dash-text-secondary)' : 'var(--dash-text-tertiary)',
+            cursor: togglingId === video.id || isPending ? 'not-allowed' : 'pointer',
+            opacity: togglingId === video.id || isPending ? 0.4 : 1,
+            transition: 'color 0.15s, background 0.15s',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'var(--dash-surface-3)'
+            e.currentTarget.style.color = 'var(--dash-text-primary)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'transparent'
+            e.currentTarget.style.color = video.is_visible ? 'var(--dash-text-secondary)' : 'var(--dash-text-tertiary)'
+          }}
+        >
+          {video.is_visible ? (
+            <Eye size={14} strokeWidth={1.5} />
+          ) : (
+            <EyeOff size={14} strokeWidth={1.5} />
+          )}
+        </button>
+      </td>
+
+      {/* Actions: preview + edit + delete */}
+      <td style={{ padding: '10px 16px', width: 130 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            opacity: hovered ? 1 : 0,
+            transition: 'opacity 0.15s',
+          }}
+        >
+          {/* Preview — only for non-photo categories */}
+          {video.category !== 'fotografia' && (
+            <button
+              type="button"
+              onClick={() => onPreview(video)}
+              title="Ver preview de Vimeo"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 28,
+                height: 28,
+                borderRadius: 8,
+                border: 'none',
+                background: 'transparent',
+                color: 'var(--dash-text-secondary)',
+                cursor: 'pointer',
+                transition: 'background 0.15s, color 0.15s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(0,113,227,0.15)'
+                e.currentTarget.style.color = '#0A84FF'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent'
+                e.currentTarget.style.color = 'var(--dash-text-secondary)'
+              }}
+            >
+              <Play size={13} strokeWidth={1.5} />
+            </button>
+          )}
+
+          {/* Edit */}
+          <button
+            type="button"
+            onClick={() => onEdit(video)}
+            title="Editar video"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 28,
+              height: 28,
+              borderRadius: 8,
+              border: 'none',
+              background: 'transparent',
+              color: 'var(--dash-text-secondary)',
+              cursor: 'pointer',
+              transition: 'background 0.15s, color 0.15s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'var(--dash-surface-3)'
+              e.currentTarget.style.color = 'var(--dash-text-primary)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.color = 'var(--dash-text-secondary)'
+            }}
+          >
+            <Pencil size={13} strokeWidth={1.5} />
+          </button>
+
+          {/* Delete */}
+          <button
+            type="button"
+            onClick={() => onDelete(video)}
+            disabled={deletingId === video.id || isPending}
+            title="Eliminar video"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 28,
+              height: 28,
+              borderRadius: 8,
+              border: 'none',
+              background: 'transparent',
+              color: 'var(--dash-text-secondary)',
+              cursor: deletingId === video.id || isPending ? 'not-allowed' : 'pointer',
+              opacity: deletingId === video.id || isPending ? 0.4 : 1,
+              transition: 'background 0.15s, color 0.15s',
+            }}
+            onMouseEnter={(e) => {
+              if (!(deletingId === video.id || isPending)) {
+                e.currentTarget.style.background = 'rgba(255,69,58,0.15)'
+                e.currentTarget.style.color = '#FF453A'
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.color = 'var(--dash-text-secondary)'
+            }}
+          >
+            <Trash2 size={13} strokeWidth={1.5} />
+          </button>
+        </div>
+      </td>
+    </tr>
   )
 }
 
@@ -173,18 +595,24 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
       setLocalVideos(initialVideos)
     }
   }, [initialVideos])
+
   const [showForm, setShowForm] = useState(false)
   const [formMode, setFormMode] = useState<FormMode>('create')
   const [editingVideo, setEditingVideo] = useState<PortfolioVideo | null>(null)
   const [togglingId, setTogglingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [reorderingId, setReorderingId] = useState<string | null>(null)
-  const [activeFilter, setActiveFilter] = useState<CategoryFilter>('todos')
-  const [hoveredRow, setHoveredRow] = useState<string | null>(null)
+  const [activeFilter, setActiveFilter] = useState<string>('todos')
+
+  // Bulk selection
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkPending, setBulkPending] = useState(false)
+
+  // Preview modal
+  const [previewVideo, setPreviewVideo] = useState<PortfolioVideo | null>(null)
 
   const [formCategory, setFormCategory] = useState<string>('videoclips')
   const [formVimeoId, setFormVimeoId] = useState<string>('')
-  const [previewVimeoId, setPreviewVimeoId] = useState<string>('')
+  const [formPreviewVimeoId, setFormPreviewVimeoId] = useState<string>('')
   const isPhoto = formCategory === 'fotografia'
 
   // Resolved category list: use initialCategories if provided and non-empty, else fall back to CATEGORIES
@@ -200,12 +628,23 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
       ? sortedVideos
       : sortedVideos.filter((v) => v.category === activeFilter)
 
+  // Build unique category list from current videos for filter pills
+  const uniqueCategories = Array.from(new Set(sortedVideos.map((v) => v.category)))
+
+  // dnd-kit sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
+
+  // ── form helpers ──────────────────────────────────────────────────────────
+
   function openCreateForm() {
     setEditingVideo(null)
     setFormMode('create')
     setFormCategory('videoclips')
     setFormVimeoId('')
-    setPreviewVimeoId('')
+    setFormPreviewVimeoId('')
     setShowForm(true)
   }
 
@@ -214,7 +653,7 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
     setFormMode('edit')
     setFormCategory(video.category)
     setFormVimeoId(video.vimeo_id)
-    setPreviewVimeoId('')
+    setFormPreviewVimeoId('')
     setShowForm(true)
   }
 
@@ -226,7 +665,7 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
   function resetFormState() {
     setFormCategory('videoclips')
     setFormVimeoId('')
-    setPreviewVimeoId('')
+    setFormPreviewVimeoId('')
     setEditingVideo(null)
   }
 
@@ -246,69 +685,268 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
     })
   }
 
+  // ── delete ────────────────────────────────────────────────────────────────
+
   function handleDelete(video: PortfolioVideo) {
     if (!window.confirm(`Eliminar "${video.title}"? Esta accion no se puede deshacer.`)) return
     setDeletingId(video.id)
     startTransition(async () => {
-      await deletePortfolioVideo(video.id)
+      const supabase = createClient()
+      await supabase.from('portfolio_videos').delete().eq('id', video.id)
       setDeletingId(null)
       router.refresh()
     })
   }
 
+  // ── single visibility toggle (optimistic) ────────────────────────────────
+
   function handleToggleVisibility(video: PortfolioVideo) {
+    const next = !video.is_visible
+    setLocalVideos((prev) => prev.map((v) => v.id === video.id ? { ...v, is_visible: next } : v))
     setTogglingId(video.id)
     startTransition(async () => {
-      await togglePortfolioVideoVisibility(video.id, !video.is_visible)
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('portfolio_videos')
+        .update({ is_visible: next })
+        .eq('id', video.id)
+      if (error) {
+        setLocalVideos((prev) => prev.map((v) => v.id === video.id ? { ...v, is_visible: video.is_visible } : v))
+      }
       setTogglingId(null)
       router.refresh()
     })
   }
 
-  async function reorderVideo(id: string, direction: 'up' | 'down') {
-    const sorted = [...localVideos].sort((a, b) => a.sort_order - b.sort_order)
-    const idx = sorted.findIndex((v) => v.id === id)
-    if (idx === -1) return
-    const swapIdx = direction === 'up' ? idx - 1 : idx + 1
-    if (swapIdx < 0 || swapIdx >= sorted.length) return
+  // ── bulk visibility ───────────────────────────────────────────────────────
 
-    const current = sorted[idx]
-    const adjacent = sorted[swapIdx]
-
+  async function handleBulkVisibility(visible: boolean) {
+    const ids = Array.from(selectedIds)
+    if (ids.length === 0) return
     const snapshot = localVideos
-    setLocalVideos(
-      localVideos.map((v) => {
-        if (v.id === current.id) return { ...v, sort_order: adjacent.sort_order }
-        if (v.id === adjacent.id) return { ...v, sort_order: current.sort_order }
-        return v
-      }),
+    setLocalVideos((prev) =>
+      prev.map((v) => selectedIds.has(v.id) ? { ...v, is_visible: visible } : v)
     )
-    setReorderingId(id)
-
+    setBulkPending(true)
     try {
       const supabase = createClient()
-      await Promise.all([
-        supabase
-          .from('portfolio_videos')
-          .update({ sort_order: adjacent.sort_order })
-          .eq('id', current.id),
-        supabase
-          .from('portfolio_videos')
-          .update({ sort_order: current.sort_order })
-          .eq('id', adjacent.id),
-      ])
+      await supabase
+        .from('portfolio_videos')
+        .update({ is_visible: visible })
+        .in('id', ids)
     } catch {
       setLocalVideos(snapshot)
     } finally {
-      setReorderingId(null)
+      setBulkPending(false)
+      setSelectedIds(new Set())
+      router.refresh()
     }
   }
 
+  function handleCheckVideo(id: string, checked: boolean) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (checked) next.add(id)
+      else next.delete(id)
+      return next
+    })
+  }
+
+  function handleCheckAll(checked: boolean) {
+    if (checked) {
+      setSelectedIds(new Set(filteredVideos.map((v) => v.id)))
+    } else {
+      setSelectedIds(new Set())
+    }
+  }
+
+  const allFilteredChecked =
+    filteredVideos.length > 0 && filteredVideos.every((v) => selectedIds.has(v.id))
+  const someFilteredChecked =
+    filteredVideos.some((v) => selectedIds.has(v.id)) && !allFilteredChecked
+
+  // ── drag-to-reorder ────────────────────────────────────────────────────────
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event
+      if (!over || active.id === over.id) return
+
+      setLocalVideos((prev) => {
+        // Sort the full list
+        const allSorted = [...prev].sort((a, b) => a.sort_order - b.sort_order)
+
+        // Work out the positions of the two items within the full sorted list
+        const fromIdx = allSorted.findIndex((v) => v.id === active.id)
+        const toIdx   = allSorted.findIndex((v) => v.id === over.id)
+        if (fromIdx === -1 || toIdx === -1) return prev
+
+        // Move within the full sorted list
+        const reordered = arrayMove(allSorted, fromIdx, toIdx)
+
+        // Re-assign sequential sort_order values
+        const updated = reordered.map((v, i) => ({ ...v, sort_order: i + 1 }))
+
+        // Persist to Supabase (fire-and-forget, refresh on complete)
+        const supabase = createClient()
+        Promise.all(
+          updated.map((v) =>
+            supabase
+              .from('portfolio_videos')
+              .update({ sort_order: v.sort_order })
+              .eq('id', v.id)
+          )
+        )
+          .then(() => router.refresh())
+          .catch(() => router.refresh())
+
+        return updated
+      })
+    },
+    [router],
+  )
+
+  // ── category click-to-filter ──────────────────────────────────────────────
+
+  function handleCategoryClick(category: string) {
+    setActiveFilter((prev) => (prev === category ? 'todos' : category))
+  }
+
+  // ── preview modal ─────────────────────────────────────────────────────────
+
+  function handlePreview(video: PortfolioVideo) {
+    setPreviewVideo(video)
+  }
+
+  function closePreview() {
+    setPreviewVideo(null)
+  }
+
+  React.useEffect(() => {
+    if (!previewVideo) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') closePreview()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [previewVideo])
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Render
+  // ─────────────────────────────────────────────────────────────────────────
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, fontFamily: FONT }}>
+
+      {/* ── Vimeo preview modal ──────────────────────────────────────────── */}
+      {previewVideo && (
+        <VimeoModal
+          vimeoId={extractVimeoId(previewVideo.vimeo_id)}
+          title={previewVideo.title}
+          onClose={closePreview}
+        />
+      )}
+
+      {/* ── Bulk action floating bar ─────────────────────────────────────── */}
+      {selectedIds.size > 0 && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 24,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            padding: '10px 16px',
+            backgroundColor: 'var(--dash-surface-2)',
+            border: '1px solid var(--dash-border-strong)',
+            borderRadius: 12,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+            backdropFilter: 'blur(16px)',
+            fontFamily: FONT,
+          }}
+        >
+          <span style={{ fontSize: 13, color: 'var(--dash-text-secondary)', whiteSpace: 'nowrap' }}>
+            {selectedIds.size} {selectedIds.size === 1 ? 'seleccionado' : 'seleccionados'}
+          </span>
+          <div style={{ width: 1, height: 20, backgroundColor: 'rgba(255,255,255,0.1)', flexShrink: 0 }} />
+          <button
+            type="button"
+            disabled={bulkPending}
+            onClick={() => { void handleBulkVisibility(true) }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '6px 14px',
+              backgroundColor: 'rgba(48,209,88,0.15)',
+              border: '1px solid rgba(48,209,88,0.3)',
+              borderRadius: 8,
+              fontSize: 13,
+              fontFamily: FONT,
+              fontWeight: 500,
+              color: '#30D158',
+              cursor: bulkPending ? 'not-allowed' : 'pointer',
+              opacity: bulkPending ? 0.5 : 1,
+              transition: 'opacity 0.15s',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <Eye size={13} strokeWidth={1.5} />
+            Mostrar seleccionados
+          </button>
+          <button
+            type="button"
+            disabled={bulkPending}
+            onClick={() => { void handleBulkVisibility(false) }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '6px 14px',
+              backgroundColor: 'rgba(255,69,58,0.12)',
+              border: '1px solid rgba(255,69,58,0.3)',
+              borderRadius: 8,
+              fontSize: 13,
+              fontFamily: FONT,
+              fontWeight: 500,
+              color: '#FF453A',
+              cursor: bulkPending ? 'not-allowed' : 'pointer',
+              opacity: bulkPending ? 0.5 : 1,
+              transition: 'opacity 0.15s',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <EyeOff size={13} strokeWidth={1.5} />
+            Ocultar seleccionados
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedIds(new Set())}
+            aria-label="Deseleccionar todos"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 28,
+              height: 28,
+              border: 'none',
+              background: 'transparent',
+              color: 'var(--dash-text-tertiary)',
+              cursor: 'pointer',
+              borderRadius: 6,
+            }}
+          >
+            <X size={14} strokeWidth={2} />
+          </button>
+        </div>
+      )}
+
       {/* ── Top bar ─────────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: 12, color: '#48484A' }}>
+        <span style={{ fontSize: 12, color: 'var(--dash-text-tertiary)' }}>
           {localVideos.length} {localVideos.length === 1 ? 'video' : 'videos'}
         </span>
 
@@ -340,13 +978,14 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
 
       {/* ── Category filter pills ────────────────────────────────────────── */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        {FILTER_PILLS.map((pill) => {
-          const active = activeFilter === pill.value
+        {/* "Todos" pill */}
+        {((): React.ReactNode => {
+          const active = activeFilter === 'todos'
           return (
             <button
-              key={pill.value}
+              key="todos"
               type="button"
-              onClick={() => setActiveFilter(pill.value)}
+              onClick={() => setActiveFilter('todos')}
               style={{
                 padding: '6px 16px',
                 borderRadius: 20,
@@ -354,25 +993,64 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
                 fontSize: 13,
                 fontFamily: FONT,
                 fontWeight: active ? 500 : 400,
-                backgroundColor: active ? '#0071E3' : '#1C1C1E',
-                color: active ? '#FFFFFF' : '#86868B',
+                backgroundColor: active ? '#0071E3' : 'var(--dash-surface-2)',
+                color: active ? '#FFFFFF' : 'var(--dash-text-secondary)',
                 cursor: 'pointer',
                 transition: 'background-color 0.15s, color 0.15s',
               }}
               onMouseEnter={(e) => {
                 if (!active) {
-                  e.currentTarget.style.backgroundColor = '#2C2C2E'
-                  e.currentTarget.style.color = '#F5F5F7'
+                  e.currentTarget.style.backgroundColor = 'var(--dash-surface-3)'
+                  e.currentTarget.style.color = 'var(--dash-text-primary)'
                 }
               }}
               onMouseLeave={(e) => {
                 if (!active) {
-                  e.currentTarget.style.backgroundColor = '#1C1C1E'
-                  e.currentTarget.style.color = '#86868B'
+                  e.currentTarget.style.backgroundColor = 'var(--dash-surface-2)'
+                  e.currentTarget.style.color = 'var(--dash-text-secondary)'
                 }
               }}
             >
-              {pill.label}
+              Todos
+            </button>
+          )
+        })()}
+
+        {/* Dynamic per-category pills derived from actual video data */}
+        {uniqueCategories.map((cat) => {
+          const active = activeFilter === cat
+          const catStyle = CATEGORY_STYLES[cat] ?? DEFAULT_CATEGORY_STYLE
+          return (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => setActiveFilter(active ? 'todos' : cat)}
+              style={{
+                padding: '6px 16px',
+                borderRadius: 20,
+                border: 'none',
+                fontSize: 13,
+                fontFamily: FONT,
+                fontWeight: active ? 500 : 400,
+                backgroundColor: active ? catStyle.color : 'var(--dash-surface-2)',
+                color: active ? '#FFFFFF' : 'var(--dash-text-secondary)',
+                cursor: 'pointer',
+                transition: 'background-color 0.15s, color 0.15s',
+              }}
+              onMouseEnter={(e) => {
+                if (!active) {
+                  e.currentTarget.style.backgroundColor = 'var(--dash-surface-3)'
+                  e.currentTarget.style.color = 'var(--dash-text-primary)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!active) {
+                  e.currentTarget.style.backgroundColor = 'var(--dash-surface-2)'
+                  e.currentTarget.style.color = 'var(--dash-text-secondary)'
+                }
+              }}
+            >
+              {cat}
             </button>
           )
         })}
@@ -382,8 +1060,8 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
       {showForm && (
         <div
           style={{
-            backgroundColor: '#1C1C1E',
-            border: '1px solid rgba(255,255,255,0.08)',
+            backgroundColor: 'var(--dash-surface-2)',
+            border: '1px solid var(--dash-border)',
             borderRadius: 16,
             padding: 24,
           }}
@@ -398,7 +1076,7 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
                 fontWeight: 600,
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
-                color: '#86868B',
+                color: 'var(--dash-text-secondary)',
               }}
             >
               {formMode === 'create' ? 'Nuevo video' : 'Editar video'}
@@ -415,17 +1093,17 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
                 borderRadius: 8,
                 border: 'none',
                 background: 'transparent',
-                color: '#48484A',
+                color: 'var(--dash-text-tertiary)',
                 cursor: 'pointer',
                 transition: 'background 0.15s, color 0.15s',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#2C2C2E'
-                e.currentTarget.style.color = '#86868B'
+                e.currentTarget.style.background = 'var(--dash-surface-3)'
+                e.currentTarget.style.color = 'var(--dash-text-secondary)'
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = 'transparent'
-                e.currentTarget.style.color = '#48484A'
+                e.currentTarget.style.color = 'var(--dash-text-tertiary)'
               }}
             >
               <X size={14} strokeWidth={2} />
@@ -446,7 +1124,7 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
                   placeholder={isPhoto ? 'Nombre de la foto' : 'Nombre del video'}
                   style={INPUT_STYLE}
                   onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--dash-border)' }}
                 />
               </div>
               <div>
@@ -462,47 +1140,47 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
                     value={formVimeoId}
                     onChange={(e) => {
                       setFormVimeoId(e.target.value)
-                      setPreviewVimeoId('')
+                      setFormPreviewVimeoId('')
                     }}
                     placeholder={isPhoto ? 'https://...' : '123456789'}
                     style={INPUT_STYLE}
                     onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
-                    onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--dash-border)' }}
                   />
                   {!isPhoto && formVimeoId && (
                     <button
                       type="button"
-                      onClick={() => setPreviewVimeoId(formVimeoId)}
+                      onClick={() => setFormPreviewVimeoId(extractVimeoId(formVimeoId))}
                       style={{
                         flexShrink: 0,
                         padding: '8px 12px',
-                        backgroundColor: '#2C2C2E',
-                        border: '1px solid rgba(255,255,255,0.08)',
+                        backgroundColor: 'var(--dash-surface-3)',
+                        border: '1px solid var(--dash-border)',
                         borderRadius: 8,
                         fontSize: 12,
                         fontFamily: FONT,
-                        color: '#86868B',
+                        color: 'var(--dash-text-secondary)',
                         cursor: 'pointer',
                         whiteSpace: 'nowrap',
                         transition: 'background-color 0.15s, color 0.15s',
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#3A3A3C'
-                        e.currentTarget.style.color = '#F5F5F7'
+                        e.currentTarget.style.backgroundColor = 'var(--dash-surface-3)'
+                        e.currentTarget.style.color = 'var(--dash-text-primary)'
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = '#2C2C2E'
-                        e.currentTarget.style.color = '#86868B'
+                        e.currentTarget.style.backgroundColor = 'var(--dash-surface-3)'
+                        e.currentTarget.style.color = 'var(--dash-text-secondary)'
                       }}
                     >
                       Ver preview
                     </button>
                   )}
                 </div>
-                {!isPhoto && previewVimeoId && (
+                {!isPhoto && formPreviewVimeoId && (
                   <div style={{ marginTop: 10 }}>
                     <iframe
-                      src={`https://player.vimeo.com/video/${previewVimeoId}`}
+                      src={`https://player.vimeo.com/video/${formPreviewVimeoId}`}
                       width={400}
                       height={225}
                       allow="autoplay; fullscreen; picture-in-picture"
@@ -510,7 +1188,7 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
                         border: 'none',
                         borderRadius: 8,
                         display: 'block',
-                        backgroundColor: '#000',
+                        backgroundColor: 'var(--dash-bg)',
                       }}
                       title="Vimeo preview"
                     />
@@ -531,7 +1209,7 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
                   placeholder="https://... (opcional, usa Vimeo si vacío)"
                   style={INPUT_STYLE}
                   onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--dash-border)' }}
                 />
               </div>
             )}
@@ -547,10 +1225,10 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
                   onChange={(e) => setFormCategory(e.target.value)}
                   style={{ ...INPUT_STYLE, appearance: 'none' }}
                   onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--dash-border)' }}
                 >
                   {resolvedCategories.map((c) => (
-                    <option key={c.value} value={c.value} style={{ backgroundColor: '#1C1C1E' }}>
+                    <option key={c.value} value={c.value} style={{ backgroundColor: 'var(--dash-surface-2)' }}>
                       {c.label}
                     </option>
                   ))}
@@ -566,7 +1244,7 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
                   placeholder="Nombre del cliente"
                   style={INPUT_STYLE}
                   onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--dash-border)' }}
                 />
               </div>
               <div>
@@ -579,7 +1257,7 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
                   placeholder="2024"
                   style={INPUT_STYLE}
                   onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--dash-border)' }}
                 />
               </div>
             </div>
@@ -596,7 +1274,7 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
                   placeholder="Director, editor..."
                   style={INPUT_STYLE}
                   onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--dash-border)' }}
                 />
               </div>
               <div>
@@ -609,7 +1287,7 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
                   placeholder="0"
                   style={INPUT_STYLE}
                   onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--dash-border)' }}
                 />
               </div>
             </div>
@@ -625,7 +1303,7 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
                 placeholder="Descripcion del video..."
                 style={{ ...INPUT_STYLE, resize: 'vertical', lineHeight: 1.5 }}
                 onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
-                onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--dash-border)' }}
               />
             </div>
 
@@ -640,7 +1318,7 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
               />
               <label
                 htmlFor="is_visible"
-                style={{ fontSize: 13, fontFamily: FONT, color: '#86868B', cursor: 'pointer' }}
+                style={{ fontSize: 13, fontFamily: FONT, color: 'var(--dash-text-secondary)', cursor: 'pointer' }}
               >
                 Visible en el portfolio publico
               </label>
@@ -684,13 +1362,13 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
                   border: 'none',
                   fontSize: 14,
                   fontFamily: FONT,
-                  color: '#48484A',
+                  color: 'var(--dash-text-tertiary)',
                   cursor: isPending ? 'not-allowed' : 'pointer',
                   opacity: isPending ? 0.4 : 1,
                   transition: 'color 0.15s',
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = '#86868B' }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = '#48484A' }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--dash-text-secondary)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--dash-text-tertiary)' }}
               >
                 Cancelar
               </button>
@@ -703,328 +1381,147 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
       {filteredVideos.length === 0 ? (
         <div
           style={{
-            border: '1px solid rgba(255,255,255,0.08)',
+            border: '1px solid var(--dash-border)',
             borderRadius: 16,
             padding: '48px 24px',
             textAlign: 'center',
           }}
         >
-          <p style={{ margin: 0, fontSize: 14, fontFamily: FONT, color: '#48484A' }}>
+          <p style={{ margin: 0, fontSize: 14, fontFamily: FONT, color: 'var(--dash-text-tertiary)' }}>
             No hay videos todavia
           </p>
-          <p style={{ margin: '6px 0 0', fontSize: 12, fontFamily: FONT, color: '#3A3A3C' }}>
+          <p style={{ margin: '6px 0 0', fontSize: 12, fontFamily: FONT, color: 'var(--dash-text-tertiary)' }}>
             Usa el boton &quot;Agregar video&quot; para empezar
           </p>
         </div>
       ) : (
-        <div
-          style={{
-            backgroundColor: '#111111',
-            border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: 16,
-            overflow: 'hidden',
-          }}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
         >
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                {/* Thumb / title */}
-                <th
-                  style={{
-                    padding: '12px 16px',
-                    textAlign: 'left',
-                    fontSize: 11,
-                    fontFamily: FONT,
-                    fontWeight: 500,
-                    letterSpacing: '0.07em',
-                    textTransform: 'uppercase',
-                    color: '#48484A',
-                  }}
-                >
-                  Video
-                </th>
-                {/* Categoria */}
-                <th
-                  style={{
-                    padding: '12px 16px',
-                    textAlign: 'left',
-                    fontSize: 11,
-                    fontFamily: FONT,
-                    fontWeight: 500,
-                    letterSpacing: '0.07em',
-                    textTransform: 'uppercase',
-                    color: '#48484A',
-                    width: 130,
-                  }}
-                >
-                  Categoria
-                </th>
-                {/* Vimeo ID */}
-                <th
-                  style={{
-                    padding: '12px 16px',
-                    textAlign: 'left',
-                    fontSize: 11,
-                    fontFamily: FONT,
-                    fontWeight: 500,
-                    letterSpacing: '0.07em',
-                    textTransform: 'uppercase',
-                    color: '#48484A',
-                    width: 100,
-                  }}
-                >
-                  Vimeo ID
-                </th>
-                {/* Visible */}
-                <th
-                  style={{
-                    padding: '12px 16px',
-                    textAlign: 'center',
-                    fontSize: 11,
-                    fontFamily: FONT,
-                    fontWeight: 500,
-                    letterSpacing: '0.07em',
-                    textTransform: 'uppercase',
-                    color: '#48484A',
-                    width: 80,
-                  }}
-                >
-                  Visible
-                </th>
-                {/* Actions */}
-                <th style={{ width: 120 }} />
-              </tr>
-            </thead>
-            <tbody>
-              {filteredVideos.map((video, idx) => {
-                const isHovered = hoveredRow === video.id
-                return (
-                  <tr
-                    key={video.id}
-                    onMouseEnter={() => setHoveredRow(video.id)}
-                    onMouseLeave={() => setHoveredRow(null)}
-                    style={{
-                      backgroundColor: isHovered ? '#1C1C1E' : 'transparent',
-                      borderTop: idx === 0 ? 'none' : '1px solid rgba(255,255,255,0.04)',
-                      transition: 'background-color 0.12s',
-                    }}
-                  >
-                    {/* Thumbnail + title */}
-                    <td style={{ padding: '12px 16px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={
-                            video.category === 'fotografia'
-                              ? video.vimeo_id
-                              : (video.cover_url ?? `/api/vimeo-thumb?id=${video.vimeo_id}`)
-                          }
-                          alt={video.title}
-                          width={60}
-                          height={40}
-                          style={{
-                            width: 60,
-                            height: 40,
-                            objectFit: 'cover',
-                            borderRadius: 6,
-                            backgroundColor: '#2C2C2E',
-                            flexShrink: 0,
-                          }}
-                        />
-                        <div style={{ minWidth: 0 }}>
-                          <p
-                            style={{
-                              margin: 0,
-                              fontSize: 14,
-                              fontFamily: FONT,
-                              fontWeight: 600,
-                              color: '#F5F5F7',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                            }}
-                          >
-                            {video.title}
-                          </p>
-                          {video.client_name && (
-                            <p
-                              style={{
-                                margin: '2px 0 0',
-                                fontSize: 12,
-                                fontFamily: FONT,
-                                color: '#86868B',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                              }}
-                            >
-                              {video.client_name}
-                              {video.year ? ` · ${video.year}` : ''}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Category pill */}
-                    <td style={{ padding: '12px 16px' }}>
-                      <CategoryPill category={video.category} />
-                    </td>
-
+          <SortableContext
+            items={filteredVideos.map((v) => v.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div
+              style={{
+                backgroundColor: 'var(--dash-surface-1)',
+                border: '1px solid var(--dash-border)',
+                borderRadius: 16,
+                overflow: 'hidden',
+              }}
+            >
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--dash-border)' }}>
+                    {/* Select all */}
+                    <th style={{ padding: '12px 8px 12px 16px', width: 36 }}>
+                      <input
+                        type="checkbox"
+                        checked={allFilteredChecked}
+                        ref={(el) => {
+                          if (el) el.indeterminate = someFilteredChecked
+                        }}
+                        onChange={(e) => handleCheckAll(e.target.checked)}
+                        style={{ accentColor: '#0071E3', width: 14, height: 14, cursor: 'pointer' }}
+                        aria-label="Seleccionar todos"
+                      />
+                    </th>
+                    {/* Drag handle + order */}
+                    <th style={{ width: 52 }} />
+                    {/* Thumb / title */}
+                    <th
+                      style={{
+                        padding: '12px 16px',
+                        textAlign: 'left',
+                        fontSize: 11,
+                        fontFamily: FONT,
+                        fontWeight: 500,
+                        letterSpacing: '0.07em',
+                        textTransform: 'uppercase',
+                        color: 'var(--dash-text-tertiary)',
+                      }}
+                    >
+                      Video
+                    </th>
+                    {/* Categoria */}
+                    <th
+                      style={{
+                        padding: '12px 16px',
+                        textAlign: 'left',
+                        fontSize: 11,
+                        fontFamily: FONT,
+                        fontWeight: 500,
+                        letterSpacing: '0.07em',
+                        textTransform: 'uppercase',
+                        color: 'var(--dash-text-tertiary)',
+                        width: 130,
+                      }}
+                    >
+                      Categoria
+                    </th>
                     {/* Vimeo ID */}
-                    <td style={{ padding: '12px 16px' }}>
-                      <span
-                        style={{
-                          fontSize: 12,
-                          fontFamily: 'ui-monospace, SFMono-Regular, monospace',
-                          color: '#48484A',
-                        }}
-                      >
-                        {video.category === 'fotografia'
-                          ? 'imagen'
-                          : video.vimeo_id.length > 12
-                            ? `${video.vimeo_id.slice(0, 12)}...`
-                            : video.vimeo_id}
-                      </span>
-                    </td>
-
-                    {/* Visibility toggle */}
-                    <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                      <button
-                        type="button"
-                        onClick={() => handleToggleVisibility(video)}
-                        disabled={togglingId === video.id || isPending}
-                        title={video.is_visible ? 'Ocultar video' : 'Mostrar video'}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: 28,
-                          height: 28,
-                          borderRadius: 8,
-                          border: 'none',
-                          background: 'transparent',
-                          color: video.is_visible ? '#86868B' : '#3A3A3C',
-                          cursor: togglingId === video.id || isPending ? 'not-allowed' : 'pointer',
-                          opacity: togglingId === video.id || isPending ? 0.4 : 1,
-                          transition: 'color 0.15s, background 0.15s',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = '#2C2C2E'
-                          e.currentTarget.style.color = '#F5F5F7'
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'transparent'
-                          e.currentTarget.style.color = video.is_visible ? '#86868B' : '#3A3A3C'
-                        }}
-                      >
-                        {video.is_visible ? (
-                          <Eye size={14} strokeWidth={1.5} />
-                        ) : (
-                          <EyeOff size={14} strokeWidth={1.5} />
-                        )}
-                      </button>
-                    </td>
-
-                    {/* Reorder + Edit + Delete */}
-                    <td style={{ padding: '12px 16px' }}>
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 6,
-                          opacity: isHovered ? 1 : 0,
-                          transition: 'opacity 0.15s',
-                        }}
-                      >
-                        <ReorderButton
-                          direction="up"
-                          disabled={idx === 0 || reorderingId === video.id || isPending}
-                          onClick={() => reorderVideo(video.id, 'up')}
-                          title="Mover arriba"
-                        />
-                        <ReorderButton
-                          direction="down"
-                          disabled={
-                            idx === filteredVideos.length - 1 ||
-                            reorderingId === video.id ||
-                            isPending
-                          }
-                          onClick={() => reorderVideo(video.id, 'down')}
-                          title="Mover abajo"
-                        />
-
-                        {/* Edit */}
-                        <button
-                          type="button"
-                          onClick={() => openEditForm(video)}
-                          title="Editar video"
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: 28,
-                            height: 28,
-                            borderRadius: 8,
-                            border: 'none',
-                            background: 'transparent',
-                            color: '#86868B',
-                            cursor: 'pointer',
-                            transition: 'background 0.15s, color 0.15s',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = '#2C2C2E'
-                            e.currentTarget.style.color = '#F5F5F7'
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'transparent'
-                            e.currentTarget.style.color = '#86868B'
-                          }}
-                        >
-                          <Pencil size={13} strokeWidth={1.5} />
-                        </button>
-
-                        {/* Delete */}
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(video)}
-                          disabled={deletingId === video.id || isPending}
-                          title="Eliminar video"
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: 28,
-                            height: 28,
-                            borderRadius: 8,
-                            border: 'none',
-                            background: 'transparent',
-                            color: '#86868B',
-                            cursor: deletingId === video.id || isPending ? 'not-allowed' : 'pointer',
-                            opacity: deletingId === video.id || isPending ? 0.4 : 1,
-                            transition: 'background 0.15s, color 0.15s',
-                          }}
-                          onMouseEnter={(e) => {
-                            if (!(deletingId === video.id || isPending)) {
-                              e.currentTarget.style.background = 'rgba(255,69,58,0.15)'
-                              e.currentTarget.style.color = '#FF453A'
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'transparent'
-                            e.currentTarget.style.color = '#86868B'
-                          }}
-                        >
-                          <Trash2 size={13} strokeWidth={1.5} />
-                        </button>
-                      </div>
-                    </td>
+                    <th
+                      style={{
+                        padding: '12px 16px',
+                        textAlign: 'left',
+                        fontSize: 11,
+                        fontFamily: FONT,
+                        fontWeight: 500,
+                        letterSpacing: '0.07em',
+                        textTransform: 'uppercase',
+                        color: 'var(--dash-text-tertiary)',
+                        width: 100,
+                      }}
+                    >
+                      Vimeo ID
+                    </th>
+                    {/* Visible */}
+                    <th
+                      style={{
+                        padding: '12px 16px',
+                        textAlign: 'center',
+                        fontSize: 11,
+                        fontFamily: FONT,
+                        fontWeight: 500,
+                        letterSpacing: '0.07em',
+                        textTransform: 'uppercase',
+                        color: 'var(--dash-text-tertiary)',
+                        width: 80,
+                      }}
+                    >
+                      Visible
+                    </th>
+                    {/* Actions */}
+                    <th style={{ width: 130 }} />
                   </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+                </thead>
+                <tbody>
+                  {filteredVideos.map((video, idx) => (
+                    <SortableRow
+                      key={video.id}
+                      video={video}
+                      displayOrder={idx + 1}
+                      isChecked={selectedIds.has(video.id)}
+                      isDraggingDisabled={isPending}
+                      onCheck={handleCheckVideo}
+                      onToggleVisibility={handleToggleVisibility}
+                      onEdit={openEditForm}
+                      onDelete={handleDelete}
+                      onPreview={handlePreview}
+                      onCategoryClick={handleCategoryClick}
+                      activeCategory={activeFilter}
+                      togglingId={togglingId}
+                      deletingId={deletingId}
+                      isPending={isPending}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
     </div>
   )

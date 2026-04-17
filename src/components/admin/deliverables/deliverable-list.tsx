@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useTransition } from 'react'
 import type { Deliverable, DeliverableType, DeliverableStatus } from '@/lib/supabase/types'
+import { updateDeliverable } from '@/lib/actions/deliverables'
 import { AddDeliverableForm } from '@/components/admin/deliverables/add-deliverable-form'
 import { EditDeliverableForm } from '@/components/admin/deliverables/edit-deliverable-form'
-import { ExternalLink, Pencil, Plus, ChevronDown, ChevronUp, Play } from 'lucide-react'
+import { RevisionHistory } from '@/components/admin/deliverables/RevisionHistory'
+import { ExternalLink, Loader2, Pencil, Plus, ChevronDown, ChevronUp, Play } from 'lucide-react'
 
 interface Props {
   projectId: string
@@ -13,14 +15,14 @@ interface Props {
 
 // ─── Design tokens (Apple dark) ──────────────────────────────────────────────
 const S = {
-  surface1: '#111111',
-  surface2: '#1C1C1E',
-  surface3: '#2C2C2E',
-  border: 'rgba(255,255,255,0.08)',
-  borderSubtle: 'rgba(255,255,255,0.06)',
-  textPrimary: '#F5F5F7',
-  textSecondary: '#86868B',
-  textTertiary: '#48484A',
+  surface1: 'var(--dash-surface-1)',
+  surface2: 'var(--dash-surface-2)',
+  surface3: 'var(--dash-surface-3)',
+  border: 'var(--dash-border)',
+  borderSubtle: 'var(--dash-border)',
+  textPrimary: 'var(--dash-text-primary)',
+  textSecondary: 'var(--dash-text-secondary)',
+  textTertiary: 'var(--dash-text-tertiary)',
   accent: '#0071E3',
   accentRed: '#FF453A',
 } as const
@@ -38,7 +40,7 @@ const TYPE_LABELS: Record<DeliverableType, string> = {
 
 // ─── Status pills ─────────────────────────────────────────────────────────────
 const STATUS_PILL: Record<DeliverableStatus, { bg: string; text: string; ring: string }> = {
-  pending:  { bg: 'rgba(72,72,74,0.5)',   text: '#86868B', ring: 'rgba(99,99,102,0.5)' },
+  pending:  { bg: 'rgba(72,72,74,0.5)',   text: 'var(--dash-text-secondary)', ring: 'rgba(99,99,102,0.5)' },
   review:   { bg: 'rgba(10,132,255,0.14)', text: '#0A84FF', ring: 'rgba(10,132,255,0.25)' },
   approved: { bg: 'rgba(48,209,88,0.14)', text: '#30D158', ring: 'rgba(48,209,88,0.25)' },
 }
@@ -192,6 +194,173 @@ function Pill({ bg, text, ring, label }: { bg: string; text: string; ring: strin
   )
 }
 
+// ─── Status quick-picker ──────────────────────────────────────────────────────
+const STATUS_SEQUENCE: DeliverableStatus[] = ['pending', 'review', 'approved']
+
+interface StatusQuickPickerProps {
+  deliverable: Deliverable
+  onStatusChanged: (updated: Deliverable) => void
+}
+
+function StatusQuickPicker({ deliverable, onStatusChanged }: StatusQuickPickerProps) {
+  const [open, setOpen]       = useState(false)
+  const [isPending, start]    = useTransition()
+  const [errorMsg, setErrMsg] = useState<string | null>(null)
+
+  const font = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+
+  function handlePick(newStatus: DeliverableStatus) {
+    if (newStatus === deliverable.status) {
+      setOpen(false)
+      return
+    }
+    setErrMsg(null)
+    start(async () => {
+      const result = await updateDeliverable({
+        id:          deliverable.id,
+        projectId:   deliverable.project_id,
+        title:       deliverable.title,
+        description: deliverable.description,
+        url:         deliverable.url,
+        due_date:    deliverable.due_date,
+        type:        deliverable.type,
+        status:      newStatus,
+      })
+      if (result.error || !result.data) {
+        setErrMsg(result.error ?? 'Error al cambiar estado.')
+        return
+      }
+      onStatusChanged(result.data)
+      setOpen(false)
+    })
+  }
+
+  const pill = STATUS_PILL[deliverable.status]
+
+  if (open) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 4,
+          position: 'relative',
+        }}
+      >
+        {isPending && (
+          <Loader2
+            size={12}
+            className="animate-spin"
+            style={{ color: S.textTertiary, flexShrink: 0 }}
+          />
+        )}
+        {STATUS_SEQUENCE.map((s) => {
+          const p = STATUS_PILL[s]
+          const isActive = s === deliverable.status
+          return (
+            <button
+              key={s}
+              type="button"
+              disabled={isPending}
+              onClick={() => handlePick(s)}
+              title={STATUS_LABELS[s]}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '2px 8px',
+                borderRadius: 999,
+                fontSize: 11,
+                fontWeight: isActive ? 600 : 400,
+                letterSpacing: '0.01em',
+                background: p.bg,
+                color: p.text,
+                boxShadow: isActive ? `0 0 0 1.5px ${p.text}` : `0 0 0 1px ${p.ring}`,
+                border: 'none',
+                cursor: isPending ? 'not-allowed' : 'pointer',
+                fontFamily: font,
+                opacity: isPending ? 0.6 : 1,
+                transition: 'box-shadow 0.12s ease',
+              }}
+            >
+              {STATUS_LABELS[s]}
+            </button>
+          )
+        })}
+        <button
+          type="button"
+          onClick={() => { setOpen(false); setErrMsg(null) }}
+          disabled={isPending}
+          style={{
+            padding: '2px 6px',
+            borderRadius: 999,
+            fontSize: 11,
+            background: 'transparent',
+            border: `1px solid ${S.border}`,
+            color: S.textTertiary,
+            cursor: 'pointer',
+            fontFamily: font,
+            lineHeight: 1.4,
+          }}
+        >
+          &times;
+        </button>
+        {errorMsg && (
+          <span
+            style={{
+              position: 'absolute',
+              top: 'calc(100% + 4px)',
+              left: 0,
+              fontSize: 10,
+              color: S.accentRed,
+              fontFamily: font,
+              whiteSpace: 'nowrap',
+              background: S.surface1,
+              padding: '2px 6px',
+              borderRadius: 4,
+              border: `1px solid rgba(255,69,58,0.25)`,
+              zIndex: 10,
+            }}
+          >
+            {errorMsg}
+          </span>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      title="Cambiar estado"
+      onClick={() => setOpen(true)}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        padding: '2px 8px',
+        borderRadius: 999,
+        fontSize: 11,
+        fontWeight: 500,
+        letterSpacing: '0.01em',
+        background: pill.bg,
+        color: pill.text,
+        boxShadow: `0 0 0 1px ${pill.ring}`,
+        border: 'none',
+        cursor: 'pointer',
+        fontFamily: font,
+        transition: 'box-shadow 0.12s ease',
+      }}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 0 0 1.5px ${pill.text}`
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 0 0 1px ${pill.ring}`
+      }}
+    >
+      {STATUS_LABELS[deliverable.status]}
+    </button>
+  )
+}
+
 // ─── Row ──────────────────────────────────────────────────────────────────────
 interface DeliverableRowProps {
   deliverable: Deliverable
@@ -199,6 +368,7 @@ interface DeliverableRowProps {
   onEdit: () => void
   onEditSuccess: (updated: Deliverable) => void
   onEditCancel: () => void
+  onStatusChanged: (updated: Deliverable) => void
 }
 
 function DeliverableRow({
@@ -207,6 +377,7 @@ function DeliverableRow({
   onEdit,
   onEditSuccess,
   onEditCancel,
+  onStatusChanged,
 }: DeliverableRowProps) {
   const [expanded, setExpanded] = useState(false)
   const [hovered, setHovered] = useState(false)
@@ -243,8 +414,7 @@ function DeliverableRow({
     )
   }
 
-  const typePill   = TYPE_PILL[deliverable.type]
-  const statusPill = STATUS_PILL[deliverable.status]
+  const typePill = TYPE_PILL[deliverable.type]
 
   return (
     <div
@@ -311,8 +481,8 @@ function DeliverableRow({
         {/* Type pill */}
         <Pill bg={typePill.bg} text={typePill.text} ring={typePill.ring} label={TYPE_LABELS[deliverable.type]} />
 
-        {/* Status pill */}
-        <Pill bg={statusPill.bg} text={statusPill.text} ring={statusPill.ring} label={STATUS_LABELS[deliverable.status]} />
+        {/* Status — click to quick-change */}
+        <StatusQuickPicker deliverable={deliverable} onStatusChanged={onStatusChanged} />
 
         {/* Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
@@ -439,6 +609,12 @@ function DeliverableRow({
           >
             Agregado {formatDate(deliverable.created_at)}
           </p>
+
+          {/* Revision history panel */}
+          <RevisionHistory
+            deliverableId={deliverable.id}
+            currentUrl={deliverable.url}
+          />
         </div>
       )}
     </div>
@@ -462,6 +638,12 @@ export function DeliverableList({ projectId, initialDeliverables }: Props) {
       prev.map((d) => (d.id === updated.id ? updated : d))
     )
     setEditingId(null)
+  }, [])
+
+  const handleStatusChanged = useCallback((updated: Deliverable) => {
+    setDeliverables((prev) =>
+      prev.map((d) => (d.id === updated.id ? updated : d))
+    )
   }, [])
 
   return (
@@ -557,6 +739,7 @@ export function DeliverableList({ projectId, initialDeliverables }: Props) {
             }}
             onEditSuccess={handleEditSuccess}
             onEditCancel={() => setEditingId(null)}
+            onStatusChanged={handleStatusChanged}
           />
         ))}
 

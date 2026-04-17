@@ -10,6 +10,12 @@ export const THEMES = [
     bg: '#000000', surface1: '#111111', surface2: '#1C1C1E', surface3: '#2C2C2E',
     text: '#F5F5F7', textSecondary: '#86868B', textTertiary: '#48484A',
     border: 'rgba(255,255,255,0.08)', borderStrong: 'rgba(255,255,255,0.14)',
+    light: {
+      bg: '#F0F6FF', surface1: '#FFFFFF', surface2: '#E8F0FD', surface3: '#D4E6FF',
+      text: '#0D1117', textSecondary: '#4A5568', textTertiary: '#9BA3AF',
+      border: 'rgba(0,113,227,0.12)', borderStrong: 'rgba(0,113,227,0.22)',
+      accent: '#0062C9', accentHover: '#0071E3',
+    },
   },
   {
     id: 'midnight', name: 'Midnight',
@@ -17,6 +23,12 @@ export const THEMES = [
     bg: '#0A0A1A', surface1: '#12122A', surface2: '#1E1E3A', surface3: '#2A2A4A',
     text: '#E8E8FF', textSecondary: '#8888BB', textTertiary: '#5555AA',
     border: 'rgba(140,140,255,0.1)', borderStrong: 'rgba(140,140,255,0.18)',
+    light: {
+      bg: '#F3F2FF', surface1: '#FFFFFF', surface2: '#EAEAFF', surface3: '#D8D6FF',
+      text: '#1A1A2E', textSecondary: '#4A4A70', textTertiary: '#8888BB',
+      border: 'rgba(94,92,230,0.12)', borderStrong: 'rgba(94,92,230,0.22)',
+      accent: '#4B49C8', accentHover: '#5E5CE6',
+    },
   },
   {
     id: 'forest', name: 'Forest',
@@ -24,6 +36,12 @@ export const THEMES = [
     bg: '#050F07', surface1: '#0A1A0D', surface2: '#122018', surface3: '#1A2E20',
     text: '#E8FFE8', textSecondary: '#6B9B72', textTertiary: '#3A6B42',
     border: 'rgba(48,209,88,0.1)', borderStrong: 'rgba(48,209,88,0.18)',
+    light: {
+      bg: '#F0FFF4', surface1: '#FFFFFF', surface2: '#E2F9EA', surface3: '#C8F0D4',
+      text: '#0A1F0E', textSecondary: '#2E6B3E', textTertiary: '#6B9B72',
+      border: 'rgba(48,209,88,0.15)', borderStrong: 'rgba(48,209,88,0.28)',
+      accent: '#1A9E3F', accentHover: '#25B84A',
+    },
   },
   {
     id: 'sunset', name: 'Sunset',
@@ -31,6 +49,12 @@ export const THEMES = [
     bg: '#0F0804', surface1: '#1A1008', surface2: '#241A10', surface3: '#2E2218',
     text: '#FFE8D6', textSecondary: '#9B7060', textTertiary: '#6B4030',
     border: 'rgba(255,107,53,0.12)', borderStrong: 'rgba(255,107,53,0.22)',
+    light: {
+      bg: '#FFF5F0', surface1: '#FFFFFF', surface2: '#FEEEE6', surface3: '#FDD8C6',
+      text: '#1F0D06', textSecondary: '#7A4030', textTertiary: '#B07060',
+      border: 'rgba(255,107,53,0.15)', borderStrong: 'rgba(255,107,53,0.28)',
+      accent: '#D94E1A', accentHover: '#FF6B35',
+    },
   },
   {
     id: 'rose', name: 'Rose',
@@ -38,6 +62,12 @@ export const THEMES = [
     bg: '#0F0508', surface1: '#1A080F', surface2: '#24101A', surface3: '#2E1824',
     text: '#FFE0E8', textSecondary: '#9B6070', textTertiary: '#6B3040',
     border: 'rgba(255,55,95,0.12)', borderStrong: 'rgba(255,55,95,0.22)',
+    light: {
+      bg: '#FFF0F4', surface1: '#FFFFFF', surface2: '#FFE3EC', surface3: '#FFCCD9',
+      text: '#1F050C', textSecondary: '#7A3050', textTertiary: '#C07080',
+      border: 'rgba(255,55,95,0.15)', borderStrong: 'rgba(255,55,95,0.28)',
+      accent: '#D42048', accentHover: '#FF375F',
+    },
   },
   {
     id: 'aurora', name: 'Aurora',
@@ -45,6 +75,12 @@ export const THEMES = [
     bg: '#030A10', surface1: '#071520', surface2: '#0D1F2D', surface3: '#132A3A',
     text: '#D6F0FF', textSecondary: '#6090A0', textTertiary: '#305060',
     border: 'rgba(100,210,255,0.1)', borderStrong: 'rgba(100,210,255,0.18)',
+    light: {
+      bg: '#F0FAFE', surface1: '#FFFFFF', surface2: '#E0F5FF', surface3: '#C0EBFF',
+      text: '#061520', textSecondary: '#305060', textTertiary: '#6090A0',
+      border: 'rgba(100,210,255,0.2)', borderStrong: 'rgba(100,210,255,0.35)',
+      accent: '#0099CC', accentHover: '#00B0E8',
+    },
   },
   {
     id: 'amber', name: 'Amber',
@@ -52,6 +88,12 @@ export const THEMES = [
     bg: '#0F0B00', surface1: '#1A1400', surface2: '#24200A', surface3: '#2E2A12',
     text: '#FFF8D6', textSecondary: '#9B9060', textTertiary: '#6B6030',
     border: 'rgba(255,214,10,0.1)', borderStrong: 'rgba(255,214,10,0.18)',
+    light: {
+      bg: '#FFFDF0', surface1: '#FFFFFF', surface2: '#FFFBE0', surface3: '#FFF5B0',
+      text: '#1A1600', textSecondary: '#6B5A00', textTertiary: '#9B8030',
+      border: 'rgba(180,140,0,0.15)', borderStrong: 'rgba(180,140,0,0.28)',
+      accent: '#B89000', accentHover: '#D4A800',
+    },
   },
   {
     id: 'violet', name: 'Violet',
@@ -59,6 +101,12 @@ export const THEMES = [
     bg: '#0A0510', surface1: '#12081C', surface2: '#1C1028', surface3: '#261834',
     text: '#F0DAFF', textSecondary: '#907AAA', textTertiary: '#604A7A',
     border: 'rgba(191,90,242,0.1)', borderStrong: 'rgba(191,90,242,0.18)',
+    light: {
+      bg: '#FAF0FF', surface1: '#FFFFFF', surface2: '#F3E3FF', surface3: '#E8CCFF',
+      text: '#150A20', textSecondary: '#5A2D80', textTertiary: '#9070BB',
+      border: 'rgba(191,90,242,0.15)', borderStrong: 'rgba(191,90,242,0.28)',
+      accent: '#8B25D4', accentHover: '#A030F0',
+    },
   },
   {
     id: 'slate', name: 'Slate',
@@ -66,6 +114,12 @@ export const THEMES = [
     bg: '#0A0A0A', surface1: '#141414', surface2: '#1E1E1E', surface3: '#282828',
     text: '#EBEBF5', textSecondary: '#8E8E93', textTertiary: '#5E5E63',
     border: 'rgba(152,152,157,0.1)', borderStrong: 'rgba(152,152,157,0.18)',
+    light: {
+      bg: '#F5F5F7', surface1: '#FFFFFF', surface2: '#F0EFF4', surface3: '#E5E4EA',
+      text: '#111111', textSecondary: '#6E6E73', textTertiary: '#AEAEB2',
+      border: 'rgba(0,0,0,0.07)', borderStrong: 'rgba(0,0,0,0.13)',
+      accent: '#636366', accentHover: '#7E7E83',
+    },
   },
   {
     id: 'crimson', name: 'Crimson',
@@ -73,6 +127,12 @@ export const THEMES = [
     bg: '#0F0302', surface1: '#1A0804', surface2: '#241008', surface3: '#2E1810',
     text: '#FFE0D6', textSecondary: '#9B6050', textTertiary: '#6B3020',
     border: 'rgba(232,52,26,0.12)', borderStrong: 'rgba(232,52,26,0.22)',
+    light: {
+      bg: '#FFF2F0', surface1: '#FFFFFF', surface2: '#FFE6E2', surface3: '#FFCFC9',
+      text: '#1F0503', textSecondary: '#7A2D1A', textTertiary: '#C07060',
+      border: 'rgba(232,52,26,0.15)', borderStrong: 'rgba(232,52,26,0.28)',
+      accent: '#C42012', accentHover: '#E8341A',
+    },
   },
 ] as const
 
@@ -114,6 +174,38 @@ export function applyTheme(theme: Theme): void {
   window.dispatchEvent(new CustomEvent('dash-theme-change', { detail: theme }))
 
   // 5. Persist
+  localStorage.setItem(STORAGE_KEY, theme.id)
+}
+
+export function applyLightTheme(theme: Theme): void {
+  const l = theme.light
+  document.documentElement.setAttribute('data-theme', theme.id)
+  document.documentElement.setAttribute('data-mode', 'light')
+  document.body.style.backgroundColor = l.bg
+  document.body.style.color = l.text
+
+  const root = document.documentElement
+  root.style.setProperty('--dash-bg', l.bg)
+  root.style.setProperty('--dash-surface-1', l.surface1)
+  root.style.setProperty('--dash-surface-2', l.surface2)
+  root.style.setProperty('--dash-surface-3', l.surface3)
+  root.style.setProperty('--dash-accent', l.accent)
+  root.style.setProperty('--dash-accent-hover', l.accentHover)
+  root.style.setProperty('--dash-text-primary', l.text)
+  root.style.setProperty('--dash-text-secondary', l.textSecondary)
+  root.style.setProperty('--dash-text-tertiary', l.textTertiary)
+  root.style.setProperty('--dash-border', l.border)
+  root.style.setProperty('--dash-border-strong', l.borderStrong)
+  // Legacy
+  root.style.setProperty('--dash-surface1', l.surface1)
+  root.style.setProperty('--dash-surface2', l.surface2)
+  root.style.setProperty('--dash-text', l.text)
+  // Semantic colors adjusted for light backgrounds
+  root.style.setProperty('--dash-success', '#1A8C3F')
+  root.style.setProperty('--dash-warning', '#9C6800')
+  root.style.setProperty('--dash-danger', '#C41D11')
+  root.style.setProperty('--dash-info', '#0077AA')
+
   localStorage.setItem(STORAGE_KEY, theme.id)
 }
 
@@ -210,8 +302,8 @@ export default function ThemeSwitcher() {
           padding: '8px 12px',
           borderRadius: '8px',
           border: 'none',
-          background: btnHovered ? 'rgba(255,255,255,0.06)' : 'transparent',
-          color: btnHovered ? '#aeaeb2' : '#86868B',
+          background: btnHovered ? 'var(--dash-border)' : 'transparent',
+          color: btnHovered ? '#aeaeb2' : 'var(--dash-text-secondary)',
           fontFamily: font,
           fontSize: '13px',
           cursor: 'pointer',
@@ -226,7 +318,7 @@ export default function ThemeSwitcher() {
             flexShrink: 0,
           }}
         >
-          <PaletteIcon color={btnHovered ? '#aeaeb2' : '#86868B'} />
+          <PaletteIcon color={btnHovered ? '#aeaeb2' : 'var(--dash-text-secondary)'} />
         </span>
         Tema
         {/* Active accent dot */}

@@ -50,7 +50,7 @@ export default async function AdminTeamPage() {
     fontWeight: 600,
     letterSpacing: '0.06em',
     textTransform: 'uppercase',
-    color: '#48484A',
+    color: 'var(--dash-text-tertiary)',
     marginBottom: '16px',
     marginTop: 0,
   }
@@ -59,7 +59,7 @@ export default async function AdminTeamPage() {
     <div
       style={{
         minHeight: '100vh',
-        backgroundColor: '#111111',
+        backgroundColor: 'var(--dash-surface-1)',
         padding: '40px 32px',
         fontFamily:
           "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
@@ -81,7 +81,7 @@ export default async function AdminTeamPage() {
             style={{
               fontSize: '28px',
               fontWeight: 600,
-              color: '#F5F5F7',
+              color: 'var(--dash-text-primary)',
               margin: 0,
               lineHeight: 1.15,
               letterSpacing: '-0.3px',
@@ -94,12 +94,12 @@ export default async function AdminTeamPage() {
               marginTop: '6px',
               fontSize: '15px',
               fontWeight: 400,
-              color: '#86868B',
+              color: 'var(--dash-text-secondary)',
             }}
           >
             {team.length} miembro{team.length !== 1 ? 's' : ''}
             {adminTeam.length > 0 && (
-              <span style={{ marginLeft: '8px', color: '#48484A' }}>
+              <span style={{ marginLeft: '8px', color: 'var(--dash-text-tertiary)' }}>
                 &middot; {adminTeam.length} admin{adminTeam.length !== 1 ? 's' : ''}
               </span>
             )}
@@ -120,7 +120,7 @@ export default async function AdminTeamPage() {
           style={{
             padding: '80px 20px',
             textAlign: 'center',
-            backgroundColor: '#1C1C1E',
+            backgroundColor: 'var(--dash-surface-2)',
             border: '1px solid rgba(255,255,255,0.06)',
             borderRadius: '16px',
             marginBottom: '32px',
@@ -136,7 +136,7 @@ export default async function AdminTeamPage() {
             style={{ display: 'block', margin: '0 auto 20px' }}
           >
             {/* Left person */}
-            <circle cx="26" cy="28" r="9" fill="#2C2C2E" stroke="#3A3A3C" strokeWidth="1.5" />
+            <circle cx="26" cy="28" r="9" fill="var(--dash-surface-3)" stroke="#3A3A3C" strokeWidth="1.5" />
             <path
               d="M8 60c0-9.94 8.06-18 18-18s18 8.06 18 18"
               stroke="#3A3A3C"
@@ -145,7 +145,7 @@ export default async function AdminTeamPage() {
               fill="none"
             />
             {/* Right person (offset) */}
-            <circle cx="54" cy="28" r="9" fill="#2C2C2E" stroke="#3A3A3C" strokeWidth="1.5" />
+            <circle cx="54" cy="28" r="9" fill="var(--dash-surface-3)" stroke="#3A3A3C" strokeWidth="1.5" />
             <path
               d="M36 60c0-9.94 8.06-18 18-18s18 8.06 18 18"
               stroke="#3A3A3C"
@@ -154,15 +154,15 @@ export default async function AdminTeamPage() {
               fill="none"
             />
             {/* Plus badge */}
-            <circle cx="64" cy="18" r="9" fill="#1C1C1E" stroke="#3A3A3C" strokeWidth="1.5" />
-            <line x1="64" y1="13" x2="64" y2="23" stroke="#48484A" strokeWidth="1.5" strokeLinecap="round" />
-            <line x1="59" y1="18" x2="69" y2="18" stroke="#48484A" strokeWidth="1.5" strokeLinecap="round" />
+            <circle cx="64" cy="18" r="9" fill="var(--dash-surface-2)" stroke="#3A3A3C" strokeWidth="1.5" />
+            <line x1="64" y1="13" x2="64" y2="23" stroke="var(--dash-text-tertiary)" strokeWidth="1.5" strokeLinecap="round" />
+            <line x1="59" y1="18" x2="69" y2="18" stroke="var(--dash-text-tertiary)" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
           <h3
             style={{
               fontSize: '17px',
               fontWeight: 600,
-              color: '#F5F5F7',
+              color: 'var(--dash-text-primary)',
               margin: '0 0 8px',
               letterSpacing: '-0.02em',
               fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
@@ -173,7 +173,7 @@ export default async function AdminTeamPage() {
           <p
             style={{
               fontSize: '13px',
-              color: '#86868B',
+              color: 'var(--dash-text-secondary)',
               margin: '0 0 24px',
               lineHeight: 1.5,
               fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
@@ -208,7 +208,7 @@ export default async function AdminTeamPage() {
             <div
               style={{
                 height: '1px',
-                backgroundColor: 'rgba(255,255,255,0.06)',
+                backgroundColor: 'var(--dash-border)',
                 marginBottom: '32px',
               }}
             />

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createDeliverable } from '@/lib/actions/deliverables'
 import type { Deliverable, DeliverableType, DeliverableStatus } from '@/lib/supabase/types'
 import { Loader2 } from 'lucide-react'
 
@@ -27,12 +27,12 @@ interface FormErrors {
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const S = {
-  surface2:      '#1C1C1E',
-  surface3:      '#2C2C2E',
+  surface2:      'var(--dash-surface-2)',
+  surface3:      'var(--dash-surface-3)',
   border:        'rgba(255,255,255,0.10)',
-  textPrimary:   '#F5F5F7',
-  textSecondary: '#86868B',
-  textTertiary:  '#48484A',
+  textPrimary:   'var(--dash-text-primary)',
+  textSecondary: 'var(--dash-text-secondary)',
+  textTertiary:  'var(--dash-text-tertiary)',
   accent:        '#0071E3',
   accentRed:     '#FF453A',
   font:          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
@@ -126,27 +126,21 @@ export function AddDeliverableForm({ projectId, onSuccess, onCancel }: Props) {
     setErrors({})
 
     startTransition(async () => {
-      const supabase = createClient()
+      const result = await createDeliverable({
+        projectId,
+        title:       values.title.trim(),
+        description: values.description.trim() || null,
+        url:         values.url.trim() || null,
+        type:        values.type,
+        status:      values.status,
+      })
 
-      const { data, error } = await supabase
-        .from('project_deliverables')
-        .insert({
-          project_id:  projectId,
-          title:       values.title.trim(),
-          description: values.description.trim() || null,
-          url:         values.url.trim() || null,
-          type:        values.type,
-          status:      values.status,
-        })
-        .select('*')
-        .single()
-
-      if (error || !data) {
-        setErrors({ general: error?.message ?? 'No se pudo agregar el entregable.' })
+      if (result.error || !result.data) {
+        setErrors({ general: result.error ?? 'No se pudo agregar el entregable.' })
         return
       }
 
-      onSuccess(data as Deliverable)
+      onSuccess(result.data as Deliverable)
     })
   }
 
@@ -337,7 +331,7 @@ export function AddDeliverableForm({ projectId, onSuccess, onCancel }: Props) {
           onMouseEnter={(e) => {
             const b = e.currentTarget as HTMLButtonElement
             b.style.borderColor = 'rgba(255,255,255,0.20)'
-            b.style.color = '#F5F5F7'
+            b.style.color = 'var(--dash-text-primary)'
           }}
           onMouseLeave={(e) => {
             const b = e.currentTarget as HTMLButtonElement

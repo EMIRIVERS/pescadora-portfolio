@@ -10,8 +10,7 @@ export default async function EditClientPage({ params }: Props) {
   const { id } = await params
   const db = createServiceClient()
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: client, error } = await (db as any)
+  const { data: client, error } = await db
     .from('clients')
     .select('id, name, email, company, phone, notes')
     .eq('id', id)
@@ -24,7 +23,7 @@ export default async function EditClientPage({ params }: Props) {
       style={{
         padding: '40px 32px',
         minHeight: '100%',
-        backgroundColor: '#000000',
+        backgroundColor: 'var(--dash-bg)',
         fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
       }}
     >
@@ -34,7 +33,7 @@ export default async function EditClientPage({ params }: Props) {
           style={{
             fontSize: '28px',
             fontWeight: 600,
-            color: '#F5F5F7',
+            color: 'var(--dash-text-primary)',
             letterSpacing: '-0.02em',
             lineHeight: 1.1,
             margin: 0,
@@ -46,7 +45,7 @@ export default async function EditClientPage({ params }: Props) {
           style={{
             marginTop: '6px',
             fontSize: '13px',
-            color: '#86868B',
+            color: 'var(--dash-text-secondary)',
             letterSpacing: '-0.01em',
           }}
         >
@@ -58,7 +57,7 @@ export default async function EditClientPage({ params }: Props) {
       <div
         style={{
           maxWidth: '560px',
-          backgroundColor: '#111111',
+          backgroundColor: 'var(--dash-surface-1)',
           border: '1px solid rgba(255,255,255,0.08)',
           borderRadius: '16px',
           padding: '28px',
@@ -69,8 +68,8 @@ export default async function EditClientPage({ params }: Props) {
           initialName={client.name}
           initialEmail={client.email ?? ''}
           initialCompany={client.company ?? ''}
-          initialPhone={(client as Record<string, unknown>).phone as string ?? ''}
-          initialNotes={(client as Record<string, unknown>).notes as string ?? ''}
+          initialPhone={client.phone ?? ''}
+          initialNotes={client.notes ?? ''}
         />
       </div>
     </div>

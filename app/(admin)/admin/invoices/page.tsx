@@ -20,6 +20,18 @@ export default async function InvoicesPage() {
 
   const invoices = (invoicesRaw ?? []) as Invoice[]
 
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  // An invoice is "effectively overdue" when: DB status is 'overdue', OR status is 'sent' with a past due_date
+  function isEffectivelyOverdue(inv: Invoice): boolean {
+    if (inv.status === 'overdue') return true
+    if (inv.status === 'sent' && inv.due_date) {
+      return new Date(inv.due_date + 'T00:00:00') < today
+    }
+    return false
+  }
+
   // Stats
   const totalPending = invoices
     .filter((i) => i.status === 'sent' || i.status === 'overdue')
@@ -35,43 +47,57 @@ export default async function InvoicesPage() {
     })
     .reduce((s, i) => s + Number(i.amount), 0)
 
+  const overdueInvoices = invoices.filter(isEffectivelyOverdue)
+  const totalOverdue = overdueInvoices.reduce((s, i) => s + Number(i.amount), 0)
+
   function fmt(n: number, currency = 'MXN') {
     return new Intl.NumberFormat('es-MX', { style: 'currency', currency, maximumFractionDigits: 0 }).format(n)
   }
+
+  const stats: { label: string; value: string; sub?: string; color: string }[] = [
+    { label: 'Por cobrar', value: fmt(totalPending), color: '#FF9F0A' },
+    { label: 'Cobrado', value: fmt(totalPaid), color: '#30D158' },
+    { label: 'Este mes', value: fmt(thisMonth), color: '#0071E3' },
+    {
+      label: 'Vencidas',
+      value: fmt(totalOverdue),
+      sub: `${overdueInvoices.length} factura${overdueInvoices.length !== 1 ? 's' : ''}`,
+      color: '#FF453A',
+    },
+    { label: 'Total facturas', value: invoices.length.toString(), color: 'var(--dash-text-secondary)' },
+  ]
 
   return (
     <div style={{ fontFamily: FONT }}>
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 600, color: '#F5F5F7', letterSpacing: '-0.02em' }}>
+        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 600, color: 'var(--dash-text-primary)', letterSpacing: '-0.02em' }}>
           Facturas
         </h1>
-        <p style={{ margin: '6px 0 0', fontSize: 14, color: '#86868B' }}>
-          Gestión de facturación y pagos
+        <p style={{ margin: '6px 0 0', fontSize: 14, color: 'var(--dash-text-secondary)' }}>
+          Gestion de facturacion y pagos
         </p>
       </div>
 
       {/* Stats */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 28, flexWrap: 'wrap' }}>
-        {[
-          { label: 'Por cobrar', value: fmt(totalPending), color: '#FF9F0A' },
-          { label: 'Cobrado', value: fmt(totalPaid), color: '#30D158' },
-          { label: 'Este mes', value: fmt(thisMonth), color: '#0071E3' },
-          { label: 'Total facturas', value: invoices.length.toString(), color: '#86868B' },
-        ].map((s) => (
+        {stats.map((s) => (
           <div
             key={s.label}
             style={{
               flex: '1 1 140px',
-              backgroundColor: '#1C1C1E',
+              backgroundColor: 'var(--dash-surface-2)',
               border: `1px solid rgba(255,255,255,0.06)`,
               borderTop: `2px solid ${s.color}`,
               borderRadius: 12,
               padding: '16px 20px',
             }}
           >
-            <p style={{ margin: 0, fontSize: 11, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#86868B', fontFamily: FONT }}>{s.label}</p>
-            <p style={{ margin: '8px 0 0', fontSize: 24, fontWeight: 600, color: '#F5F5F7', letterSpacing: '-0.02em', fontFamily: FONT }}>{s.value}</p>
+            <p style={{ margin: 0, fontSize: 11, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--dash-text-secondary)', fontFamily: FONT }}>{s.label}</p>
+            <p style={{ margin: '8px 0 0', fontSize: 24, fontWeight: 600, color: s.label === 'Vencidas' ? s.color : 'var(--dash-text-primary)', letterSpacing: '-0.02em', fontFamily: FONT }}>{s.value}</p>
+            {s.sub && (
+              <p style={{ margin: '4px 0 0', fontSize: 11, color: s.color, fontFamily: FONT }}>{s.sub}</p>
+            )}
           </div>
         ))}
       </div>

@@ -200,14 +200,14 @@ export default function MediaBrowser() {
       {/* Header */}
       <div style={{ marginBottom: 24, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 600, color: '#F5F5F7', letterSpacing: '-0.02em' }}>Media</h1>
-          <p style={{ margin: '6px 0 0', fontSize: 14, color: '#86868B' }}>Archivos de imagen en Supabase Storage</p>
+          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 600, color: 'var(--dash-text-primary)', letterSpacing: '-0.02em' }}>Media</h1>
+          <p style={{ margin: '6px 0 0', fontSize: 14, color: 'var(--dash-text-secondary)' }}>Archivos de imagen en Supabase Storage</p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button
             type="button"
             onClick={() => setNewFolderMode(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', backgroundColor: '#2C2C2E', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 13, color: '#F5F5F7', cursor: 'pointer', fontFamily: FONT }}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', backgroundColor: 'var(--dash-surface-3)', border: '1px solid var(--dash-border)', borderRadius: 8, fontSize: 13, color: 'var(--dash-text-primary)', cursor: 'pointer', fontFamily: FONT }}
           >
             <FolderPlus size={14} strokeWidth={1.5} /> Nueva carpeta
           </button>
@@ -233,13 +233,13 @@ export default function MediaBrowser() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 16, flexWrap: 'wrap' }}>
         {breadcrumbs.map((crumb, i) => (
           <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            {i > 0 && <ChevronRight size={12} strokeWidth={1.5} style={{ color: '#48484A' }} />}
+            {i > 0 && <ChevronRight size={12} strokeWidth={1.5} style={{ color: 'var(--dash-text-tertiary)' }} />}
             <button
               type="button"
               onClick={() => setPath(path.slice(0, i))}
               style={{
                 border: 'none', background: 'transparent',
-                color: i === breadcrumbs.length - 1 ? '#F5F5F7' : '#0071E3',
+                color: i === breadcrumbs.length - 1 ? 'var(--dash-text-primary)' : '#0071E3',
                 fontFamily: FONT, fontSize: 13, cursor: 'pointer', padding: '2px 4px', borderRadius: 4,
                 fontWeight: i === breadcrumbs.length - 1 ? 500 : 400,
                 display: 'flex', alignItems: 'center', gap: 4,
@@ -260,12 +260,12 @@ export default function MediaBrowser() {
             onChange={(e) => setNewFolderName(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void handleCreateFolder(); if (e.key === 'Escape') { setNewFolderMode(false); setNewFolderName('') } }}
             placeholder="Nombre de la carpeta"
-            style={{ flex: 1, maxWidth: 280, backgroundColor: '#1C1C1E', border: '1px solid #0071E3', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: '#F5F5F7', fontFamily: FONT, outline: 'none' }}
+            style={{ flex: 1, maxWidth: 280, backgroundColor: 'var(--dash-surface-2)', border: '1px solid #0071E3', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: 'var(--dash-text-primary)', fontFamily: FONT, outline: 'none' }}
           />
           <button type="button" onClick={() => void handleCreateFolder()} style={{ padding: '8px 12px', backgroundColor: '#0071E3', border: 'none', borderRadius: 8, color: '#fff', cursor: 'pointer' }}>
             <Check size={14} strokeWidth={2} />
           </button>
-          <button type="button" onClick={() => { setNewFolderMode(false); setNewFolderName('') }} style={{ padding: '8px 12px', backgroundColor: '#2C2C2E', border: 'none', borderRadius: 8, color: '#86868B', cursor: 'pointer' }}>
+          <button type="button" onClick={() => { setNewFolderMode(false); setNewFolderName('') }} style={{ padding: '8px 12px', backgroundColor: 'var(--dash-surface-3)', border: 'none', borderRadius: 8, color: 'var(--dash-text-secondary)', cursor: 'pointer' }}>
             <X size={14} strokeWidth={1.5} />
           </button>
         </div>
@@ -280,12 +280,12 @@ export default function MediaBrowser() {
 
       {/* Bulk actions */}
       {selected.size > 0 && (
-        <div style={{ display: 'flex', gap: 8, marginBottom: 12, padding: '8px 12px', backgroundColor: '#1C1C1E', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, alignItems: 'center' }}>
-          <span style={{ fontSize: 13, color: '#86868B', fontFamily: FONT, marginRight: 4 }}>{selected.size} seleccionado{selected.size > 1 ? 's' : ''}</span>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12, padding: '8px 12px', backgroundColor: 'var(--dash-surface-2)', border: '1px solid var(--dash-border)', borderRadius: 10, alignItems: 'center' }}>
+          <span style={{ fontSize: 13, color: 'var(--dash-text-secondary)', fontFamily: FONT, marginRight: 4 }}>{selected.size} seleccionado{selected.size > 1 ? 's' : ''}</span>
           <button type="button" onClick={handleDeleteSelected} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', border: 'none', backgroundColor: 'rgba(255,69,58,0.1)', color: '#FF453A', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontFamily: FONT }}>
             <Trash2 size={12} strokeWidth={1.5} /> Eliminar
           </button>
-          <button type="button" onClick={() => setSelected(new Set())} style={{ padding: '5px 10px', border: 'none', backgroundColor: 'transparent', color: '#86868B', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontFamily: FONT }}>
+          <button type="button" onClick={() => setSelected(new Set())} style={{ padding: '5px 10px', border: 'none', backgroundColor: 'transparent', color: 'var(--dash-text-secondary)', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontFamily: FONT }}>
             Cancelar
           </button>
         </div>
@@ -293,9 +293,9 @@ export default function MediaBrowser() {
 
       {/* Upload progress */}
       {Object.keys(uploadProgress).length > 0 && (
-        <div style={{ marginBottom: 16, padding: '10px 14px', backgroundColor: '#1C1C1E', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10 }}>
+        <div style={{ marginBottom: 16, padding: '10px 14px', backgroundColor: 'var(--dash-surface-2)', border: '1px solid var(--dash-border)', borderRadius: 10 }}>
           {Object.entries(uploadProgress).map(([name]) => (
-            <p key={name} style={{ margin: '2px 0', fontSize: 12, color: '#86868B', fontFamily: FONT }}>Subiendo {name}...</p>
+            <p key={name} style={{ margin: '2px 0', fontSize: 12, color: 'var(--dash-text-secondary)', fontFamily: FONT }}>Subiendo {name}...</p>
           ))}
         </div>
       )}
@@ -314,11 +314,11 @@ export default function MediaBrowser() {
         }}
       >
         {loading ? (
-          <div style={{ padding: '48px', textAlign: 'center', color: '#48484A', fontSize: 14, fontFamily: FONT }}>Cargando...</div>
+          <div style={{ padding: '48px', textAlign: 'center', color: 'var(--dash-text-tertiary)', fontSize: 14, fontFamily: FONT }}>Cargando...</div>
         ) : items.length === 0 ? (
-          <div style={{ padding: '64px 24px', textAlign: 'center', border: '1px dashed rgba(255,255,255,0.08)', borderRadius: 16 }}>
+          <div style={{ padding: '64px 24px', textAlign: 'center', border: '1px dashed var(--dash-border)', borderRadius: 16 }}>
             <Upload size={32} strokeWidth={1} style={{ color: '#3A3A3C', marginBottom: 16 }} />
-            <p style={{ margin: 0, fontSize: 15, color: '#48484A', fontFamily: FONT }}>Sin archivos</p>
+            <p style={{ margin: 0, fontSize: 15, color: 'var(--dash-text-tertiary)', fontFamily: FONT }}>Sin archivos</p>
             <p style={{ margin: '6px 0 0', fontSize: 13, color: '#3A3A3C', fontFamily: FONT }}>Arrastra imágenes aquí o usa el botón de subir</p>
           </div>
         ) : (
@@ -345,7 +345,7 @@ export default function MediaBrowser() {
                     borderRadius: 10,
                     overflow: 'hidden',
                     border: isSelected ? '2px solid #0071E3' : '2px solid transparent',
-                    backgroundColor: '#1C1C1E',
+                    backgroundColor: 'var(--dash-surface-2)',
                     cursor: 'pointer',
                     position: 'relative',
                     transition: 'border-color 0.12s, box-shadow 0.12s',
@@ -354,12 +354,12 @@ export default function MediaBrowser() {
                 >
                   {/* Thumbnail or folder icon */}
                   {item.isFolder ? (
-                    <div style={{ height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#2C2C2E' }}>
+                    <div style={{ height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--dash-surface-3)' }}>
                       <FolderOpen size={40} strokeWidth={1} style={{ color: '#FF9F0A' }} />
                     </div>
                   ) : (
                     <div
-                      style={{ height: 120, position: 'relative', backgroundColor: '#2C2C2E', overflow: 'hidden' }}
+                      style={{ height: 120, position: 'relative', backgroundColor: 'var(--dash-surface-3)', overflow: 'hidden' }}
                       onClick={(e) => { e.stopPropagation(); setPreview(publicUrl!) }}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -386,15 +386,15 @@ export default function MediaBrowser() {
                         }}
                         onBlur={() => void handleRename(item.name, renameValue)}
                         onClick={(e) => e.stopPropagation()}
-                        style={{ width: '100%', boxSizing: 'border-box', margin: 0, fontSize: 12, fontWeight: 500, color: '#F5F5F7', fontFamily: FONT, backgroundColor: 'transparent', border: '1px solid #0071E3', borderRadius: 4, padding: '1px 4px', outline: 'none' }}
+                        style={{ width: '100%', boxSizing: 'border-box', margin: 0, fontSize: 12, fontWeight: 500, color: 'var(--dash-text-primary)', fontFamily: FONT, backgroundColor: 'transparent', border: '1px solid #0071E3', borderRadius: 4, padding: '1px 4px', outline: 'none' }}
                       />
                     ) : (
-                      <p style={{ margin: 0, fontSize: 12, fontWeight: 500, color: '#F5F5F7', fontFamily: FONT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={item.name}>
+                      <p style={{ margin: 0, fontSize: 12, fontWeight: 500, color: 'var(--dash-text-primary)', fontFamily: FONT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={item.name}>
                         {item.name === '.keep' ? '(carpeta vac\u00eda)' : item.name}
                       </p>
                     )}
                     {!item.isFolder && item.metadata?.size && (
-                      <p style={{ margin: '2px 0 0', fontSize: 11, color: '#48484A', fontFamily: FONT }}>{formatBytes(item.metadata.size)}</p>
+                      <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--dash-text-tertiary)', fontFamily: FONT }}>{formatBytes(item.metadata.size)}</p>
                     )}
                   </div>
 
@@ -409,7 +409,7 @@ export default function MediaBrowser() {
                         type="button"
                         onClick={() => { setRenamingItem(item.name); setRenameValue(item.name) }}
                         title="Renombrar"
-                        style={{ width: 26, height: 26, borderRadius: 6, border: 'none', backgroundColor: 'rgba(0,0,0,0.6)', color: '#F5F5F7', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}
+                        style={{ width: 26, height: 26, borderRadius: 6, border: 'none', backgroundColor: 'rgba(0,0,0,0.6)', color: 'var(--dash-text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}
                       >
                         <Pencil size={12} strokeWidth={1.5} />
                       </button>
@@ -418,7 +418,7 @@ export default function MediaBrowser() {
                           type="button"
                           onClick={() => copyUrl(item.name)}
                           title="Copiar URL"
-                          style={{ width: 26, height: 26, borderRadius: 6, border: 'none', backgroundColor: 'rgba(0,0,0,0.6)', color: copied === item.name ? '#30D158' : '#F5F5F7', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}
+                          style={{ width: 26, height: 26, borderRadius: 6, border: 'none', backgroundColor: 'rgba(0,0,0,0.6)', color: copied === item.name ? '#30D158' : 'var(--dash-text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}
                         >
                           {copied === item.name ? <Check size={12} strokeWidth={2} /> : <Copy size={12} strokeWidth={1.5} />}
                         </button>
@@ -456,7 +456,7 @@ export default function MediaBrowser() {
           <button
             type="button"
             onClick={() => setPreview(null)}
-            style={{ position: 'absolute', top: 20, right: 20, width: 36, height: 36, borderRadius: '50%', border: 'none', backgroundColor: 'rgba(255,255,255,0.1)', color: '#F5F5F7', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ position: 'absolute', top: 20, right: 20, width: 36, height: 36, borderRadius: '50%', border: 'none', backgroundColor: 'var(--dash-border)', color: 'var(--dash-text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             <X size={16} strokeWidth={1.5} />
           </button>
@@ -470,7 +470,7 @@ export default function MediaBrowser() {
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); void navigator.clipboard.writeText(preview); setCopied('preview') }}
-            style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', padding: '8px 20px', backgroundColor: '#1C1C1E', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, color: '#F5F5F7', cursor: 'pointer', fontSize: 13, fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 6 }}
+            style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', padding: '8px 20px', backgroundColor: 'var(--dash-surface-2)', border: '1px solid var(--dash-border)', borderRadius: 20, color: 'var(--dash-text-primary)', cursor: 'pointer', fontSize: 13, fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 6 }}
           >
             {copied === 'preview' ? <><Check size={13} strokeWidth={2} /> URL copiada</> : <><Copy size={13} strokeWidth={1.5} /> Copiar URL</>}
           </button>

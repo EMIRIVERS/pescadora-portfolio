@@ -17,6 +17,8 @@ export type TaskPriority = 'low' | 'medium' | 'high'
 export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'proposal' | 'won' | 'lost'
 export type LeadSource = 'manual' | 'referral' | 'instagram' | 'web' | 'whatsapp' | 'other'
 export type LeadActivityType = 'note' | 'email' | 'call' | 'whatsapp' | 'meeting' | 'status_change'
+export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled'
+export type ProposalStatus = 'draft' | 'sent' | 'accepted' | 'rejected'
 
 export interface Database {
   public: {
@@ -71,6 +73,8 @@ export interface Database {
           company: string | null
           avatar_url: string | null
           profile_id: string | null
+          phone: string | null
+          notes: string | null
         }
         Insert: {
           id?: string
@@ -80,6 +84,8 @@ export interface Database {
           company?: string | null
           avatar_url?: string | null
           profile_id?: string | null
+          phone?: string | null
+          notes?: string | null
         }
         Update: {
           id?: string
@@ -89,6 +95,8 @@ export interface Database {
           company?: string | null
           avatar_url?: string | null
           profile_id?: string | null
+          phone?: string | null
+          notes?: string | null
         }
         Relationships: [
           {
@@ -115,6 +123,8 @@ export interface Database {
           created_by: string | null
           is_public: boolean
           portfolio_order: number
+          budget: number | null
+          currency: string | null
         }
         Insert: {
           id?: string
@@ -130,6 +140,8 @@ export interface Database {
           created_by?: string | null
           is_public?: boolean
           portfolio_order?: number
+          budget?: number | null
+          currency?: string | null
         }
         Update: {
           id?: string
@@ -145,6 +157,8 @@ export interface Database {
           created_by?: string | null
           is_public?: boolean
           portfolio_order?: number
+          budget?: number | null
+          currency?: string | null
         }
         Relationships: [
           {
@@ -574,6 +588,291 @@ export interface Database {
         }
         Relationships: []
       }
+      client_uploads: {
+        Row: {
+          id: string
+          project_id: string
+          client_id: string | null
+          file_name: string
+          file_url: string
+          file_size: number | null
+          uploaded_at: string
+        }
+        Insert: {
+          id?: string
+          project_id: string
+          client_id?: string | null
+          file_name: string
+          file_url: string
+          file_size?: number | null
+          uploaded_at?: string
+        }
+        Update: {
+          id?: string
+          project_id?: string
+          client_id?: string | null
+          file_name?: string
+          file_url?: string
+          file_size?: number | null
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'client_uploads_project_id_fkey'
+            columns: ['project_id']
+            isOneToOne: false
+            referencedRelation: 'projects'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'client_uploads_client_id_fkey'
+            columns: ['client_id']
+            isOneToOne: false
+            referencedRelation: 'clients'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      project_expenses: {
+        Row: {
+          id: string
+          project_id: string
+          created_at: string
+          label: string
+          amount: number
+          category: string | null
+          notes: string | null
+          date: string | null
+        }
+        Insert: {
+          id?: string
+          project_id: string
+          created_at?: string
+          label: string
+          amount: number
+          category?: string | null
+          notes?: string | null
+          date?: string | null
+        }
+        Update: {
+          id?: string
+          project_id?: string
+          label?: string
+          amount?: number
+          category?: string | null
+          notes?: string | null
+          date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'project_expenses_project_id_fkey'
+            columns: ['project_id']
+            isOneToOne: false
+            referencedRelation: 'projects'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      deliverable_revisions: {
+        Row: {
+          id: string
+          deliverable_id: string
+          revision_number: number
+          url: string | null
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          deliverable_id: string
+          revision_number: number
+          url?: string | null
+          notes?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          deliverable_id?: string
+          revision_number?: number
+          url?: string | null
+          notes?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'deliverable_revisions_deliverable_id_fkey'
+            columns: ['deliverable_id']
+            isOneToOne: false
+            referencedRelation: 'project_deliverables'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          client_id: string | null
+          project_id: string | null
+          invoice_number: string
+          title: string | null
+          amount: number
+          currency: string
+          status: InvoiceStatus
+          issue_date: string
+          due_date: string | null
+          notes: string | null
+          paid_at: string | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          client_id?: string | null
+          project_id?: string | null
+          invoice_number: string
+          title?: string | null
+          amount: number
+          currency?: string
+          status?: InvoiceStatus
+          issue_date?: string
+          due_date?: string | null
+          notes?: string | null
+          paid_at?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          client_id?: string | null
+          project_id?: string | null
+          invoice_number?: string
+          title?: string | null
+          amount?: number
+          currency?: string
+          status?: InvoiceStatus
+          issue_date?: string
+          due_date?: string | null
+          notes?: string | null
+          paid_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'invoices_client_id_fkey'
+            columns: ['client_id']
+            isOneToOne: false
+            referencedRelation: 'clients'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'invoices_project_id_fkey'
+            columns: ['project_id']
+            isOneToOne: false
+            referencedRelation: 'projects'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      proposals: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          client_id: string | null
+          lead_id: string | null
+          title: string
+          description: string | null
+          items: Json
+          total: number
+          currency: string
+          status: ProposalStatus
+          valid_until: string | null
+          notes: string | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          client_id?: string | null
+          lead_id?: string | null
+          title: string
+          description?: string | null
+          items?: Json
+          total?: number
+          currency?: string
+          status?: ProposalStatus
+          valid_until?: string | null
+          notes?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          client_id?: string | null
+          lead_id?: string | null
+          title?: string
+          description?: string | null
+          items?: Json
+          total?: number
+          currency?: string
+          status?: ProposalStatus
+          valid_until?: string | null
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'proposals_client_id_fkey'
+            columns: ['client_id']
+            isOneToOne: false
+            referencedRelation: 'clients'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'proposals_lead_id_fkey'
+            columns: ['lead_id']
+            isOneToOne: false
+            referencedRelation: 'leads'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      portfolio_categories: {
+        Row: {
+          id: string
+          created_at: string
+          name: string | null
+          slug: string
+          label: string | null
+          description: string | null
+          sort_order: number
+          is_visible: boolean
+          cover_url: string | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          name?: string | null
+          slug: string
+          label?: string | null
+          description?: string | null
+          sort_order?: number
+          is_visible?: boolean
+          cover_url?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          name?: string | null
+          slug?: string
+          label?: string | null
+          description?: string | null
+          sort_order?: number
+          is_visible?: boolean
+          cover_url?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -653,6 +952,11 @@ export type TaskActivityLog = ActivityLog
 
 export type Lead = Tables<'leads'>
 export type LeadActivity = Tables<'lead_activities'>
+export type ClientUpload = Tables<'client_uploads'>
+export type ProjectExpense = Tables<'project_expenses'>
+export type DeliverableRevision = Tables<'deliverable_revisions'>
+
+
 
 export interface LeadWithActivity extends Lead {
   activities: LeadActivity[]
@@ -672,3 +976,17 @@ export interface PortfolioVideo {
   created_at: string
   updated_at: string
 }
+
+export type Invoice = Tables<'invoices'>
+export type Proposal = Tables<'proposals'>
+export type PortfolioCategory = Tables<'portfolio_categories'>
+
+export interface InvoiceWithRelations extends Invoice {
+  clients: Pick<Client, 'name' | 'company'> | null
+  projects: Pick<Project, 'title'> | null
+}
+
+export interface ProposalWithRelations extends Proposal {
+  clients: Pick<Client, 'name' | 'company'> | null
+}
+

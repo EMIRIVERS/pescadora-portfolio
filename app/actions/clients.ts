@@ -1,7 +1,7 @@
 'use server'
 import { revalidatePath } from 'next/cache'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
-import { createServiceClient } from '@/lib/supabase/server'
+import { createServiceClient, requireAdmin, escapeHtml } from '@/lib/supabase/server'
 import { sendEmail, ADMIN_EMAIL } from '@/lib/email'
 
 // ── Minimal DB type for email_log (not yet in generated types) ────────────────
@@ -33,6 +33,9 @@ function createEmailLogClient() {
 // ── Create client manually (no Auth account) ──────────────────────────────────
 
 export async function createClient(formData: FormData): Promise<{ error?: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
+
   const db = createServiceClient()
   const name = String(formData.get('name') ?? '').trim()
   if (!name) return { error: 'El nombre es obligatorio.' }
@@ -49,10 +52,12 @@ export async function createClient(formData: FormData): Promise<{ error?: string
   // Notify admin that a new client was created — fire-and-forget
   const clientEmail = String(formData.get('email') ?? '').trim() || null
   const clientName = String(formData.get('name') ?? '').trim()
+  const safeClientName = escapeHtml(clientName)
+  const safeClientEmail = clientEmail ? escapeHtml(clientEmail) : null
   const notificationHtml = `<!DOCTYPE html><html><body style="background:#0a0a0a;color:#F5F5F7;font-family:system-ui,sans-serif;padding:40px;max-width:600px;margin:0 auto;">
     <h2 style="font-size:18px;font-weight:700;color:#F5F5F7;margin:0 0 16px;">Nuevo cliente creado</h2>
-    <p style="font-size:14px;line-height:1.7;color:#cccccc;margin:0 0 8px;"><strong>Nombre:</strong> ${clientName}</p>
-    ${clientEmail ? `<p style="font-size:14px;line-height:1.7;color:#cccccc;margin:0 0 8px;"><strong>Email:</strong> ${clientEmail}</p>` : ''}
+    <p style="font-size:14px;line-height:1.7;color:#cccccc;margin:0 0 8px;"><strong>Nombre:</strong> ${safeClientName}</p>
+    ${safeClientEmail ? `<p style="font-size:14px;line-height:1.7;color:#cccccc;margin:0 0 8px;"><strong>Email:</strong> ${safeClientEmail}</p>` : ''}
     <hr style="border:none;border-top:1px solid #222;margin:24px 0;">
     <p style="font-size:12px;color:#86868B;">XICO Films — Panel de administracion</p>
     </body></html>`
@@ -84,6 +89,9 @@ export async function createClient(formData: FormData): Promise<{ error?: string
 // ── Invite client via Supabase Auth email ────────────────────────────────────
 
 export async function inviteClientByEmail(email: string): Promise<{ error?: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
+
   const trimmed = email.trim().toLowerCase()
   if (!trimmed) return { error: 'El email es obligatorio.' }
 
@@ -102,6 +110,9 @@ export async function linkClientToUser(
   clientId: string,
   email: string,
 ): Promise<{ error?: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
+
   const trimmedEmail = email.trim().toLowerCase()
   if (!trimmedEmail) return { error: 'El email es obligatorio.' }
 
@@ -156,6 +167,9 @@ export async function linkClientToUser(
 export async function unlinkClientFromUser(
   clientId: string,
 ): Promise<{ error?: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
+
   const db = createServiceClient()
 
   const { error } = await db

@@ -10,7 +10,7 @@ const SHIMMER_KEYFRAME = `
 `
 
 const SHIMMER: React.CSSProperties = {
-  background: 'linear-gradient(90deg,#1C1C1E 25%,#2C2C2E 50%,#1C1C1E 75%)',
+  background: 'linear-gradient(90deg,var(--dash-surface-2) 25%,var(--dash-surface-3) 50%,var(--dash-surface-2) 75%)',
   backgroundSize: '200% 100%',
   animation: 'skeleton-shimmer 1.5s infinite linear',
   borderRadius: '6px',
@@ -24,7 +24,7 @@ export default function ClientsLoading() {
       style={{
         padding: '40px 32px',
         minHeight: '100%',
-        backgroundColor: '#000000',
+        backgroundColor: 'var(--dash-bg)',
         fontFamily: FONT,
       }}
     >
@@ -59,8 +59,8 @@ export default function ClientsLoading() {
           <div
             key={i}
             style={{
-              backgroundColor: '#111111',
-              border: '1px solid rgba(255,255,255,0.06)',
+              backgroundColor: 'var(--dash-surface-1)',
+              border: '1px solid var(--dash-border)',
               borderRadius: '12px',
               padding: '18px 20px',
               display: 'flex',

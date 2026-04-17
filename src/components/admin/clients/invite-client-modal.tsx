@@ -34,10 +34,10 @@ function Field({ id, label, required, name, type = 'text', value, placeholder, d
     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
       <label
         htmlFor={id}
-        style={{ fontFamily: SF, fontSize: '12px', fontWeight: 500, color: '#86868B', letterSpacing: '0.01em' }}
+        style={{ fontFamily: SF, fontSize: '12px', fontWeight: 500, color: 'var(--dash-text-secondary)', letterSpacing: '0.01em' }}
       >
         {label}
-        {required && <span style={{ color: '#FF453A', marginLeft: '3px' }}>*</span>}
+        {required && <span style={{ color: 'var(--dash-danger)', marginLeft: '3px' }}>*</span>}
       </label>
       <input
         id={id}
@@ -53,8 +53,8 @@ function Field({ id, label, required, name, type = 'text', value, placeholder, d
         style={{
           fontFamily: SF,
           fontSize: '15px',
-          color: '#F5F5F7',
-          backgroundColor: '#2C2C2E',
+          color: 'var(--dash-text-primary)',
+          backgroundColor: 'var(--dash-surface-3)',
           border: focused
             ? '1px solid rgba(0,113,227,0.7)'
             : error
@@ -71,7 +71,7 @@ function Field({ id, label, required, name, type = 'text', value, placeholder, d
         }}
       />
       {error && (
-        <p style={{ fontFamily: SF, fontSize: '12px', color: '#FF453A', margin: 0 }}>{error}</p>
+        <p style={{ fontFamily: SF, fontSize: '12px', color: 'var(--dash-danger)', margin: 0 }}>{error}</p>
       )}
     </div>
   )
@@ -95,8 +95,8 @@ function TabBtn({ active, onClick, children }: TabBtnProps) {
         fontFamily: SF,
         fontSize: '14px',
         fontWeight: active ? 600 : 400,
-        color: active ? '#F5F5F7' : '#86868B',
-        backgroundColor: active ? '#1C1C1E' : 'transparent',
+        color: active ? 'var(--dash-text-primary)' : 'var(--dash-text-secondary)',
+        backgroundColor: active ? 'var(--dash-surface-2)' : 'transparent',
         border: 'none',
         borderBottom: active ? '2px solid #0071E3' : '2px solid transparent',
         padding: '10px 0',
@@ -149,11 +149,11 @@ function InviteTab({ onClose }: { onClose: () => void }) {
         >
           <CheckCircle2 style={{ color: '#34C759', width: '32px', height: '32px' }} strokeWidth={1.5} />
           <div>
-            <p style={{ fontFamily: SF, fontSize: '15px', fontWeight: 600, color: '#F5F5F7', marginBottom: '4px' }}>
+            <p style={{ fontFamily: SF, fontSize: '15px', fontWeight: 600, color: 'var(--dash-text-primary)', marginBottom: '4px' }}>
               Invitacion enviada
             </p>
-            <p style={{ fontFamily: SF, fontSize: '13px', color: '#86868B' }}>{email.trim()}</p>
-            <p style={{ fontFamily: SF, fontSize: '13px', color: '#48484A', marginTop: '6px' }}>
+            <p style={{ fontFamily: SF, fontSize: '13px', color: 'var(--dash-text-secondary)' }}>{email.trim()}</p>
+            <p style={{ fontFamily: SF, fontSize: '13px', color: 'var(--dash-text-tertiary)', marginTop: '6px' }}>
               El cliente recibira un enlace para acceder al portal.
             </p>
           </div>
@@ -173,7 +173,7 @@ function InviteTab({ onClose }: { onClose: () => void }) {
 
   return (
     <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      <p style={{ fontFamily: SF, fontSize: '13px', color: '#86868B', margin: 0 }}>
+      <p style={{ fontFamily: SF, fontSize: '13px', color: 'var(--dash-text-secondary)', margin: 0 }}>
         Se enviara un email de invitacion de Supabase Auth. El cliente podra crear su cuenta y acceder al portal.
       </p>
       <Field
@@ -194,7 +194,7 @@ function InviteTab({ onClose }: { onClose: () => void }) {
           onClick={onClose}
           disabled={isPending}
           style={{
-            fontFamily: SF, fontSize: '15px', fontWeight: 500, color: '#86868B',
+            fontFamily: SF, fontSize: '15px', fontWeight: 500, color: 'var(--dash-text-secondary)',
             backgroundColor: 'transparent', border: 'none',
             cursor: isPending ? 'not-allowed' : 'pointer',
             opacity: isPending ? 0.5 : 1, padding: '8px 16px', borderRadius: '8px',
@@ -272,10 +272,10 @@ function ManualTab({ onClose }: { onClose: () => void }) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '28px 20px', backgroundColor: 'rgba(52,199,89,0.08)', border: '1px solid rgba(52,199,89,0.2)', borderRadius: '12px', textAlign: 'center' }}>
         <CheckCircle2 style={{ color: '#34C759', width: '32px', height: '32px' }} strokeWidth={1.5} />
-        <p style={{ fontFamily: SF, fontSize: '15px', fontWeight: 600, color: '#F5F5F7', margin: 0 }}>
+        <p style={{ fontFamily: SF, fontSize: '15px', fontWeight: 600, color: 'var(--dash-text-primary)', margin: 0 }}>
           Cliente guardado
         </p>
-        <p style={{ fontFamily: SF, fontSize: '13px', color: '#86868B', margin: 0 }}>
+        <p style={{ fontFamily: SF, fontSize: '13px', color: 'var(--dash-text-secondary)', margin: 0 }}>
           {values.name.trim()} fue agregado sin cuenta de acceso.
         </p>
       </div>
@@ -284,12 +284,12 @@ function ManualTab({ onClose }: { onClose: () => void }) {
 
   return (
     <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <p style={{ fontFamily: SF, fontSize: '13px', color: '#86868B', margin: 0 }}>
-        Crea el registro del cliente directamente. El campo <code style={{ color: '#48484A' }}>profile_id</code> quedara vacio hasta que el cliente acepte una invitacion.
+      <p style={{ fontFamily: SF, fontSize: '13px', color: 'var(--dash-text-secondary)', margin: 0 }}>
+        Crea el registro del cliente directamente. El campo <code style={{ color: 'var(--dash-text-tertiary)' }}>profile_id</code> quedara vacio hasta que el cliente acepte una invitacion.
       </p>
 
       {errors.general && (
-        <div style={{ backgroundColor: 'rgba(255,69,58,0.08)', border: '1px solid rgba(255,69,58,0.2)', borderRadius: '10px', padding: '12px 14px', fontFamily: SF, fontSize: '13px', color: '#FF453A' }}>
+        <div style={{ backgroundColor: 'rgba(255,69,58,0.08)', border: '1px solid rgba(255,69,58,0.2)', borderRadius: '10px', padding: '12px 14px', fontFamily: SF, fontSize: '13px', color: 'var(--dash-danger)' }}>
           {errors.general}
         </div>
       )}
@@ -304,7 +304,7 @@ function ManualTab({ onClose }: { onClose: () => void }) {
           type="button"
           onClick={onClose}
           disabled={isPending}
-          style={{ fontFamily: SF, fontSize: '15px', fontWeight: 500, color: '#86868B', backgroundColor: 'transparent', border: 'none', cursor: isPending ? 'not-allowed' : 'pointer', opacity: isPending ? 0.5 : 1, padding: '8px 16px', borderRadius: '8px' }}
+          style={{ fontFamily: SF, fontSize: '15px', fontWeight: 500, color: 'var(--dash-text-secondary)', backgroundColor: 'transparent', border: 'none', cursor: isPending ? 'not-allowed' : 'pointer', opacity: isPending ? 0.5 : 1, padding: '8px 16px', borderRadius: '8px' }}
         >
           Cancelar
         </button>
@@ -387,7 +387,7 @@ export function InviteClientModal({ onClose }: Props) {
         transition={{ duration: 0.15 }}
         style={{
           position: 'relative', width: '100%', maxWidth: '460px',
-          backgroundColor: '#1C1C1E',
+          backgroundColor: 'var(--dash-surface-2)',
           border: '1px solid rgba(255,255,255,0.08)',
           borderRadius: '20px',
           boxShadow: '0 32px 80px rgba(0,0,0,0.6), 0 8px 24px rgba(0,0,0,0.4)',
@@ -402,7 +402,7 @@ export function InviteClientModal({ onClose }: Props) {
             borderBottom: '1px solid rgba(255,255,255,0.06)',
           }}
         >
-          <h2 style={{ fontFamily: SF, fontSize: '17px', fontWeight: 600, color: '#F5F5F7', margin: 0, letterSpacing: '-0.01em' }}>
+          <h2 style={{ fontFamily: SF, fontSize: '17px', fontWeight: 600, color: 'var(--dash-text-primary)', margin: 0, letterSpacing: '-0.01em' }}>
             {TITLE[tab]}
           </h2>
           <button
@@ -412,12 +412,12 @@ export function InviteClientModal({ onClose }: Props) {
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               width: '28px', height: '28px', borderRadius: '50%',
-              border: 'none', backgroundColor: 'rgba(255,255,255,0.08)',
-              color: '#86868B', cursor: 'pointer', flexShrink: 0,
+              border: 'none', backgroundColor: 'var(--dash-border)',
+              color: 'var(--dash-text-secondary)', cursor: 'pointer', flexShrink: 0,
               transition: 'background-color 0.15s ease',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.14)'; e.currentTarget.style.color = '#F5F5F7' }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = '#86868B' }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--dash-border-strong)'; e.currentTarget.style.color = 'var(--dash-text-primary)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'var(--dash-border)'; e.currentTarget.style.color = 'var(--dash-text-secondary)' }}
           >
             <X style={{ width: '14px', height: '14px' }} strokeWidth={2.5} />
           </button>
@@ -428,7 +428,7 @@ export function InviteClientModal({ onClose }: Props) {
           style={{
             display: 'flex',
             borderBottom: '1px solid rgba(255,255,255,0.06)',
-            backgroundColor: '#141414',
+            backgroundColor: 'var(--dash-surface-1)',
           }}
         >
           <TabBtn active={tab === 'invite'} onClick={() => setTab('invite')}>

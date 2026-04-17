@@ -134,8 +134,8 @@ export default async function AutomatizacionesPage() {
       <div
         style={{
           minHeight: '100vh',
-          backgroundColor: '#000000',
-          color: '#F5F5F7',
+          backgroundColor: 'var(--dash-bg)',
+          color: 'var(--dash-text-primary)',
           fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
           padding: '40px 32px',
           maxWidth: '960px',
@@ -148,7 +148,7 @@ export default async function AutomatizacionesPage() {
             style={{
               fontSize: '28px',
               fontWeight: 700,
-              color: '#F5F5F7',
+              color: 'var(--dash-text-primary)',
               letterSpacing: '-0.01em',
               margin: 0,
               lineHeight: 1.2,
@@ -159,7 +159,7 @@ export default async function AutomatizacionesPage() {
           <p
             style={{
               fontSize: '15px',
-              color: '#86868B',
+              color: 'var(--dash-text-secondary)',
               margin: '8px 0 0',
             }}
           >
@@ -172,8 +172,8 @@ export default async function AutomatizacionesPage() {
           {/* ── Estado del sistema ─────────────────────────────────────────── */}
           <section
             style={{
-              backgroundColor: '#111111',
-              border: '1px solid rgba(255,255,255,0.06)',
+              backgroundColor: 'var(--dash-surface-1)',
+              border: '1px solid var(--dash-border)',
               borderRadius: '12px',
               padding: '20px',
             }}
@@ -184,7 +184,7 @@ export default async function AutomatizacionesPage() {
                 fontWeight: 600,
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
-                color: '#48484A',
+                color: 'var(--dash-text-tertiary)',
                 margin: '0 0 16px',
               }}
             >
@@ -202,7 +202,7 @@ export default async function AutomatizacionesPage() {
                   flexShrink: 0,
                 }}
               />
-              <span style={{ fontSize: '15px', fontWeight: 500, color: '#F5F5F7' }}>
+              <span style={{ fontSize: '15px', fontWeight: 500, color: 'var(--dash-text-primary)' }}>
                 {statusLabel}
               </span>
               <span
@@ -228,8 +228,8 @@ export default async function AutomatizacionesPage() {
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '10px',
-                backgroundColor: '#1C1C1E',
-                border: '1px solid rgba(255,255,255,0.05)',
+                backgroundColor: 'var(--dash-surface-2)',
+                border: '1px solid var(--dash-border)',
                 borderRadius: '8px',
                 padding: '14px 16px',
               }}
@@ -245,7 +245,7 @@ export default async function AutomatizacionesPage() {
                     flexShrink: 0,
                   }}
                 />
-                <span style={{ fontSize: '13px', color: '#F5F5F7', flex: 1 }}>
+                <span style={{ fontSize: '13px', color: 'var(--dash-text-primary)', flex: 1 }}>
                   Email (Resend)
                 </span>
                 <span
@@ -270,7 +270,7 @@ export default async function AutomatizacionesPage() {
                     flexShrink: 0,
                   }}
                 />
-                <span style={{ fontSize: '13px', color: '#F5F5F7', flex: 1 }}>
+                <span style={{ fontSize: '13px', color: 'var(--dash-text-primary)', flex: 1 }}>
                   Cron jobs
                 </span>
                 <span
@@ -295,9 +295,9 @@ export default async function AutomatizacionesPage() {
                   marginTop: '14px',
                 }}
               >
-                <p style={{ fontSize: '13px', color: '#86868B', margin: '0 0 10px' }}>
+                <p style={{ fontSize: '13px', color: 'var(--dash-text-secondary)', margin: '0 0 10px' }}>
                   Agrega las siguientes variables de entorno en Vercel o en tu archivo{' '}
-                  <span className="auto-env-chip" style={{ color: '#F5F5F7', fontSize: '12px' }}>
+                  <span className="auto-env-chip" style={{ color: 'var(--dash-text-primary)', fontSize: '12px' }}>
                     .env.local
                   </span>
                   :
@@ -328,8 +328,8 @@ export default async function AutomatizacionesPage() {
           {/* ── Email de prueba ────────────────────────────────────────────── */}
           <section
             style={{
-              backgroundColor: '#111111',
-              border: '1px solid rgba(255,255,255,0.06)',
+              backgroundColor: 'var(--dash-surface-1)',
+              border: '1px solid var(--dash-border)',
               borderRadius: '12px',
               padding: '20px',
             }}
@@ -340,13 +340,13 @@ export default async function AutomatizacionesPage() {
                 fontWeight: 600,
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
-                color: '#48484A',
+                color: 'var(--dash-text-tertiary)',
                 margin: '0 0 8px',
               }}
             >
               Probar configuracion de email
             </h2>
-            <p style={{ fontSize: '14px', color: '#86868B', margin: '0 0 16px' }}>
+            <p style={{ fontSize: '14px', color: 'var(--dash-text-secondary)', margin: '0 0 16px' }}>
               Envia un email de prueba para verificar que Resend esta configurado correctamente.
             </p>
 
@@ -378,7 +378,7 @@ export default async function AutomatizacionesPage() {
                 fontWeight: 600,
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
-                color: '#48484A',
+                color: 'var(--dash-text-tertiary)',
                 margin: '0 0 12px',
               }}
             >
@@ -390,8 +390,8 @@ export default async function AutomatizacionesPage() {
                   key={t.event}
                   className="auto-trigger-card"
                   style={{
-                    backgroundColor: '#111111',
-                    border: '1px solid rgba(255,255,255,0.06)',
+                    backgroundColor: 'var(--dash-surface-1)',
+                    border: '1px solid var(--dash-border)',
                     borderRadius: '12px',
                     padding: '16px 20px',
                     display: 'flex',
@@ -403,15 +403,15 @@ export default async function AutomatizacionesPage() {
                 >
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                      <span style={{ fontSize: '14px', fontWeight: 500, color: '#F5F5F7' }}>
+                      <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--dash-text-primary)' }}>
                         {t.event}
                       </span>
                       {t.soon && (
                         <span
                           style={{
                             fontSize: '11px',
-                            color: '#48484A',
-                            backgroundColor: 'rgba(255,255,255,0.04)',
+                            color: 'var(--dash-text-tertiary)',
+                            backgroundColor: 'var(--dash-surface-2)',
                             borderRadius: '4px',
                             padding: '2px 6px',
                           }}
@@ -426,8 +426,8 @@ export default async function AutomatizacionesPage() {
                           key={a}
                           style={{
                             fontSize: '12px',
-                            color: t.soon ? '#48484A' : '#86868B',
-                            backgroundColor: 'rgba(255,255,255,0.04)',
+                            color: t.soon ? 'var(--dash-text-tertiary)' : 'var(--dash-text-secondary)',
+                            backgroundColor: 'var(--dash-surface-2)',
                             borderRadius: '6px',
                             padding: '3px 8px',
                           }}
@@ -455,8 +455,8 @@ export default async function AutomatizacionesPage() {
           {/* ── Formulario de cotizacion publica ───────────────────────────── */}
           <section
             style={{
-              backgroundColor: '#111111',
-              border: '1px solid rgba(255,255,255,0.06)',
+              backgroundColor: 'var(--dash-surface-1)',
+              border: '1px solid var(--dash-border)',
               borderRadius: '12px',
               padding: '20px',
             }}
@@ -467,7 +467,7 @@ export default async function AutomatizacionesPage() {
                 fontWeight: 600,
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
-                color: '#48484A',
+                color: 'var(--dash-text-tertiary)',
                 margin: '0 0 16px',
               }}
             >
@@ -475,7 +475,7 @@ export default async function AutomatizacionesPage() {
             </h2>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
               <div>
-                <p style={{ fontSize: '14px', fontWeight: 500, color: '#F5F5F7', margin: '0 0 4px' }}>
+                <p style={{ fontSize: '14px', fontWeight: 500, color: 'var(--dash-text-primary)', margin: '0 0 4px' }}>
                   Formulario en /cotiza
                 </p>
                 <p style={{ fontSize: '12px', color: '#30D158', margin: 0 }}>
@@ -508,7 +508,7 @@ export default async function AutomatizacionesPage() {
                 fontWeight: 600,
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
-                color: '#48484A',
+                color: 'var(--dash-text-tertiary)',
                 margin: '0 0 12px',
               }}
             >
@@ -518,22 +518,22 @@ export default async function AutomatizacionesPage() {
             {emailLogs.length === 0 ? (
               <div
                 style={{
-                  backgroundColor: '#111111',
-                  border: '1px solid rgba(255,255,255,0.06)',
+                  backgroundColor: 'var(--dash-surface-1)',
+                  border: '1px solid var(--dash-border)',
                   borderRadius: '12px',
                   padding: '40px 20px',
                   textAlign: 'center',
                 }}
               >
-                <p style={{ fontSize: '14px', color: '#48484A', margin: 0 }}>
+                <p style={{ fontSize: '14px', color: 'var(--dash-text-tertiary)', margin: 0 }}>
                   Los emails enviados apareceran aqui
                 </p>
               </div>
             ) : (
               <div
                 style={{
-                  backgroundColor: '#111111',
-                  border: '1px solid rgba(255,255,255,0.06)',
+                  backgroundColor: 'var(--dash-surface-1)',
+                  border: '1px solid var(--dash-border)',
                   borderRadius: '12px',
                   overflow: 'hidden',
                 }}
@@ -542,7 +542,7 @@ export default async function AutomatizacionesPage() {
                   <thead>
                     <tr
                       style={{
-                        borderBottom: '1px solid rgba(255,255,255,0.06)',
+                        borderBottom: '1px solid var(--dash-border)',
                         backgroundColor: 'rgba(255,255,255,0.02)',
                       }}
                     >
@@ -556,7 +556,7 @@ export default async function AutomatizacionesPage() {
                             fontWeight: 600,
                             letterSpacing: '0.06em',
                             textTransform: 'uppercase',
-                            color: '#48484A',
+                            color: 'var(--dash-text-tertiary)',
                           }}
                         >
                           {col}
@@ -570,13 +570,13 @@ export default async function AutomatizacionesPage() {
                         key={log.id}
                         className="auto-table-row"
                         style={{
-                          borderTop: i > 0 ? '1px solid rgba(255,255,255,0.04)' : undefined,
+                          borderTop: i > 0 ? '1px solid var(--dash-surface-2)' : undefined,
                         }}
                       >
-                        <td style={{ padding: '10px 16px', fontSize: '13px', color: '#F5F5F7' }}>
+                        <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--dash-text-primary)' }}>
                           {log.to_email}
                         </td>
-                        <td style={{ padding: '10px 16px', fontSize: '13px', color: '#86868B' }}>
+                        <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--dash-text-secondary)' }}>
                           {log.subject}
                         </td>
                         <td style={{ padding: '10px 16px' }}>
@@ -593,7 +593,7 @@ export default async function AutomatizacionesPage() {
                             {log.template_name}
                           </code>
                         </td>
-                        <td style={{ padding: '10px 16px', fontSize: '12px', color: '#48484A' }}>
+                        <td style={{ padding: '10px 16px', fontSize: '12px', color: 'var(--dash-text-tertiary)' }}>
                           {formatDateTime(log.sent_at)}
                         </td>
                       </tr>
@@ -607,8 +607,8 @@ export default async function AutomatizacionesPage() {
           {/* ── Cron job ───────────────────────────────────────────────────── */}
           <section
             style={{
-              backgroundColor: '#111111',
-              border: '1px solid rgba(255,255,255,0.06)',
+              backgroundColor: 'var(--dash-surface-1)',
+              border: '1px solid var(--dash-border)',
               borderRadius: '12px',
               padding: '20px',
             }}
@@ -619,7 +619,7 @@ export default async function AutomatizacionesPage() {
                 fontWeight: 600,
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
-                color: '#48484A',
+                color: 'var(--dash-text-tertiary)',
                 margin: '0 0 16px',
               }}
             >
@@ -637,16 +637,16 @@ export default async function AutomatizacionesPage() {
                 }}
               />
               <div>
-                <p style={{ fontSize: '14px', fontWeight: 500, color: '#F5F5F7', margin: '0 0 4px' }}>
+                <p style={{ fontSize: '14px', fontWeight: 500, color: 'var(--dash-text-primary)', margin: '0 0 4px' }}>
                   Recordatorios automaticos: todos los dias a las 9:00 AM
                 </p>
-                <p style={{ fontSize: '12px', color: '#48484A', margin: 0 }}>
+                <p style={{ fontSize: '12px', color: 'var(--dash-text-tertiary)', margin: 0 }}>
                   Endpoint:{' '}
                   <code
                     style={{
                       fontFamily: "'SF Mono', SFMono-Regular, ui-monospace, monospace",
                       fontSize: '12px',
-                      color: '#86868B',
+                      color: 'var(--dash-text-secondary)',
                     }}
                   >
                     /api/cron/reminders

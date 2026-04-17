@@ -22,7 +22,7 @@ function getInitials(name: string | null): string {
 const ROLE_COLORS: Record<string, { bg: string; text: string; ring: string }> = {
   lead: { bg: 'rgba(191,90,242,0.15)', text: '#BF5AF2', ring: 'rgba(191,90,242,0.3)' },
   editor: { bg: 'rgba(0,113,227,0.15)', text: '#409CFF', ring: 'rgba(0,113,227,0.3)' },
-  member: { bg: 'rgba(72,72,74,0.4)', text: '#86868B', ring: 'rgba(255,255,255,0.08)' },
+  member: { bg: 'rgba(72,72,74,0.4)', text: 'var(--dash-text-secondary)', ring: 'var(--dash-border)' },
 }
 
 function getRoleColor(role: string) {
@@ -30,11 +30,11 @@ function getRoleColor(role: string) {
 }
 
 const selectBase: React.CSSProperties = {
-  backgroundColor: '#1C1C1E',
+  backgroundColor: 'var(--dash-surface-2)',
   border: '1px solid rgba(255,255,255,0.1)',
   borderRadius: '8px',
   padding: '9px 12px',
-  color: '#F5F5F7',
+  color: 'var(--dash-text-primary)',
   fontSize: '13px',
   outline: 'none',
 }
@@ -124,7 +124,7 @@ export function ProjectAssignments({ projectId }: Props) {
       )}
 
       {assignments.length === 0 && (
-        <p style={{ fontSize: '13px', color: '#48484A', padding: '0 4px' }}>
+        <p style={{ fontSize: '13px', color: 'var(--dash-text-tertiary)', padding: '0 4px' }}>
           Sin miembros asignados.
         </p>
       )}
@@ -137,7 +137,7 @@ export function ProjectAssignments({ projectId }: Props) {
               key={a.id}
               className="flex items-center gap-3"
               style={{
-                backgroundColor: '#1C1C1E',
+                backgroundColor: 'var(--dash-surface-2)',
                 border: '1px solid rgba(255,255,255,0.08)',
                 borderRadius: '12px',
                 padding: '12px 16px',
@@ -150,10 +150,10 @@ export function ProjectAssignments({ projectId }: Props) {
                   width: '36px',
                   height: '36px',
                   borderRadius: '50%',
-                  backgroundColor: '#2C2C2E',
+                  backgroundColor: 'var(--dash-surface-3)',
                   fontSize: '13px',
                   fontWeight: 600,
-                  color: '#86868B',
+                  color: 'var(--dash-text-secondary)',
                   letterSpacing: '0.02em',
                 }}
               >
@@ -164,14 +164,14 @@ export function ProjectAssignments({ projectId }: Props) {
               <div className="flex-1 min-w-0">
                 <p
                   className="truncate"
-                  style={{ fontSize: '14px', fontWeight: 500, color: '#F5F5F7' }}
+                  style={{ fontSize: '14px', fontWeight: 500, color: 'var(--dash-text-primary)' }}
                 >
                   {a.profile.full_name ?? a.profile.email ?? 'Desconocido'}
                 </p>
                 {a.profile.email && (
                   <p
                     className="truncate"
-                    style={{ fontSize: '12px', color: '#86868B', marginTop: '1px' }}
+                    style={{ fontSize: '12px', color: 'var(--dash-text-secondary)', marginTop: '1px' }}
                   >
                     {a.profile.email}
                   </p>
@@ -208,7 +208,7 @@ export function ProjectAssignments({ projectId }: Props) {
                   borderRadius: '6px',
                   border: 'none',
                   backgroundColor: 'transparent',
-                  color: '#48484A',
+                  color: 'var(--dash-text-tertiary)',
                   cursor: isPending ? 'not-allowed' : 'pointer',
                   opacity: isPending ? 0.4 : 1,
                 }}
@@ -219,7 +219,7 @@ export function ProjectAssignments({ projectId }: Props) {
                   }
                 }}
                 onMouseOut={(e) => {
-                  e.currentTarget.style.color = '#48484A'
+                  e.currentTarget.style.color = 'var(--dash-text-tertiary)'
                   e.currentTarget.style.backgroundColor = 'transparent'
                 }}
               >
@@ -234,7 +234,7 @@ export function ProjectAssignments({ projectId }: Props) {
       {showPicker ? (
         <div
           style={{
-            backgroundColor: '#1C1C1E',
+            backgroundColor: 'var(--dash-surface-2)',
             border: '1px solid rgba(255,255,255,0.08)',
             borderRadius: '12px',
             padding: '18px 20px',
@@ -247,7 +247,7 @@ export function ProjectAssignments({ projectId }: Props) {
               fontWeight: 600,
               letterSpacing: '0.06em',
               textTransform: 'uppercase',
-              color: '#48484A',
+              color: 'var(--dash-text-tertiary)',
             }}
           >
             Asignar miembro
@@ -318,7 +318,7 @@ export function ProjectAssignments({ projectId }: Props) {
                 borderRadius: '8px',
                 backgroundColor: 'transparent',
                 border: '1px solid rgba(255,255,255,0.1)',
-                color: '#86868B',
+                color: 'var(--dash-text-secondary)',
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
               }}
@@ -328,7 +328,7 @@ export function ProjectAssignments({ projectId }: Props) {
           </div>
 
           {availableStaff.length === 0 && (
-            <p style={{ fontSize: '12px', color: '#48484A' }}>
+            <p style={{ fontSize: '12px', color: 'var(--dash-text-tertiary)' }}>
               Todo el equipo ya esta asignado a este proyecto.
             </p>
           )}

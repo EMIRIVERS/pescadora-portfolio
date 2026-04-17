@@ -37,7 +37,7 @@ export default async function AdminLeadsPage() {
     <div
       style={{
         minHeight: '100vh',
-        backgroundColor: '#000000',
+        backgroundColor: 'var(--dash-bg)',
         fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
       }}
     >
@@ -62,7 +62,7 @@ export default async function AdminLeadsPage() {
               style={{
                 fontSize: '28px',
                 fontWeight: 600,
-                color: '#F5F5F7',
+                color: 'var(--dash-text-primary)',
                 letterSpacing: '-0.02em',
                 lineHeight: 1.1,
                 margin: 0,
@@ -75,7 +75,7 @@ export default async function AdminLeadsPage() {
                 marginTop: '8px',
                 fontSize: '14px',
                 fontWeight: 400,
-                color: '#86868B',
+                color: 'var(--dash-text-secondary)',
                 lineHeight: 1.5,
               }}
             >
@@ -140,7 +140,7 @@ export default async function AdminLeadsPage() {
             style={{
               padding: '80px 20px',
               textAlign: 'center',
-              background: '#111111',
+              background: 'var(--dash-surface-1)',
               border: '1px solid rgba(255,255,255,0.06)',
               borderRadius: '16px',
               marginBottom: '32px',
@@ -158,7 +158,7 @@ export default async function AdminLeadsPage() {
               {/* Funnel outline */}
               <path
                 d="M14 18h52l-20 24v18l-12-8V42L14 18z"
-                fill="#2C2C2E"
+                fill="var(--dash-surface-3)"
                 stroke="#3A3A3C"
                 strokeWidth="1.5"
                 strokeLinejoin="round"
@@ -172,7 +172,7 @@ export default async function AdminLeadsPage() {
               style={{
                 fontSize: '17px',
                 fontWeight: 600,
-                color: '#F5F5F7',
+                color: 'var(--dash-text-primary)',
                 margin: '0 0 8px',
                 letterSpacing: '-0.02em',
                 fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
@@ -183,7 +183,7 @@ export default async function AdminLeadsPage() {
             <p
               style={{
                 fontSize: '13px',
-                color: '#86868B',
+                color: 'var(--dash-text-secondary)',
                 margin: '0 0 24px',
                 lineHeight: 1.5,
                 fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",

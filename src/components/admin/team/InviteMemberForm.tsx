@@ -11,11 +11,11 @@ type Tab = 'invite' | 'manual'
 // ── Shared input style ─────────────────────────────────────────────────────────
 
 const inputStyle: React.CSSProperties = {
-  backgroundColor: '#2C2C2E',
+  backgroundColor: 'var(--dash-surface-3)',
   border: '1px solid rgba(255,255,255,0.08)',
   borderRadius: '8px',
   padding: '10px 12px',
-  color: '#F5F5F7',
+  color: 'var(--dash-text-primary)',
   fontSize: '14px',
   width: '100%',
   outline: 'none',
@@ -41,8 +41,8 @@ function TabBtn({ active, onClick, children }: TabBtnProps) {
         fontFamily: SF,
         fontSize: '13px',
         fontWeight: active ? 600 : 400,
-        color: active ? '#F5F5F7' : '#86868B',
-        backgroundColor: active ? '#1C1C1E' : 'transparent',
+        color: active ? 'var(--dash-text-primary)' : 'var(--dash-text-secondary)',
+        backgroundColor: active ? 'var(--dash-surface-2)' : 'transparent',
         border: 'none',
         borderBottom: active ? '2px solid #0071E3' : '2px solid transparent',
         padding: '9px 0',
@@ -117,7 +117,7 @@ function InviteTab({ onDone }: { onDone: () => void }) {
           type="button"
           onClick={onDone}
           disabled={isPending}
-          style={{ color: '#86868B', backgroundColor: 'transparent', border: 'none', borderRadius: '8px', padding: '9px 14px', fontSize: '14px', fontFamily: SF, cursor: isPending ? 'not-allowed' : 'pointer' }}
+          style={{ color: 'var(--dash-text-secondary)', backgroundColor: 'transparent', border: 'none', borderRadius: '8px', padding: '9px 14px', fontSize: '14px', fontFamily: SF, cursor: isPending ? 'not-allowed' : 'pointer' }}
         >
           Cancelar
         </button>
@@ -201,7 +201,7 @@ function ManualTab({ onDone }: { onDone: () => void }) {
         </p>
       )}
 
-      <p style={{ margin: 0, fontSize: '12px', color: '#48484A', fontFamily: SF }}>
+      <p style={{ margin: 0, fontSize: '12px', color: 'var(--dash-text-tertiary)', fontFamily: SF }}>
         Se creara la cuenta sin enviar email. El usuario debera restablecer su contrasena para acceder.
       </p>
 
@@ -210,7 +210,7 @@ function ManualTab({ onDone }: { onDone: () => void }) {
           type="button"
           onClick={onDone}
           disabled={isPending}
-          style={{ color: '#86868B', backgroundColor: 'transparent', border: 'none', borderRadius: '8px', padding: '9px 14px', fontSize: '14px', fontFamily: SF, cursor: isPending ? 'not-allowed' : 'pointer' }}
+          style={{ color: 'var(--dash-text-secondary)', backgroundColor: 'transparent', border: 'none', borderRadius: '8px', padding: '9px 14px', fontSize: '14px', fontFamily: SF, cursor: isPending ? 'not-allowed' : 'pointer' }}
         >
           Cancelar
         </button>
@@ -260,7 +260,7 @@ export default function InviteMemberForm() {
   return (
     <div
       style={{
-        backgroundColor: '#1C1C1E',
+        backgroundColor: 'var(--dash-surface-2)',
         border: '1px solid rgba(255,255,255,0.08)',
         borderRadius: '12px',
         overflow: 'hidden',

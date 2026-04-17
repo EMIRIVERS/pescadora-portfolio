@@ -2,6 +2,7 @@
 
 import { useRouter, usePathname } from 'next/navigation'
 import { useCallback, useRef, useTransition } from 'react'
+import { motion } from 'framer-motion'
 import type { Client } from '@/lib/supabase/types'
 import { X, Search } from 'lucide-react'
 
@@ -73,15 +74,18 @@ export function ProjectsFilterBar({
   }
 
   return (
-    <div
+    <motion.div
       className="flex flex-wrap items-center gap-3"
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
       style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif" }}
     >
       {/* Search input */}
       <div className="relative flex-1 min-w-[200px] max-w-sm">
         <Search
           className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none"
-          style={{ color: '#48484A' }}
+          style={{ color: 'var(--dash-text-tertiary)' }}
         />
         <input
           type="text"
@@ -90,9 +94,9 @@ export function ProjectsFilterBar({
           onChange={(e) => handleSearch(e.target.value)}
           style={{
             width: '100%',
-            background: '#1C1C1E',
+            background: 'var(--dash-surface-2)',
             border: '1px solid rgba(255,255,255,0.08)',
-            color: '#F5F5F7',
+            color: 'var(--dash-text-primary)',
             fontSize: '13px',
             borderRadius: '10px',
             paddingLeft: '36px',
@@ -105,7 +109,7 @@ export function ProjectsFilterBar({
             e.currentTarget.style.borderColor = 'rgba(0,113,227,0.5)'
           }}
           onBlur={(e) => {
-            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
+            e.currentTarget.style.borderColor = 'var(--dash-border)'
           }}
         />
       </div>
@@ -130,13 +134,13 @@ export function ProjectsFilterBar({
                 background: isActive
                   ? pill.color
                     ? pill.color
-                    : '#F5F5F7'
-                  : '#1C1C1E',
+                    : 'var(--dash-text-primary)'
+                  : 'var(--dash-surface-2)',
                 color: isActive
                   ? pill.color
                     ? '#fff'
-                    : '#000000'
-                  : '#86868B',
+                    : 'var(--dash-bg)'
+                  : 'var(--dash-text-secondary)',
               }}
             >
               {pill.label}
@@ -151,9 +155,9 @@ export function ProjectsFilterBar({
           value={currentClient}
           onChange={(e) => handleClient(e.target.value)}
           style={{
-            background: '#1C1C1E',
+            background: 'var(--dash-surface-2)',
             border: '1px solid rgba(255,255,255,0.08)',
-            color: '#86868B',
+            color: 'var(--dash-text-secondary)',
             fontSize: '12px',
             fontWeight: 500,
             borderRadius: '20px',
@@ -184,7 +188,7 @@ export function ProjectsFilterBar({
             gap: '6px',
             fontSize: '12px',
             fontWeight: 500,
-            color: '#86868B',
+            color: 'var(--dash-text-secondary)',
             background: 'transparent',
             border: '1px solid rgba(255,255,255,0.08)',
             borderRadius: '20px',
@@ -194,12 +198,12 @@ export function ProjectsFilterBar({
             opacity: isPending ? 0.4 : 1,
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.color = '#F5F5F7'
+            e.currentTarget.style.color = 'var(--dash-text-primary)'
             e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)'
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.color = '#86868B'
-            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
+            e.currentTarget.style.color = 'var(--dash-text-secondary)'
+            e.currentTarget.style.borderColor = 'var(--dash-border)'
           }}
         >
           <X className="w-3 h-3" />
@@ -208,10 +212,10 @@ export function ProjectsFilterBar({
       )}
 
       {isPending && (
-        <span style={{ fontSize: '11px', color: '#48484A', letterSpacing: '0.05em' }}>
+        <span style={{ fontSize: '11px', color: 'var(--dash-text-tertiary)', letterSpacing: '0.05em' }}>
           cargando...
         </span>
       )}
-    </div>
+    </motion.div>
   )
 }

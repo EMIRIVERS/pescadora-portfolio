@@ -16,7 +16,7 @@ export default function ProjectsLoading() {
     <div
       style={{
         padding: '40px 32px',
-        background: '#000000',
+        background: 'var(--dash-bg)',
         minHeight: '100vh',
         fontFamily: FONT,
       }}
@@ -37,7 +37,7 @@ export default function ProjectsLoading() {
               width: '160px',
               height: '28px',
               borderRadius: '8px',
-              background: 'linear-gradient(90deg,#1C1C1E 25%,#2C2C2E 50%,#1C1C1E 75%)',
+              background: 'linear-gradient(90deg,var(--dash-surface-2) 25%,var(--dash-surface-3) 50%,var(--dash-surface-2) 75%)',
               backgroundSize: '200% 100%',
               animation: 'skeleton-shimmer 1.5s infinite linear',
             }}
@@ -47,7 +47,7 @@ export default function ProjectsLoading() {
               width: '90px',
               height: '13px',
               borderRadius: '4px',
-              background: 'linear-gradient(90deg,#1C1C1E 25%,#2C2C2E 50%,#1C1C1E 75%)',
+              background: 'linear-gradient(90deg,var(--dash-surface-2) 25%,var(--dash-surface-3) 50%,var(--dash-surface-2) 75%)',
               backgroundSize: '200% 100%',
               animation: 'skeleton-shimmer 1.5s infinite linear',
             }}
@@ -58,7 +58,7 @@ export default function ProjectsLoading() {
             width: '140px',
             height: '38px',
             borderRadius: '8px',
-            background: 'linear-gradient(90deg,#1C1C1E 25%,#2C2C2E 50%,#1C1C1E 75%)',
+            background: 'linear-gradient(90deg,var(--dash-surface-2) 25%,var(--dash-surface-3) 50%,var(--dash-surface-2) 75%)',
             backgroundSize: '200% 100%',
             animation: 'skeleton-shimmer 1.5s infinite linear',
           }}
@@ -81,7 +81,7 @@ export default function ProjectsLoading() {
           height: '40px',
           borderRadius: '10px',
           marginBottom: '20px',
-          background: 'linear-gradient(90deg,#1C1C1E 25%,#2C2C2E 50%,#1C1C1E 75%)',
+          background: 'linear-gradient(90deg,var(--dash-surface-2) 25%,var(--dash-surface-3) 50%,var(--dash-surface-2) 75%)',
           backgroundSize: '200% 100%',
           animation: 'skeleton-shimmer 1.5s infinite linear',
         }}
@@ -91,7 +91,7 @@ export default function ProjectsLoading() {
       {/* Table skeleton */}
       <div
         style={{
-          background: '#111111',
+          background: 'var(--dash-surface-1)',
           borderRadius: '16px',
           overflow: 'hidden',
         }}
@@ -101,7 +101,7 @@ export default function ProjectsLoading() {
         <div
           style={{
             padding: '12px 20px',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
+            borderBottom: '1px solid var(--dash-border)',
             display: 'grid',
             gridTemplateColumns: '1fr 160px 160px 110px 110px 80px 36px',
             gap: '16px',
@@ -115,7 +115,7 @@ export default function ProjectsLoading() {
                 width: w,
                 height: '10px',
                 borderRadius: '3px',
-                background: '#2C2C2E',
+                background: 'var(--dash-surface-3)',
               }}
             />
           ))}

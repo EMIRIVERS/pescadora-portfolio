@@ -58,8 +58,8 @@ export function SkeletonCard() {
       <style>{SHIMMER_CSS}</style>
       <div
         style={{
-          background: '#111111',
-          border: '1px solid rgba(255,255,255,0.06)',
+          background: 'var(--dash-surface-1)',
+          border: '1px solid var(--dash-border)',
           borderRadius: '12px',
           padding: '18px 20px',
           display: 'flex',
@@ -112,7 +112,7 @@ export function SkeletonRow() {
           gap: '16px',
           alignItems: 'center',
           padding: '16px 20px',
-          borderBottom: '1px solid rgba(255,255,255,0.04)',
+          borderBottom: '1px solid var(--dash-surface-2)',
         }}
         aria-hidden="true"
       >
@@ -170,8 +170,8 @@ export function SkeletonKanbanCard() {
       <style>{SHIMMER_CSS}</style>
       <div
         style={{
-          background: '#1C1C1E',
-          border: '1px solid rgba(255,255,255,0.06)',
+          background: 'var(--dash-surface-2)',
+          border: '1px solid var(--dash-border)',
           borderRadius: '10px',
           padding: '12px 14px',
           display: 'flex',

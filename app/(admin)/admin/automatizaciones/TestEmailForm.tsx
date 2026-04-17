@@ -35,12 +35,12 @@ export function TestEmailForm({ disabled = false }: Props) {
           style={{
             flex: 1,
             minWidth: '200px',
-            backgroundColor: '#1C1C1E',
+            backgroundColor: 'var(--dash-surface-2)',
             border: '1px solid rgba(255,255,255,0.08)',
             borderRadius: '8px',
             padding: '9px 14px',
             fontSize: '14px',
-            color: '#F5F5F7',
+            color: 'var(--dash-text-primary)',
             outline: 'none',
             opacity: disabled ? 0.4 : 1,
           }}
@@ -49,8 +49,8 @@ export function TestEmailForm({ disabled = false }: Props) {
           type="submit"
           disabled={disabled || isPending}
           style={{
-            backgroundColor: disabled || isPending ? '#1C1C1E' : '#0071E3',
-            color: disabled || isPending ? '#48484A' : '#ffffff',
+            backgroundColor: disabled || isPending ? 'var(--dash-surface-2)' : '#0071E3',
+            color: disabled || isPending ? 'var(--dash-text-tertiary)' : '#ffffff',
             border: 'none',
             borderRadius: '8px',
             padding: '9px 18px',

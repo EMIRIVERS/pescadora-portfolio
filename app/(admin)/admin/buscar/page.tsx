@@ -6,16 +6,16 @@ import SearchInput from './SearchInput'
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
 const T = {
-  bg:            '#000000',
-  surface1:      '#111111',
-  surface2:      '#1C1C1E',
-  surface3:      '#2C2C2E',
-  border:        'rgba(255,255,255,0.08)',
-  borderSubtle:  'rgba(255,255,255,0.04)',
-  borderHeader:  'rgba(255,255,255,0.06)',
-  textPrimary:   '#F5F5F7',
-  textSecondary: '#86868B',
-  textTertiary:  '#48484A',
+  bg:            'var(--dash-bg)',
+  surface1:      'var(--dash-surface-1)',
+  surface2:      'var(--dash-surface-2)',
+  surface3:      'var(--dash-surface-3)',
+  border:        'var(--dash-border)',
+  borderSubtle:  'var(--dash-surface-2)',
+  borderHeader:  'var(--dash-border)',
+  textPrimary:   'var(--dash-text-primary)',
+  textSecondary: 'var(--dash-text-secondary)',
+  textTertiary:  'var(--dash-text-tertiary)',
   accent:        '#0071E3',
   font:          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
 } as const
@@ -203,10 +203,10 @@ export default async function AdminBuscarPage({ searchParams }: PageProps) {
     <>
       <style>{`
         .result-row { transition: background 0.1s ease; }
-        .result-row:hover { background: #1C1C1E !important; }
-        .result-link { color: #F5F5F7; text-decoration: none; display: flex; align-items: center; gap: 12px; padding: 14px 20px; width: 100%; }
-        .result-arrow { color: #48484A; transition: color 0.15s; flex-shrink: 0; }
-        .result-row:hover .result-arrow { color: #F5F5F7 !important; }
+        .result-row:hover { background: var(--dash-surface-2) !important; }
+        .result-link { color: var(--dash-text-primary); text-decoration: none; display: flex; align-items: center; gap: 12px; padding: 14px 20px; width: 100%; }
+        .result-arrow { color: var(--dash-text-tertiary); transition: color 0.15s; flex-shrink: 0; }
+        .result-row:hover .result-arrow { color: var(--dash-text-primary) !important; }
       `}</style>
 
       <div

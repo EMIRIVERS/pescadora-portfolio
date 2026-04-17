@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { updateDeliverable } from '@/lib/actions/deliverables'
 import type { Deliverable, DeliverableType, DeliverableStatus } from '@/lib/supabase/types'
 import { Loader2 } from 'lucide-react'
 
@@ -28,12 +28,12 @@ interface FormErrors {
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const S = {
-  surface2:      '#1C1C1E',
-  surface3:      '#2C2C2E',
+  surface2:      'var(--dash-surface-2)',
+  surface3:      'var(--dash-surface-3)',
   border:        'rgba(255,255,255,0.10)',
-  textPrimary:   '#F5F5F7',
-  textSecondary: '#86868B',
-  textTertiary:  '#48484A',
+  textPrimary:   'var(--dash-text-primary)',
+  textSecondary: 'var(--dash-text-secondary)',
+  textTertiary:  'var(--dash-text-tertiary)',
   accent:        '#0071E3',
   accentRed:     '#FF453A',
   font:          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
@@ -126,28 +126,23 @@ export function EditDeliverableForm({ deliverable, onSuccess, onCancel }: Props)
     setErrors({})
 
     startTransition(async () => {
-      const supabase = createClient()
+      const result = await updateDeliverable({
+        id:          deliverable.id,
+        projectId:   deliverable.project_id,
+        title:       values.title.trim(),
+        description: values.description.trim() || null,
+        url:         values.url.trim() || null,
+        due_date:    values.due_date.trim() || null,
+        type:        values.type,
+        status:      values.status,
+      })
 
-      const { data, error } = await supabase
-        .from('project_deliverables')
-        .update({
-          title:       values.title.trim(),
-          description: values.description.trim() || null,
-          url:         values.url.trim() || null,
-          due_date:    values.due_date.trim() || null,
-          type:        values.type,
-          status:      values.status,
-        })
-        .eq('id', deliverable.id)
-        .select('*')
-        .single()
-
-      if (error || !data) {
-        setErrors({ general: error?.message ?? 'No se pudo actualizar el entregable.' })
+      if (result.error || !result.data) {
+        setErrors({ general: result.error ?? 'No se pudo actualizar el entregable.' })
         return
       }
 
-      onSuccess(data as Deliverable)
+      onSuccess(result.data as Deliverable)
     })
   }
 
@@ -361,7 +356,7 @@ export function EditDeliverableForm({ deliverable, onSuccess, onCancel }: Props)
           onMouseEnter={(e) => {
             const b = e.currentTarget as HTMLButtonElement
             b.style.borderColor = 'rgba(255,255,255,0.20)'
-            b.style.color = '#F5F5F7'
+            b.style.color = 'var(--dash-text-primary)'
           }}
           onMouseLeave={(e) => {
             const b = e.currentTarget as HTMLButtonElement

@@ -14,6 +14,12 @@ import { createServiceClient } from '@/lib/supabase/server'
 import type { ProjectStatus, LeadStatus, LeadSource, DeliverableStatus } from '@/lib/supabase/types'
 import { StatCardsGrid } from '@/components/admin/dashboard/StatCardsGrid'
 import type { StatCardData } from '@/components/admin/dashboard/StatCardsGrid'
+import { FadeIn } from '@/components/admin/dashboard/FadeIn'
+import { AnimatedProjectsList } from '@/components/admin/dashboard/AnimatedProjectsList'
+import type { ProjectRow } from '@/components/admin/dashboard/AnimatedProjectsList'
+import { AnimatedLeadsList } from '@/components/admin/dashboard/AnimatedLeadsList'
+import type { LeadRow } from '@/components/admin/dashboard/AnimatedLeadsList'
+import { HoverLiftLink } from '@/components/admin/dashboard/HoverLiftLink'
 
 // ─── Local types ────────────────────────────────────────────────────────────
 
@@ -69,6 +75,16 @@ interface DeliveredProjectForSparkline {
   end_date: string | null
 }
 
+interface TodayTask {
+  id: string
+  title: string
+  project_title: string | null
+  project_id: string | null
+}
+
+// Period values used by the sparkline/revenue chart
+type SparklinePeriod = 'this_month' | '3months' | 'this_year' | 'all_time'
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function formatDate(iso: string): string {
@@ -116,21 +132,70 @@ function greetingLabel(): string {
   return 'Buenas noches'
 }
 
-// Build last-5-months sparkline data from delivered projects grouped by end_date month
-function buildSparklinePoints(projects: DeliveredProjectForSparkline[]): number[] {
+// Build sparkline data from delivered projects grouped by end_date month,
+// filtered to the selected period.
+function buildSparklinePoints(
+  projects: DeliveredProjectForSparkline[],
+  period: SparklinePeriod
+): number[] {
   const now = new Date()
-  // produce [month-4, month-3, month-2, month-1, month-0] counts
-  const counts: number[] = [0, 0, 0, 0, 0]
+
+  // Determine how many months back to include and bucket count
+  let monthCount: number
+  switch (period) {
+    case 'this_month':
+      monthCount = 1
+      break
+    case '3months':
+      monthCount = 3
+      break
+    case 'this_year':
+      // months from Jan of current year to now
+      monthCount = now.getMonth() + 1
+      break
+    case 'all_time':
+    default:
+      monthCount = 12
+      break
+  }
+
+  // Clamp to at least 2 so the polyline has something to draw
+  const buckets = Math.max(monthCount, 2)
+  const counts: number[] = new Array(buckets).fill(0) as number[]
+
   for (const p of projects) {
     if (!p.end_date) continue
     const d = new Date(p.end_date)
     const monthsDiff =
       (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth())
-    if (monthsDiff >= 0 && monthsDiff < 5) {
-      counts[4 - monthsDiff]++
+    if (monthsDiff >= 0 && monthsDiff < buckets) {
+      counts[buckets - 1 - monthsDiff]++
     }
   }
   return counts
+}
+
+// Format a currency amount: sum across mixed currencies — use the dominant currency
+// or fall back to a plain number. For the dashboard we sum all paid invoices and
+// show the total in MXN (the studio's primary currency).
+function formatRevenue(total: number, currency: string): string {
+  try {
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency,
+      maximumFractionDigits: 0,
+    }).format(total)
+  } catch {
+    return `$${total.toLocaleString('es-MX')} ${currency}`
+  }
+}
+
+// Get the ISO date string N days ago (for stale leads check)
+function daysAgoIso(n: number): string {
+  const d = new Date()
+  d.setDate(d.getDate() - n)
+  d.setHours(23, 59, 59, 999)
+  return d.toISOString()
 }
 
 // Render a tiny 80x24 SVG polyline from an array of 5 values
@@ -173,9 +238,9 @@ const PROJECT_STATUS_LABEL: Record<ProjectStatus, string> = {
 }
 
 const PROJECT_STATUS_COLOR: Record<ProjectStatus, string> = {
-  pre_production: '#48484A',
-  production: '#30D158',
-  post_production: '#FF9F0A',
+  pre_production: 'var(--dash-text-tertiary)',
+  production: 'var(--dash-success)',
+  post_production: 'var(--dash-warning)',
   delivered: '#0071E3',
 }
 
@@ -189,10 +254,10 @@ const PROJECT_STATUS_BG: Record<ProjectStatus, string> = {
 const LEAD_STATUS_COLOR: Record<LeadStatus, string> = {
   new: '#0071E3',
   contacted: '#BF5AF2',
-  qualified: '#FF9F0A',
+  qualified: 'var(--dash-warning)',
   proposal: '#FF6961',
-  won: '#30D158',
-  lost: '#48484A',
+  won: 'var(--dash-success)',
+  lost: 'var(--dash-text-tertiary)',
 }
 
 const LEAD_STATUS_BG: Record<LeadStatus, string> = {
@@ -214,9 +279,9 @@ const LEAD_STATUS_LABEL: Record<LeadStatus, string> = {
 }
 
 const DELIVERABLE_STATUS_COLOR: Record<DeliverableStatus, string> = {
-  pending: '#FF9F0A',
+  pending: 'var(--dash-warning)',
   review: '#BF5AF2',
-  approved: '#30D158',
+  approved: 'var(--dash-success)',
 }
 
 const DELIVERABLE_STATUS_BG: Record<DeliverableStatus, string> = {
@@ -237,8 +302,18 @@ const STAT_ACCENT = ['#0071E3', '#30D158', '#FF9F0A', '#BF5AF2', '#FF453A'] as c
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default async function AdminDashboardPage() {
+interface PageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}
+
+export default async function AdminDashboardPage({ searchParams }: PageProps) {
   const supabase = createServiceClient()
+  const resolvedParams = await searchParams
+  const rawPeriod = typeof resolvedParams.period === 'string' ? resolvedParams.period : 'all_time'
+  const VALID_PERIODS: SparklinePeriod[] = ['this_month', '3months', 'this_year', 'all_time']
+  const period: SparklinePeriod = VALID_PERIODS.includes(rawPeriod as SparklinePeriod)
+    ? (rawPeriod as SparklinePeriod)
+    : 'all_time'
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -248,10 +323,33 @@ export default async function AdminDashboardPage() {
   in7Days.setDate(in7Days.getDate() + 7)
   const in7DaysDate = in7Days.toISOString().slice(0, 10)
 
-  // For sparkline: last 5 months of delivered projects (use end_date)
-  const fiveMonthsAgo = new Date(today)
-  fiveMonthsAgo.setMonth(fiveMonthsAgo.getMonth() - 4)
-  fiveMonthsAgo.setDate(1)
+  // Compute sparkline cutoff date based on selected period
+  const sparklineCutoff = new Date(today)
+  switch (period) {
+    case 'this_month':
+      sparklineCutoff.setDate(1)
+      break
+    case '3months':
+      sparklineCutoff.setMonth(sparklineCutoff.getMonth() - 2)
+      sparklineCutoff.setDate(1)
+      break
+    case 'this_year':
+      sparklineCutoff.setMonth(0)
+      sparklineCutoff.setDate(1)
+      break
+    case 'all_time':
+    default:
+      sparklineCutoff.setFullYear(sparklineCutoff.getFullYear() - 1)
+      sparklineCutoff.setDate(1)
+      break
+  }
+
+  // Date threshold for stale leads (more than 3 days in 'new' status)
+  const staleLeadsThreshold = daysAgoIso(3)
+
+  // Supabase client cast for tables not in our typed schema (invoices)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const dbAny = supabase as unknown as { from: (table: string) => any }
 
   const [
     { count: totalProjects },
@@ -266,6 +364,9 @@ export default async function AdminDashboardPage() {
     { count: newLeadsCount },
     { data: atRiskRaw },
     { data: deliveredProjectsRaw },
+    { data: invoicesPaidRaw },
+    { data: tasksDueTodayRaw },
+    { count: staleLeadsCount },
   ] = await Promise.all([
     supabase
       .from('projects')
@@ -320,12 +421,26 @@ export default async function AdminDashboardPage() {
       .lte('end_date', new Date(Date.now() + 5 * 86400000).toISOString())
       .order('end_date', { ascending: true })
       .limit(3),
-    // Delivered projects in the last 5 months for sparkline
+    // Delivered projects filtered by selected period for sparkline
     supabase
       .from('projects')
       .select('end_date')
       .eq('status', 'delivered')
-      .gte('end_date', fiveMonthsAgo.toISOString().slice(0, 10)),
+      .gte('end_date', sparklineCutoff.toISOString().slice(0, 10)),
+    // Paid invoices for Revenue Total (invoices table not in typed schema)
+    dbAny.from('invoices').select('amount, currency').eq('status', 'paid') as Promise<{ data: { amount: number; currency: string }[] | null }>,
+    // Tasks due today — joined with task_boards to get project info
+    supabase
+      .from('tasks')
+      .select('id, title, board:task_boards(project_id, project:projects(title))')
+      .eq('due_date', todayDate)
+      .limit(10),
+    // Stale new leads: 'new' status created more than 3 days ago
+    supabase
+      .from('leads')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'new')
+      .lt('created_at', staleLeadsThreshold),
   ])
 
   // Aggregate leads by status
@@ -379,11 +494,59 @@ export default async function AdminDashboardPage() {
     client_id: p.client_id as string | null,
   }))
 
-  // Sparkline data
+  // Sparkline data — filtered by selected period
   const sparklineValues = buildSparklinePoints(
-    (deliveredProjectsRaw ?? []) as DeliveredProjectForSparkline[]
+    (deliveredProjectsRaw ?? []) as DeliveredProjectForSparkline[],
+    period
   )
   const sparklineAccent = STAT_ACCENT[0]
+
+  // Revenue Total — sum of all paid invoices, displayed in MXN
+  const paidInvoices = (invoicesPaidRaw ?? []) as { amount: number; currency: string }[]
+  const revenueTotal = paidInvoices.reduce((acc, inv) => acc + Number(inv.amount), 0)
+  const revenueCurrency = paidInvoices.find((i) => i.currency)?.currency ?? 'MXN'
+  const revenueDisplay = revenueTotal > 0 ? formatRevenue(revenueTotal, revenueCurrency) : '$0 MXN'
+
+  // Stale leads count
+  const staleLeads = staleLeadsCount ?? 0
+
+  // Today's tasks
+  const todayTasks: TodayTask[] = (tasksDueTodayRaw ?? []).map((t) => {
+    // board may be an array or object depending on Supabase join mode
+    const boardRaw = Array.isArray(t.board) ? t.board[0] : t.board
+    const projectRaw = boardRaw?.project
+    const project = Array.isArray(projectRaw) ? projectRaw[0] : projectRaw
+    return {
+      id: t.id as string,
+      title: t.title as string,
+      project_title: (project?.title as string | null) ?? null,
+      project_id: (boardRaw?.project_id as string | null) ?? null,
+    }
+  })
+
+  // ── Serialised rows for animated client list components ───────────────────
+  const projectRows: ProjectRow[] = recentProjects.map((p) => ({
+    id: p.id,
+    title: p.title,
+    status: p.status,
+    created_at: p.created_at,
+    clientName: p.client?.name ?? null,
+    statusLabel: PROJECT_STATUS_LABEL[p.status],
+    statusColor: PROJECT_STATUS_COLOR[p.status],
+    statusBg: PROJECT_STATUS_BG[p.status],
+    formattedDate: formatDate(p.created_at),
+  }))
+
+  const leadRows: LeadRow[] = recentLeads.map((l) => ({
+    id: l.id,
+    name: l.name,
+    source: l.source,
+    created_at: l.created_at,
+    statusLabel: LEAD_STATUS_LABEL[l.status],
+    statusColor: LEAD_STATUS_COLOR[l.status],
+    statusBg: LEAD_STATUS_BG[l.status],
+    formattedDate: formatDate(l.created_at),
+  }))
 
   // ── Stats cards definition ─────────────────────────────────────────────────
   const statCards = [
@@ -429,13 +592,22 @@ export default async function AdminDashboardPage() {
     },
   ] as const
 
-  // Serializable version for the animated client component
+  // Serializable version for the animated client component (6 cards: 5 original + revenue)
   const statCardData: StatCardData[] = [
     { label: statCards[0].label, sublabel: statCards[0].sublabel, value: statCards[0].value, iconKey: 'FolderKanban', accent: statCards[0].accent, href: statCards[0].href },
     { label: statCards[1].label, sublabel: statCards[1].sublabel, value: statCards[1].value, iconKey: 'Users',        accent: statCards[1].accent, href: statCards[1].href },
     { label: statCards[2].label, sublabel: statCards[2].sublabel, value: statCards[2].value, iconKey: 'Target',       accent: statCards[2].accent, href: statCards[2].href },
     { label: statCards[3].label, sublabel: statCards[3].sublabel, value: statCards[3].value, iconKey: 'CheckCircle2', accent: statCards[3].accent, href: statCards[3].href },
     { label: statCards[4].label, sublabel: statCards[4].sublabel, value: statCards[4].value, iconKey: 'Film',         accent: statCards[4].accent, href: statCards[4].href },
+    {
+      label: 'REVENUE TOTAL',
+      sublabel: `${paidInvoices.length} facturas pagadas`,
+      value: revenueTotal,
+      displayValue: revenueDisplay,
+      iconKey: 'DollarSign',
+      accent: '#30D158',
+      href: '/admin/invoices',
+    },
   ]
 
   const quickActions = [
@@ -473,16 +645,16 @@ export default async function AdminDashboardPage() {
     <>
       <style>{`
         .apd-root {
-          background-color: #000000;
+          background-color: var(--dash-bg);
           min-height: 100vh;
           padding: 2.5rem 2rem;
           font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
-          color: #F5F5F7;
+          color: var(--dash-text-primary);
           box-sizing: border-box;
         }
         .apd-stat-card {
-          background: #111111;
-          border: 1px solid rgba(255,255,255,0.08);
+          background: var(--dash-surface-1);
+          border: 1px solid var(--dash-border);
           border-radius: 16px;
           padding: 20px 24px;
           display: flex;
@@ -493,12 +665,12 @@ export default async function AdminDashboardPage() {
           transition: border-color 0.2s, transform 0.2s;
         }
         .apd-stat-card:hover {
-          border-color: rgba(255,255,255,0.15) !important;
+          border-color: var(--dash-border-strong) !important;
           transform: translateY(-1px);
         }
         .apd-list-card {
-          background: #111111;
-          border: 1px solid rgba(255,255,255,0.08);
+          background: var(--dash-surface-1);
+          border: 1px solid var(--dash-border);
           border-radius: 16px;
           overflow: hidden;
         }
@@ -506,23 +678,23 @@ export default async function AdminDashboardPage() {
           transition: background 0.15s;
         }
         .apd-list-item:hover {
-          background: rgba(255,255,255,0.04);
+          background: var(--dash-surface-2);
         }
         .apd-quick-link {
           display: inline-block;
           padding: 7px 18px;
-          background: #1C1C1E;
-          border: 1px solid rgba(255,255,255,0.08);
+          background: var(--dash-surface-2);
+          border: 1px solid var(--dash-border);
           border-radius: 20px;
-          color: #86868B;
+          color: var(--dash-text-secondary);
           font-size: 12px;
           text-decoration: none;
           transition: background 0.15s, color 0.15s;
           letter-spacing: 0.01em;
         }
         .apd-quick-link:hover {
-          background: #2C2C2E;
-          color: #F5F5F7;
+          background: var(--dash-surface-3);
+          color: var(--dash-text-primary);
         }
         .apd-ver-todos {
           color: #0071E3;
@@ -534,7 +706,7 @@ export default async function AdminDashboardPage() {
           opacity: 0.75;
         }
         .apd-project-link {
-          color: #F5F5F7;
+          color: var(--dash-text-primary);
           text-decoration: none;
           font-size: 14px;
           font-weight: 400;
@@ -547,7 +719,7 @@ export default async function AdminDashboardPage() {
           color: #0071E3;
         }
         .dh-row:hover {
-          background: #1C1C1E;
+          background: var(--dash-surface-2);
         }
         .dh-link:hover {
           color: #0071E3;
@@ -560,7 +732,7 @@ export default async function AdminDashboardPage() {
           padding: 12px 20px;
           background: #0071E3;
           border-radius: 10px;
-          color: #F5F5F7;
+          color: var(--dash-text-primary);
           font-size: 14px;
           font-weight: 500;
           text-decoration: none;
@@ -577,10 +749,10 @@ export default async function AdminDashboardPage() {
           justify-content: center;
           gap: 8px;
           padding: 12px 20px;
-          background: #1C1C1E;
-          border: 1px solid rgba(255,255,255,0.1);
+          background: var(--dash-surface-2);
+          border: 1px solid var(--dash-border);
           border-radius: 10px;
-          color: #F5F5F7;
+          color: var(--dash-text-primary);
           font-size: 14px;
           font-weight: 500;
           text-decoration: none;
@@ -588,8 +760,8 @@ export default async function AdminDashboardPage() {
           flex: 1;
         }
         .dh-action-secondary:hover {
-          background: #2C2C2E;
-          border-color: rgba(255,255,255,0.18);
+          background: var(--dash-surface-3);
+          border-color: var(--dash-border-strong);
           transform: translateY(-1px);
         }
         .apd-actions-grid {
@@ -619,7 +791,7 @@ export default async function AdminDashboardPage() {
           position: absolute;
           width: 2px;
           height: 5px;
-          background: #111111;
+          background: var(--dash-surface-1);
           left: -1px;
           top: 3px;
           border-radius: 1px;
@@ -634,7 +806,7 @@ export default async function AdminDashboardPage() {
             style={{
               fontSize: '28px',
               fontWeight: 600,
-              color: '#F5F5F7',
+              color: 'var(--dash-text-primary)',
               margin: '0 0 6px 0',
               letterSpacing: '-0.02em',
             }}
@@ -644,7 +816,7 @@ export default async function AdminDashboardPage() {
           <p
             style={{
               fontSize: '13px',
-              color: '#86868B',
+              color: 'var(--dash-text-secondary)',
               margin: 0,
               textTransform: 'capitalize',
             }}
@@ -654,61 +826,104 @@ export default async function AdminDashboardPage() {
         </div>
 
         {/* ── Stat cards row — animated client component ── */}
-        <StatCardsGrid cards={statCardData} />
+        <FadeIn delay={0}>
+          <StatCardsGrid cards={statCardData} />
+        </FadeIn>
 
-        {/* ── Revenue sparkline card (standalone, full-width accent) ── */}
+        {/* ── Proyectos entregados sparkline card with period selector ── */}
+        <FadeIn delay={0}>
         <div
           style={{
-            background: '#111111',
-            border: '1px solid rgba(255,255,255,0.08)',
+            background: 'var(--dash-surface-1)',
+            border: '1px solid var(--dash-border)',
             borderRadius: '12px',
             padding: '16px 20px',
             marginBottom: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '16px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div
-              style={{
-                width: '30px',
-                height: '30px',
-                borderRadius: '8px',
-                background: `${sparklineAccent}1A`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              <TrendingUp size={15} color={sparklineAccent} strokeWidth={1.8} />
-            </div>
-            <div>
+          {/* top row: icon+label | period buttons */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div
+                style={{
+                  width: '30px',
+                  height: '30px',
+                  borderRadius: '8px',
+                  background: `${sparklineAccent}1A`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <TrendingUp size={15} color={sparklineAccent} strokeWidth={1.8} />
+              </div>
               <p
                 style={{
                   fontSize: '11px',
                   fontWeight: 600,
-                  color: '#86868B',
-                  margin: '0 0 2px 0',
+                  color: 'var(--dash-text-secondary)',
+                  margin: 0,
                   letterSpacing: '0.05em',
                   textTransform: 'uppercase',
                 }}
               >
                 Proyectos entregados
               </p>
-              <p style={{ fontSize: '11px', color: '#48484A', margin: 0 }}>
-                ultimos 5 meses
-              </p>
+            </div>
+            {/* Period filter links — server-side navigation, no client JS needed */}
+            <div
+              style={{
+                display: 'flex',
+                gap: '4px',
+                background: 'var(--dash-surface-2)',
+                borderRadius: '10px',
+                padding: '3px',
+                border: '1px solid rgba(255,255,255,0.08)',
+                flexShrink: 0,
+              }}
+            >
+              {(
+                [
+                  { label: 'Mes', value: 'this_month' },
+                  { label: '3M', value: '3months' },
+                  { label: 'Ano', value: 'this_year' },
+                  { label: 'Todo', value: 'all_time' },
+                ] as { label: string; value: SparklinePeriod }[]
+              ).map((btn) => {
+                const isActive = period === btn.value
+                return (
+                  <Link
+                    key={btn.value}
+                    href={`/admin?period=${btn.value}`}
+                    style={{
+                      display: 'inline-block',
+                      padding: '5px 12px',
+                      borderRadius: '7px',
+                      fontSize: '11px',
+                      fontWeight: isActive ? 600 : 400,
+                      background: isActive ? '#0071E3' : 'transparent',
+                      color: isActive ? '#FFFFFF' : 'var(--dash-text-secondary)',
+                      textDecoration: 'none',
+                      whiteSpace: 'nowrap',
+                      letterSpacing: '-0.01em',
+                      lineHeight: 1.4,
+                    }}
+                    aria-current={isActive ? 'page' : undefined}
+                  >
+                    {btn.label}
+                  </Link>
+                )
+              })}
             </div>
           </div>
+          {/* bottom row: count + sparkline */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <span
               style={{
                 fontSize: '22px',
                 fontWeight: 700,
-                color: '#F5F5F7',
+                color: 'var(--dash-text-primary)',
                 letterSpacing: '-0.02em',
               }}
             >
@@ -717,12 +932,14 @@ export default async function AdminDashboardPage() {
             <SparklineSVG values={sparklineValues} color={sparklineAccent} />
           </div>
         </div>
+        </FadeIn>
 
         {/* ── Proyectos en riesgo ── */}
         {atRiskProjects.length > 0 && (
+          <FadeIn delay={0.1}>
           <div
             style={{
-              background: '#111111',
+              background: 'var(--dash-surface-1)',
               border: '1px solid rgba(255,69,58,0.25)',
               borderRadius: '12px',
               padding: '16px 20px',
@@ -733,7 +950,7 @@ export default async function AdminDashboardPage() {
               style={{
                 fontSize: '13px',
                 fontWeight: 600,
-                color: '#FF453A',
+                color: 'var(--dash-danger)',
                 margin: '0 0 12px 0',
                 display: 'flex',
                 alignItems: 'center',
@@ -742,7 +959,7 @@ export default async function AdminDashboardPage() {
             >
               <span
                 className="apd-alert-icon"
-                style={{ color: '#FF453A' }}
+                style={{ color: 'var(--dash-danger)' }}
                 aria-hidden="true"
               />
               Proyectos en riesgo
@@ -751,10 +968,10 @@ export default async function AdminDashboardPage() {
               {atRiskProjects.map((proj) => {
                 const days = daysUntil(proj.end_date)
                 const overdue = days < 0
-                const daysColor = overdue ? '#FF453A' : '#FF9F0A'
+                const daysColor = overdue ? 'var(--dash-danger)' : 'var(--dash-warning)'
                 const daysLabel = overdue ? `${Math.abs(days)} dias vencido` : `${days} dias`
                 return (
-                  <Link
+                  <HoverLiftLink
                     key={proj.id}
                     href={`/admin/projects/${proj.id}`}
                     className="dh-row dh-link"
@@ -772,7 +989,7 @@ export default async function AdminDashboardPage() {
                     <span
                       style={{
                         fontSize: '13px',
-                        color: '#F5F5F7',
+                        color: 'var(--dash-text-primary)',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
@@ -813,11 +1030,66 @@ export default async function AdminDashboardPage() {
                         {daysLabel}
                       </span>
                     </div>
-                  </Link>
+                  </HoverLiftLink>
                 )
               })}
             </div>
           </div>
+          </FadeIn>
+        )}
+
+        {/* ── Hoy: tareas con vencimiento hoy ── */}
+        {todayTasks.length > 0 && (
+          <FadeIn delay={0.15}>
+          <div
+            style={{
+              background: 'var(--dash-surface-1)',
+              border: '1px solid rgba(0,113,227,0.25)',
+              borderRadius: '12px',
+              padding: '16px 20px',
+              marginBottom: '16px',
+            }}
+          >
+            <p
+              style={{
+                fontSize: '13px',
+                fontWeight: 600,
+                color: '#0071E3',
+                margin: '0 0 10px 0',
+              }}
+            >
+              Hoy — {todayTasks.length} {todayTasks.length === 1 ? 'tarea' : 'tareas'} vencen hoy
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              {todayTasks.map((task) => (
+                <HoverLiftLink
+                  key={task.id}
+                  href={task.project_id ? `/admin/projects/${task.project_id}` : '/admin/kanban'}
+                  className="dh-row dh-link"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                    padding: '7px 10px',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                    transition: 'background 0.15s',
+                  }}
+                >
+                  <span style={{ fontSize: '13px', color: 'var(--dash-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                    {task.title}
+                  </span>
+                  {task.project_title && (
+                    <span style={{ fontSize: '11px', color: 'var(--dash-text-tertiary)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                      {task.project_title}
+                    </span>
+                  )}
+                </HoverLiftLink>
+              ))}
+            </div>
+          </div>
+          </FadeIn>
         )}
 
         {/* ── Entregas + Leads sin atender (2 cols) ── */}
@@ -830,10 +1102,11 @@ export default async function AdminDashboardPage() {
           }}
         >
           {/* ── Entregas esta semana ── */}
+          <FadeIn delay={0.2}>
           <div
             style={{
-              background: '#111111',
-              border: '1px solid rgba(255,255,255,0.08)',
+              background: 'var(--dash-surface-1)',
+              border: '1px solid var(--dash-border)',
               borderRadius: '12px',
               padding: '20px',
             }}
@@ -842,7 +1115,7 @@ export default async function AdminDashboardPage() {
               style={{
                 fontSize: '15px',
                 fontWeight: 600,
-                color: '#F5F5F7',
+                color: 'var(--dash-text-primary)',
                 margin: '0 0 16px 0',
               }}
             >
@@ -853,7 +1126,7 @@ export default async function AdminDashboardPage() {
                     style={{
                       fontSize: '12px',
                       fontWeight: 600,
-                      color: upcomingDeliverables.length >= 3 ? '#FF453A' : '#FF9F0A',
+                      color: upcomingDeliverables.length >= 3 ? 'var(--dash-danger)' : 'var(--dash-warning)',
                       background: upcomingDeliverables.length >= 3
                         ? 'rgba(255,69,58,0.13)'
                         : 'rgba(255,159,10,0.13)',
@@ -868,16 +1141,16 @@ export default async function AdminDashboardPage() {
             </p>
 
             {upcomingDeliverables.length === 0 ? (
-              <p style={{ fontSize: '13px', color: '#86868B', margin: 0 }}>
+              <p style={{ fontSize: '13px', color: 'var(--dash-text-secondary)', margin: 0 }}>
                 Sin entregas pendientes esta semana
               </p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 {upcomingDeliverables.map((deliverable) => {
                   const days = daysUntil(deliverable.due_date)
-                  const daysColor = days < 3 ? '#FF453A' : days < 5 ? '#FF9F0A' : '#30D158'
+                  const daysColor = days < 3 ? 'var(--dash-danger)' : days < 5 ? 'var(--dash-warning)' : 'var(--dash-success)'
                   return (
-                    <Link
+                    <HoverLiftLink
                       key={deliverable.id}
                       href={deliverable.project ? `/admin/projects/${deliverable.project.id}` : '/admin/projects'}
                       className="dh-row dh-link"
@@ -896,7 +1169,7 @@ export default async function AdminDashboardPage() {
                         <span
                           style={{
                             fontSize: '13px',
-                            color: '#F5F5F7',
+                            color: 'var(--dash-text-primary)',
                             display: 'block',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
@@ -909,7 +1182,7 @@ export default async function AdminDashboardPage() {
                           <span
                             style={{
                               fontSize: '11px',
-                              color: '#48484A',
+                              color: 'var(--dash-text-tertiary)',
                               display: 'block',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
@@ -954,52 +1227,68 @@ export default async function AdminDashboardPage() {
                           {DELIVERABLE_STATUS_LABEL[deliverable.status]}
                         </span>
                       </div>
-                    </Link>
+                    </HoverLiftLink>
                   )
                 })}
               </div>
             )}
           </div>
+          </FadeIn>
 
           {/* ── Leads sin atender ── */}
+          <FadeIn delay={0.35}>
           <div
             style={{
-              background: '#111111',
-              border: '1px solid rgba(255,255,255,0.08)',
+              background: 'var(--dash-surface-1)',
+              border: '1px solid var(--dash-border)',
               borderRadius: '12px',
               padding: '20px',
             }}
           >
-            <p
-              style={{
-                fontSize: '15px',
-                fontWeight: 600,
-                color: '#F5F5F7',
-                margin: '0 0 16px 0',
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: '8px',
-              }}
-            >
-              Leads sin atender
-              {totalNewLeads > 0 && (
-                <span
+            <div style={{ marginBottom: '16px' }}>
+              <p
+                style={{
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  color: 'var(--dash-text-primary)',
+                  margin: '0 0 6px 0',
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  gap: '8px',
+                }}
+              >
+                Leads sin atender
+                {totalNewLeads > 0 && (
+                  <span
+                    style={{
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: '#0071E3',
+                      background: 'rgba(0,113,227,0.13)',
+                      borderRadius: '6px',
+                      padding: '2px 7px',
+                    }}
+                  >
+                    {totalNewLeads}
+                  </span>
+                )}
+              </p>
+              {staleLeads > 0 && (
+                <p
                   style={{
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: '#0071E3',
-                    background: 'rgba(0,113,227,0.13)',
-                    borderRadius: '6px',
-                    padding: '2px 7px',
+                    fontSize: '11px',
+                    fontWeight: 500,
+                    color: 'var(--dash-warning)',
+                    margin: 0,
                   }}
                 >
-                  {totalNewLeads}
-                </span>
+                  {staleLeads} {staleLeads === 1 ? 'lead' : 'leads'} sin contactar por +3 dias
+                </p>
               )}
-            </p>
+            </div>
 
             {newLeads.length === 0 ? (
-              <p style={{ fontSize: '13px', color: '#30D158', margin: 0 }}>
+              <p style={{ fontSize: '13px', color: 'var(--dash-success)', margin: 0 }}>
                 Todos los leads atendidos
               </p>
             ) : (
@@ -1024,7 +1313,7 @@ export default async function AdminDashboardPage() {
                       <span
                         style={{
                           fontSize: '13px',
-                          color: '#F5F5F7',
+                          color: 'var(--dash-text-primary)',
                           display: 'block',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
@@ -1036,7 +1325,7 @@ export default async function AdminDashboardPage() {
                       <span
                         style={{
                           fontSize: '11px',
-                          color: '#48484A',
+                          color: 'var(--dash-text-tertiary)',
                           display: 'block',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
@@ -1050,7 +1339,7 @@ export default async function AdminDashboardPage() {
                     <span
                       style={{
                         fontSize: '11px',
-                        color: '#86868B',
+                        color: 'var(--dash-text-secondary)',
                         whiteSpace: 'nowrap',
                         flexShrink: 0,
                       }}
@@ -1062,13 +1351,14 @@ export default async function AdminDashboardPage() {
               </div>
             )}
           </div>
+          </FadeIn>
         </div>
 
         {/* ── Acciones rapidas ── */}
         <div
           style={{
-            background: '#111111',
-            border: '1px solid rgba(255,255,255,0.08)',
+            background: 'var(--dash-surface-1)',
+            border: '1px solid var(--dash-border)',
             borderRadius: '12px',
             padding: '20px',
             marginBottom: '28px',
@@ -1078,7 +1368,7 @@ export default async function AdminDashboardPage() {
             style={{
               fontSize: '11px',
               fontWeight: 600,
-              color: '#86868B',
+              color: 'var(--dash-text-secondary)',
               textTransform: 'uppercase',
               letterSpacing: '0.08em',
               margin: '0 0 14px 0',
@@ -1110,6 +1400,7 @@ export default async function AdminDashboardPage() {
           }}
         >
           {/* ── Proyectos recientes ── */}
+          <FadeIn delay={0.25}>
           <div className="apd-list-card">
             {/* Card header */}
             <div
@@ -1118,14 +1409,14 @@ export default async function AdminDashboardPage() {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 padding: '18px 20px 14px',
-                borderBottom: '1px solid rgba(255,255,255,0.06)',
+                borderBottom: '1px solid var(--dash-border)',
               }}
             >
               <span
                 style={{
                   fontSize: '15px',
                   fontWeight: 600,
-                  color: '#F5F5F7',
+                  color: 'var(--dash-text-primary)',
                 }}
               >
                 Proyectos recientes
@@ -1135,99 +1426,13 @@ export default async function AdminDashboardPage() {
               </Link>
             </div>
 
-            {/* Items */}
-            {recentProjects.length === 0 && (
-              <p
-                style={{
-                  color: '#48484A',
-                  fontSize: '13px',
-                  padding: '20px',
-                  margin: 0,
-                }}
-              >
-                Sin proyectos registrados.
-              </p>
-            )}
-
-            {recentProjects.map((project, idx) => (
-              <div
-                key={project.id}
-                className="apd-list-item"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '12px',
-                  padding: '12px 20px',
-                  borderBottom:
-                    idx < recentProjects.length - 1
-                      ? '1px solid rgba(255,255,255,0.05)'
-                      : 'none',
-                }}
-              >
-                {/* Left: name + client */}
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <Link
-                    href={`/admin/projects/${project.id}`}
-                    className="apd-project-link"
-                    style={{ display: 'block' }}
-                  >
-                    {project.title}
-                  </Link>
-                  <span
-                    style={{
-                      fontSize: '12px',
-                      color: '#48484A',
-                      display: 'block',
-                      marginTop: '2px',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {project.client?.name ?? 'Sin cliente'}
-                  </span>
-                </div>
-
-                {/* Right: status pill + date */}
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    flexShrink: 0,
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: '11px',
-                      fontWeight: 500,
-                      color: PROJECT_STATUS_COLOR[project.status],
-                      background: PROJECT_STATUS_BG[project.status],
-                      borderRadius: '6px',
-                      padding: '3px 8px',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {PROJECT_STATUS_LABEL[project.status]}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: '11px',
-                      color: '#48484A',
-                      whiteSpace: 'nowrap',
-                      minWidth: '46px',
-                      textAlign: 'right',
-                    }}
-                  >
-                    {formatDate(project.created_at)}
-                  </span>
-                </div>
-              </div>
-            ))}
+            {/* Items — staggered animated list */}
+            <AnimatedProjectsList projects={projectRows} />
           </div>
+          </FadeIn>
 
           {/* ── Leads recientes ── */}
+          <FadeIn delay={0.3}>
           <div className="apd-list-card">
             {/* Card header */}
             <div
@@ -1236,14 +1441,14 @@ export default async function AdminDashboardPage() {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 padding: '18px 20px 14px',
-                borderBottom: '1px solid rgba(255,255,255,0.06)',
+                borderBottom: '1px solid var(--dash-border)',
               }}
             >
               <span
                 style={{
                   fontSize: '15px',
                   fontWeight: 600,
-                  color: '#F5F5F7',
+                  color: 'var(--dash-text-primary)',
                 }}
               >
                 Leads recientes
@@ -1253,97 +1458,10 @@ export default async function AdminDashboardPage() {
               </Link>
             </div>
 
-            {/* Items */}
-            {recentLeads.length === 0 && (
-              <p
-                style={{
-                  color: '#48484A',
-                  fontSize: '13px',
-                  padding: '20px',
-                  margin: 0,
-                }}
-              >
-                Sin leads registrados.
-              </p>
-            )}
-
-            {recentLeads.map((lead, idx) => (
-              <div
-                key={lead.id}
-                className="apd-list-item"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '12px',
-                  padding: '12px 20px',
-                  borderBottom:
-                    idx < recentLeads.length - 1
-                      ? '1px solid rgba(255,255,255,0.05)'
-                      : 'none',
-                }}
-              >
-                {/* Left: name + source */}
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <Link
-                    href="/admin/leads"
-                    className="apd-project-link"
-                    style={{ display: 'block' }}
-                  >
-                    {lead.name}
-                  </Link>
-                  <span
-                    style={{
-                      fontSize: '12px',
-                      color: '#48484A',
-                      display: 'block',
-                      marginTop: '2px',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {lead.source}
-                  </span>
-                </div>
-
-                {/* Right: status badge + date */}
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    flexShrink: 0,
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: '11px',
-                      fontWeight: 500,
-                      color: LEAD_STATUS_COLOR[lead.status],
-                      background: LEAD_STATUS_BG[lead.status],
-                      borderRadius: '6px',
-                      padding: '3px 8px',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {LEAD_STATUS_LABEL[lead.status]}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: '11px',
-                      color: '#48484A',
-                      whiteSpace: 'nowrap',
-                      minWidth: '46px',
-                      textAlign: 'right',
-                    }}
-                  >
-                    {formatDate(lead.created_at)}
-                  </span>
-                </div>
-              </div>
-            ))}
+            {/* Items — staggered animated list */}
+            <AnimatedLeadsList leads={leadRows} />
           </div>
+          </FadeIn>
         </div>
 
         {/* ── Accesos rapidos ── */}
@@ -1352,7 +1470,7 @@ export default async function AdminDashboardPage() {
             style={{
               fontSize: '11px',
               fontWeight: 600,
-              color: '#48484A',
+              color: 'var(--dash-text-tertiary)',
               textTransform: 'uppercase',
               letterSpacing: '0.08em',
               margin: '0 0 12px 0',
