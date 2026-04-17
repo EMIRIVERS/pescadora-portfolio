@@ -36,14 +36,16 @@ import {
 const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
 const BUCKET = 'media'
 
-function getPublicUrl(storagePath: string) {
-  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${storagePath}`
+function resolvePhotoUrl(photo: Photo) {
+  if (photo.url) return photo.url
+  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${photo.storage_path}`
 }
 
 export interface Photo {
   id: string
   album_id: string
   storage_path: string
+  url?: string | null
   alt_text: string
   sort_order: number
 }
@@ -95,7 +97,7 @@ function SortablePhoto({
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={getPublicUrl(photo.storage_path)}
+        src={resolvePhotoUrl(photo)}
         alt={photo.alt_text}
         style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', pointerEvents: 'none', userSelect: 'none' }}
       />
@@ -185,12 +187,14 @@ function PhotoGrid({
       }
 
       const altText = file.name.replace(/\.[^/.]+$/, '')
+      const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${storagePath}`
       try {
-        await addPhoto(album.id, storagePath, altText, nextOrder)
+        await addPhoto(album.id, storagePath, altText, nextOrder, publicUrl)
         const newPhoto: Photo = {
           id: `temp-${Date.now()}-${i}`,
           album_id: album.id,
           storage_path: storagePath,
+          url: publicUrl,
           alt_text: altText,
           sort_order: nextOrder,
         }

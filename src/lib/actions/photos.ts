@@ -91,12 +91,14 @@ export async function addPhoto(
   storagePath: string,
   altText: string,
   sortOrder: number,
+  url?: string,
 ) {
   const db = createServiceClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (db as any).from('portfolio_photos').insert({
     album_id: albumId,
     storage_path: storagePath,
+    url: url ?? null,
     alt_text: altText,
     sort_order: sortOrder,
   })
