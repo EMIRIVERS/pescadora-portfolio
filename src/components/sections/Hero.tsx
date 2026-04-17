@@ -8,10 +8,21 @@ gsap.registerPlugin(ScrollTrigger)
 
 /* --- Config --- */
 const TOTAL_FRAMES = 233
-const FRAME_PATH = '/hero-frames/frame_'
+const TOTAL_SETS = 12
 
-function frameSrc(i: number): string {
-  return `${FRAME_PATH}${String(i).padStart(4, '0')}.webp`
+/** Elige un set aleatorio por visita (consistente dentro de la sesion) */
+function pickSet(): number {
+  if (typeof window === 'undefined') return 1
+  const key = 'xico_hero_set'
+  const stored = sessionStorage.getItem(key)
+  if (stored) return Number(stored)
+  const set = Math.floor(Math.random() * TOTAL_SETS) + 1
+  sessionStorage.setItem(key, String(set))
+  return set
+}
+
+function frameSrc(set: number, i: number): string {
+  return `/hero-frames/set-${set}/frame_${String(i).padStart(4, '0')}.webp`
 }
 
 /* --- Slides narrativos --- */
@@ -117,12 +128,13 @@ export function Hero({ onLoadProgress, initialBlur }: HeroProps) {
 
   /* --- Carga progresiva de frames --- */
   useEffect(() => {
+    const currentSet = pickSet()
     const imgs: HTMLImageElement[] = new Array(TOTAL_FRAMES)
     imagesRef.current = imgs
 
     const load = (i: number): Promise<void> => new Promise((res) => {
       const img = new Image()
-      img.src = frameSrc(i + 1)
+      img.src = frameSrc(currentSet, i + 1)
       img.onload = () => {
         imgs[i] = img
         loadedCountRef.current++
@@ -509,6 +521,42 @@ export function Hero({ onLoadProgress, initialBlur }: HeroProps) {
             <path d="M6 0v16M1 11l5 5 5-5" stroke="#fff" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
+
+        {/* Skip hero button */}
+        <button
+          onClick={() => {
+            document.getElementById('portfolio')?.scrollIntoView({ behavior: 'smooth' })
+          }}
+          data-cursor="link"
+          style={{
+            position: 'absolute',
+            bottom: '2.5rem',
+            right: '2rem',
+            zIndex: 7,
+            background: 'none',
+            border: '1px solid rgba(255,255,255,0.12)',
+            color: 'rgba(255,255,255,0.3)',
+            fontFamily: 'var(--font-geist-mono)',
+            fontSize: '0.55rem',
+            letterSpacing: '0.2em',
+            textTransform: 'uppercase',
+            padding: '0.5rem 1rem',
+            cursor: 'pointer',
+            transition: 'color 0.3s ease, border-color 0.3s ease',
+          }}
+          onMouseEnter={(e) => {
+            const btn = e.currentTarget
+            btn.style.color = 'rgba(255,255,255,0.7)'
+            btn.style.borderColor = 'rgba(255,255,255,0.3)'
+          }}
+          onMouseLeave={(e) => {
+            const btn = e.currentTarget
+            btn.style.color = 'rgba(255,255,255,0.3)'
+            btn.style.borderColor = 'rgba(255,255,255,0.12)'
+          }}
+        >
+          Saltar
+        </button>
 
         <style>{`
           @keyframes heroScrollHint {

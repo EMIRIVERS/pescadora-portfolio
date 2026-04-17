@@ -110,7 +110,7 @@ export default function PortfolioHeader({ visible }: PortfolioHeaderProps) {
         {CATEGORIES.map(({ label, id }) => (
           <button
             key={id}
-            onClick={() => scrollTo('portfolio')}
+            onClick={() => scrollTo(id)}
             style={catBase}
             onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = '#e8341a'; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = '#555'; }}

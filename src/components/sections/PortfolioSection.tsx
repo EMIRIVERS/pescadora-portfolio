@@ -117,6 +117,7 @@ function PortfolioCard({
   return (
     <motion.div
       ref={ref}
+      id={card.name}
       initial={{ opacity: 0, y: 24 }}
       animate={{
         opacity: 1,

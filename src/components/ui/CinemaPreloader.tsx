@@ -124,13 +124,27 @@ export default function CinemaPreloader({ onComplete, progress }: CinemaPreloade
   return (
     <div
       ref={containerRef}
-      aria-hidden="true"
       style={{
         position: 'fixed',
         inset: 0,
         zIndex: 10000,
-        pointerEvents: 'none',
+        pointerEvents: 'auto',
       }}
+      onClick={() => {
+        if (timelineRef.current) {
+          timelineRef.current.progress(1)
+        }
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape' || e.key === ' ') {
+          if (timelineRef.current) {
+            timelineRef.current.progress(1)
+          }
+        }
+      }}
+      tabIndex={0}
+      role="button"
+      aria-label="Saltar intro"
     >
       {/* Top panel */}
       <div
