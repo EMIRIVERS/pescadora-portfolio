@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   DndContext,
@@ -715,6 +716,7 @@ function DraggableLeadCard({ lead, accentColor, onClick, isSelected, selectionMo
 // ── LeadsPipeline ────────────────────────────────────────────────────────────
 
 export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
+  const router = useRouter();
   const [localLeads, setLocalLeads] = useState<Lead[]>(leads);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [showAdd, setShowAdd] = useState(false);
@@ -825,7 +827,7 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
     return sortLeads(result, sortBy);
   }, [localLeads, search, filterSource, filterBudget, filterAge, segmentFilter, sortBy]);
 
-  const hasActiveFilters = search.trim() !== '' || filterSource !== 'all' || filterBudget !== 'all' || filterAge !== 'all';
+  const hasActiveFilters = search.trim() !== '' || filterSource !== 'all' || filterBudget !== 'all' || filterAge !== 'all' || segmentFilter !== null;
 
   // Selected leads objects
   const selectedLeadsArr = useMemo(
@@ -1092,7 +1094,7 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
               </button>
             ))}
           </div>
-          <LeadsImporter onDone={() => window.location.reload()} />
+          <LeadsImporter onDone={() => { router.refresh() }} />
           <button
             onClick={() => {
               setAddPresetStatus('new');

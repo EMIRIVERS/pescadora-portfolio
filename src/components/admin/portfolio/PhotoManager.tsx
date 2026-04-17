@@ -22,7 +22,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { createClient } from '@/lib/supabase/client'
 import {
   Plus, Trash2, Eye, EyeOff, X, Check, Upload, ArrowLeft, Pencil,
-  GripVertical, ChevronRight, FolderOpen,
+  GripVertical, ChevronRight, FolderOpen, ImagePlus,
 } from 'lucide-react'
 import {
   createAlbum,
@@ -58,6 +58,7 @@ export interface Album {
   sort_order: number
   is_visible: boolean
   parent_id: string | null
+  cover_url?: string | null
   portfolio_photos: Photo[]
 }
 
@@ -69,6 +70,7 @@ function SortableAlbumCard({
   onToggleVisibility,
   onRename,
   onDelete,
+  onSetCover,
   isDeleting,
   isSubAlbum,
 }: {
@@ -77,6 +79,7 @@ function SortableAlbumCard({
   onToggleVisibility: (album: Album) => void
   onRename: (album: Album) => void
   onDelete: (album: Album) => void
+  onSetCover?: (album: Album) => void
   isDeleting: boolean
   isSubAlbum?: boolean
 }) {
@@ -86,6 +89,7 @@ function SortableAlbumCard({
 
   const sorted = [...album.portfolio_photos].sort((a, b) => a.sort_order - b.sort_order)
   const coverPhotos = sorted.slice(0, 4)
+  const hasCoverUrl = Boolean(album.cover_url)
 
   return (
     <div
@@ -105,35 +109,62 @@ function SortableAlbumCard({
         flexDirection: 'column',
       }}
     >
-      {/* Cover mosaic */}
+      {/* Cover — custom URL or mosaic of first 4 photos */}
       <div
         onClick={() => !isDragging && onOpen(album)}
         style={{
           width: '100%',
           aspectRatio: '4/3',
           background: 'var(--dash-surface-3)',
-          display: 'grid',
-          gridTemplateColumns: coverPhotos.length >= 2 ? '1fr 1fr' : '1fr',
-          gridTemplateRows: coverPhotos.length >= 3 ? '1fr 1fr' : '1fr',
+          display: hasCoverUrl ? 'block' : 'grid',
+          gridTemplateColumns: !hasCoverUrl && coverPhotos.length >= 2 ? '1fr 1fr' : '1fr',
+          gridTemplateRows: !hasCoverUrl && coverPhotos.length >= 3 ? '1fr 1fr' : '1fr',
           gap: 1,
           cursor: 'pointer',
           overflow: 'hidden',
+          position: 'relative',
         }}
       >
-        {coverPhotos.length === 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.08)', fontSize: 28 }}>
-            <FolderOpen size={28} strokeWidth={1} />
-          </div>
-        )}
-        {coverPhotos.map((photo) => (
+        {hasCoverUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img
-            key={photo.id}
-            src={resolvePhotoUrl(photo)}
-            alt=""
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-          />
-        ))}
+          <img src={album.cover_url!} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+        ) : (
+          <>
+            {coverPhotos.length === 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.08)', fontSize: 28 }}>
+                <FolderOpen size={28} strokeWidth={1} />
+              </div>
+            )}
+            {coverPhotos.map((photo) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={photo.id}
+                src={resolvePhotoUrl(photo)}
+                alt=""
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              />
+            ))}
+          </>
+        )}
+        {/* Set cover button overlay */}
+        {onSetCover && (
+          <button
+            className="pm-cover-btn"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); onSetCover(album) }}
+            title="Cambiar miniatura"
+            style={{
+              position: 'absolute', bottom: 5, right: 5,
+              width: 26, height: 26, borderRadius: 6,
+              background: 'rgba(0,0,0,0.65)', border: 'none',
+              color: '#fff', cursor: 'pointer', display: 'flex',
+              alignItems: 'center', justifyContent: 'center',
+              opacity: 0, transition: 'opacity 0.15s',
+            }}
+          >
+            <ImagePlus size={12} strokeWidth={1.5} />
+          </button>
+        )}
       </div>
 
       {/* Footer */}
@@ -281,6 +312,7 @@ function AlbumDetail({
   onAlbumCreated,
   onAlbumUpdated,
   onAlbumDeleted,
+  onSetCover,
 }: {
   album: Album
   subAlbums: Album[]
@@ -292,6 +324,7 @@ function AlbumDetail({
   onAlbumCreated: (album: Album) => void
   onAlbumUpdated: (id: string, patch: Partial<Album>) => void
   onAlbumDeleted: (id: string) => void
+  onSetCover?: (album: Album) => void
 }) {
   const router = useRouter()
   const supabase = createClient()
@@ -443,10 +476,10 @@ function AlbumDetail({
     fd.set('label', newSubLabel.trim())
     startSubTransition(async () => {
       try {
-        await createAlbum(fd, album.id)
+        const newAlbum = await createAlbum(fd, album.id)
+        onAlbumCreated(newAlbum)
         setShowNewSub(false)
         setNewSubLabel('')
-        router.refresh()
       } catch (err) {
         setSubError(err instanceof Error ? err.message : 'Error al crear')
       }
@@ -683,6 +716,7 @@ function AlbumDetail({
                     onToggleVisibility={handleToggleSub}
                     onRename={handleRenameSub}
                     onDelete={handleDeleteSub}
+                    onSetCover={onSetCover}
                     isDeleting={deletingSubId === sub.id}
                     isSubAlbum
                   />
@@ -724,6 +758,9 @@ export default function PhotoManager({ initialAlbums, compact = false }: { initi
   const [renameLabel, setRenameLabel] = useState('')
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [coverAlbumId, setCoverAlbumId] = useState<string | null>(null)
+  const [coverUrl, setCoverUrl] = useState('')
+  const [coverPending, startCoverTransition] = useTransition()
 
   // Root albums only (no parent)
   const rootAlbums = [...albums.filter((a) => !a.parent_id)].sort((a, b) => a.sort_order - b.sort_order)
@@ -780,10 +817,10 @@ export default function PhotoManager({ initialAlbums, compact = false }: { initi
     fd.set('label', newLabel.trim())
     startTransition(async () => {
       try {
-        await createAlbum(fd)
+        const newAlbum = await createAlbum(fd)
+        setAlbums((prev) => [...prev, newAlbum])
         setShowNew(false)
         setNewLabel('')
-        router.refresh()
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error al crear')
       }
@@ -852,6 +889,25 @@ export default function PhotoManager({ initialAlbums, compact = false }: { initi
     })
   }
 
+  // ── Cover / thumbnail ────────────────────────────────────────────────────────
+
+  function handleSetCover(album: Album) {
+    setCoverAlbumId(album.id)
+    setCoverUrl(album.cover_url ?? '')
+  }
+
+  function handleSaveCover() {
+    if (!coverAlbumId) return
+    const url = coverUrl.trim() || null
+    patchAlbum(coverAlbumId, { cover_url: url })
+    const id = coverAlbumId
+    setCoverAlbumId(null)
+    startCoverTransition(async () => {
+      try { await updateAlbum(id, { cover_url: url }) }
+      catch { /* revert */ patchAlbum(id, { cover_url: albums.find((a) => a.id === id)?.cover_url }) }
+    })
+  }
+
   // ── Navigation ───────────────────────────────────────────────────────────────
 
   function navigateInto(album: Album) {
@@ -878,6 +934,7 @@ export default function PhotoManager({ initialAlbums, compact = false }: { initi
           .pm-icon-del:hover { background: rgba(255,69,58,0.15) !important; color: #FF453A !important; }
           .pm-photo-cell:hover .pm-delete-btn { opacity: 1 !important; }
           .pm-photo-cell:hover .pm-photo-overlay { background: rgba(0,0,0,0.25) !important; }
+          .pm-album-card:hover .pm-cover-btn { opacity: 1 !important; }
         `}</style>
 
         {/* Breadcrumb */}
@@ -918,7 +975,40 @@ export default function PhotoManager({ initialAlbums, compact = false }: { initi
           onAlbumCreated={(newAlbum) => setAlbums((prev) => [...prev, newAlbum])}
           onAlbumUpdated={patchAlbum}
           onAlbumDeleted={removeAlbum}
+          onSetCover={handleSetCover}
         />
+
+      {/* Cover URL modal (detail view) */}
+      {coverAlbumId && (
+        <div
+          onClick={() => setCoverAlbumId(null)}
+          style={{ position: 'fixed', inset: 0, zIndex: 9998, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: 'var(--dash-surface-2)', border: '1px solid var(--dash-border)', borderRadius: 12, padding: 20, width: '100%', maxWidth: 420, display: 'flex', flexDirection: 'column', gap: 12 }}
+          >
+            <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--dash-text-primary)', fontFamily: FONT }}>Miniatura del álbum</p>
+            <p style={{ margin: 0, fontSize: 12, color: 'var(--dash-text-tertiary)', fontFamily: FONT }}>Pega una URL de imagen para usar como portada. Déjalo vacío para usar el mosaico automático.</p>
+            <input
+              autoFocus
+              type="url"
+              value={coverUrl}
+              onChange={(e) => setCoverUrl(e.target.value)}
+              placeholder="https://..."
+              style={{ backgroundColor: 'var(--dash-surface-3)', border: '1px solid var(--dash-border)', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: 'var(--dash-text-primary)', fontFamily: FONT, outline: 'none' }}
+            />
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button onClick={() => setCoverAlbumId(null)} style={{ padding: '7px 14px', background: 'var(--dash-surface-3)', border: '1px solid var(--dash-border)', borderRadius: 7, fontSize: 12, color: 'var(--dash-text-secondary)', cursor: 'pointer', fontFamily: FONT }}>
+                Cancelar
+              </button>
+              <button onClick={handleSaveCover} disabled={coverPending} style={{ padding: '7px 14px', background: '#0071E3', border: 'none', borderRadius: 7, fontSize: 12, color: '#fff', cursor: 'pointer', opacity: coverPending ? 0.5 : 1, fontFamily: FONT }}>
+                {coverPending ? '...' : 'Guardar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     )
   }
@@ -934,6 +1024,7 @@ export default function PhotoManager({ initialAlbums, compact = false }: { initi
         .pm-icon-del:hover { background: rgba(255,69,58,0.15) !important; color: #FF453A !important; }
         .pm-photo-cell:hover .pm-delete-btn { opacity: 1 !important; }
         .pm-photo-cell:hover .pm-photo-overlay { background: rgba(0,0,0,0.25) !important; }
+        .pm-album-card:hover .pm-cover-btn { opacity: 1 !important; }
       `}</style>
 
       {/* Header */}
@@ -1003,12 +1094,45 @@ export default function PhotoManager({ initialAlbums, compact = false }: { initi
                   onToggleVisibility={handleToggle}
                   onRename={(a) => { setRenamingId(a.id); setRenameLabel(a.label); setError(null) }}
                   onDelete={handleDelete}
+                  onSetCover={handleSetCover}
                   isDeleting={deletingId === album.id}
                 />
               ))}
             </div>
           </SortableContext>
         </DndContext>
+      )}
+
+      {/* Cover URL modal */}
+      {coverAlbumId && (
+        <div
+          onClick={() => setCoverAlbumId(null)}
+          style={{ position: 'fixed', inset: 0, zIndex: 9998, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: 'var(--dash-surface-2)', border: '1px solid var(--dash-border)', borderRadius: 12, padding: 20, width: '100%', maxWidth: 420, display: 'flex', flexDirection: 'column', gap: 12 }}
+          >
+            <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--dash-text-primary)', fontFamily: FONT }}>Miniatura del álbum</p>
+            <p style={{ margin: 0, fontSize: 12, color: 'var(--dash-text-tertiary)', fontFamily: FONT }}>Pega una URL de imagen para usar como portada. Déjalo vacío para usar el mosaico automático.</p>
+            <input
+              autoFocus
+              type="url"
+              value={coverUrl}
+              onChange={(e) => setCoverUrl(e.target.value)}
+              placeholder="https://..."
+              style={{ backgroundColor: 'var(--dash-surface-3)', border: '1px solid var(--dash-border)', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: 'var(--dash-text-primary)', fontFamily: FONT, outline: 'none' }}
+            />
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button onClick={() => setCoverAlbumId(null)} style={{ padding: '7px 14px', background: 'var(--dash-surface-3)', border: '1px solid var(--dash-border)', borderRadius: 7, fontSize: 12, color: 'var(--dash-text-secondary)', cursor: 'pointer', fontFamily: FONT }}>
+                Cancelar
+              </button>
+              <button onClick={handleSaveCover} disabled={coverPending} style={{ padding: '7px 14px', background: '#0071E3', border: 'none', borderRadius: 7, fontSize: 12, color: '#fff', cursor: 'pointer', opacity: coverPending ? 0.5 : 1, fontFamily: FONT }}>
+                {coverPending ? '...' : 'Guardar'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

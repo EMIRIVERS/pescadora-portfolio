@@ -206,7 +206,7 @@ export default function CategoryManager({ initialCategories, videoCounts = {}, p
     const swapIdx = dir === 'up' ? idx - 1 : idx + 1
     if (swapIdx < 0 || swapIdx >= sorted.length) return
     const adj = sorted[swapIdx]
-    const snapshot = cats
+    const snapshot = [...cats]
     setCats((prev) => prev.map((c) => {
       if (c.id === cat.id) return { ...c, sort_order: adj.sort_order }
       if (c.id === adj.id) return { ...c, sort_order: cat.sort_order }

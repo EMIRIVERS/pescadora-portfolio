@@ -1,9 +1,13 @@
 'use server'
+import { requireAdmin } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email'
 
 export async function sendTestEmail(
   formData: FormData,
 ): Promise<{ error?: string; success?: boolean }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
+
   const to = String(formData.get('to') ?? '').trim()
   if (!to) return { error: 'Email requerido' }
 

@@ -119,7 +119,7 @@ export default async function PortfolioAdminPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase as any)
       .from('photo_albums')
-      .select('*, portfolio_photos(*)')
+      .select('id, slug, label, sort_order, is_visible, parent_id, cover_url, portfolio_photos(*)')
       .order('sort_order', { ascending: true }),
   ])
 

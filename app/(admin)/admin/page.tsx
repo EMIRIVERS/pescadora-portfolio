@@ -203,9 +203,10 @@ function SparklineSVG({ values, color }: { values: number[]; color: string }) {
   const w = 80
   const h = 24
   const max = Math.max(...values, 1)
+  const divisor = values.length > 1 ? values.length - 1 : 1
   const pts = values
     .map((v, i) => {
-      const x = (i / (values.length - 1)) * w
+      const x = (i / divisor) * w
       const y = h - (v / max) * (h - 2) - 1
       return `${x},${y}`
     })

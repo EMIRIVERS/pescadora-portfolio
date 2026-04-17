@@ -98,7 +98,7 @@ export async function inviteClientByEmail(email: string): Promise<{ error?: stri
   const db = createServiceClient()
   const { error } = await db.auth.admin.inviteUserByEmail(trimmed, {
     data: { role: 'client' },
-    redirectTo: process.env.NEXT_PUBLIC_SITE_URL + '/auth/callback',
+    redirectTo: (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://pescadora.studio') + '/auth/callback',
   })
   if (error) return { error: error.message }
   return {}
@@ -185,12 +185,14 @@ export async function unlinkClientFromUser(
 }
 
 export async function updateClient(id: string, formData: FormData): Promise<{ error?: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
+
   const db = createServiceClient()
   const name = String(formData.get('name') ?? '').trim()
   if (!name) return { error: 'El nombre es obligatorio.' }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (db as any).from('clients').update({
+  const { error } = await db.from('clients').update({
     name,
     email: String(formData.get('email') ?? '').trim() || null,
     company: String(formData.get('company') ?? '').trim() || null,
@@ -205,6 +207,9 @@ export async function updateClient(id: string, formData: FormData): Promise<{ er
 }
 
 export async function deleteClient(id: string): Promise<{ error?: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
+
   const db = createServiceClient()
   const { error } = await db.from('clients').delete().eq('id', id)
   if (error) return { error: error.message }

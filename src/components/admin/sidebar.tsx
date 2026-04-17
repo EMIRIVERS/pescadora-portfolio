@@ -610,7 +610,7 @@ export default function Sidebar({ profile }: SidebarProps) {
           .from('leads')
           .select('id', { count: 'exact', head: true })
           .eq('status', 'new')
-          .lt('created_at', yesterday),
+          .gte('created_at', yesterday),
         db
           .from('project_deliverables')
           .select('id', { count: 'exact', head: true })

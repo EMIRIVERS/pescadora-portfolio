@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createServiceClient } from '@/lib/supabase/server'
+import { createServiceClient, requireAdmin } from '@/lib/supabase/server'
 
 function toSlug(str: string) {
   return str
@@ -15,7 +15,13 @@ function toSlug(str: string) {
 
 // ─── Albums ───────────────────────────────────────────────────────────────────
 
-export async function createAlbum(formData: FormData, parentId?: string | null) {
+export async function createAlbum(formData: FormData, parentId?: string | null): Promise<{
+  id: string; slug: string; label: string; sort_order: number;
+  is_visible: boolean; parent_id: string | null; cover_url: string | null; portfolio_photos: []
+}> {
+  const auth = await requireAdmin()
+  if ('error' in auth) throw new Error(auth.error)
+
   const label = String(formData.get('label') ?? '').trim()
   if (!label) throw new Error('El nombre es obligatorio')
   const slug = toSlug(label)
@@ -37,20 +43,24 @@ export async function createAlbum(formData: FormData, parentId?: string | null) 
   const sort_order = ((max as { sort_order: number } | null)?.sort_order ?? -1) + 1
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (db as any).from('photo_albums').insert({
+  const { data, error } = await (db as any).from('photo_albums').insert({
     slug,
     label,
     sort_order,
     parent_id: parentId ?? null,
-  })
+  }).select('id, slug, label, sort_order, is_visible, parent_id, cover_url').single()
   if (error) throw new Error(error.message)
   revalidatePath('/admin/portfolio')
+  return { ...(data as { id: string; slug: string; label: string; sort_order: number; is_visible: boolean; parent_id: string | null; cover_url: string | null }), portfolio_photos: [] as [] }
 }
 
 export async function updateAlbum(
   id: string,
-  data: { label?: string; is_visible?: boolean; sort_order?: number },
+  data: { label?: string; is_visible?: boolean; sort_order?: number; cover_url?: string | null },
 ) {
+  const auth = await requireAdmin()
+  if ('error' in auth) throw new Error(auth.error)
+
   const db = createServiceClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (db as any).from('photo_albums').update(data).eq('id', id)
@@ -59,6 +69,9 @@ export async function updateAlbum(
 }
 
 export async function deleteAlbum(id: string) {
+  const auth = await requireAdmin()
+  if ('error' in auth) throw new Error(auth.error)
+
   const db = createServiceClient()
 
   // Collect all album IDs to delete (this album + all sub-albums recursively)
@@ -94,6 +107,9 @@ export async function reorderAlbums(
   myOrder: number,
   adjOrder: number,
 ) {
+  const auth = await requireAdmin()
+  if ('error' in auth) throw new Error(auth.error)
+
   const db = createServiceClient()
   await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -113,6 +129,9 @@ export async function addPhoto(
   sortOrder: number,
   url?: string,
 ): Promise<{ id: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) throw new Error(auth.error)
+
   const db = createServiceClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (db as any).from('portfolio_photos').insert({
@@ -128,6 +147,9 @@ export async function addPhoto(
 }
 
 export async function deletePhoto(id: string, storagePath: string) {
+  const auth = await requireAdmin()
+  if ('error' in auth) throw new Error(auth.error)
+
   const db = createServiceClient()
   if (storagePath?.trim()) {
     await db.storage.from('media').remove([storagePath])
@@ -139,6 +161,9 @@ export async function deletePhoto(id: string, storagePath: string) {
 }
 
 export async function reorderPhotos(updates: { id: string; sort_order: number }[]) {
+  const auth = await requireAdmin()
+  if ('error' in auth) throw new Error(auth.error)
+
   const db = createServiceClient()
   await Promise.all(
     updates.map(({ id, sort_order }) =>

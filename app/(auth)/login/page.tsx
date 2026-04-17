@@ -1,6 +1,7 @@
 'use client'
 
 import { Suspense, useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 // ── Timecode ────────────────────────────────────────────────────────────────
@@ -103,6 +104,7 @@ function FilmBg() {
 // ── Login form ──────────────────────────────────────────────────────────────
 
 function LoginPageInner() {
+  const router = useRouter()
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [error, setError]       = useState<string | null>(null)
@@ -130,7 +132,8 @@ function LoginPageInner() {
       setPending(false)
       return
     }
-    window.location.href = '/admin'
+    router.push('/admin')
+    router.refresh()
   }
 
   const GS = "var(--font-geist-sans), system-ui, sans-serif"
