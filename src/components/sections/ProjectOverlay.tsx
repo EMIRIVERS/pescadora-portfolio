@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import Image from 'next/image'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { registry } from '@/lib/registry'
 import { projectStories } from '@/data/project-stories'
 import type { PhotoEntry, VideoEntry } from '@/types/media'
@@ -23,6 +23,17 @@ function InfoCell({ label, value }: { label: string; value: string }) {
 
 const VIMEO_PARAMS = 'title=0&byline=0&portrait=0&badge=0&autopause=0&player_id=0&app_id=58479'
 
+/* ─── Clip-path helpers ─── */
+function rectToClipInset(origin: { x: number; y: number; w: number; h: number }): string {
+  const vw = typeof window !== 'undefined' ? window.innerWidth : 1920
+  const vh = typeof window !== 'undefined' ? window.innerHeight : 1080
+  const top = origin.y
+  const right = vw - (origin.x + origin.w)
+  const bottom = vh - (origin.y + origin.h)
+  const left = origin.x
+  return `inset(${top}px ${right}px ${bottom}px ${left}px round 0px)`
+}
+
 // ---------------------------------------------------------------------------
 // VideoGrid
 // ---------------------------------------------------------------------------
@@ -31,10 +42,11 @@ function VideoGrid({ videos, onSelect }: { videos: VideoEntry[]; onSelect: (v: V
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1, padding: '0 0 4rem' }}>
-      {videos.map((video) => (
+      {videos.map((video, i) => (
         <VideoTile
           key={video.id}
           video={video}
+          index={i}
           hovered={hoveredId === video.id}
           onHover={(over) => setHoveredId(over ? video.id : null)}
           onClick={() => onSelect(video)}
@@ -44,13 +56,16 @@ function VideoGrid({ videos, onSelect }: { videos: VideoEntry[]; onSelect: (v: V
   )
 }
 
-function VideoTile({ video, hovered, onHover, onClick }: {
-  video: VideoEntry; hovered: boolean; onHover: (over: boolean) => void; onClick: () => void
+function VideoTile({ video, index, hovered, onHover, onClick }: {
+  video: VideoEntry; index: number; hovered: boolean; onHover: (over: boolean) => void; onClick: () => void
 }) {
   const [loaded, setLoaded] = useState(false)
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, delay: 0.15 + index * 0.07, ease: [0.25, 0.46, 0.45, 0.94] }}
       onMouseEnter={() => onHover(true)}
       onMouseLeave={() => onHover(false)}
       onClick={onClick}
@@ -61,7 +76,7 @@ function VideoTile({ video, hovered, onHover, onClick }: {
       )}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={`/api/vimeo-thumb?id=${video.vimeoId}`} alt={video.title} onLoad={() => setLoaded(true)}
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: loaded ? 1 : 0, transition: 'opacity 0.3s' }} />
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: loaded ? 1 : 0, transition: 'opacity 0.3s, transform 0.7s ease', transform: hovered ? 'scale(1.05)' : 'scale(1)' }} />
       {hovered && video.vimeoId && (
         <iframe src={`https://player.vimeo.com/video/${video.vimeoId}?autoplay=1&muted=1&background=1&loop=1&${VIMEO_PARAMS}`}
           referrerPolicy="strict-origin-when-cross-origin"
@@ -70,14 +85,14 @@ function VideoTile({ video, hovered, onHover, onClick }: {
       )}
       <div style={{ position: 'absolute', inset: 0, background: hovered ? 'rgba(0,0,0,0.1)' : 'rgba(0,0,0,0.4)', transition: 'background 0.4s', zIndex: 1 }} />
       <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: hovered ? 1 : 0, transition: 'opacity 0.3s', zIndex: 2 }}>
-        <div style={{ width: 44, height: 44, borderRadius: 0, border: '1px solid rgba(237,232,224,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 44, height: 44, border: '1px solid rgba(237,232,224,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <span style={{ color: '#ede8e0', fontSize: '1rem', marginLeft: 4 }}>&#9654;</span>
         </div>
       </div>
       <div style={{ position: 'absolute', bottom: '0.85rem', left: '1rem', fontFamily: 'var(--font-geist-mono)', fontWeight: 700, fontSize: '0.55rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#ede8e0', opacity: hovered ? 1 : 0.55, transition: 'opacity 0.3s', pointerEvents: 'none', zIndex: 3 }}>
         {video.title}
       </div>
-    </div>
+    </motion.div>
   )
 }
 
@@ -89,8 +104,9 @@ function VideoDetail({ video, onBack, onClose }: { video: VideoEntry; onBack: ()
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, x: 60 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -60 }}
       transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
       style={{ position: 'fixed', inset: 0, zIndex: 300, background: '#050505', overflowY: 'auto' }}
     >
@@ -142,7 +158,7 @@ function VideoDetail({ video, onBack, onClose }: { video: VideoEntry; onBack: ()
 }
 
 // ---------------------------------------------------------------------------
-// PhotoProjectsGrid — lista de proyectos de foto para seleccionar
+// PhotoProjectsGrid
 // ---------------------------------------------------------------------------
 function PhotoProjectsGrid({ onSelect }: { onSelect: (project: string) => void }) {
   const projects = new Map<string, { url: string; count: number }>()
@@ -154,9 +170,12 @@ function PhotoProjectsGrid({ onSelect }: { onSelect: (project: string) => void }
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1, padding: '0 0 4rem' }}>
-      {[...projects.entries()].map(([name, data]) => (
-        <div
+      {[...projects.entries()].map(([name, data], i) => (
+        <motion.div
           key={name}
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.15 + i * 0.07, ease: [0.25, 0.46, 0.45, 0.94] }}
           onClick={() => onSelect(name)}
           style={{ position: 'relative', width: '100%', paddingBottom: '75%', overflow: 'hidden', cursor: 'pointer' }}
         >
@@ -171,14 +190,14 @@ function PhotoProjectsGrid({ onSelect }: { onSelect: (project: string) => void }
           <span style={{ position: 'absolute', bottom: '1rem', right: '1rem', fontFamily: 'var(--font-geist-mono)', fontSize: '0.6rem', color: '#6b6560', letterSpacing: '0.15em', textTransform: 'uppercase', pointerEvents: 'none' }}>
             {data.count} fotos
           </span>
-        </div>
+        </motion.div>
       ))}
     </div>
   )
 }
 
 // ---------------------------------------------------------------------------
-// PhotoProjectDetail — fotos de un proyecto específico
+// PhotoProjectDetail
 // ---------------------------------------------------------------------------
 function PhotoProjectDetail({ projectName, onBack, onClose }: { projectName: string; onBack: () => void; onClose: () => void }) {
   const photos: PhotoEntry[] = registry.photos.filter((p) => p.project === projectName)
@@ -186,8 +205,9 @@ function PhotoProjectDetail({ projectName, onBack, onClose }: { projectName: str
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, x: 60 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -60 }}
       transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
       style={{ position: 'absolute', inset: 0, background: '#050505', overflowY: 'auto' }}
     >
@@ -227,31 +247,42 @@ function PhotoProjectDetail({ projectName, onBack, onClose }: { projectName: str
 }
 
 // ---------------------------------------------------------------------------
-// ProjectOverlay
+// ProjectOverlay — con transición clip-path desde la card
 // ---------------------------------------------------------------------------
 interface ProjectOverlayProps {
   projectName: string
   mediaType: 'video' | 'fotografia'
+  origin: { x: number; y: number; w: number; h: number }
   onClose: () => void
   videos?: VideoEntry[]
-  fotoEntries?: VideoEntry[]  // DB fotografia entries (vimeoId = image URL)
+  fotoEntries?: VideoEntry[]
 }
 
-export default function ProjectOverlay({ projectName, mediaType, onClose, videos, fotoEntries }: ProjectOverlayProps) {
+export default function ProjectOverlay({ projectName, mediaType, origin, onClose, videos, fotoEntries }: ProjectOverlayProps) {
   const [selectedVideo, setSelectedVideo] = useState<VideoEntry | null>(null)
   const [selectedPhotoProject, setSelectedPhotoProject] = useState<string | null>(null)
+  const [isClosing, setIsClosing] = useState(false)
+  const overlayRef = useRef<HTMLDivElement>(null)
+
+  const initialClip = rectToClipInset(origin)
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (selectedVideo) { setSelectedVideo(null); return }
         if (selectedPhotoProject) { setSelectedPhotoProject(null); return }
-        onClose()
+        handleClose()
       }
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [onClose, selectedVideo, selectedPhotoProject])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedVideo, selectedPhotoProject])
+
+  const handleClose = useCallback(() => {
+    setIsClosing(true)
+    setTimeout(() => onClose(), 500)
+  }, [onClose])
 
   const videoSource = videos && videos.length > 0 ? videos : registry.videos
   const overlayVideos: VideoEntry[] = mediaType === 'video'
@@ -263,67 +294,124 @@ export default function ProjectOverlay({ projectName, mediaType, onClose, videos
     'restaurantes': 'Restaurantes', 'comerciales': 'Comerciales', 'fotografia': 'Fotografía',
   }
 
-  // Video detail level
   if (selectedVideo) {
-    return <VideoDetail video={selectedVideo} onBack={() => setSelectedVideo(null)} onClose={onClose} />
+    return (
+      <AnimatePresence mode="wait">
+        <VideoDetail key="vd" video={selectedVideo} onBack={() => setSelectedVideo(null)} onClose={handleClose} />
+      </AnimatePresence>
+    )
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.97, y: 20 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
-      style={{ position: 'fixed', inset: 0, zIndex: 200, background: '#050505', overflowY: 'auto' }}
-    >
-      {/* Header */}
-      <header style={{ position: 'sticky', top: 0, zIndex: 10, background: 'rgba(5,5,5,0.95)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 2rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <span style={{ fontFamily: 'var(--font-geist-sans)', fontWeight: 700, fontSize: 'clamp(0.8rem, 1.5vw, 1rem)', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#ede8e0' }}>
-          {CATEGORY_LABEL[projectName] ?? projectName}
-        </span>
-        <button onClick={onClose} aria-label="Cerrar" style={{ background: 'none', border: 'none', color: '#ede8e0', fontSize: '1rem', cursor: 'pointer', padding: '0.25rem 0.5rem', lineHeight: 1 }}>
-          &#10005;
-        </button>
-      </header>
+    <>
+      {/* Backdrop */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isClosing ? 0 : 1 }}
+        transition={{ duration: 0.35 }}
+        style={{
+          position: 'fixed', inset: 0, zIndex: 199,
+          background: 'rgba(0,0,0,0.6)',
+          backdropFilter: 'blur(4px)',
+          WebkitBackdropFilter: 'blur(4px)',
+        }}
+        onClick={handleClose}
+      />
 
-      {/* VIDEO: grid de thumbnails */}
-      {mediaType === 'video' && (
-        <VideoGrid videos={overlayVideos} onSelect={setSelectedVideo} />
-      )}
+      {/* Panel principal con clip-path reveal */}
+      <div
+        ref={overlayRef}
+        style={{
+          position: 'fixed', inset: 0, zIndex: 200,
+          background: '#050505',
+          overflowY: 'auto',
+          clipPath: isClosing ? initialClip : 'inset(0px 0px 0px 0px round 0px)',
+          transition: `clip-path 0.55s cubic-bezier(0.77, 0, 0.175, 1)`,
+          animation: isClosing ? 'none' : 'overlayClipReveal 0.55s cubic-bezier(0.77, 0, 0.175, 1) forwards',
+        }}
+      >
+        <style>{`
+          @keyframes overlayClipReveal {
+            from { clip-path: ${initialClip}; }
+            to   { clip-path: inset(0px 0px 0px 0px round 0px); }
+          }
+          @keyframes shimmer {
+            0%   { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+          }
+        `}</style>
 
-      {/* FOTOGRAFÍA: DB entries (grilla plana de imágenes) */}
-      {mediaType === 'fotografia' && fotoEntries && fotoEntries.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2, padding: '0 0 4rem' }}>
-          {fotoEntries.map((foto) => (
-            <div key={foto.id} style={{ position: 'relative', width: '100%', paddingBottom: '75%', overflow: 'hidden' }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={foto.vimeoId ?? ''}
-                alt={foto.title}
-                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.6s ease' }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1.04)' }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1)' }}
-              />
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(transparent 50%, rgba(0,0,0,0.75))', pointerEvents: 'none' }} />
-              <span style={{ position: 'absolute', bottom: '0.85rem', left: '1rem', fontFamily: 'var(--font-geist-mono)', fontWeight: 700, fontSize: '0.55rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#ede8e0', pointerEvents: 'none' }}>
-                {foto.title}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+        {/* Header */}
+        <motion.header
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+          style={{
+            position: 'sticky', top: 0, zIndex: 10,
+            background: 'rgba(5,5,5,0.95)',
+            backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '1rem 2rem',
+            borderBottom: '1px solid rgba(255,255,255,0.06)',
+          }}
+        >
+          <span style={{ fontFamily: 'var(--font-geist-sans)', fontWeight: 700, fontSize: 'clamp(0.8rem, 1.5vw, 1rem)', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#ede8e0' }}>
+            {CATEGORY_LABEL[projectName] ?? projectName}
+          </span>
+          <button onClick={handleClose} aria-label="Cerrar" style={{ background: 'none', border: 'none', color: '#ede8e0', fontSize: '1.2rem', cursor: 'pointer', padding: '0.25rem 0.5rem', lineHeight: 1, transition: 'transform 0.3s ease', }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'rotate(90deg)' }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'rotate(0deg)' }}>
+            &#10005;
+          </button>
+        </motion.header>
 
-      {/* FOTOGRAFÍA: registro estático (fallback) */}
-      {mediaType === 'fotografia' && (!fotoEntries || fotoEntries.length === 0) && !selectedPhotoProject && (
-        <PhotoProjectsGrid onSelect={setSelectedPhotoProject} />
-      )}
+        {/* VIDEO grid */}
+        {mediaType === 'video' && (
+          <VideoGrid videos={overlayVideos} onSelect={setSelectedVideo} />
+        )}
 
-      {mediaType === 'fotografia' && (!fotoEntries || fotoEntries.length === 0) && selectedPhotoProject && (
-        <PhotoProjectDetail
-          projectName={selectedPhotoProject}
-          onBack={() => setSelectedPhotoProject(null)}
-          onClose={onClose}
-        />
-      )}
-    </motion.div>
+        {/* FOTOGRAFÍA: DB entries */}
+        {mediaType === 'fotografia' && fotoEntries && fotoEntries.length > 0 && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2, padding: '0 0 4rem' }}>
+            {fotoEntries.map((foto, i) => (
+              <motion.div
+                key={foto.id}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, delay: 0.15 + i * 0.07, ease: [0.25, 0.46, 0.45, 0.94] }}
+                style={{ position: 'relative', width: '100%', paddingBottom: '75%', overflow: 'hidden' }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={foto.vimeoId ?? ''}
+                  alt={foto.title}
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.6s ease' }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1.04)' }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1)' }}
+                />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(transparent 50%, rgba(0,0,0,0.75))', pointerEvents: 'none' }} />
+                <span style={{ position: 'absolute', bottom: '0.85rem', left: '1rem', fontFamily: 'var(--font-geist-mono)', fontWeight: 700, fontSize: '0.55rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#ede8e0', pointerEvents: 'none' }}>
+                  {foto.title}
+                </span>
+              </motion.div>
+            ))}
+          </div>
+        )}
+
+        {/* FOTOGRAFÍA: registro estático (fallback) */}
+        {mediaType === 'fotografia' && (!fotoEntries || fotoEntries.length === 0) && !selectedPhotoProject && (
+          <PhotoProjectsGrid onSelect={setSelectedPhotoProject} />
+        )}
+
+        {mediaType === 'fotografia' && (!fotoEntries || fotoEntries.length === 0) && selectedPhotoProject && (
+          <AnimatePresence mode="wait">
+            <PhotoProjectDetail
+              key={selectedPhotoProject}
+              projectName={selectedPhotoProject}
+              onBack={() => setSelectedPhotoProject(null)}
+              onClose={handleClose}
+            />
+          </AnimatePresence>
+        )}
+      </div>
+    </>
   )
 }

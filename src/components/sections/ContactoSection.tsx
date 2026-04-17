@@ -7,11 +7,21 @@ gsap.registerPlugin(ScrollTrigger)
 
 const CONTACT_EMAIL = 'hola@xicofilms.com'
 
+const SUBTITLE_TEXT = 'Video  \u00B7  Fotograf\u00EDa  \u00B7  Direcci\u00F3n Creativa  \u00B7  Redes Sociales'
+
 export function ContactoSection() {
   const sectionRef = useRef<HTMLElement>(null)
   const headingRef = useRef<HTMLDivElement>(null)
   const linksRef = useRef<HTMLDivElement>(null)
   const footerRef = useRef<HTMLDivElement>(null)
+  const emailLinkRef = useRef<HTMLAnchorElement>(null)
+  const waLinkRef = useRef<HTMLAnchorElement>(null)
+  const subtitleRef = useRef<HTMLParagraphElement>(null)
+  const cursorRef = useRef<HTMLSpanElement>(null)
+
+  const line1Ref = useRef<HTMLSpanElement>(null)
+  const line2Ref = useRef<HTMLSpanElement>(null)
+  const line3Ref = useRef<HTMLSpanElement>(null)
 
   const [emailHovered, setEmailHovered] = useState(false)
   const [waHovered, setWaHovered] = useState(false)
@@ -20,31 +30,82 @@ export function ContactoSection() {
 
   useEffect(() => {
     const section = sectionRef.current
-    const heading = headingRef.current
-    const links = linksRef.current
+    const line1 = line1Ref.current
+    const line2 = line2Ref.current
+    const line3 = line3Ref.current
+    const subtitle = subtitleRef.current
+    const cursor = cursorRef.current
+    const emailLink = emailLinkRef.current
+    const waLink = waLinkRef.current
     const footer = footerRef.current
 
-    if (!section || !heading || !links || !footer) return
+    if (!section || !line1 || !line2 || !line3 || !subtitle || !cursor || !emailLink || !footer) return
 
-    const triggers: ScrollTrigger[] = []
+    // --- Set initial states ---
 
-    gsap.set(heading, { y: 30, opacity: 0 })
-    gsap.set(links, { y: 20, opacity: 0 })
+    // Heading lines: inner spans start pushed down
+    gsap.set([line1, line2, line3], { yPercent: 110 })
+
+    // Subtitle characters: build char spans
+    const chars = subtitle.querySelectorAll<HTMLSpanElement>('.char-span')
+    gsap.set(chars, { opacity: 0 })
+
+    // Cursor
+    gsap.set(cursor, { opacity: 0 })
+
+    // Contact links
+    gsap.set(emailLink, { x: -60, opacity: 0 })
+    if (waLink) gsap.set(waLink, { x: 60, opacity: 0 })
+
+    // Footer
     gsap.set(footer, { opacity: 0 })
 
+    // --- Build master timeline ---
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: section,
-        start: 'top 80%',
+        start: 'top 75%',
         once: true,
       },
     })
 
-    tl.to(heading, { y: 0, opacity: 1, duration: 0.6, ease: 'power2.out' })
-      .to(links, { y: 0, opacity: 1, duration: 0.6, ease: 'power2.out' }, '+=0.15')
-      .to(footer, { opacity: 1, duration: 0.6, ease: 'power2.out' }, '+=0.3')
+    // Animation 1: Per-line mask reveal with accelerating stagger
+    tl.to(line1, { yPercent: 0, duration: 0.8, ease: 'power3.out' })
+      .to(line2, { yPercent: 0, duration: 0.7, ease: 'power3.out' }, '-=0.4')
+      .to(line3, { yPercent: 0, duration: 0.6, ease: 'power3.out' }, '-=0.35')
+
+    // Animation 2: Typewriter effect on subtitle
+    tl.to(chars, {
+      opacity: 1,
+      duration: 0.01,
+      stagger: 0.025,
+    })
+
+    // Blinking cursor: pulse 3 times then fade
+    tl.to(cursor, { opacity: 1, duration: 0.01 })
+      .to(cursor, {
+        opacity: 0,
+        duration: 0.3,
+        repeat: 5,
+        yoyo: true,
+        ease: 'steps(1)',
+      })
+      .to(cursor, { opacity: 0, duration: 0.2 })
+
+    // Animation 3: Split-direction slide on contact links
+    const linkTargets: gsap.TweenTarget[] = [emailLink]
+    if (waLink) linkTargets.push(waLink)
+
+    tl.to(emailLink, { x: 0, opacity: 1, duration: 0.7, ease: 'power2.out' }, '<')
+    if (waLink) {
+      tl.to(waLink, { x: 0, opacity: 1, duration: 0.7, ease: 'power2.out' }, '<')
+    }
+
+    // Footer fade in after links
+    tl.to(footer, { opacity: 1, duration: 0.6, ease: 'power2.out' }, '+=0.3')
 
     const st = tl.scrollTrigger
+    const triggers: ScrollTrigger[] = []
     if (st) triggers.push(st)
 
     return () => {
@@ -63,6 +124,17 @@ export function ContactoSection() {
     transition: 'color 0.25s ease',
     cursor: 'pointer',
   })
+
+  // Build character spans for the subtitle typewriter effect
+  const subtitleChars = SUBTITLE_TEXT.split('').map((char, i) => (
+    <span
+      key={i}
+      className="char-span"
+      style={{ display: 'inline-block', whiteSpace: 'pre' }}
+    >
+      {char}
+    </span>
+  ))
 
   return (
     <section
@@ -90,20 +162,40 @@ export function ContactoSection() {
               margin: 0,
             }}
           >
-            <span style={{ display: 'block' }}>QUE HISTORIA</span>
-            <span style={{ display: 'block' }}>QUIERES</span>
-            <span style={{ display: 'block', color: '#e8341a' }}>CONTAR?</span>
+            <span style={{ display: 'block', overflow: 'hidden' }}>
+              <span ref={line1Ref} style={{ display: 'block' }}>QUE HISTORIA</span>
+            </span>
+            <span style={{ display: 'block', overflow: 'hidden' }}>
+              <span ref={line2Ref} style={{ display: 'block' }}>QUIERES</span>
+            </span>
+            <span style={{ display: 'block', overflow: 'hidden' }}>
+              <span ref={line3Ref} style={{ display: 'block', color: '#e8341a' }}>CONTAR?</span>
+            </span>
           </h2>
-          <p style={{
-            fontFamily: 'var(--font-geist-mono)',
-            fontSize: 'clamp(0.65rem, 1.2vw, 0.9rem)',
-            letterSpacing: '0.25em',
-            textTransform: 'uppercase',
-            color: '#444',
-            marginTop: '2rem',
-            lineHeight: 1.8,
-          }}>
-            Video&nbsp;&nbsp;·&nbsp;&nbsp;Fotografía&nbsp;&nbsp;·&nbsp;&nbsp;Dirección Creativa&nbsp;&nbsp;·&nbsp;&nbsp;Redes Sociales
+          <p
+            ref={subtitleRef}
+            style={{
+              fontFamily: 'var(--font-geist-mono)',
+              fontSize: 'clamp(0.65rem, 1.2vw, 0.9rem)',
+              letterSpacing: '0.25em',
+              textTransform: 'uppercase',
+              color: '#444',
+              marginTop: '2rem',
+              lineHeight: 1.8,
+            }}
+          >
+            {subtitleChars}
+            <span
+              ref={cursorRef}
+              style={{
+                display: 'inline-block',
+                width: '0.6em',
+                height: '1em',
+                backgroundColor: '#444',
+                marginLeft: '2px',
+                verticalAlign: 'text-bottom',
+              }}
+            />
           </p>
         </div>
 
@@ -119,6 +211,7 @@ export function ContactoSection() {
           }}
         >
           <a
+            ref={emailLinkRef}
             href={`mailto:${CONTACT_EMAIL}`}
             style={linkStyle(emailHovered)}
             data-cursor="link"
@@ -130,6 +223,7 @@ export function ContactoSection() {
 
           {WA_NUMBER && (
             <a
+              ref={waLinkRef}
               href={`https://wa.me/${WA_NUMBER}`}
               target="_blank"
               rel="noopener noreferrer"
@@ -150,33 +244,80 @@ export function ContactoSection() {
             marginTop: '6rem',
             borderTop: '1px solid rgba(255,255,255,0.06)',
             paddingTop: '2rem',
+          }}
+        >
+          <div style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-          }}
-        >
-          <span
-            style={{
-              fontFamily: 'var(--font-geist-mono)',
-              fontSize: '0.55rem',
-              letterSpacing: '0.2em',
-              textTransform: 'uppercase',
-              color: '#6b6560',
-            }}
-          >
-            XICO Films
-          </span>
-          <span
-            style={{
-              fontFamily: 'var(--font-geist-mono)',
-              fontSize: '0.55rem',
-              letterSpacing: '0.2em',
-              textTransform: 'uppercase',
-              color: '#6b6560',
-            }}
-          >
-            @xicofilms
-          </span>
+            flexWrap: 'wrap',
+            gap: '1rem',
+          }}>
+            <span
+              style={{
+                fontFamily: 'var(--font-geist-mono)',
+                fontSize: '0.65rem',
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
+                color: '#6b6560',
+              }}
+            >
+              XICO Films &mdash; {new Date().getFullYear()}
+            </span>
+
+            <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+              <a
+                href="https://instagram.com/xicofilms"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-cursor="link"
+                style={{
+                  fontFamily: 'var(--font-geist-mono)',
+                  fontSize: '0.6rem',
+                  letterSpacing: '0.15em',
+                  textTransform: 'uppercase',
+                  color: '#6b6560',
+                  textDecoration: 'none',
+                  transition: 'color 0.25s ease',
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = '#ede8e0' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = '#6b6560' }}
+              >
+                Instagram
+              </a>
+              <a
+                href="https://vimeo.com/xicofilms"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-cursor="link"
+                style={{
+                  fontFamily: 'var(--font-geist-mono)',
+                  fontSize: '0.6rem',
+                  letterSpacing: '0.15em',
+                  textTransform: 'uppercase',
+                  color: '#6b6560',
+                  textDecoration: 'none',
+                  transition: 'color 0.25s ease',
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = '#ede8e0' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = '#6b6560' }}
+              >
+                Vimeo
+              </a>
+            </div>
+          </div>
+
+          <p style={{
+            fontFamily: 'var(--font-geist-mono)',
+            fontSize: '0.5rem',
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+            color: '#3a3632',
+            marginTop: '1.5rem',
+            marginBottom: 0,
+          }}>
+            Mexico &mdash; Activos donde el trabajo lo exige
+          </p>
         </div>
 
       </div>
