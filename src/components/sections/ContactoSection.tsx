@@ -82,16 +82,17 @@ export function ContactoSection() {
             style={{
               fontFamily: 'var(--font-geist-sans)',
               fontWeight: 900,
-              fontSize: 'clamp(4rem, 14vw, 12rem)',
+              fontSize: 'clamp(3.2rem, 12vw, 10rem)',
               letterSpacing: '-0.02em',
-              lineHeight: 0.85,
+              lineHeight: 0.88,
               color: '#ede8e0',
               textTransform: 'uppercase',
               margin: 0,
             }}
           >
-            <span style={{ display: 'block' }}>COTIZA</span>
-            <span style={{ display: 'block' }}>TU PROYECTO.</span>
+            <span style={{ display: 'block' }}>QUE HISTORIA</span>
+            <span style={{ display: 'block' }}>QUIERES</span>
+            <span style={{ display: 'block', color: '#e8341a' }}>CONTAR?</span>
           </h2>
           <p style={{
             fontFamily: 'var(--font-geist-mono)',
@@ -102,7 +103,7 @@ export function ContactoSection() {
             marginTop: '2rem',
             lineHeight: 1.8,
           }}>
-            Videoclips&nbsp;&nbsp;·&nbsp;&nbsp;Corporativo&nbsp;&nbsp;·&nbsp;&nbsp;Restaurantes&nbsp;&nbsp;·&nbsp;&nbsp;Comerciales&nbsp;&nbsp;·&nbsp;&nbsp;Fotografía
+            Video&nbsp;&nbsp;·&nbsp;&nbsp;Fotografía&nbsp;&nbsp;·&nbsp;&nbsp;Dirección Creativa&nbsp;&nbsp;·&nbsp;&nbsp;Redes Sociales
           </p>
         </div>
 
