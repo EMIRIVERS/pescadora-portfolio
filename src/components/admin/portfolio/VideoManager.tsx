@@ -602,6 +602,7 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
   const [togglingId, setTogglingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [activeFilter, setActiveFilter] = useState<string>('todos')
+  const [formError, setFormError] = useState<string | null>(null)
 
   // Bulk selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -660,6 +661,7 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
   function closeForm() {
     setShowForm(false)
     setEditingVideo(null)
+    setFormError(null)
   }
 
   function resetFormState() {
@@ -672,16 +674,21 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
+    setFormError(null)
 
     startTransition(async () => {
-      if (formMode === 'create') {
-        await createPortfolioVideo(formData)
-      } else if (editingVideo) {
-        await updatePortfolioVideo(editingVideo.id, formData)
+      try {
+        if (formMode === 'create') {
+          await createPortfolioVideo(formData)
+        } else if (editingVideo) {
+          await updatePortfolioVideo(editingVideo.id, formData)
+        }
+        closeForm()
+        resetFormState()
+        router.refresh()
+      } catch (err) {
+        setFormError(err instanceof Error ? err.message : 'Error al guardar')
       }
-      closeForm()
-      resetFormState()
-      router.refresh()
     })
   }
 
@@ -691,10 +698,16 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
     if (!window.confirm(`Eliminar "${video.title}"? Esta accion no se puede deshacer.`)) return
     setDeletingId(video.id)
     startTransition(async () => {
-      const supabase = createClient()
-      await supabase.from('portfolio_videos').delete().eq('id', video.id)
-      setDeletingId(null)
-      router.refresh()
+      try {
+        const supabase = createClient()
+        const { error } = await supabase.from('portfolio_videos').delete().eq('id', video.id)
+        if (error) throw new Error(error.message)
+        router.refresh()
+      } catch (err) {
+        setFormError(err instanceof Error ? err.message : 'Error al eliminar')
+      } finally {
+        setDeletingId(null)
+      }
     })
   }
 
@@ -1373,6 +1386,9 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
                 Cancelar
               </button>
             </div>
+            {formError && (
+              <p style={{ margin: '8px 0 0', fontSize: 12, color: '#FF453A' }}>{formError}</p>
+            )}
           </form>
         </div>
       )}

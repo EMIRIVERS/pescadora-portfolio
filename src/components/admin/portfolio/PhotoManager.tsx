@@ -336,9 +336,9 @@ function AlbumDetail({
       const altText = file.name.replace(/\.[^/.]+$/, '')
       const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${storagePath}`
       try {
-        await addPhoto(album.id, storagePath, altText, nextOrder, publicUrl)
+        const { id: realId } = await addPhoto(album.id, storagePath, altText, nextOrder, publicUrl)
         const newPhoto: Photo = {
-          id: `temp-${Date.now()}-${i}`,
+          id: realId,
           album_id: album.id,
           storage_path: storagePath,
           url: publicUrl,
@@ -368,11 +368,15 @@ function AlbumDetail({
     if (!over || active.id === over.id) return
     const oldIdx = photos.findIndex((p) => p.id === active.id)
     const newIdx = photos.findIndex((p) => p.id === over.id)
+    if (oldIdx === -1 || newIdx === -1) return
     const reordered = arrayMove(photos, oldIdx, newIdx).map((p, i) => ({ ...p, sort_order: i }))
     setPhotos(reordered)
     onPhotosChange(album.id, reordered)
+    // Only persist IDs that exist in DB (skip any residual temp IDs)
+    const toSave = reordered.filter((p) => !p.id.startsWith('temp-'))
+    if (toSave.length === 0) return
     startTransition(async () => {
-      await reorderPhotos(reordered.map((p) => ({ id: p.id, sort_order: p.sort_order })))
+      await reorderPhotos(toSave.map((p) => ({ id: p.id, sort_order: p.sort_order })))
     })
   }
 

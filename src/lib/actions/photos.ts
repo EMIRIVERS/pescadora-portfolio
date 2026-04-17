@@ -92,23 +92,26 @@ export async function addPhoto(
   altText: string,
   sortOrder: number,
   url?: string,
-) {
+): Promise<{ id: string }> {
   const db = createServiceClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (db as any).from('portfolio_photos').insert({
+  const { data, error } = await (db as any).from('portfolio_photos').insert({
     album_id: albumId,
     storage_path: storagePath,
     url: url ?? null,
     alt_text: altText,
     sort_order: sortOrder,
-  })
+  }).select('id').single()
   if (error) throw new Error(error.message)
   revalidatePath('/admin/portfolio')
+  return { id: (data as { id: string }).id }
 }
 
 export async function deletePhoto(id: string, storagePath: string) {
   const db = createServiceClient()
-  await db.storage.from('media').remove([storagePath])
+  if (storagePath?.trim()) {
+    await db.storage.from('media').remove([storagePath])
+  }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (db as any).from('portfolio_photos').delete().eq('id', id)
   if (error) throw new Error(error.message)
