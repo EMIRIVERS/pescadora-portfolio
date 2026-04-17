@@ -712,7 +712,7 @@ function AlbumDetail({
 
 // ─── Main PhotoManager ────────────────────────────────────────────────────────
 
-export default function PhotoManager({ initialAlbums }: { initialAlbums: Album[] }) {
+export default function PhotoManager({ initialAlbums, compact = false }: { initialAlbums: Album[]; compact?: boolean }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [albums, setAlbums] = useState<Album[]>(initialAlbums)
@@ -937,20 +937,22 @@ export default function PhotoManager({ initialAlbums }: { initialAlbums: Album[]
       `}</style>
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <div>
-          <h3 style={{ margin: 0, fontSize: 13, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--dash-text-secondary)' }}>
-            Álbumes de fotografías
-          </h3>
-          <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--dash-text-tertiary)' }}>
-            Arrastra para reordenar · Clic para abrir · Dentro de cada álbum puedes crear sub-álbumes
-          </p>
-        </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: compact ? 12 : 20 }}>
+        {!compact && (
+          <div>
+            <h3 style={{ margin: 0, fontSize: 13, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--dash-text-secondary)' }}>
+              Álbumes de fotografías
+            </h3>
+            <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--dash-text-tertiary)' }}>
+              Arrastra para reordenar · Clic para abrir · Dentro de cada álbum puedes crear sub-álbumes
+            </p>
+          </div>
+        )}
         <button
           onClick={() => { setShowNew(true); setError(null) }}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: 'var(--dash-surface-2)', border: '1px solid var(--dash-border)', borderRadius: 8, fontSize: 13, color: 'var(--dash-text-primary)', cursor: 'pointer', fontFamily: FONT, flexShrink: 0 }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: compact ? '5px 10px' : '7px 14px', background: 'var(--dash-surface-2)', border: '1px solid var(--dash-border)', borderRadius: 8, fontSize: compact ? 12 : 13, color: 'var(--dash-text-primary)', cursor: 'pointer', fontFamily: FONT, flexShrink: 0, marginLeft: 'auto' }}
         >
-          <Plus size={13} strokeWidth={2} />
+          <Plus size={compact ? 11 : 13} strokeWidth={2} />
           Nuevo álbum
         </button>
       </div>
@@ -959,7 +961,7 @@ export default function PhotoManager({ initialAlbums }: { initialAlbums: Album[]
 
       {/* New album form */}
       {showNew && (
-        <form onSubmit={handleCreate} style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16, padding: 12, background: 'var(--dash-surface-2)', borderRadius: 10, border: '1px solid var(--dash-border)' }}>
+        <form onSubmit={handleCreate} style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: compact ? 10 : 16, padding: compact ? 9 : 12, background: 'var(--dash-surface-2)', borderRadius: 10, border: '1px solid var(--dash-border)' }}>
           <input value={newLabel} onChange={(e) => setNewLabel(e.target.value)} placeholder="Nombre del álbum (ej. Retratos)" required autoFocus style={{ ...INPUT, flex: 1 }} />
           <button type="submit" disabled={isPending || !newLabel.trim()} style={{ padding: '8px 16px', background: '#0071E3', border: 'none', borderRadius: 8, fontSize: 13, color: '#fff', cursor: 'pointer', opacity: isPending ? 0.5 : 1, fontFamily: FONT }}>
             {isPending ? '...' : 'Crear'}
@@ -992,7 +994,7 @@ export default function PhotoManager({ initialAlbums }: { initialAlbums: Album[]
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleAlbumDragEnd}>
           <SortableContext items={rootAlbums.map((a) => a.id)} strategy={rectSortingStrategy}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${compact ? '130px' : '190px'}, 1fr))`, gap: compact ? 8 : 12 }}>
               {rootAlbums.map((album) => (
                 <SortableAlbumCard
                   key={album.id}

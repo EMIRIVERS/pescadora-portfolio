@@ -535,7 +535,7 @@ export default function CategoryManager({ initialCategories, videoCounts = {}, p
                   borderBottom: idx < sorted.length - 1 ? '1px solid var(--dash-surface-2)' : undefined,
                 }}
               >
-                <PhotoManager initialAlbums={photoAlbums} />
+                <PhotoManager initialAlbums={photoAlbums} compact />
               </div>
             )}
 
