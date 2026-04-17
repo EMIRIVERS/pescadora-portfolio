@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Pencil, Trash2, Eye, EyeOff, X, Check, ImageIcon } from 'lucide-react'
+import { Plus, Pencil, Trash2, Eye, EyeOff, X, Check, ImageIcon, Upload } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 import {
   createCategory,
   updateCategory,
@@ -11,6 +12,17 @@ import {
   toggleCategoryVisibility,
   reorderCategories,
 } from '@/lib/actions/categories'
+
+const COVER_BUCKET = 'media'
+
+async function uploadCoverToStorage(file: File, slug: string): Promise<string> {
+  const supabase = createClient()
+  const ext = file.name.split('.').pop() ?? 'jpg'
+  const path = `covers/${slug}-${Date.now()}.${ext}`
+  const { error } = await supabase.storage.from(COVER_BUCKET).upload(path, file, { upsert: true })
+  if (error) throw new Error(error.message)
+  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${COVER_BUCKET}/${path}`
+}
 
 interface Category {
   id: string
@@ -57,6 +69,22 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
   // Cover editing state: keyed by category id
   const [coverEditingId, setCoverEditingId] = useState<string | null>(null)
   const [coverDraft, setCoverDraft] = useState('')
+  const [coverUploading, setCoverUploading] = useState(false)
+  const [coverDropOver, setCoverDropOver] = useState(false)
+  const coverFileRef = useRef<HTMLInputElement>(null)
+
+  async function handleCoverFileUpload(file: File, cat: Category) {
+    if (!file.type.startsWith('image/')) return
+    setCoverUploading(true)
+    try {
+      const url = await uploadCoverToStorage(file, cat.slug)
+      setCoverDraft(url)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al subir imagen')
+    } finally {
+      setCoverUploading(false)
+    }
+  }
 
   const sorted = [...cats].sort((a, b) => a.sort_order - b.sort_order)
 
@@ -485,30 +513,44 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
             {coverEditingId === cat.id && (
               <div
                 style={{
-                  padding: '12px 16px 16px',
+                  padding: '14px 16px 18px',
                   background: '#161616',
                   borderBottom: idx < sorted.length - 1 ? '1px solid var(--dash-surface-2)' : undefined,
                   borderTop: '1px solid var(--dash-border)',
                 }}
               >
-                <p style={{ margin: '0 0 8px', fontSize: 11, color: 'var(--dash-text-secondary)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                  Miniatura de portada — {cat.label}
+                <p style={{ margin: '0 0 12px', fontSize: 11, color: 'var(--dash-text-secondary)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                  Portada — {cat.label}
                 </p>
 
-                <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                  {/* Preview */}
+                <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                  {/* Preview / drop zone */}
                   <div
+                    onDragOver={(e) => { e.preventDefault(); setCoverDropOver(true) }}
+                    onDragLeave={() => setCoverDropOver(false)}
+                    onDrop={(e) => {
+                      e.preventDefault()
+                      setCoverDropOver(false)
+                      const file = e.dataTransfer.files[0]
+                      if (file) handleCoverFileUpload(file, cat)
+                    }}
+                    onClick={() => !coverUploading && coverFileRef.current?.click()}
                     style={{
-                      width: 72,
-                      height: 48,
-                      borderRadius: 6,
+                      width: 100,
+                      height: 70,
+                      borderRadius: 8,
                       overflow: 'hidden',
                       flexShrink: 0,
                       background: 'var(--dash-surface-2)',
-                      border: '1px solid var(--dash-border)',
+                      border: `1.5px dashed ${coverDropOver ? 'rgba(255,255,255,0.4)' : coverDraft.trim() ? 'transparent' : 'rgba(255,255,255,0.15)'}`,
                       display: 'flex',
+                      flexDirection: 'column',
                       alignItems: 'center',
                       justifyContent: 'center',
+                      cursor: coverUploading ? 'wait' : 'pointer',
+                      position: 'relative',
+                      transition: 'border-color 0.15s',
+                      gap: 4,
                     }}
                   >
                     {coverDraft.trim() ? (
@@ -519,39 +561,52 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
                       />
+                    ) : coverUploading ? (
+                      <span style={{ fontSize: 10, color: 'var(--dash-text-tertiary)', fontFamily: FONT }}>Subiendo...</span>
                     ) : (
-                      <ImageIcon size={18} strokeWidth={1.2} color="#3A3A3C" />
+                      <>
+                        <Upload size={14} strokeWidth={1.5} color="rgba(255,255,255,0.25)" />
+                        <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', fontFamily: FONT, textAlign: 'center', lineHeight: 1.3 }}>
+                          Subir o<br />arrastrar
+                        </span>
+                      </>
                     )}
                   </div>
 
-                  {/* Input + actions */}
+                  <input
+                    ref={coverFileRef}
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) handleCoverFileUpload(file, cat)
+                      e.target.value = ''
+                    }}
+                  />
+
+                  {/* URL input + actions */}
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <input
                       className="cm-cover-input"
                       value={coverDraft}
                       onChange={(e) => setCoverDraft(e.target.value)}
-                      placeholder="https://... pega la URL de la imagen"
-                      autoFocus
+                      placeholder="O pega una URL de imagen..."
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') handleSaveCover(cat)
                         if (e.key === 'Escape') handleCancelCover()
                       }}
-                      style={{
-                        ...INPUT,
-                        width: '100%',
-                        fontSize: 12,
-                        padding: '7px 10px',
-                      }}
+                      style={{ ...INPUT, width: '100%', fontSize: 12, padding: '7px 10px' }}
                     />
-                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                       <button
                         onClick={() => handleSaveCover(cat)}
-                        disabled={isPending}
+                        disabled={isPending || coverUploading}
                         style={{
                           display: 'inline-flex', alignItems: 'center', gap: 5,
                           padding: '6px 14px', background: '#0071E3', border: 'none',
                           borderRadius: 7, fontSize: 12, color: '#fff', cursor: 'pointer',
-                          opacity: isPending ? 0.5 : 1, fontFamily: FONT,
+                          opacity: isPending || coverUploading ? 0.5 : 1, fontFamily: FONT,
                         }}
                       >
                         <Check size={11} strokeWidth={2.5} />
@@ -567,23 +622,16 @@ export default function CategoryManager({ initialCategories, videoCounts = {} }:
                             fontSize: 12, color: '#FF453A', cursor: 'pointer', fontFamily: FONT,
                           }}
                         >
-                          Quitar cover
+                          Quitar
                         </button>
                       )}
                       <button
                         onClick={handleCancelCover}
-                        style={{
-                          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                          width: 28, height: 28, background: 'transparent', border: 'none',
-                          color: 'var(--dash-text-tertiary)', cursor: 'pointer', borderRadius: 6,
-                        }}
+                        style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: 'var(--dash-text-tertiary)', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                       >
                         <X size={13} strokeWidth={2} />
                       </button>
                     </div>
-                    <p style={{ margin: 0, fontSize: 11, color: '#3A3A3C' }}>
-                      Acepta cualquier URL publica — Supabase Storage, Vimeo, etc. Deja vacio para usar la miniatura automatica.
-                    </p>
                   </div>
                 </div>
               </div>
