@@ -234,9 +234,11 @@ function SortablePhoto({
         style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', pointerEvents: 'none', userSelect: 'none' }}
       />
 
-      {/* Hover overlay */}
+      {/* Hover overlay — click on photo opens preview */}
       <div
         className="pm-photo-overlay"
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => { e.stopPropagation(); onPreview(photo) }}
         style={{
           position: 'absolute', inset: 0,
           background: 'rgba(0,0,0,0)',
@@ -246,6 +248,7 @@ function SortablePhoto({
           justifyContent: 'flex-end',
           padding: 5,
           gap: 4,
+          cursor: 'pointer',
         }}
       >
         <button
@@ -293,6 +296,7 @@ function AlbumDetail({
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [uploadTotal, setUploadTotal] = useState(0)
+  const [uploadErrors, setUploadErrors] = useState<string[]>([])
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [dropOver, setDropOver] = useState(false)
   const [preview, setPreview] = useState<Photo | null>(null)
@@ -309,7 +313,9 @@ function AlbumDetail({
     setUploading(true)
     setUploadProgress(0)
     setUploadTotal(arr.length)
+    setUploadErrors([])
 
+    const errs: string[] = []
     let nextOrder = photos.length > 0 ? Math.max(...photos.map((p) => p.sort_order)) + 1 : 0
 
     for (let i = 0; i < arr.length; i++) {
@@ -322,7 +328,7 @@ function AlbumDetail({
         .upload(storagePath, file, { upsert: false })
 
       if (uploadError) {
-        console.error('Upload error:', uploadError.message)
+        errs.push(`${file.name}: ${uploadError.message}`)
         setUploadProgress(i + 1)
         continue
       }
@@ -346,16 +352,18 @@ function AlbumDetail({
         })
         nextOrder++
       } catch (err) {
-        console.error('DB error:', err)
+        errs.push(`${file.name}: ${err instanceof Error ? err.message : 'Error al guardar'}`)
       }
       setUploadProgress(i + 1)
     }
 
     setUploading(false)
+    if (errs.length > 0) setUploadErrors(errs)
     router.refresh()
   }
 
   function handleDragEnd(event: DragEndEvent) {
+    if (uploading) return
     const { active, over } = event
     if (!over || active.id === over.id) return
     const oldIdx = photos.findIndex((p) => p.id === active.id)
@@ -392,7 +400,7 @@ function AlbumDetail({
   return (
     <div style={{ fontFamily: FONT }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
         <button
           onClick={onBack}
           style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: 'var(--dash-surface-2)', border: '1px solid var(--dash-border)', borderRadius: 8, fontSize: 13, color: 'var(--dash-text-secondary)', cursor: 'pointer', fontFamily: FONT, flexShrink: 0 }}
@@ -401,18 +409,18 @@ function AlbumDetail({
           Albums
         </button>
 
-        <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--dash-text-primary)', flex: 1, letterSpacing: '-0.01em' }}>
+        <h3 style={{ margin: 0, fontSize: 17, fontWeight: 600, color: 'var(--dash-text-primary)', flex: 1, minWidth: 80, letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {album.label}
         </h3>
 
-        <span style={{ fontSize: 12, color: 'var(--dash-text-tertiary)' }}>
+        <span style={{ fontSize: 12, color: 'var(--dash-text-tertiary)', flexShrink: 0 }}>
           {photos.length} foto{photos.length !== 1 ? 's' : ''}
         </span>
 
         <button
           onClick={() => onToggleVisibility(album)}
           title={album.is_visible ? 'Ocultar album' : 'Mostrar album'}
-          style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--dash-surface-2)', border: '1px solid var(--dash-border)', color: album.is_visible ? 'var(--dash-text-secondary)' : '#FF453A', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--dash-surface-2)', border: '1px solid var(--dash-border)', color: album.is_visible ? 'var(--dash-text-secondary)' : '#FF453A', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
         >
           {album.is_visible ? <Eye size={14} strokeWidth={1.5} /> : <EyeOff size={14} strokeWidth={1.5} />}
         </button>
@@ -420,7 +428,7 @@ function AlbumDetail({
         <button
           onClick={() => onDelete(album)}
           title="Eliminar album"
-          style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--dash-surface-2)', border: '1px solid var(--dash-border)', color: 'var(--dash-text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--dash-surface-2)', border: '1px solid var(--dash-border)', color: 'var(--dash-text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
         >
           <Trash2 size={14} strokeWidth={1.5} />
         </button>
@@ -478,11 +486,42 @@ function AlbumDetail({
         onChange={(e) => { if (e.target.files) uploadFiles(e.target.files); e.target.value = '' }}
       />
 
+      {/* Upload errors */}
+      {uploadErrors.length > 0 && (
+        <div style={{ marginBottom: 12, padding: '10px 14px', background: 'rgba(255,69,58,0.08)', border: '1px solid rgba(255,69,58,0.25)', borderRadius: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+            <div>
+              <p style={{ margin: '0 0 6px', fontSize: 12, fontWeight: 600, color: '#FF453A', fontFamily: FONT }}>
+                {uploadErrors.length === 1 ? 'Error al subir 1 foto' : `Errores al subir ${uploadErrors.length} fotos`}
+              </p>
+              {uploadErrors.map((e, i) => (
+                <p key={i} style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,100,80,0.9)', fontFamily: FONT }}>{e}</p>
+              ))}
+            </div>
+            <button
+              onClick={() => setUploadErrors([])}
+              style={{ flexShrink: 0, width: 20, height: 20, background: 'transparent', border: 'none', color: '#FF453A', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+            >
+              <X size={12} strokeWidth={2} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Photo grid */}
       {photos.length > 0 ? (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={photos.map((p) => p.id)} strategy={rectSortingStrategy}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 6 }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+                gap: 6,
+                pointerEvents: uploading ? 'none' : 'auto',
+                opacity: uploading ? 0.6 : 1,
+                transition: 'opacity 0.2s',
+              }}
+            >
               {photos.map((photo) => (
                 <SortablePhoto
                   key={photo.id}
