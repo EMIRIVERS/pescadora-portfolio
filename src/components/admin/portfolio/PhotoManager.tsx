@@ -20,7 +20,10 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { createClient } from '@/lib/supabase/client'
-import { Plus, Trash2, Eye, EyeOff, X, Check, Upload, ArrowLeft, Pencil, GripVertical } from 'lucide-react'
+import {
+  Plus, Trash2, Eye, EyeOff, X, Check, Upload, ArrowLeft, Pencil,
+  GripVertical, ChevronRight, FolderOpen,
+} from 'lucide-react'
 import {
   createAlbum,
   updateAlbum,
@@ -54,6 +57,7 @@ export interface Album {
   label: string
   sort_order: number
   is_visible: boolean
+  parent_id: string | null
   portfolio_photos: Photo[]
 }
 
@@ -66,6 +70,7 @@ function SortableAlbumCard({
   onRename,
   onDelete,
   isDeleting,
+  isSubAlbum,
 }: {
   album: Album
   onOpen: (album: Album) => void
@@ -73,6 +78,7 @@ function SortableAlbumCard({
   onRename: (album: Album) => void
   onDelete: (album: Album) => void
   isDeleting: boolean
+  isSubAlbum?: boolean
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: album.id,
@@ -89,17 +95,17 @@ function SortableAlbumCard({
         transform: CSS.Transform.toString(transform),
         transition,
         opacity: isDragging ? 0.4 : isDeleting ? 0.4 : album.is_visible ? 1 : 0.5,
-        borderRadius: 12,
+        borderRadius: isSubAlbum ? 10 : 12,
         overflow: 'hidden',
         background: 'var(--dash-surface-2)',
-        border: '1px solid rgba(255,255,255,0.07)',
+        border: `1px solid ${isSubAlbum ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.07)'}`,
         cursor: 'default',
         userSelect: 'none',
         display: 'flex',
         flexDirection: 'column',
       }}
     >
-      {/* Cover mosaic — clickable to open */}
+      {/* Cover mosaic */}
       <div
         onClick={() => !isDragging && onOpen(album)}
         style={{
@@ -115,8 +121,8 @@ function SortableAlbumCard({
         }}
       >
         {coverPhotos.length === 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.1)', fontSize: 32 }}>
-            ⬜
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.08)', fontSize: 28 }}>
+            <FolderOpen size={28} strokeWidth={1} />
           </div>
         )}
         {coverPhotos.map((photo) => (
@@ -131,58 +137,55 @@ function SortableAlbumCard({
       </div>
 
       {/* Footer */}
-      <div style={{ padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-        {/* Drag handle */}
+      <div style={{ padding: '8px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
         <div
           {...attributes}
           {...listeners}
           style={{ cursor: 'grab', color: 'var(--dash-text-tertiary)', display: 'flex', flexShrink: 0, touchAction: 'none' }}
         >
-          <GripVertical size={14} strokeWidth={1.5} />
+          <GripVertical size={13} strokeWidth={1.5} />
         </div>
 
-        {/* Name + count */}
         <div
           onClick={() => !isDragging && onOpen(album)}
           style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}
         >
-          <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--dash-text-primary)', fontFamily: FONT, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: 'var(--dash-text-primary)', fontFamily: FONT, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {album.label}
           </p>
-          <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--dash-text-tertiary)', fontFamily: FONT }}>
+          <p style={{ margin: '1px 0 0', fontSize: 10, color: 'var(--dash-text-tertiary)', fontFamily: FONT }}>
             {album.portfolio_photos.length} foto{album.portfolio_photos.length !== 1 ? 's' : ''}
-            {!album.is_visible && <span style={{ marginLeft: 6, color: '#FF453A' }}>oculto</span>}
+            {!album.is_visible && <span style={{ marginLeft: 5, color: '#FF453A' }}>oculto</span>}
           </p>
         </div>
 
-        {/* Quick actions */}
         <div className="pm-card-actions" style={{ display: 'flex', gap: 2, opacity: 0, transition: 'opacity 0.15s' }}>
           <button
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => { e.stopPropagation(); onToggleVisibility(album) }}
             title={album.is_visible ? 'Ocultar' : 'Mostrar'}
             className="pm-icon-btn"
-            style={{ width: 26, height: 26, borderRadius: 6, background: 'transparent', border: 'none', color: 'var(--dash-text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ width: 24, height: 24, borderRadius: 5, background: 'transparent', border: 'none', color: 'var(--dash-text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            {album.is_visible ? <Eye size={12} strokeWidth={1.5} /> : <EyeOff size={12} strokeWidth={1.5} />}
+            {album.is_visible ? <Eye size={11} strokeWidth={1.5} /> : <EyeOff size={11} strokeWidth={1.5} />}
           </button>
           <button
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => { e.stopPropagation(); onRename(album) }}
             title="Renombrar"
             className="pm-icon-btn"
-            style={{ width: 26, height: 26, borderRadius: 6, background: 'transparent', border: 'none', color: 'var(--dash-text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ width: 24, height: 24, borderRadius: 5, background: 'transparent', border: 'none', color: 'var(--dash-text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            <Pencil size={11} strokeWidth={1.5} />
+            <Pencil size={10} strokeWidth={1.5} />
           </button>
           <button
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => { e.stopPropagation(); onDelete(album) }}
-            title="Eliminar album"
+            title="Eliminar"
             className="pm-icon-btn pm-icon-del"
-            style={{ width: 26, height: 26, borderRadius: 6, background: 'transparent', border: 'none', color: 'var(--dash-text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ width: 24, height: 24, borderRadius: 5, background: 'transparent', border: 'none', color: 'var(--dash-text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            <Trash2 size={11} strokeWidth={1.5} />
+            <Trash2 size={10} strokeWidth={1.5} />
           </button>
         </div>
       </div>
@@ -233,8 +236,6 @@ function SortablePhoto({
         alt={photo.alt_text}
         style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', pointerEvents: 'none', userSelect: 'none' }}
       />
-
-      {/* Hover overlay — click on photo opens preview */}
       <div
         className="pm-photo-overlay"
         onPointerDown={(e) => e.stopPropagation()}
@@ -243,12 +244,8 @@ function SortablePhoto({
           position: 'absolute', inset: 0,
           background: 'rgba(0,0,0,0)',
           transition: 'background 0.15s',
-          display: 'flex',
-          alignItems: 'flex-end',
-          justifyContent: 'flex-end',
-          padding: 5,
-          gap: 4,
-          cursor: 'pointer',
+          display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end',
+          padding: 5, gap: 4, cursor: 'pointer',
         }}
       >
         <button
@@ -271,20 +268,30 @@ function SortablePhoto({
   )
 }
 
-// ─── Album detail (photo grid) ────────────────────────────────────────────────
+// ─── Album detail (photos + sub-albums) ──────────────────────────────────────
 
 function AlbumDetail({
   album,
+  subAlbums,
   onBack,
   onPhotosChange,
   onToggleVisibility,
   onDelete,
+  onNavigateInto,
+  onAlbumCreated,
+  onAlbumUpdated,
+  onAlbumDeleted,
 }: {
   album: Album
+  subAlbums: Album[]
   onBack: () => void
   onPhotosChange: (albumId: string, photos: Photo[]) => void
   onToggleVisibility: (album: Album) => void
   onDelete: (album: Album) => void
+  onNavigateInto: (album: Album) => void
+  onAlbumCreated: (album: Album) => void
+  onAlbumUpdated: (id: string, patch: Partial<Album>) => void
+  onAlbumDeleted: (id: string) => void
 }) {
   const router = useRouter()
   const supabase = createClient()
@@ -302,10 +309,43 @@ function AlbumDetail({
   const [preview, setPreview] = useState<Photo | null>(null)
   const [, startTransition] = useTransition()
 
-  const sensors = useSensors(
+  // Sub-album creation
+  const [showNewSub, setShowNewSub] = useState(false)
+  const [newSubLabel, setNewSubLabel] = useState('')
+  const [subPending, startSubTransition] = useTransition()
+  const [subError, setSubError] = useState<string | null>(null)
+
+  // Sub-album rename
+  const [renamingSubId, setRenamingSubId] = useState<string | null>(null)
+  const [renameSubLabel, setRenameSubLabel] = useState('')
+  const [, startRenameTransition] = useTransition()
+
+  const [deletingSubId, setDeletingSubId] = useState<string | null>(null)
+
+  const photoDndSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
+  const subDndSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
+
+  const sortedSubAlbums = [...subAlbums].sort((a, b) => a.sort_order - b.sort_order)
+
+  const INPUT: React.CSSProperties = {
+    backgroundColor: 'var(--dash-surface-2)',
+    border: '1px solid var(--dash-border)',
+    borderRadius: 8,
+    padding: '7px 11px',
+    fontSize: 13,
+    color: 'var(--dash-text-primary)',
+    fontFamily: FONT,
+    outline: 'none',
+    boxSizing: 'border-box',
+  }
+
+  // ── Photo upload ────────────────────────────────────────────────────────────
 
   async function uploadFiles(files: FileList | File[]) {
     const arr = Array.from(files).filter((f) => f.type.startsWith('image/'))
@@ -337,14 +377,7 @@ function AlbumDetail({
       const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${storagePath}`
       try {
         const { id: realId } = await addPhoto(album.id, storagePath, altText, nextOrder, publicUrl)
-        const newPhoto: Photo = {
-          id: realId,
-          album_id: album.id,
-          storage_path: storagePath,
-          url: publicUrl,
-          alt_text: altText,
-          sort_order: nextOrder,
-        }
+        const newPhoto: Photo = { id: realId, album_id: album.id, storage_path: storagePath, url: publicUrl, alt_text: altText, sort_order: nextOrder }
         setPhotos((prev) => {
           const updated = [...prev, newPhoto]
           onPhotosChange(album.id, updated)
@@ -362,7 +395,9 @@ function AlbumDetail({
     router.refresh()
   }
 
-  function handleDragEnd(event: DragEndEvent) {
+  // ── Photo drag-and-drop reorder ─────────────────────────────────────────────
+
+  function handlePhotoDragEnd(event: DragEndEvent) {
     if (uploading) return
     const { active, over } = event
     if (!over || active.id === over.id) return
@@ -372,7 +407,6 @@ function AlbumDetail({
     const reordered = arrayMove(photos, oldIdx, newIdx).map((p, i) => ({ ...p, sort_order: i }))
     setPhotos(reordered)
     onPhotosChange(album.id, reordered)
-    // Only persist IDs that exist in DB (skip any residual temp IDs)
     const toSave = reordered.filter((p) => !p.id.startsWith('temp-'))
     if (toSave.length === 0) return
     startTransition(async () => {
@@ -380,7 +414,9 @@ function AlbumDetail({
     })
   }
 
-  async function handleDelete(photo: Photo) {
+  // ── Photo delete ────────────────────────────────────────────────────────────
+
+  async function handleDeletePhoto(photo: Photo) {
     if (!window.confirm('¿Eliminar esta foto?')) return
     setDeletingId(photo.id)
     try {
@@ -390,15 +426,86 @@ function AlbumDetail({
         onPhotosChange(album.id, updated)
         return updated
       })
+    } catch (err) {
+      setUploadErrors([err instanceof Error ? err.message : 'Error al eliminar'])
     } finally {
       setDeletingId(null)
     }
   }
 
-  function handleFileDrop(e: React.DragEvent) {
+  // ── Sub-album actions ───────────────────────────────────────────────────────
+
+  function handleCreateSubAlbum(e: React.FormEvent) {
     e.preventDefault()
-    setDropOver(false)
-    if (e.dataTransfer.files.length > 0) uploadFiles(e.dataTransfer.files)
+    if (!newSubLabel.trim()) return
+    setSubError(null)
+    const fd = new FormData()
+    fd.set('label', newSubLabel.trim())
+    startSubTransition(async () => {
+      try {
+        await createAlbum(fd, album.id)
+        setShowNewSub(false)
+        setNewSubLabel('')
+        router.refresh()
+      } catch (err) {
+        setSubError(err instanceof Error ? err.message : 'Error al crear')
+      }
+    })
+  }
+
+  function handleSubAlbumDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIdx = sortedSubAlbums.findIndex((a) => a.id === active.id)
+    const newIdx = sortedSubAlbums.findIndex((a) => a.id === over.id)
+    if (oldIdx === -1 || newIdx === -1) return
+    const reordered = arrayMove(sortedSubAlbums, oldIdx, newIdx)
+    reordered.forEach((a, i) => onAlbumUpdated(a.id, { sort_order: i }))
+    startTransition(async () => {
+      await Promise.all(reordered.map((a, i) => updateAlbum(a.id, { sort_order: i })))
+    })
+  }
+
+  function handleToggleSub(sub: Album) {
+    const next = !sub.is_visible
+    onAlbumUpdated(sub.id, { is_visible: next })
+    startTransition(async () => {
+      try {
+        await updateAlbum(sub.id, { is_visible: next })
+      } catch {
+        onAlbumUpdated(sub.id, { is_visible: sub.is_visible })
+      }
+    })
+  }
+
+  function handleRenameSub(sub: Album) {
+    setRenamingSubId(sub.id)
+    setRenameSubLabel(sub.label)
+  }
+
+  function handleSaveRenameSub(sub: Album) {
+    const trimmed = renameSubLabel.trim()
+    if (!trimmed) return
+    startRenameTransition(async () => {
+      try {
+        await updateAlbum(sub.id, { label: trimmed })
+        onAlbumUpdated(sub.id, { label: trimmed })
+        setRenamingSubId(null)
+      } catch { /* no-op */ }
+    })
+  }
+
+  function handleDeleteSub(sub: Album) {
+    if (!window.confirm(`¿Eliminar el sub-álbum "${sub.label}" y todas sus fotos?`)) return
+    setDeletingSubId(sub.id)
+    startTransition(async () => {
+      try {
+        await deleteAlbum(sub.id)
+        onAlbumDeleted(sub.id)
+        router.refresh()
+      } catch { /* no-op */ }
+      finally { setDeletingSubId(null) }
+    })
   }
 
   return (
@@ -410,7 +517,7 @@ function AlbumDetail({
           style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: 'var(--dash-surface-2)', border: '1px solid var(--dash-border)', borderRadius: 8, fontSize: 13, color: 'var(--dash-text-secondary)', cursor: 'pointer', fontFamily: FONT, flexShrink: 0 }}
         >
           <ArrowLeft size={13} strokeWidth={2} />
-          Albums
+          Atrás
         </button>
 
         <h3 style={{ margin: 0, fontSize: 17, fontWeight: 600, color: 'var(--dash-text-primary)', flex: 1, minWidth: 80, letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -423,15 +530,14 @@ function AlbumDetail({
 
         <button
           onClick={() => onToggleVisibility(album)}
-          title={album.is_visible ? 'Ocultar album' : 'Mostrar album'}
+          title={album.is_visible ? 'Ocultar' : 'Mostrar'}
           style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--dash-surface-2)', border: '1px solid var(--dash-border)', color: album.is_visible ? 'var(--dash-text-secondary)' : '#FF453A', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
         >
           {album.is_visible ? <Eye size={14} strokeWidth={1.5} /> : <EyeOff size={14} strokeWidth={1.5} />}
         </button>
-
         <button
           onClick={() => onDelete(album)}
-          title="Eliminar album"
+          title="Eliminar álbum"
           style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--dash-surface-2)', border: '1px solid var(--dash-border)', color: 'var(--dash-text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
         >
           <Trash2 size={14} strokeWidth={1.5} />
@@ -443,69 +549,41 @@ function AlbumDetail({
         ref={dropZoneRef}
         onDragOver={(e) => { e.preventDefault(); setDropOver(true) }}
         onDragLeave={(e) => { if (!dropZoneRef.current?.contains(e.relatedTarget as Node)) setDropOver(false) }}
-        onDrop={handleFileDrop}
+        onDrop={(e) => { e.preventDefault(); setDropOver(false); if (e.dataTransfer.files.length > 0) uploadFiles(e.dataTransfer.files) }}
         onClick={() => !uploading && fileInputRef.current?.click()}
         style={{
-          marginBottom: 16,
-          padding: '20px 16px',
+          marginBottom: 12,
+          padding: '18px 16px',
           borderRadius: 12,
           border: `1.5px dashed ${dropOver ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.12)'}`,
           background: dropOver ? 'rgba(255,255,255,0.04)' : 'transparent',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 8,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
           cursor: uploading ? 'wait' : 'pointer',
           transition: 'border-color 0.15s, background 0.15s',
         }}
       >
-        <Upload size={20} strokeWidth={1.5} color={dropOver ? 'var(--dash-text-primary)' : 'var(--dash-text-tertiary)'} />
+        <Upload size={18} strokeWidth={1.5} color={dropOver ? 'var(--dash-text-primary)' : 'var(--dash-text-tertiary)'} />
         <p style={{ margin: 0, fontSize: 13, color: uploading ? 'var(--dash-text-secondary)' : 'var(--dash-text-tertiary)', fontFamily: FONT, textAlign: 'center' }}>
-          {uploading
-            ? `Subiendo ${uploadProgress} de ${uploadTotal}...`
-            : 'Arrastra fotos aquí o haz clic para seleccionar'}
+          {uploading ? `Subiendo ${uploadProgress} de ${uploadTotal}...` : 'Arrastra fotos aquí o haz clic para seleccionar'}
         </p>
-        {/* Progress bar */}
         {uploading && (
           <div style={{ width: '100%', maxWidth: 240, height: 3, background: 'var(--dash-surface-3)', borderRadius: 2, overflow: 'hidden' }}>
-            <div
-              style={{
-                height: '100%',
-                width: `${(uploadProgress / Math.max(uploadTotal, 1)) * 100}%`,
-                background: '#0071E3',
-                borderRadius: 2,
-                transition: 'width 0.2s',
-              }}
-            />
+            <div style={{ height: '100%', width: `${(uploadProgress / Math.max(uploadTotal, 1)) * 100}%`, background: '#0071E3', borderRadius: 2, transition: 'width 0.2s' }} />
           </div>
         )}
       </div>
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        multiple
-        style={{ display: 'none' }}
-        onChange={(e) => { if (e.target.files) uploadFiles(e.target.files); e.target.value = '' }}
-      />
+      <input ref={fileInputRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={(e) => { if (e.target.files) uploadFiles(e.target.files); e.target.value = '' }} />
 
       {/* Upload errors */}
       {uploadErrors.length > 0 && (
         <div style={{ marginBottom: 12, padding: '10px 14px', background: 'rgba(255,69,58,0.08)', border: '1px solid rgba(255,69,58,0.25)', borderRadius: 8 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
             <div>
-              <p style={{ margin: '0 0 6px', fontSize: 12, fontWeight: 600, color: '#FF453A', fontFamily: FONT }}>
-                {uploadErrors.length === 1 ? 'Error al subir 1 foto' : `Errores al subir ${uploadErrors.length} fotos`}
-              </p>
-              {uploadErrors.map((e, i) => (
-                <p key={i} style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,100,80,0.9)', fontFamily: FONT }}>{e}</p>
-              ))}
+              <p style={{ margin: '0 0 4px', fontSize: 12, fontWeight: 600, color: '#FF453A', fontFamily: FONT }}>{uploadErrors.length === 1 ? '1 error' : `${uploadErrors.length} errores`}</p>
+              {uploadErrors.map((e, i) => <p key={i} style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,100,80,0.9)', fontFamily: FONT }}>{e}</p>)}
             </div>
-            <button
-              onClick={() => setUploadErrors([])}
-              style={{ flexShrink: 0, width: 20, height: 20, background: 'transparent', border: 'none', color: '#FF453A', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
-            >
+            <button onClick={() => setUploadErrors([])} style={{ flexShrink: 0, width: 20, height: 20, background: 'transparent', border: 'none', color: '#FF453A', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>
               <X size={12} strokeWidth={2} />
             </button>
           </div>
@@ -513,61 +591,117 @@ function AlbumDetail({
       )}
 
       {/* Photo grid */}
-      {photos.length > 0 ? (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      {photos.length > 0 && (
+        <DndContext sensors={photoDndSensors} collisionDetection={closestCenter} onDragEnd={handlePhotoDragEnd}>
           <SortableContext items={photos.map((p) => p.id)} strategy={rectSortingStrategy}>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
-                gap: 6,
-                pointerEvents: uploading ? 'none' : 'auto',
-                opacity: uploading ? 0.6 : 1,
-                transition: 'opacity 0.2s',
-              }}
-            >
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: 6, pointerEvents: uploading ? 'none' : 'auto', opacity: uploading ? 0.6 : 1, transition: 'opacity 0.2s', marginBottom: 24 }}>
               {photos.map((photo) => (
-                <SortablePhoto
-                  key={photo.id}
-                  photo={photo}
-                  onDelete={handleDelete}
-                  deletingId={deletingId}
-                  onPreview={setPreview}
-                />
+                <SortablePhoto key={photo.id} photo={photo} onDelete={handleDeletePhoto} deletingId={deletingId} onPreview={setPreview} />
               ))}
             </div>
           </SortableContext>
         </DndContext>
-      ) : (
-        !uploading && (
-          <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--dash-text-tertiary)', padding: '24px 0', margin: 0 }}>
-            Album vacío — sube fotos para empezar
-          </p>
-        )
       )}
+      {photos.length === 0 && !uploading && (
+        <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--dash-text-tertiary)', padding: '16px 0 24px', margin: 0 }}>
+          Álbum vacío — sube fotos para empezar
+        </p>
+      )}
+
+      {/* ── Sub-albums section ─────────────────────────────────────────────── */}
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+          <div>
+            <p style={{ margin: 0, fontSize: 12, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--dash-text-secondary)', fontFamily: FONT }}>
+              Sub-álbumes
+            </p>
+            <p style={{ margin: '3px 0 0', fontSize: 11, color: 'var(--dash-text-tertiary)', fontFamily: FONT }}>
+              Agrupa fotos dentro de este álbum
+            </p>
+          </div>
+          <button
+            onClick={() => { setShowNewSub(true); setSubError(null) }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 12px', background: 'var(--dash-surface-2)', border: '1px solid var(--dash-border)', borderRadius: 7, fontSize: 12, color: 'var(--dash-text-primary)', cursor: 'pointer', fontFamily: FONT }}
+          >
+            <Plus size={12} strokeWidth={2} />
+            Nuevo sub-álbum
+          </button>
+        </div>
+
+        {subError && <p style={{ fontSize: 12, color: '#FF453A', marginBottom: 10 }}>{subError}</p>}
+
+        {/* New sub-album form */}
+        {showNewSub && (
+          <form
+            onSubmit={handleCreateSubAlbum}
+            style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 14, padding: 10, background: 'var(--dash-surface-2)', borderRadius: 9, border: '1px solid var(--dash-border)' }}
+          >
+            <input
+              value={newSubLabel}
+              onChange={(e) => setNewSubLabel(e.target.value)}
+              placeholder="Nombre del sub-álbum"
+              required
+              autoFocus
+              style={{ ...INPUT, flex: 1 }}
+            />
+            <button type="submit" disabled={subPending || !newSubLabel.trim()} style={{ padding: '7px 14px', background: '#0071E3', border: 'none', borderRadius: 7, fontSize: 12, color: '#fff', cursor: 'pointer', opacity: subPending ? 0.5 : 1, fontFamily: FONT }}>
+              {subPending ? '...' : 'Crear'}
+            </button>
+            <button type="button" onClick={() => { setShowNewSub(false); setNewSubLabel('') }} style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: 'var(--dash-text-tertiary)', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <X size={13} />
+            </button>
+          </form>
+        )}
+
+        {/* Rename sub-album inline */}
+        {renamingSubId && (() => {
+          const sub = subAlbums.find((a) => a.id === renamingSubId)
+          if (!sub) return null
+          return (
+            <div style={{ marginBottom: 14, padding: 10, background: 'var(--dash-surface-2)', borderRadius: 9, border: '1px solid var(--dash-border)', display: 'flex', gap: 8, alignItems: 'center' }}>
+              <span style={{ fontSize: 11, color: 'var(--dash-text-tertiary)', flexShrink: 0 }}>Renombrar:</span>
+              <input value={renameSubLabel} onChange={(e) => setRenameSubLabel(e.target.value)} autoFocus onKeyDown={(e) => { if (e.key === 'Enter') handleSaveRenameSub(sub); if (e.key === 'Escape') setRenamingSubId(null) }} style={{ ...INPUT, flex: 1, padding: '5px 9px', fontSize: 12 }} />
+              <button onClick={() => handleSaveRenameSub(sub)} style={{ width: 26, height: 26, background: 'transparent', border: 'none', color: '#30D158', cursor: 'pointer', borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Check size={13} strokeWidth={2.5} /></button>
+              <button onClick={() => setRenamingSubId(null)} style={{ width: 26, height: 26, background: 'transparent', border: 'none', color: 'var(--dash-text-tertiary)', cursor: 'pointer', borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={12} /></button>
+            </div>
+          )
+        })()}
+
+        {sortedSubAlbums.length === 0 && !showNewSub ? (
+          <div style={{ padding: '20px 16px', textAlign: 'center', background: 'var(--dash-surface-1)', border: '1px dashed rgba(255,255,255,0.08)', borderRadius: 10 }}>
+            <p style={{ margin: 0, fontSize: 12, color: 'var(--dash-text-tertiary)' }}>Sin sub-álbumes todavía</p>
+          </div>
+        ) : (
+          <DndContext sensors={subDndSensors} collisionDetection={closestCenter} onDragEnd={handleSubAlbumDragEnd}>
+            <SortableContext items={sortedSubAlbums.map((a) => a.id)} strategy={rectSortingStrategy}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
+                {sortedSubAlbums.map((sub) => (
+                  <SortableAlbumCard
+                    key={sub.id}
+                    album={sub}
+                    onOpen={onNavigateInto}
+                    onToggleVisibility={handleToggleSub}
+                    onRename={handleRenameSub}
+                    onDelete={handleDeleteSub}
+                    isDeleting={deletingSubId === sub.id}
+                    isSubAlbum
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        )}
+      </div>
 
       {/* Lightbox */}
       {preview && (
         <div
           onClick={() => setPreview(null)}
-          style={{
-            position: 'fixed', inset: 0, zIndex: 9999,
-            background: 'rgba(0,0,0,0.88)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: 24,
-          }}
+          style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={resolvePhotoUrl(preview)}
-            alt={preview.alt_text}
-            onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: '90vw', maxHeight: '85vh', objectFit: 'contain', borderRadius: 8 }}
-          />
-          <button
-            onClick={() => setPreview(null)}
-            style={{ position: 'fixed', top: 20, right: 20, width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          >
+          <img src={resolvePhotoUrl(preview)} alt={preview.alt_text} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '90vw', maxHeight: '85vh', objectFit: 'contain', borderRadius: 8 }} />
+          <button onClick={() => setPreview(null)} style={{ position: 'fixed', top: 20, right: 20, width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <X size={16} strokeWidth={2} />
           </button>
         </div>
@@ -581,10 +715,9 @@ function AlbumDetail({
 export default function PhotoManager({ initialAlbums }: { initialAlbums: Album[] }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const [albums, setAlbums] = useState<Album[]>(
-    [...initialAlbums].sort((a, b) => a.sort_order - b.sort_order),
-  )
-  const [openAlbum, setOpenAlbum] = useState<Album | null>(null)
+  const [albums, setAlbums] = useState<Album[]>(initialAlbums)
+  // navStack: breadcrumb of opened albums. [] = root grid
+  const [navStack, setNavStack] = useState<Album[]>([])
   const [showNew, setShowNew] = useState(false)
   const [newLabel, setNewLabel] = useState('')
   const [renamingId, setRenamingId] = useState<string | null>(null)
@@ -592,7 +725,14 @@ export default function PhotoManager({ initialAlbums }: { initialAlbums: Album[]
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const sorted = [...albums].sort((a, b) => a.sort_order - b.sort_order)
+  // Root albums only (no parent)
+  const rootAlbums = [...albums.filter((a) => !a.parent_id)].sort((a, b) => a.sort_order - b.sort_order)
+
+  // Current album from navStack
+  const currentAlbum = navStack.length > 0 ? albums.find((a) => a.id === navStack[navStack.length - 1].id) ?? navStack[navStack.length - 1] : null
+
+  // Sub-albums of current album
+  const currentSubAlbums = currentAlbum ? albums.filter((a) => a.parent_id === currentAlbum.id) : []
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -611,7 +751,26 @@ export default function PhotoManager({ initialAlbums }: { initialAlbums: Album[]
     boxSizing: 'border-box',
   }
 
-  // ── Create ─────────────────────────────────────────────────────────────────
+  // ── Helpers ─────────────────────────────────────────────────────────────────
+
+  function patchAlbum(id: string, patch: Partial<Album>) {
+    setAlbums((prev) => prev.map((a) => a.id === id ? { ...a, ...patch } : a))
+    setNavStack((prev) => prev.map((a) => a.id === id ? { ...a, ...patch } : a))
+  }
+
+  function removeAlbum(id: string) {
+    setAlbums((prev) => prev.filter((a) => a.id !== id && a.parent_id !== id))
+    setNavStack((prev) => {
+      const idx = prev.findIndex((a) => a.id === id)
+      return idx === -1 ? prev : prev.slice(0, idx)
+    })
+  }
+
+  function handlePhotosChange(albumId: string, photos: Photo[]) {
+    setAlbums((prev) => prev.map((a) => a.id === albumId ? { ...a, portfolio_photos: photos } : a))
+  }
+
+  // ── Create root album ───────────────────────────────────────────────────────
 
   function handleCreate(e: React.FormEvent) {
     e.preventDefault()
@@ -631,13 +790,7 @@ export default function PhotoManager({ initialAlbums }: { initialAlbums: Album[]
     })
   }
 
-  // ── Rename ─────────────────────────────────────────────────────────────────
-
-  function startRename(album: Album) {
-    setRenamingId(album.id)
-    setRenameLabel(album.label)
-    setError(null)
-  }
+  // ── Rename ──────────────────────────────────────────────────────────────────
 
   function handleSaveRename(album: Album) {
     const trimmed = renameLabel.trim()
@@ -645,8 +798,7 @@ export default function PhotoManager({ initialAlbums }: { initialAlbums: Album[]
     startTransition(async () => {
       try {
         await updateAlbum(album.id, { label: trimmed })
-        setAlbums((prev) => prev.map((a) => a.id === album.id ? { ...a, label: trimmed } : a))
-        if (openAlbum?.id === album.id) setOpenAlbum((prev) => prev ? { ...prev, label: trimmed } : prev)
+        patchAlbum(album.id, { label: trimmed })
         setRenamingId(null)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error al guardar')
@@ -654,31 +806,26 @@ export default function PhotoManager({ initialAlbums }: { initialAlbums: Album[]
     })
   }
 
-  // ── Visibility ─────────────────────────────────────────────────────────────
+  // ── Visibility ──────────────────────────────────────────────────────────────
 
   function handleToggle(album: Album) {
     const next = !album.is_visible
-    setAlbums((prev) => prev.map((a) => a.id === album.id ? { ...a, is_visible: next } : a))
-    if (openAlbum?.id === album.id) setOpenAlbum((prev) => prev ? { ...prev, is_visible: next } : prev)
+    patchAlbum(album.id, { is_visible: next })
     startTransition(async () => {
-      try {
-        await updateAlbum(album.id, { is_visible: next })
-      } catch {
-        setAlbums((prev) => prev.map((a) => a.id === album.id ? { ...a, is_visible: album.is_visible } : a))
-      }
+      try { await updateAlbum(album.id, { is_visible: next }) }
+      catch { patchAlbum(album.id, { is_visible: album.is_visible }) }
     })
   }
 
-  // ── Delete ─────────────────────────────────────────────────────────────────
+  // ── Delete ──────────────────────────────────────────────────────────────────
 
   function handleDelete(album: Album) {
-    if (!window.confirm(`¿Eliminar el álbum "${album.label}" y todas sus fotos?`)) return
+    if (!window.confirm(`¿Eliminar "${album.label}" y todas sus fotos y sub-álbumes?`)) return
     setDeletingId(album.id)
     startTransition(async () => {
       try {
         await deleteAlbum(album.id)
-        setAlbums((prev) => prev.filter((a) => a.id !== album.id))
-        if (openAlbum?.id === album.id) setOpenAlbum(null)
+        removeAlbum(album.id)
         router.refresh()
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error al eliminar')
@@ -688,46 +835,95 @@ export default function PhotoManager({ initialAlbums }: { initialAlbums: Album[]
     })
   }
 
-  // ── Drag-and-drop album reorder ────────────────────────────────────────────
+  // ── Root album drag-and-drop ─────────────────────────────────────────────────
 
   function handleAlbumDragEnd(event: DragEndEvent) {
     const { active, over } = event
     if (!over || active.id === over.id) return
-    const oldIdx = sorted.findIndex((a) => a.id === active.id)
-    const newIdx = sorted.findIndex((a) => a.id === over.id)
-    const reordered = arrayMove(sorted, oldIdx, newIdx)
-    setAlbums(reordered.map((a, i) => ({ ...a, sort_order: i })))
+    const oldIdx = rootAlbums.findIndex((a) => a.id === active.id)
+    const newIdx = rootAlbums.findIndex((a) => a.id === over.id)
+    const reordered = arrayMove(rootAlbums, oldIdx, newIdx)
+    setAlbums((prev) => {
+      const roots = new Map(reordered.map((a, i) => [a.id, i]))
+      return prev.map((a) => roots.has(a.id) ? { ...a, sort_order: roots.get(a.id)! } : a)
+    })
     startTransition(async () => {
-      // persist all new sort_orders
-      await Promise.all(
-        reordered.map((a, i) => updateAlbum(a.id, { sort_order: i }))
-      )
+      await Promise.all(reordered.map((a, i) => updateAlbum(a.id, { sort_order: i })))
     })
   }
 
-  // ── Photos change callback ─────────────────────────────────────────────────
+  // ── Navigation ───────────────────────────────────────────────────────────────
 
-  function handlePhotosChange(albumId: string, photos: Photo[]) {
-    setAlbums((prev) => prev.map((a) => a.id === albumId ? { ...a, portfolio_photos: photos } : a))
-    if (openAlbum?.id === albumId) setOpenAlbum((prev) => prev ? { ...prev, portfolio_photos: photos } : prev)
+  function navigateInto(album: Album) {
+    setNavStack((prev) => [...prev, album])
   }
 
-  // ── Render: detail view ────────────────────────────────────────────────────
+  function navigateBack() {
+    setNavStack((prev) => prev.slice(0, -1))
+  }
 
-  if (openAlbum) {
-    const current = albums.find((a) => a.id === openAlbum.id) ?? openAlbum
+  function navigateTo(idx: number) {
+    setNavStack((prev) => prev.slice(0, idx + 1))
+  }
+
+  // ── Render: album detail view ────────────────────────────────────────────────
+
+  if (currentAlbum) {
     return (
-      <AlbumDetail
-        album={current}
-        onBack={() => setOpenAlbum(null)}
-        onPhotosChange={handlePhotosChange}
-        onToggleVisibility={handleToggle}
-        onDelete={(album) => { handleDelete(album) }}
-      />
+      <div style={{ fontFamily: FONT }}>
+        <style>{`
+          .pm-album-card:hover .pm-card-actions { opacity: 1 !important; }
+          .pm-icon-btn { transition: background 0.12s, color 0.12s; }
+          .pm-icon-btn:hover { background: var(--dash-surface-3) !important; color: var(--dash-text-primary) !important; }
+          .pm-icon-del:hover { background: rgba(255,69,58,0.15) !important; color: #FF453A !important; }
+          .pm-photo-cell:hover .pm-delete-btn { opacity: 1 !important; }
+          .pm-photo-cell:hover .pm-photo-overlay { background: rgba(0,0,0,0.25) !important; }
+        `}</style>
+
+        {/* Breadcrumb */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 20, flexWrap: 'wrap' }}>
+          <button
+            onClick={() => setNavStack([])}
+            style={{ background: 'none', border: 'none', color: 'var(--dash-text-tertiary)', cursor: 'pointer', fontSize: 13, fontFamily: FONT, padding: '2px 4px', borderRadius: 4 }}
+          >
+            Álbumes
+          </button>
+          {navStack.map((a, i) => (
+            <span key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <ChevronRight size={12} strokeWidth={1.5} color="var(--dash-text-tertiary)" />
+              {i < navStack.length - 1 ? (
+                <button
+                  onClick={() => navigateTo(i)}
+                  style={{ background: 'none', border: 'none', color: 'var(--dash-text-tertiary)', cursor: 'pointer', fontSize: 13, fontFamily: FONT, padding: '2px 4px', borderRadius: 4 }}
+                >
+                  {a.label}
+                </button>
+              ) : (
+                <span style={{ fontSize: 13, color: 'var(--dash-text-primary)', fontWeight: 600, fontFamily: FONT, padding: '2px 4px' }}>
+                  {albums.find((al) => al.id === a.id)?.label ?? a.label}
+                </span>
+              )}
+            </span>
+          ))}
+        </div>
+
+        <AlbumDetail
+          album={currentAlbum}
+          subAlbums={currentSubAlbums}
+          onBack={navigateBack}
+          onPhotosChange={handlePhotosChange}
+          onToggleVisibility={handleToggle}
+          onDelete={handleDelete}
+          onNavigateInto={navigateInto}
+          onAlbumCreated={(newAlbum) => setAlbums((prev) => [...prev, newAlbum])}
+          onAlbumUpdated={patchAlbum}
+          onAlbumDeleted={removeAlbum}
+        />
+      </div>
     )
   }
 
-  // ── Render: albums grid ────────────────────────────────────────────────────
+  // ── Render: root albums grid ─────────────────────────────────────────────────
 
   return (
     <div style={{ fontFamily: FONT }}>
@@ -744,18 +940,18 @@ export default function PhotoManager({ initialAlbums }: { initialAlbums: Album[]
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div>
           <h3 style={{ margin: 0, fontSize: 13, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--dash-text-secondary)' }}>
-            Albums de fotografias
+            Álbumes de fotografías
           </h3>
           <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--dash-text-tertiary)' }}>
-            Arrastra las cards para reordenar · Haz clic para abrir un album
+            Arrastra para reordenar · Clic para abrir · Dentro de cada álbum puedes crear sub-álbumes
           </p>
         </div>
         <button
           onClick={() => { setShowNew(true); setError(null) }}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: 'var(--dash-surface-2)', border: '1px solid var(--dash-border)', borderRadius: 8, fontSize: 13, color: 'var(--dash-text-primary)', cursor: 'pointer', fontFamily: FONT }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: 'var(--dash-surface-2)', border: '1px solid var(--dash-border)', borderRadius: 8, fontSize: 13, color: 'var(--dash-text-primary)', cursor: 'pointer', fontFamily: FONT, flexShrink: 0 }}
         >
           <Plus size={13} strokeWidth={2} />
-          Nuevo album
+          Nuevo álbum
         </button>
       </div>
 
@@ -763,30 +959,12 @@ export default function PhotoManager({ initialAlbums }: { initialAlbums: Album[]
 
       {/* New album form */}
       {showNew && (
-        <form
-          onSubmit={handleCreate}
-          style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16, padding: 12, background: 'var(--dash-surface-2)', borderRadius: 10, border: '1px solid var(--dash-border)' }}
-        >
-          <input
-            value={newLabel}
-            onChange={(e) => setNewLabel(e.target.value)}
-            placeholder="Nombre del album (ej. Retratos)"
-            required
-            autoFocus
-            style={{ ...INPUT, flex: 1 }}
-          />
-          <button
-            type="submit"
-            disabled={isPending || !newLabel.trim()}
-            style={{ padding: '8px 16px', background: '#0071E3', border: 'none', borderRadius: 8, fontSize: 13, color: '#fff', cursor: 'pointer', opacity: isPending ? 0.5 : 1, fontFamily: FONT }}
-          >
+        <form onSubmit={handleCreate} style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16, padding: 12, background: 'var(--dash-surface-2)', borderRadius: 10, border: '1px solid var(--dash-border)' }}>
+          <input value={newLabel} onChange={(e) => setNewLabel(e.target.value)} placeholder="Nombre del álbum (ej. Retratos)" required autoFocus style={{ ...INPUT, flex: 1 }} />
+          <button type="submit" disabled={isPending || !newLabel.trim()} style={{ padding: '8px 16px', background: '#0071E3', border: 'none', borderRadius: 8, fontSize: 13, color: '#fff', cursor: 'pointer', opacity: isPending ? 0.5 : 1, fontFamily: FONT }}>
             {isPending ? '...' : 'Crear'}
           </button>
-          <button
-            type="button"
-            onClick={() => { setShowNew(false); setNewLabel('') }}
-            style={{ width: 32, height: 32, background: 'transparent', border: 'none', color: 'var(--dash-text-tertiary)', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          >
+          <button type="button" onClick={() => { setShowNew(false); setNewLabel('') }} style={{ width: 32, height: 32, background: 'transparent', border: 'none', color: 'var(--dash-text-tertiary)', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <X size={14} />
           </button>
         </form>
@@ -799,39 +977,29 @@ export default function PhotoManager({ initialAlbums }: { initialAlbums: Album[]
         return (
           <div style={{ marginBottom: 16, padding: 14, background: 'var(--dash-surface-2)', borderRadius: 10, border: '1px solid var(--dash-border)', display: 'flex', gap: 8, alignItems: 'center' }}>
             <span style={{ fontSize: 12, color: 'var(--dash-text-tertiary)', flexShrink: 0 }}>Renombrar:</span>
-            <input
-              value={renameLabel}
-              onChange={(e) => setRenameLabel(e.target.value)}
-              autoFocus
-              onKeyDown={(e) => { if (e.key === 'Enter') handleSaveRename(album); if (e.key === 'Escape') setRenamingId(null) }}
-              style={{ ...INPUT, flex: 1, padding: '6px 10px', fontSize: 13 }}
-            />
-            <button onClick={() => handleSaveRename(album)} disabled={isPending} style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: '#30D158', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Check size={14} strokeWidth={2.5} />
-            </button>
-            <button onClick={() => setRenamingId(null)} style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: 'var(--dash-text-tertiary)', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <X size={13} strokeWidth={2} />
-            </button>
+            <input value={renameLabel} onChange={(e) => setRenameLabel(e.target.value)} autoFocus onKeyDown={(e) => { if (e.key === 'Enter') handleSaveRename(album); if (e.key === 'Escape') setRenamingId(null) }} style={{ ...INPUT, flex: 1, padding: '6px 10px', fontSize: 13 }} />
+            <button onClick={() => handleSaveRename(album)} disabled={isPending} style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: '#30D158', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Check size={14} strokeWidth={2.5} /></button>
+            <button onClick={() => setRenamingId(null)} style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: 'var(--dash-text-tertiary)', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={13} strokeWidth={2} /></button>
           </div>
         )
       })()}
 
-      {/* Album grid */}
-      {sorted.length === 0 ? (
+      {/* Albums grid */}
+      {rootAlbums.length === 0 ? (
         <div style={{ padding: '48px 24px', textAlign: 'center', background: 'var(--dash-surface-1)', border: '1px solid var(--dash-border)', borderRadius: 12 }}>
-          <p style={{ margin: 0, fontSize: 13, color: 'var(--dash-text-tertiary)' }}>No hay albums. Crea uno para empezar.</p>
+          <p style={{ margin: 0, fontSize: 13, color: 'var(--dash-text-tertiary)' }}>No hay álbumes. Crea uno para empezar.</p>
         </div>
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleAlbumDragEnd}>
-          <SortableContext items={sorted.map((a) => a.id)} strategy={rectSortingStrategy}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
-              {sorted.map((album) => (
+          <SortableContext items={rootAlbums.map((a) => a.id)} strategy={rectSortingStrategy}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 12 }}>
+              {rootAlbums.map((album) => (
                 <SortableAlbumCard
                   key={album.id}
                   album={album}
-                  onOpen={setOpenAlbum}
+                  onOpen={navigateInto}
                   onToggleVisibility={handleToggle}
-                  onRename={startRename}
+                  onRename={(a) => { setRenamingId(a.id); setRenameLabel(a.label); setError(null) }}
                   onDelete={handleDelete}
                   isDeleting={deletingId === album.id}
                 />

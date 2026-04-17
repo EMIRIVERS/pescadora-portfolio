@@ -15,23 +15,34 @@ function toSlug(str: string) {
 
 // ─── Albums ───────────────────────────────────────────────────────────────────
 
-export async function createAlbum(formData: FormData) {
+export async function createAlbum(formData: FormData, parentId?: string | null) {
   const label = String(formData.get('label') ?? '').trim()
   if (!label) throw new Error('El nombre es obligatorio')
   const slug = toSlug(label)
 
   const db = createServiceClient()
+  // Calculate next sort_order within the same parent scope
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: max } = await (db as any)
+  let maxQuery = (db as any)
     .from('photo_albums')
     .select('sort_order')
     .order('sort_order', { ascending: false })
     .limit(1)
-    .single()
+  if (parentId) {
+    maxQuery = maxQuery.eq('parent_id', parentId)
+  } else {
+    maxQuery = maxQuery.is('parent_id', null)
+  }
+  const { data: max } = await maxQuery.maybeSingle()
   const sort_order = ((max as { sort_order: number } | null)?.sort_order ?? -1) + 1
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (db as any).from('photo_albums').insert({ slug, label, sort_order })
+  const { error } = await (db as any).from('photo_albums').insert({
+    slug,
+    label,
+    sort_order,
+    parent_id: parentId ?? null,
+  })
   if (error) throw new Error(error.message)
   revalidatePath('/admin/portfolio')
 }
@@ -50,16 +61,25 @@ export async function updateAlbum(
 export async function deleteAlbum(id: string) {
   const db = createServiceClient()
 
-  // Clean up storage files first
+  // Collect all album IDs to delete (this album + all sub-albums recursively)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: subAlbums } = await (db as any)
+    .from('photo_albums')
+    .select('id')
+    .eq('parent_id', id)
+  const albumIds = [id, ...((subAlbums ?? []) as { id: string }[]).map((a) => a.id)]
+
+  // Clean up storage files for all albums
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: photos } = await (db as any)
     .from('portfolio_photos')
     .select('storage_path')
-    .eq('album_id', id)
+    .in('album_id', albumIds)
   if (photos && photos.length > 0) {
-    await db.storage
-      .from('media')
-      .remove((photos as { storage_path: string }[]).map((p) => p.storage_path))
+    const paths = (photos as { storage_path: string }[])
+      .map((p) => p.storage_path)
+      .filter((p) => p?.trim())
+    if (paths.length > 0) await db.storage.from('media').remove(paths)
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
