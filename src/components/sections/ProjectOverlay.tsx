@@ -109,6 +109,7 @@ function VideoDetail({ video, onBack, onClose }: { video: VideoEntry; onBack: ()
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -60 }}
       transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+      data-lenis-prevent
       style={{ position: 'fixed', inset: 0, zIndex: 300, background: '#050505', overflowY: 'auto' }}
     >
       <header style={{ position: 'sticky', top: 0, zIndex: 10, background: 'rgba(5,5,5,0.95)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 2rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
@@ -120,11 +121,11 @@ function VideoDetail({ video, onBack, onClose }: { video: VideoEntry; onBack: ()
         </button>
       </header>
 
-      <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', background: '#000' }}>
+      <div style={{ position: 'relative', width: '100%', maxWidth: '100vw', paddingBottom: '56.25%', background: '#000' }}>
         <iframe
           src={`https://player.vimeo.com/video/${video.vimeoId}?autoplay=1&${VIMEO_PARAMS}`}
           referrerPolicy="strict-origin-when-cross-origin"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none' }}
+          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
           allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
           allowFullScreen title={video.title}
         />
