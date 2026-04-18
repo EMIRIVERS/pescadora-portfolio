@@ -3,6 +3,7 @@
 import { useEffect, useRef, useCallback } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import FilmGrain from '@/components/ui/FilmGrain'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -449,13 +450,18 @@ export function Hero({ onLoadProgress, initialBlur }: HeroProps) {
           pointerEvents: 'none',
         }} />
 
+        {/* Film grain + scanlines — solo en el hero */}
+        <div style={{ position: 'absolute', inset: 0, zIndex: 2, pointerEvents: 'none', overflow: 'hidden' }}>
+          <FilmGrain />
+        </div>
+
         {/* Scanlines (sutiles) */}
         <div style={{
           position: 'absolute',
           inset: 0,
           backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px)',
           pointerEvents: 'none',
-          zIndex: 2,
+          zIndex: 3,
         }} />
 
         {/* --- Contenedor de slides de texto --- */}
@@ -534,7 +540,7 @@ export function Hero({ onLoadProgress, initialBlur }: HeroProps) {
           zIndex: 6,
         }} />
 
-        {/* Scroll hint */}
+        {/* Scroll hint — más visible con texto */}
         <div style={{
           position: 'absolute',
           bottom: '2.5rem',
@@ -542,17 +548,27 @@ export function Hero({ onLoadProgress, initialBlur }: HeroProps) {
           right: 0,
           zIndex: 7,
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          opacity: 0.3,
+          gap: '0.6rem',
           animation: 'heroScrollHint 2.2s ease-in-out infinite',
         }}>
-          <svg width="12" height="20" viewBox="0 0 12 20" fill="none">
-            <path d="M6 0v16M1 11l5 5 5-5" stroke="#fff" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+          <span style={{
+            fontFamily: 'var(--font-geist-mono)',
+            fontSize: '0.6rem',
+            letterSpacing: '0.25em',
+            textTransform: 'uppercase',
+            color: 'rgba(255,255,255,0.45)',
+          }}>
+            Scroll para explorar
+          </span>
+          <svg width="14" height="22" viewBox="0 0 14 22" fill="none">
+            <path d="M7 0v18M1 12l6 6 6-6" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.5"/>
           </svg>
         </div>
 
-        {/* Skip hero button */}
+        {/* Skip hero button — más visible */}
         <button
           onClick={() => {
             document.getElementById('portfolio')?.scrollIntoView({ behavior: 'smooth' })
@@ -563,29 +579,33 @@ export function Hero({ onLoadProgress, initialBlur }: HeroProps) {
             bottom: '2.5rem',
             right: '2rem',
             zIndex: 7,
-            background: 'none',
-            border: '1px solid rgba(255,255,255,0.12)',
-            color: 'rgba(255,255,255,0.3)',
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            color: 'rgba(255,255,255,0.5)',
             fontFamily: 'var(--font-geist-mono)',
-            fontSize: '0.55rem',
+            fontSize: '0.6rem',
             letterSpacing: '0.2em',
             textTransform: 'uppercase',
-            padding: '0.5rem 1rem',
+            padding: '0.6rem 1.4rem',
             cursor: 'pointer',
-            transition: 'color 0.3s ease, border-color 0.3s ease',
+            transition: 'all 0.3s ease',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
           }}
           onMouseEnter={(e) => {
             const btn = e.currentTarget
-            btn.style.color = 'rgba(255,255,255,0.7)'
-            btn.style.borderColor = 'rgba(255,255,255,0.3)'
+            btn.style.color = '#ffffff'
+            btn.style.borderColor = 'rgba(255,255,255,0.5)'
+            btn.style.background = 'rgba(255,255,255,0.12)'
           }}
           onMouseLeave={(e) => {
             const btn = e.currentTarget
-            btn.style.color = 'rgba(255,255,255,0.3)'
-            btn.style.borderColor = 'rgba(255,255,255,0.12)'
+            btn.style.color = 'rgba(255,255,255,0.5)'
+            btn.style.borderColor = 'rgba(255,255,255,0.2)'
+            btn.style.background = 'rgba(255,255,255,0.06)'
           }}
         >
-          Saltar
+          Saltar intro
         </button>
 
         <style>{`

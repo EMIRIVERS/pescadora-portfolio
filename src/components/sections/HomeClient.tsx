@@ -174,7 +174,6 @@ export default function HomeClient({ cmsProjects, videos, categories, photoAlbum
       )}
 
       {/* Ambient effects (always rendered) */}
-      <FilmGrain />
       <DustParticles />
       <CursorGlow />
       <AdaptiveCursor />
@@ -220,19 +219,63 @@ export default function HomeClient({ cmsProjects, videos, categories, photoAlbum
             <ManifestoSection />
             <ServiciosSection />
 
-            {/* Puente visual Servicios → Contacto */}
+            {/* CTA — Cotiza tu proyecto */}
             <div style={{
-              padding: '4rem 2rem',
+              padding: '5rem 2rem',
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
+              gap: '1.5rem',
+              borderTop: '1px solid rgba(255,255,255,0.06)',
             }}>
+              <span style={{
+                fontFamily: 'var(--font-geist-mono)',
+                fontSize: '0.6rem',
+                letterSpacing: '0.3em',
+                textTransform: 'uppercase',
+                color: '#6b6560',
+              }}>
+                Listo para crear?
+              </span>
+              <a
+                href="/cotiza"
+                data-cursor="link"
+                style={{
+                  fontFamily: 'var(--font-geist-sans)',
+                  fontWeight: 700,
+                  fontSize: 'clamp(0.8rem, 1.5vw, 1rem)',
+                  letterSpacing: '0.2em',
+                  textTransform: 'uppercase',
+                  color: '#ede8e0',
+                  textDecoration: 'none',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  padding: '1rem 2.5rem',
+                  transition: 'all 0.3s ease',
+                  background: 'transparent',
+                }}
+                onMouseEnter={(e) => {
+                  const el = e.currentTarget
+                  el.style.background = '#e8341a'
+                  el.style.borderColor = '#e8341a'
+                  el.style.color = '#ffffff'
+                }}
+                onMouseLeave={(e) => {
+                  const el = e.currentTarget
+                  el.style.background = 'transparent'
+                  el.style.borderColor = 'rgba(255,255,255,0.15)'
+                  el.style.color = '#ede8e0'
+                }}
+              >
+                Cotiza tu proyecto
+              </a>
               <div style={{
                 width: '100%',
                 maxWidth: '600px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '1.5rem',
+                marginTop: '2rem',
               }}>
                 <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.06)' }} />
                 <span style={{

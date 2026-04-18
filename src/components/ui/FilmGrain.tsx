@@ -60,12 +60,11 @@ export default function FilmGrain() {
       ref={canvasRef}
       aria-hidden="true"
       style={{
-        position: 'fixed',
+        position: 'absolute',
         inset: 0,
         width: '100%',
         height: '100%',
         pointerEvents: 'none',
-        zIndex: 9990,
         mixBlendMode: 'overlay',
         opacity: 0.04,
         imageRendering: 'pixelated',
