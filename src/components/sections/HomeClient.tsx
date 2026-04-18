@@ -21,13 +21,16 @@ import CinemaPreloader from '@/components/ui/CinemaPreloader'
 
 gsap.registerPlugin(ScrollTrigger)
 
+import type { PhotoAlbum } from '@/types/media'
+
 interface Props {
   cmsProjects: CmsProjectCard[]
   videos?: VideoEntry[]
   categories?: PortfolioCategory[]
+  photoAlbums?: PhotoAlbum[]
 }
 
-export default function HomeClient({ cmsProjects, videos, categories }: Props) {
+export default function HomeClient({ cmsProjects, videos, categories, photoAlbums }: Props) {
   const [headerVisible, setHeaderVisible] = useState(false)
   const [preloaderDone, setPreloaderDone] = useState(false)
   const [loadProgress, setLoadProgress] = useState(0)
@@ -213,7 +216,7 @@ export default function HomeClient({ cmsProjects, videos, categories }: Props) {
             />
           </div>
           <div style={{ backgroundColor: '#050505' }}>
-            <PortfolioSection cmsProjects={cmsProjects} videos={videos} categories={categories} />
+            <PortfolioSection cmsProjects={cmsProjects} videos={videos} categories={categories} photoAlbums={photoAlbums} />
             <ManifestoSection />
             <ServiciosSection />
 

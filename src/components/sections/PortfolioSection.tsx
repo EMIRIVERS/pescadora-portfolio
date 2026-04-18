@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useMemo, useRef, useCallback } from 'react'
+import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { registry } from '@/lib/registry'
 import type { VideoEntry } from '@/types/media'
 import type { PortfolioCategory } from '@/types/media'
+import type { PhotoAlbum } from '@/types/media'
 import ProjectOverlay from './ProjectOverlay'
 
 type OverlayMediaType = 'video' | 'fotografia'
@@ -30,6 +31,7 @@ interface Props {
   cmsProjects?: CmsProjectCard[]
   videos?: VideoEntry[]
   categories?: PortfolioCategory[]
+  photoAlbums?: PhotoAlbum[]
 }
 
 interface OverlayOrigin {
@@ -92,6 +94,64 @@ function buildAllCards(videos: VideoEntry[], cats: PortfolioCategory[]): Project
   return cards
 }
 
+/* ─── Frozen GIF: muestra primer frame estático, reproduce solo en hover ─── */
+function FrozenGif({ src, alt, hovered }: { src: string; alt: string; hovered: boolean }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [frozen, setFrozen] = useState(false)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const img = new window.Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => {
+      canvas.width = img.naturalWidth
+      canvas.height = img.naturalHeight
+      const ctx = canvas.getContext('2d')
+      if (ctx) {
+        ctx.drawImage(img, 0, 0)
+        setFrozen(true)
+      }
+    }
+    img.src = src
+  }, [src])
+
+  return (
+    <>
+      {/* Canvas con primer frame congelado */}
+      <canvas
+        ref={canvasRef}
+        style={{
+          position: 'absolute', inset: 0,
+          width: '100%', height: '100%',
+          objectFit: 'cover',
+          opacity: hovered ? 0 : 1,
+          transition: 'opacity 0.3s ease',
+        }}
+      />
+      {/* GIF real, solo visible en hover */}
+      {(hovered || !frozen) && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt={alt}
+          style={{
+            position: 'absolute', inset: 0,
+            width: '100%', height: '100%',
+            objectFit: 'cover',
+            opacity: hovered ? 1 : (frozen ? 0 : 1),
+            transition: 'opacity 0.3s ease',
+          }}
+        />
+      )}
+    </>
+  )
+}
+
+function isGif(url: string): boolean {
+  return /\.gif(\?|$)/i.test(url)
+}
+
 /* ─── Card con hover preview ─── */
 function PortfolioCard({
   card,
@@ -137,7 +197,9 @@ function PortfolioCard({
       <div style={{ paddingBottom: aspect, position: 'relative', background: '#111' }}>
         {/* Imagen estática de portada */}
         {card.coverUrl && (
-          card.isPhoto ? (
+          isGif(card.coverUrl) ? (
+            <FrozenGif src={card.coverUrl} alt={card.name} hovered={hovered} />
+          ) : card.isPhoto ? (
             <Image
               src={card.coverUrl}
               alt={card.name}
@@ -239,7 +301,7 @@ function PortfolioCard({
   )
 }
 
-export default function PortfolioSection({ cmsProjects, videos, categories }: Props) {
+export default function PortfolioSection({ cmsProjects, videos, categories, photoAlbums }: Props) {
   const [openState, setOpenState] = useState<{ project: string; mediaType: OverlayMediaType; origin: OverlayOrigin } | null>(null)
 
   const activeCats = categories && categories.length > 0 ? categories : FALLBACK_CATEGORIES
@@ -308,6 +370,7 @@ export default function PortfolioSection({ cmsProjects, videos, categories }: Pr
           onClose={() => setOpenState(null)}
           videos={videos}
           fotoEntries={fotoEntries.length > 0 ? fotoEntries : undefined}
+          photoAlbums={photoAlbums}
         />
       )}
 

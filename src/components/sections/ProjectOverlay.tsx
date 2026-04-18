@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { registry } from '@/lib/registry'
 import { projectStories } from '@/data/project-stories'
 import type { PhotoEntry, VideoEntry } from '@/types/media'
+import type { PhotoAlbum } from '@/types/media'
 
 function InfoCell({ label, value }: { label: string; value: string }) {
   if (!value) return null
@@ -158,7 +159,92 @@ function VideoDetail({ video, onBack, onClose }: { video: VideoEntry; onBack: ()
 }
 
 // ---------------------------------------------------------------------------
-// PhotoProjectsGrid
+// DbAlbumsGrid — albums from Supabase photo_albums
+// ---------------------------------------------------------------------------
+function DbAlbumsGrid({ albums, onSelect }: { albums: PhotoAlbum[]; onSelect: (album: PhotoAlbum) => void }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2, padding: '0 0 4rem' }}>
+      {albums.map((album, i) => {
+        const coverPhoto = album.cover_url ?? (album.photos[0]?.storage_path ?? null)
+        return (
+          <motion.div
+            key={album.id}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, delay: 0.15 + i * 0.07, ease: [0.25, 0.46, 0.45, 0.94] }}
+            onClick={() => onSelect(album)}
+            style={{ position: 'relative', width: '100%', paddingBottom: '75%', overflow: 'hidden', cursor: 'pointer' }}
+          >
+            {coverPhoto && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={coverPhoto}
+                alt={album.label}
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.6s ease' }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1.04)' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1)' }}
+              />
+            )}
+            {!coverPhoto && <div style={{ position: 'absolute', inset: 0, background: '#111' }} />}
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(transparent 40%, rgba(0,0,0,0.8))', pointerEvents: 'none' }} />
+            <span style={{ position: 'absolute', bottom: '1rem', left: '1rem', fontFamily: 'var(--font-geist-sans)', fontWeight: 700, fontSize: 'clamp(0.9rem, 2vw, 1.4rem)', letterSpacing: '0.02em', textTransform: 'uppercase', color: '#ede8e0', pointerEvents: 'none' }}>
+              {album.label}
+            </span>
+            <span style={{ position: 'absolute', bottom: '1rem', right: '1rem', fontFamily: 'var(--font-geist-mono)', fontSize: '0.6rem', color: '#6b6560', letterSpacing: '0.15em', textTransform: 'uppercase', pointerEvents: 'none' }}>
+              {album.photos.length} fotos
+            </span>
+          </motion.div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// DbAlbumDetail — photos inside a specific album
+// ---------------------------------------------------------------------------
+function DbAlbumDetail({ album, onBack, onClose }: { album: PhotoAlbum; onBack: () => void; onClose: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 60 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -60 }}
+      transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+      style={{ position: 'absolute', inset: 0, background: '#050505', overflowY: 'auto' }}
+    >
+      <header style={{ position: 'sticky', top: 0, zIndex: 10, background: 'rgba(5,5,5,0.95)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 2rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'rgba(237,232,224,0.6)', fontFamily: 'var(--font-geist-mono)', fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.25em', textTransform: 'uppercase', cursor: 'pointer', padding: 0 }}>
+          &larr; {album.label}
+        </button>
+        <button onClick={onClose} aria-label="Cerrar" style={{ background: 'none', border: 'none', color: '#ede8e0', fontSize: '1rem', cursor: 'pointer', padding: '0.25rem 0.5rem', lineHeight: 1 }}>
+          &#10005;
+        </button>
+      </header>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2, padding: '0 0 4rem' }}>
+        {album.photos.map((photo: PhotoAlbum['photos'][number], i: number) => (
+          <motion.div
+            key={photo.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: i * 0.05, ease: [0.25, 0.46, 0.45, 0.94] }}
+            style={{ position: 'relative', width: '100%', paddingBottom: '75%', overflow: 'hidden' }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={photo.storage_path}
+              alt={photo.alt_text || album.label}
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          </motion.div>
+        ))}
+      </div>
+    </motion.div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// PhotoProjectsGrid (static registry fallback)
 // ---------------------------------------------------------------------------
 function PhotoProjectsGrid({ onSelect }: { onSelect: (project: string) => void }) {
   const projects = new Map<string, { url: string; count: number }>()
@@ -256,11 +342,13 @@ interface ProjectOverlayProps {
   onClose: () => void
   videos?: VideoEntry[]
   fotoEntries?: VideoEntry[]
+  photoAlbums?: PhotoAlbum[]
 }
 
-export default function ProjectOverlay({ projectName, mediaType, origin, onClose, videos, fotoEntries }: ProjectOverlayProps) {
+export default function ProjectOverlay({ projectName, mediaType, origin, onClose, videos, fotoEntries, photoAlbums }: ProjectOverlayProps) {
   const [selectedVideo, setSelectedVideo] = useState<VideoEntry | null>(null)
   const [selectedPhotoProject, setSelectedPhotoProject] = useState<string | null>(null)
+  const [selectedAlbum, setSelectedAlbum] = useState<PhotoAlbum | null>(null)
   const [isClosing, setIsClosing] = useState(false)
   const overlayRef = useRef<HTMLDivElement>(null)
 
@@ -270,6 +358,7 @@ export default function ProjectOverlay({ projectName, mediaType, origin, onClose
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (selectedVideo) { setSelectedVideo(null); return }
+        if (selectedAlbum) { setSelectedAlbum(null); return }
         if (selectedPhotoProject) { setSelectedPhotoProject(null); return }
         handleClose()
       }
@@ -277,7 +366,7 @@ export default function ProjectOverlay({ projectName, mediaType, origin, onClose
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedVideo, selectedPhotoProject])
+  }, [selectedVideo, selectedPhotoProject, selectedAlbum])
 
   const handleClose = useCallback(() => {
     setIsClosing(true)
@@ -321,6 +410,7 @@ export default function ProjectOverlay({ projectName, mediaType, origin, onClose
       {/* Panel principal con clip-path reveal */}
       <div
         ref={overlayRef}
+        data-lenis-prevent
         style={{
           position: 'fixed', inset: 0, zIndex: 200,
           background: '#050505',
@@ -368,40 +458,28 @@ export default function ProjectOverlay({ projectName, mediaType, origin, onClose
           <VideoGrid videos={overlayVideos} onSelect={setSelectedVideo} />
         )}
 
-        {/* FOTOGRAFÍA: DB entries */}
-        {mediaType === 'fotografia' && fotoEntries && fotoEntries.length > 0 && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2, padding: '0 0 4rem' }}>
-            {fotoEntries.map((foto, i) => (
-              <motion.div
-                key={foto.id}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.45, delay: 0.15 + i * 0.07, ease: [0.25, 0.46, 0.45, 0.94] }}
-                style={{ position: 'relative', width: '100%', paddingBottom: '75%', overflow: 'hidden' }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={foto.vimeoId ?? ''}
-                  alt={foto.title}
-                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.6s ease' }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1.04)' }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1)' }}
-                />
-                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(transparent 50%, rgba(0,0,0,0.75))', pointerEvents: 'none' }} />
-                <span style={{ position: 'absolute', bottom: '0.85rem', left: '1rem', fontFamily: 'var(--font-geist-mono)', fontWeight: 700, fontSize: '0.55rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#ede8e0', pointerEvents: 'none' }}>
-                  {foto.title}
-                </span>
-              </motion.div>
-            ))}
-          </div>
+        {/* FOTOGRAFÍA: DB albums (priority) */}
+        {mediaType === 'fotografia' && photoAlbums && photoAlbums.length > 0 && !selectedAlbum && (
+          <DbAlbumsGrid albums={photoAlbums} onSelect={setSelectedAlbum} />
         )}
 
-        {/* FOTOGRAFÍA: registro estático (fallback) */}
-        {mediaType === 'fotografia' && (!fotoEntries || fotoEntries.length === 0) && !selectedPhotoProject && (
+        {mediaType === 'fotografia' && selectedAlbum && (
+          <AnimatePresence mode="wait">
+            <DbAlbumDetail
+              key={selectedAlbum.id}
+              album={selectedAlbum}
+              onBack={() => setSelectedAlbum(null)}
+              onClose={handleClose}
+            />
+          </AnimatePresence>
+        )}
+
+        {/* FOTOGRAFÍA: fallback a registro estático si no hay albums DB */}
+        {mediaType === 'fotografia' && (!photoAlbums || photoAlbums.length === 0) && !selectedPhotoProject && (
           <PhotoProjectsGrid onSelect={setSelectedPhotoProject} />
         )}
 
-        {mediaType === 'fotografia' && (!fotoEntries || fotoEntries.length === 0) && selectedPhotoProject && (
+        {mediaType === 'fotografia' && (!photoAlbums || photoAlbums.length === 0) && selectedPhotoProject && (
           <AnimatePresence mode="wait">
             <PhotoProjectDetail
               key={selectedPhotoProject}

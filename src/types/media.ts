@@ -30,3 +30,12 @@ export interface MediaRegistry {
   photos: PhotoEntry[]
   videos: VideoEntry[]
 }
+
+export interface PhotoAlbum {
+  id: string
+  slug: string
+  label: string
+  sort_order: number
+  cover_url: string | null
+  photos: { id: string; storage_path: string; alt_text: string; sort_order: number }[]
+}
