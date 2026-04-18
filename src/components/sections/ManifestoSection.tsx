@@ -135,7 +135,7 @@ export default function ManifestoSection() {
     <section
       ref={sectionRef}
       style={{
-        padding: '10rem 2rem 8rem',
+        padding: 'clamp(5rem, 10vw, 10rem) clamp(1.2rem, 4vw, 2rem) clamp(4rem, 8vw, 8rem)',
         borderTop: '1px solid rgba(255,255,255,0.06)',
         background: 'transparent',
       }}
@@ -242,7 +242,7 @@ export default function ManifestoSection() {
             letterSpacing: '0.2em',
             textTransform: 'uppercase',
             color: '#8a8078',
-            marginTop: '3rem',
+            marginTop: 'clamp(1.5rem, 4vw, 3rem)',
             marginBottom: 0,
           }}
         >

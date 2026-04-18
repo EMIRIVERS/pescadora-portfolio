@@ -238,11 +238,11 @@ export default function CinemaPreloader({ onComplete, progress }: CinemaPreloade
             ref={counterRef}
             style={{
               position: 'absolute',
-              bottom: '2rem',
-              right: '2rem',
+              bottom: 'clamp(1rem, 3vh, 2rem)',
+              right: 'clamp(1rem, 3vw, 2rem)',
               fontFamily: 'var(--font-geist-mono), monospace',
               fontWeight: 300,
-              fontSize: 'clamp(0.55rem, 0.9vw, 0.75rem)',
+              fontSize: 'clamp(0.6rem, 1.5vw, 0.75rem)',
               color: 'rgba(232, 52, 26, 0.5)',
               letterSpacing: '0.1em',
             }}
@@ -254,16 +254,21 @@ export default function CinemaPreloader({ onComplete, progress }: CinemaPreloade
           <div
             style={{
               position: 'absolute',
-              bottom: '2rem',
-              left: '2rem',
+              bottom: 'clamp(1rem, 3vh, 2rem)',
+              left: 'clamp(1rem, 3vw, 2rem)',
               fontFamily: 'var(--font-geist-mono), monospace',
-              fontSize: '0.5rem',
+              fontSize: 'clamp(0.55rem, 1.5vw, 0.6rem)',
               letterSpacing: '0.2em',
               textTransform: 'uppercase',
-              color: 'rgba(255,255,255,0.15)',
+              color: 'rgba(255,255,255,0.2)',
+              padding: '0.5rem',
+              minHeight: '44px',
+              minWidth: '44px',
+              display: 'flex',
+              alignItems: 'center',
             }}
           >
-            Click para saltar
+            Toca para saltar
           </div>
         </>
       )}

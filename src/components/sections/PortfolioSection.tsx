@@ -323,10 +323,10 @@ export default function PortfolioSection({ cmsProjects, videos, categories, phot
   }, [])
 
   return (
-    <section id="portfolio" style={{ padding: '0 0 4rem' }}>
+    <section id="portfolio" style={{ padding: '0 0 clamp(2rem, 4vw, 4rem)' }}>
 
       {/* Label */}
-      <div style={{ paddingTop: '5rem', paddingBottom: '2.5rem', paddingLeft: '2rem' }}>
+      <div style={{ paddingTop: 'clamp(3rem, 5vw, 5rem)', paddingBottom: 'clamp(1.5rem, 3vw, 2.5rem)', paddingLeft: 'clamp(1.2rem, 4vw, 2rem)' }}>
         <span style={{
           fontFamily: 'var(--font-geist-mono)',
           fontSize: '0.7rem',

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import FilmGrain from '@/components/ui/FilmGrain'
@@ -8,16 +8,27 @@ import FilmGrain from '@/components/ui/FilmGrain'
 gsap.registerPlugin(ScrollTrigger)
 
 /* --- Config --- */
-const TOTAL_FRAMES = 233
+const TOTAL_FRAMES_DESKTOP = 233
+const TOTAL_FRAMES_MOBILE = 120
 const TOTAL_SETS = 12
+
+function isMobileDevice(): boolean {
+  if (typeof window === 'undefined') return false
+  return window.innerWidth < 768
+}
 
 /** Elige un set aleatorio en cada recarga */
 function pickSet(): number {
   return Math.floor(Math.random() * TOTAL_SETS) + 1
 }
 
-function frameSrc(set: number, i: number): string {
-  return `/hero-frames/set-${set}/frame_${String(i).padStart(4, '0')}.webp`
+function frameSrc(set: number, i: number, totalFrames: number): string {
+  // On mobile we sample fewer frames: map mobile index to desktop frame index
+  if (totalFrames < TOTAL_FRAMES_DESKTOP) {
+    const mapped = Math.round((i / (totalFrames - 1)) * (TOTAL_FRAMES_DESKTOP - 1))
+    return `/hero-frames/set-${set}/frame_${String(mapped + 1).padStart(4, '0')}.webp`
+  }
+  return `/hero-frames/set-${set}/frame_${String(i + 1).padStart(4, '0')}.webp`
 }
 
 /* --- Slides narrativos --- */
@@ -108,6 +119,14 @@ export function Hero({ onLoadProgress, initialBlur }: HeroProps) {
   const skewTargetRef = useRef(0)
   const loadedCountRef = useRef(0)
   const stickyRef = useRef<HTMLDivElement>(null)
+  const totalFramesRef = useRef(TOTAL_FRAMES_DESKTOP)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const mobile = isMobileDevice()
+    setIsMobile(mobile)
+    totalFramesRef.current = mobile ? TOTAL_FRAMES_MOBILE : TOTAL_FRAMES_DESKTOP
+  }, [])
 
   /* --- Draw frame al canvas --- */
   const drawFrame = useCallback((index: number) => {
@@ -121,7 +140,7 @@ export function Hero({ onLoadProgress, initialBlur }: HeroProps) {
     const ctx = ctxRef.current
     if (!ctx) return
 
-    const dpr = Math.min(window.devicePixelRatio, 2)
+    const dpr = Math.min(window.devicePixelRatio, isMobileDevice() ? 1.5 : 2)
     const cw = canvas.clientWidth
     const ch = canvas.clientHeight
     if (canvas.width !== cw * dpr || canvas.height !== ch * dpr) {
@@ -141,17 +160,18 @@ export function Hero({ onLoadProgress, initialBlur }: HeroProps) {
   /* --- Carga progresiva de frames --- */
   useEffect(() => {
     const currentSet = pickSet()
-    const imgs: HTMLImageElement[] = new Array(TOTAL_FRAMES)
+    const frameCount = totalFramesRef.current
+    const imgs: HTMLImageElement[] = new Array(frameCount)
     imagesRef.current = imgs
 
     const load = (i: number): Promise<void> => new Promise((res) => {
       const img = new Image()
-      img.src = frameSrc(currentSet, i + 1)
+      img.src = frameSrc(currentSet, i, frameCount)
       img.onload = () => {
         imgs[i] = img
         loadedCountRef.current++
         if (onLoadProgress) {
-          onLoadProgress(loadedCountRef.current / TOTAL_FRAMES)
+          onLoadProgress(loadedCountRef.current / frameCount)
         }
         if (i === 0) drawFrame(0)
         res()
@@ -163,19 +183,21 @@ export function Hero({ onLoadProgress, initialBlur }: HeroProps) {
       // 1. Frame 1 inmediato (poster)
       await load(0)
 
-      // 2. Keyframes cada 30
+      // 2. Keyframes cada ~30 (adjusted for frame count)
+      const keyStep = Math.max(10, Math.round(frameCount / 8))
       const keyframes = []
-      for (let i = 30; i < TOTAL_FRAMES; i += 30) keyframes.push(i)
-      keyframes.push(TOTAL_FRAMES - 1) // ultimo frame
+      for (let i = keyStep; i < frameCount; i += keyStep) keyframes.push(i)
+      keyframes.push(frameCount - 1)
       await Promise.all(keyframes.map(load))
 
-      // 3. Resto en batches de 15
+      // 3. Resto en batches
+      const batchSize = isMobileDevice() ? 8 : 15
       const remaining = []
-      for (let i = 0; i < TOTAL_FRAMES; i++) {
+      for (let i = 0; i < frameCount; i++) {
         if (!imgs[i]) remaining.push(i)
       }
-      for (let b = 0; b < remaining.length; b += 15) {
-        await Promise.all(remaining.slice(b, b + 15).map(load))
+      for (let b = 0; b < remaining.length; b += batchSize) {
+        await Promise.all(remaining.slice(b, b + batchSize).map(load))
       }
     }
 
@@ -241,7 +263,7 @@ export function Hero({ onLoadProgress, initialBlur }: HeroProps) {
         pointer-events: none; opacity: 0;
         transform-style: preserve-3d;
         will-change: transform, opacity;
-        padding: clamp(3rem, 8vh, 6rem) clamp(2rem, 6vw, 5rem);
+        padding: clamp(2rem, 8vh, 6rem) clamp(1rem, 4vw, 5rem);
       `
 
       const allChars: HTMLSpanElement[] = []
@@ -301,7 +323,8 @@ export function Hero({ onLoadProgress, initialBlur }: HeroProps) {
           velocityRef.current = self.getVelocity()
 
           // Frame scrub -- busca el mas cercano cargado
-          const targetFrame = Math.min(TOTAL_FRAMES - 1, Math.floor(p * TOTAL_FRAMES))
+          const fc = totalFramesRef.current
+          const targetFrame = Math.min(fc - 1, Math.floor(p * fc))
           if (targetFrame !== currentFrameRef.current) {
             currentFrameRef.current = targetFrame
             // Buscar frame cargado mas cercano
@@ -416,7 +439,7 @@ export function Hero({ onLoadProgress, initialBlur }: HeroProps) {
     <section
       ref={sectionRef}
       id="hero"
-      style={{ position: 'relative', height: '500vh' }}
+      style={{ position: 'relative', height: isMobile ? '300vh' : '500vh' }}
     >
       <div
         ref={stickyRef}
@@ -540,10 +563,10 @@ export function Hero({ onLoadProgress, initialBlur }: HeroProps) {
           zIndex: 6,
         }} />
 
-        {/* Scroll hint — más visible con texto */}
+        {/* Scroll hint — mas visible con texto */}
         <div style={{
           position: 'absolute',
-          bottom: '2.5rem',
+          bottom: isMobile ? '5rem' : '2.5rem',
           left: 0,
           right: 0,
           zIndex: 7,
@@ -553,10 +576,11 @@ export function Hero({ onLoadProgress, initialBlur }: HeroProps) {
           justifyContent: 'center',
           gap: '0.6rem',
           animation: 'heroScrollHint 2.2s ease-in-out infinite',
+          pointerEvents: 'none',
         }}>
           <span style={{
             fontFamily: 'var(--font-geist-mono)',
-            fontSize: '0.6rem',
+            fontSize: 'clamp(0.6rem, 1.8vw, 0.75rem)',
             letterSpacing: '0.25em',
             textTransform: 'uppercase',
             color: 'rgba(255,255,255,0.45)',
@@ -568,7 +592,7 @@ export function Hero({ onLoadProgress, initialBlur }: HeroProps) {
           </svg>
         </div>
 
-        {/* Skip hero button — más visible */}
+        {/* Skip hero button — mas visible */}
         <button
           onClick={() => {
             document.getElementById('portfolio')?.scrollIntoView({ behavior: 'smooth' })
@@ -576,17 +600,19 @@ export function Hero({ onLoadProgress, initialBlur }: HeroProps) {
           data-cursor="link"
           style={{
             position: 'absolute',
-            bottom: '2.5rem',
-            right: '2rem',
+            bottom: isMobile ? '1.2rem' : '2.5rem',
+            right: isMobile ? '1rem' : '2rem',
             zIndex: 7,
             background: 'rgba(255,255,255,0.06)',
             border: '1px solid rgba(255,255,255,0.2)',
             color: 'rgba(255,255,255,0.5)',
             fontFamily: 'var(--font-geist-mono)',
-            fontSize: '0.6rem',
+            fontSize: 'clamp(0.6rem, 1.8vw, 0.7rem)',
             letterSpacing: '0.2em',
             textTransform: 'uppercase',
-            padding: '0.6rem 1.4rem',
+            padding: isMobile ? '0.8rem 1.2rem' : '0.6rem 1.4rem',
+            minHeight: '44px',
+            minWidth: '44px',
             cursor: 'pointer',
             transition: 'all 0.3s ease',
             backdropFilter: 'blur(8px)',

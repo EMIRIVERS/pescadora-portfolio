@@ -116,13 +116,17 @@ export function ContactoSection() {
 
   const linkStyle = (hovered: boolean): React.CSSProperties => ({
     fontFamily: 'var(--font-geist-mono)',
-    fontSize: '0.7rem',
+    fontSize: 'clamp(0.7rem, 1.2vw, 0.8rem)',
     letterSpacing: '0.2em',
     textTransform: 'uppercase',
     color: hovered ? '#ede8e0' : '#6b6560',
     textDecoration: 'none',
     transition: 'color 0.25s ease',
     cursor: 'pointer',
+    padding: '0.75rem 0',
+    minHeight: '44px',
+    display: 'inline-flex',
+    alignItems: 'center',
   })
 
   // Build character spans for the subtitle typewriter effect
@@ -137,13 +141,32 @@ export function ContactoSection() {
   ))
 
   return (
+    <>
+    <style>{`
+      @media (max-width: 480px) {
+        .contacto-footer-row {
+          flex-direction: column !important;
+          align-items: flex-start !important;
+        }
+        .contacto-social-links {
+          gap: 1.5rem !important;
+        }
+      }
+      .contacto-social-link {
+        padding: 0.5rem 0;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+      }
+    `}</style>
     <section
       ref={sectionRef}
       id="contacto"
       style={{
-        padding: '8rem 2rem 4rem',
+        padding: 'clamp(4rem, 8vw, 8rem) clamp(1.2rem, 4vw, 2rem) clamp(2rem, 4vw, 4rem)',
         borderTop: '1px solid rgba(255,255,255,0.06)',
         background: '#050505',
+        overflowX: 'hidden',
       }}
     >
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -154,12 +177,13 @@ export function ContactoSection() {
             style={{
               fontFamily: 'var(--font-geist-sans)',
               fontWeight: 900,
-              fontSize: 'clamp(3.2rem, 12vw, 10rem)',
-              letterSpacing: '-0.02em',
+              fontSize: 'clamp(2.2rem, 11vw, 10rem)',
+              letterSpacing: '-0.03em',
               lineHeight: 0.88,
               color: '#ede8e0',
               textTransform: 'uppercase',
               margin: 0,
+              overflowWrap: 'break-word',
             }}
           >
             <span style={{ display: 'block', overflow: 'hidden' }}>
@@ -177,11 +201,12 @@ export function ContactoSection() {
             style={{
               fontFamily: 'var(--font-geist-mono)',
               fontSize: 'clamp(0.65rem, 1.2vw, 0.9rem)',
-              letterSpacing: '0.25em',
+              letterSpacing: 'clamp(0.08em, 0.5vw, 0.25em)',
               textTransform: 'uppercase',
               color: '#444',
-              marginTop: '2rem',
+              marginTop: 'clamp(1rem, 3vw, 2rem)',
               lineHeight: 1.8,
+              wordBreak: 'break-word' as const,
             }}
           >
             {subtitleChars}
@@ -203,10 +228,10 @@ export function ContactoSection() {
         <div
           ref={linksRef}
           style={{
-            marginTop: '4rem',
+            marginTop: 'clamp(2rem, 4vw, 4rem)',
             display: 'flex',
             flexWrap: 'wrap',
-            gap: '2.5rem',
+            gap: 'clamp(1rem, 3vw, 2.5rem)',
             alignItems: 'center',
           }}
         >
@@ -241,12 +266,12 @@ export function ContactoSection() {
         <div
           ref={footerRef}
           style={{
-            marginTop: '6rem',
+            marginTop: 'clamp(3rem, 6vw, 6rem)',
             borderTop: '1px solid rgba(255,255,255,0.06)',
-            paddingTop: '2rem',
+            paddingTop: 'clamp(1.5rem, 3vw, 2rem)',
           }}
         >
-          <div style={{
+          <div className="contacto-footer-row" style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -265,8 +290,9 @@ export function ContactoSection() {
               XICO Films &mdash; {new Date().getFullYear()}
             </span>
 
-            <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+            <div className="contacto-social-links" style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
               <a
+                className="contacto-social-link"
                 href="https://instagram.com/xicofilms"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -286,6 +312,7 @@ export function ContactoSection() {
                 Instagram
               </a>
               <a
+                className="contacto-social-link"
                 href="https://vimeo.com/xicofilms"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -322,5 +349,6 @@ export function ContactoSection() {
 
       </div>
     </section>
+    </>
   )
 }

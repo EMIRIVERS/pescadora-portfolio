@@ -189,11 +189,23 @@ export function ServiciosSection() {
   }
 
   return (
+    <>
+    <style>{`
+      @media (max-width: 480px) {
+        .servicios-section .servicios-subitems {
+          padding-left: 2rem !important;
+        }
+        .servicios-section .servicios-accordion-btn {
+          gap: 0.75rem !important;
+        }
+      }
+    `}</style>
     <section
       ref={sectionRef}
       id="servicios"
+      className="servicios-section"
       style={{
-        padding: '6rem 2rem',
+        padding: 'clamp(3rem, 6vw, 6rem) clamp(1.2rem, 4vw, 2rem)',
         background: 'var(--color-bg)',
         borderTop: '1px solid rgba(255,255,255,0.06)',
       }}
@@ -239,6 +251,7 @@ export function ServiciosSection() {
               >
                 {/* Category header - clickable */}
                 <button
+                  className="servicios-accordion-btn"
                   onClick={() => toggle(i)}
                   onMouseEnter={() => setHoveredIndex(i)}
                   onMouseLeave={() => setHoveredIndex(null)}
@@ -248,6 +261,7 @@ export function ServiciosSection() {
                     alignItems: 'center',
                     gap: '1.5rem',
                     padding: '1.25rem 0',
+                    minHeight: '48px',
                     background: 'none',
                     border: 'none',
                     cursor: 'pointer',
@@ -334,7 +348,7 @@ export function ServiciosSection() {
                     borderBottom: isOpen ? '1px solid rgba(255,255,255,0.06)' : 'none',
                   }}
                 >
-                  <div style={{ padding: '0.5rem 0 1rem 3.5rem' }}>
+                  <div className="servicios-subitems" style={{ padding: '0.5rem 0 1rem 3.5rem' }}>
                     {cat.items.map((item, j) => (
                       <div
                         key={item}
@@ -380,5 +394,6 @@ export function ServiciosSection() {
         </div>
       </div>
     </section>
+    </>
   )
 }

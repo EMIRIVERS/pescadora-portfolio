@@ -8,6 +8,22 @@ import { projectStories } from '@/data/project-stories'
 import type { PhotoEntry, VideoEntry } from '@/types/media'
 import type { PhotoAlbum } from '@/types/media'
 
+function getInitialMobileOverlay(breakpoint: number): boolean {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia(`(max-width: ${breakpoint}px)`).matches
+}
+
+function useIsMobileOverlay(breakpoint = 640): boolean {
+  const [mobile, setMobile] = useState(() => getInitialMobileOverlay(breakpoint))
+  useEffect(() => {
+    const mql = window.matchMedia(`(max-width: ${breakpoint}px)`)
+    const handler = (e: MediaQueryListEvent) => setMobile(e.matches)
+    mql.addEventListener('change', handler)
+    return () => mql.removeEventListener('change', handler)
+  }, [breakpoint])
+  return mobile
+}
+
 function InfoCell({ label, value }: { label: string; value: string }) {
   if (!value) return null
   return (
@@ -40,9 +56,10 @@ function rectToClipInset(origin: { x: number; y: number; w: number; h: number })
 // ---------------------------------------------------------------------------
 function VideoGrid({ videos, onSelect }: { videos: VideoEntry[]; onSelect: (v: VideoEntry) => void }) {
   const [hoveredId, setHoveredId] = useState<string | null>(null)
+  const isMobile = useIsMobileOverlay()
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1, padding: '0 0 4rem' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 1, padding: '0 0 4rem' }}>
       {videos.map((video, i) => (
         <VideoTile
           key={video.id}
@@ -110,13 +127,13 @@ function VideoDetail({ video, onBack, onClose }: { video: VideoEntry; onBack: ()
       exit={{ opacity: 0, x: -60 }}
       transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
       data-lenis-prevent
-      style={{ position: 'fixed', inset: 0, zIndex: 300, background: '#050505', overflowY: 'auto' }}
+      style={{ position: 'fixed', inset: 0, zIndex: 300, background: '#050505', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
     >
-      <header style={{ position: 'sticky', top: 0, zIndex: 10, background: 'rgba(5,5,5,0.95)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 2rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'rgba(237,232,224,0.6)', fontFamily: 'var(--font-geist-mono)', fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.25em', textTransform: 'uppercase', cursor: 'pointer', padding: 0 }}>
+      <header style={{ position: 'sticky', top: 0, zIndex: 10, background: 'rgba(5,5,5,0.95)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem clamp(1rem, 4vw, 2rem)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'rgba(237,232,224,0.6)', fontFamily: 'var(--font-geist-mono)', fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.25em', textTransform: 'uppercase', cursor: 'pointer', padding: 0, minHeight: 44, minWidth: 44, display: 'inline-flex', alignItems: 'center' }}>
           &larr; Volver
         </button>
-        <button onClick={onClose} aria-label="Cerrar" style={{ background: 'none', border: 'none', color: '#ede8e0', fontSize: '1rem', cursor: 'pointer', padding: '0.25rem 0.5rem', lineHeight: 1 }}>
+        <button onClick={onClose} aria-label="Cerrar" style={{ background: 'none', border: 'none', color: '#ede8e0', fontSize: '1rem', cursor: 'pointer', padding: '0.25rem 0.5rem', lineHeight: 1, minHeight: 44, minWidth: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
           &#10005;
         </button>
       </header>
@@ -131,7 +148,7 @@ function VideoDetail({ video, onBack, onClose }: { video: VideoEntry; onBack: ()
         />
       </div>
 
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '2.5rem 2rem 4rem' }}>
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: 'clamp(1.5rem, 4vw, 2.5rem) clamp(1rem, 4vw, 2rem) 4rem' }}>
         <motion.h2
           initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.15 }}
@@ -163,8 +180,9 @@ function VideoDetail({ video, onBack, onClose }: { video: VideoEntry; onBack: ()
 // DbAlbumsGrid — albums from Supabase photo_albums
 // ---------------------------------------------------------------------------
 function DbAlbumsGrid({ albums, onSelect }: { albums: PhotoAlbum[]; onSelect: (album: PhotoAlbum) => void }) {
+  const isMobile = useIsMobileOverlay()
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2, padding: '0 0 4rem' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 2, padding: '0 0 4rem' }}>
       {albums.map((album, i) => {
         const coverPhoto = album.cover_url ?? (album.photos[0]?.storage_path ?? null)
         return (
@@ -205,24 +223,25 @@ function DbAlbumsGrid({ albums, onSelect }: { albums: PhotoAlbum[]; onSelect: (a
 // DbAlbumDetail — photos inside a specific album
 // ---------------------------------------------------------------------------
 function DbAlbumDetail({ album, onBack, onClose }: { album: PhotoAlbum; onBack: () => void; onClose: () => void }) {
+  const isMobile = useIsMobileOverlay()
   return (
     <motion.div
       initial={{ opacity: 0, x: 60 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -60 }}
       transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
-      style={{ position: 'absolute', inset: 0, background: '#050505', overflowY: 'auto' }}
+      style={{ position: 'absolute', inset: 0, background: '#050505', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
     >
-      <header style={{ position: 'sticky', top: 0, zIndex: 10, background: 'rgba(5,5,5,0.95)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 2rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'rgba(237,232,224,0.6)', fontFamily: 'var(--font-geist-mono)', fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.25em', textTransform: 'uppercase', cursor: 'pointer', padding: 0 }}>
+      <header style={{ position: 'sticky', top: 0, zIndex: 10, background: 'rgba(5,5,5,0.95)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem clamp(1rem, 4vw, 2rem)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'rgba(237,232,224,0.6)', fontFamily: 'var(--font-geist-mono)', fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.25em', textTransform: 'uppercase', cursor: 'pointer', padding: 0, minHeight: 44, minWidth: 44, display: 'inline-flex', alignItems: 'center' }}>
           &larr; {album.label}
         </button>
-        <button onClick={onClose} aria-label="Cerrar" style={{ background: 'none', border: 'none', color: '#ede8e0', fontSize: '1rem', cursor: 'pointer', padding: '0.25rem 0.5rem', lineHeight: 1 }}>
+        <button onClick={onClose} aria-label="Cerrar" style={{ background: 'none', border: 'none', color: '#ede8e0', fontSize: '1rem', cursor: 'pointer', padding: '0.25rem 0.5rem', lineHeight: 1, minHeight: 44, minWidth: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
           &#10005;
         </button>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2, padding: '0 0 4rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 2, padding: '0 0 4rem' }}>
         {album.photos.map((photo: PhotoAlbum['photos'][number], i: number) => (
           <motion.div
             key={photo.id}
@@ -248,6 +267,7 @@ function DbAlbumDetail({ album, onBack, onClose }: { album: PhotoAlbum; onBack: 
 // PhotoProjectsGrid (static registry fallback)
 // ---------------------------------------------------------------------------
 function PhotoProjectsGrid({ onSelect }: { onSelect: (project: string) => void }) {
+  const isMobile = useIsMobileOverlay()
   const projects = new Map<string, { url: string; count: number }>()
   for (const photo of registry.photos) {
     const existing = projects.get(photo.project)
@@ -256,7 +276,7 @@ function PhotoProjectsGrid({ onSelect }: { onSelect: (project: string) => void }
   }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1, padding: '0 0 4rem' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 1, padding: '0 0 4rem' }}>
       {[...projects.entries()].map(([name, data], i) => (
         <motion.div
           key={name}
@@ -287,6 +307,7 @@ function PhotoProjectsGrid({ onSelect }: { onSelect: (project: string) => void }
 // PhotoProjectDetail
 // ---------------------------------------------------------------------------
 function PhotoProjectDetail({ projectName, onBack, onClose }: { projectName: string; onBack: () => void; onClose: () => void }) {
+  const isMobile = useIsMobileOverlay()
   const photos: PhotoEntry[] = registry.photos.filter((p) => p.project === projectName)
   const story = projectStories[projectName] ?? null
 
@@ -296,13 +317,13 @@ function PhotoProjectDetail({ projectName, onBack, onClose }: { projectName: str
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -60 }}
       transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
-      style={{ position: 'absolute', inset: 0, background: '#050505', overflowY: 'auto' }}
+      style={{ position: 'absolute', inset: 0, background: '#050505', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
     >
-      <header style={{ position: 'sticky', top: 0, zIndex: 10, background: 'rgba(5,5,5,0.95)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 2rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'rgba(237,232,224,0.6)', fontFamily: 'var(--font-geist-mono)', fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.25em', textTransform: 'uppercase', cursor: 'pointer', padding: 0 }}>
-          &larr; Fotografía
+      <header style={{ position: 'sticky', top: 0, zIndex: 10, background: 'rgba(5,5,5,0.95)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem clamp(1rem, 4vw, 2rem)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'rgba(237,232,224,0.6)', fontFamily: 'var(--font-geist-mono)', fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.25em', textTransform: 'uppercase', cursor: 'pointer', padding: 0, minHeight: 44, minWidth: 44, display: 'inline-flex', alignItems: 'center' }}>
+          &larr; Fotografia
         </button>
-        <button onClick={onClose} aria-label="Cerrar" style={{ background: 'none', border: 'none', color: '#ede8e0', fontSize: '1rem', cursor: 'pointer', padding: '0.25rem 0.5rem', lineHeight: 1 }}>
+        <button onClick={onClose} aria-label="Cerrar" style={{ background: 'none', border: 'none', color: '#ede8e0', fontSize: '1rem', cursor: 'pointer', padding: '0.25rem 0.5rem', lineHeight: 1, minHeight: 44, minWidth: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
           &#10005;
         </button>
       </header>
@@ -314,15 +335,15 @@ function PhotoProjectDetail({ projectName, onBack, onClose }: { projectName: str
       )}
 
       {story && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.5rem', padding: '2.5rem 2rem', maxWidth: 900, margin: '0 auto' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', padding: 'clamp(1.5rem, 4vw, 2.5rem) clamp(1rem, 4vw, 2rem)', maxWidth: 900, margin: '0 auto' }}>
           <InfoCell label="Cliente" value={story.client} />
-          <InfoCell label="Categoría" value={story.category} />
-          <InfoCell label="Año" value={story.year} />
+          <InfoCell label="Categoria" value={story.category} />
+          <InfoCell label="Ano" value={story.year} />
           <InfoCell label="Rol" value={story.role} />
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2, padding: '0 0 4rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 2, padding: '0 0 4rem' }}>
         {photos.map((photo) => (
           <div key={photo.id} style={{ position: 'relative', width: '100%', paddingBottom: '75%', overflow: 'hidden' }}>
             <Image src={photo.url} alt={photo.alt} fill style={{ objectFit: 'cover' }} />
@@ -416,15 +437,17 @@ export default function ProjectOverlay({ projectName, mediaType, origin, onClose
           position: 'fixed', inset: 0, zIndex: 200,
           background: '#050505',
           overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
           clipPath: isClosing ? initialClip : 'inset(0px 0px 0px 0px round 0px)',
-          transition: `clip-path 0.55s cubic-bezier(0.77, 0, 0.175, 1)`,
+          WebkitClipPath: isClosing ? initialClip : 'inset(0px 0px 0px 0px round 0px)',
+          transition: `clip-path 0.55s cubic-bezier(0.77, 0, 0.175, 1), -webkit-clip-path 0.55s cubic-bezier(0.77, 0, 0.175, 1)`,
           animation: isClosing ? 'none' : 'overlayClipReveal 0.55s cubic-bezier(0.77, 0, 0.175, 1) forwards',
         }}
       >
         <style>{`
           @keyframes overlayClipReveal {
-            from { clip-path: ${initialClip}; }
-            to   { clip-path: inset(0px 0px 0px 0px round 0px); }
+            from { clip-path: ${initialClip}; -webkit-clip-path: ${initialClip}; }
+            to   { clip-path: inset(0px 0px 0px 0px round 0px); -webkit-clip-path: inset(0px 0px 0px 0px round 0px); }
           }
           @keyframes shimmer {
             0%   { background-position: -200% 0; }
@@ -442,14 +465,14 @@ export default function ProjectOverlay({ projectName, mediaType, origin, onClose
             background: 'rgba(5,5,5,0.95)',
             backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '1rem 2rem',
+            padding: '0.5rem clamp(1rem, 4vw, 2rem)',
             borderBottom: '1px solid rgba(255,255,255,0.06)',
           }}
         >
           <span style={{ fontFamily: 'var(--font-geist-sans)', fontWeight: 700, fontSize: 'clamp(0.8rem, 1.5vw, 1rem)', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#ede8e0' }}>
             {CATEGORY_LABEL[projectName] ?? projectName}
           </span>
-          <button onClick={handleClose} aria-label="Cerrar" style={{ background: 'none', border: 'none', color: '#ede8e0', fontSize: '1.2rem', cursor: 'pointer', padding: '0.25rem 0.5rem', lineHeight: 1, transition: 'transform 0.3s ease', }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'rotate(90deg)' }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'rotate(0deg)' }}>
+          <button onClick={handleClose} aria-label="Cerrar" style={{ background: 'none', border: 'none', color: '#ede8e0', fontSize: '1.2rem', cursor: 'pointer', padding: '0.25rem 0.5rem', lineHeight: 1, transition: 'transform 0.3s ease', minHeight: 44, minWidth: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'rotate(90deg)' }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'rotate(0deg)' }}>
             &#10005;
           </button>
         </motion.header>

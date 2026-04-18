@@ -30,10 +30,21 @@ interface Props {
   photoAlbums?: PhotoAlbum[]
 }
 
+function getIsTouch(): boolean {
+  if (typeof window === 'undefined') return false
+  return 'ontouchstart' in window || navigator.maxTouchPoints > 0
+}
+
+function useIsTouchDevice(): boolean {
+  const [isTouch] = useState(getIsTouch)
+  return isTouch
+}
+
 export default function HomeClient({ cmsProjects, videos, categories, photoAlbums }: Props) {
   const [headerVisible, setHeaderVisible] = useState(false)
   const [preloaderDone, setPreloaderDone] = useState(false)
   const [loadProgress, setLoadProgress] = useState(0)
+  const isTouch = useIsTouchDevice()
 
   const heroWrapperRef = useRef<HTMLDivElement>(null)
   const colorGradeRef = useRef<HTMLDivElement>(null)
@@ -173,10 +184,10 @@ export default function HomeClient({ cmsProjects, videos, categories, photoAlbum
         />
       )}
 
-      {/* Ambient effects (always rendered) */}
-      <DustParticles />
-      <CursorGlow />
-      <AdaptiveCursor />
+      {/* Ambient effects -- cursor effects hidden on touch devices */}
+      {!isTouch && <DustParticles />}
+      {!isTouch && <CursorGlow />}
+      {!isTouch && <AdaptiveCursor />}
 
       {/* Color grade overlay */}
       <div
@@ -219,9 +230,9 @@ export default function HomeClient({ cmsProjects, videos, categories, photoAlbum
             <ManifestoSection />
             <ServiciosSection />
 
-            {/* CTA — Cotiza tu proyecto */}
+            {/* CTA -- Cotiza tu proyecto */}
             <div style={{
-              padding: '5rem 2rem',
+              padding: 'clamp(2.5rem, 6vw, 5rem) clamp(1rem, 4vw, 2rem)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
