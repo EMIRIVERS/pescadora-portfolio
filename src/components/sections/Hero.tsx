@@ -10,15 +10,9 @@ gsap.registerPlugin(ScrollTrigger)
 const TOTAL_FRAMES = 233
 const TOTAL_SETS = 12
 
-/** Elige un set aleatorio por visita (consistente dentro de la sesion) */
+/** Elige un set aleatorio en cada recarga */
 function pickSet(): number {
-  if (typeof window === 'undefined') return 1
-  const key = 'xico_hero_set'
-  const stored = sessionStorage.getItem(key)
-  if (stored) return Number(stored)
-  const set = Math.floor(Math.random() * TOTAL_SETS) + 1
-  sessionStorage.setItem(key, String(set))
-  return set
+  return Math.floor(Math.random() * TOTAL_SETS) + 1
 }
 
 function frameSrc(set: number, i: number): string {
@@ -26,28 +20,45 @@ function frameSrc(set: number, i: number): string {
 }
 
 /* --- Slides narrativos --- */
+type Align = 'start' | 'center' | 'end'
+
 interface Slide {
   line1: string
   line2?: string
   /** scroll range normalizado [entrada, salida] dentro de 0-1 */
   range: [number, number]
+  /** posicion horizontal */
+  alignX: Align
+  /** posicion vertical */
+  alignY: Align
+  /** text-align */
+  textAlign: 'left' | 'center' | 'right'
 }
 
 const SLIDES: Slide[] = [
   {
     line1: 'CADA IMAGEN',
     line2: 'TIENE UNA HISTORIA',
-    range: [0.06, 0.24],
+    range: [0.04, 0.28],
+    alignX: 'start',
+    alignY: 'end',
+    textAlign: 'left',
   },
   {
     line1: 'DIRECCION',
     line2: 'FOTOGRAFIA -- PRODUCCION',
-    range: [0.30, 0.48],
+    range: [0.32, 0.56],
+    alignX: 'end',
+    alignY: 'start',
+    textAlign: 'right',
   },
   {
     line1: 'DEL CONCEPTO',
     line2: 'A LA PANTALLA',
-    range: [0.54, 0.70],
+    range: [0.60, 0.74],
+    alignX: 'center',
+    alignY: 'center',
+    textAlign: 'center',
   },
 ]
 
@@ -203,16 +214,33 @@ export function Hero({ onLoadProgress, initialBlur }: HeroProps) {
     // Almacenar refs de chars por slide para la timeline
     const slideCharSets: HTMLSpanElement[][] = []
 
+    const justifyMap: Record<Align, string> = {
+      start: 'flex-end',
+      center: 'center',
+      end: 'flex-start',
+    }
+    const alignMap: Record<Align, string> = {
+      start: 'flex-start',
+      center: 'center',
+      end: 'flex-end',
+    }
+    const lineJustifyMap: Record<string, string> = {
+      left: 'flex-start',
+      center: 'center',
+      right: 'flex-end',
+    }
+
     SLIDES.forEach((slide) => {
       const slideDiv = document.createElement('div')
       slideDiv.style.cssText = `
         position: absolute; inset: 0;
         display: flex; flex-direction: column;
-        align-items: center; justify-content: center;
+        align-items: ${alignMap[slide.alignX]};
+        justify-content: ${justifyMap[slide.alignY]};
         pointer-events: none; opacity: 0;
         transform-style: preserve-3d;
         will-change: transform, opacity;
-        padding: 0 1.5rem;
+        padding: clamp(3rem, 8vh, 6rem) clamp(2rem, 6vw, 5rem);
       `
 
       const allChars: HTMLSpanElement[] = []
@@ -220,6 +248,7 @@ export function Hero({ onLoadProgress, initialBlur }: HeroProps) {
       // Linea 1
       const line1 = createMaskedLine()
       const inner1 = line1.firstChild as HTMLDivElement
+      inner1.style.justifyContent = lineJustifyMap[slide.textAlign]
       const chars1 = splitChars(slide.line1)
       chars1.forEach((s) => {
         s.style.fontFamily = 'var(--font-geist-sans)'
@@ -238,6 +267,7 @@ export function Hero({ onLoadProgress, initialBlur }: HeroProps) {
       if (slide.line2) {
         const line2 = createMaskedLine()
         const inner2 = line2.firstChild as HTMLDivElement
+        inner2.style.justifyContent = lineJustifyMap[slide.textAlign]
         line2.style.marginTop = '0.3em'
         const chars2 = splitChars(slide.line2)
         chars2.forEach((s) => {
@@ -290,9 +320,9 @@ export function Hero({ onLoadProgress, initialBlur }: HeroProps) {
       const chars = slideCharSets[i]
       const [start, end] = slide.range
       const dur = end - start
-      const enterDur = dur * 0.35
-      const holdDur = dur * 0.30
-      const exitDur = dur * 0.35
+      const enterDur = dur * 0.25
+      const holdDur = dur * 0.50
+      const exitDur = dur * 0.25
 
       // ENTER -- slide aparece, chars se revelan con stagger + blur-to-sharp
       tl.fromTo(el,
