@@ -10,42 +10,41 @@ import type { KanbanTaskWithAssignee, TaskPriority } from '@/lib/supabase/types'
 
 // Left-border color by priority (3 px solid strip)
 const PRIORITY_BORDER_COLOR: Record<TaskPriority, string> = {
-  low: '#3A3A3C',
-  medium: '#FF9F0A',
-  high: '#FF453A',
+  low:    'var(--dash-border)',
+  medium: 'var(--dash-warning)',
+  high:   'var(--dash-danger)',
 }
 
 // Small dot color shown next to the label
 const PRIORITY_DOT_COLOR: Record<TaskPriority, string> = {
-  low: 'var(--dash-text-tertiary)',
-  medium: '#FF9F0A',
-  high: '#FF453A',
+  low:    'var(--dash-text-tertiary)',
+  medium: 'var(--dash-warning)',
+  high:   'var(--dash-danger)',
 }
 
 const PRIORITY_LABELS: Record<TaskPriority, string> = {
-  low: 'Low',
-  medium: 'Medium',
-  high: 'High',
+  low:    'Normal',
+  medium: 'Alta',
+  high:   'Urgente',
 }
 
 // Only show badge for medium and high
 const PRIORITY_BADGE: Partial<Record<TaskPriority, { label: string; color: string; bg: string }>> = {
-  medium: { label: 'Alta', color: '#FF9F0A', bg: 'rgba(255,159,10,0.12)' },
-  high:   { label: 'Urgente', color: '#FF453A', bg: 'rgba(255,69,58,0.12)' },
+  medium: { label: 'Alta',    color: 'var(--dash-warning)', bg: 'color-mix(in srgb, var(--dash-warning) 12%, transparent)' },
+  high:   { label: 'Urgente', color: 'var(--dash-danger)',  bg: 'color-mix(in srgb, var(--dash-danger) 12%, transparent)'  },
 }
 
 // ── Due-date color helper ──────────────────────────────────────────────────────
 
 function getDueDateColor(due: string): string {
-  // due is 'YYYY-MM-DD'; compare against today in local time
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const dueDate = new Date(`${due}T00:00:00`)
   const diff = dueDate.getTime() - today.getTime()
   const dayMs = 86_400_000
-  if (diff < 0) return '#FF453A'              // overdue — red
-  if (diff <= 2 * dayMs) return '#FF9F0A'     // within 2 days — amber
-  return '#30D158'                            // future — green
+  if (diff < 0) return 'var(--dash-danger)'
+  if (diff <= 2 * dayMs) return 'var(--dash-warning)'
+  return 'var(--dash-success)'
 }
 
 // ── Props ─────────────────────────────────────────────────────────────────────
@@ -80,8 +79,8 @@ export function TaskCard({ task, onOpenDetail }: TaskCardProps) {
     cursor: 'grab',
     position: 'relative',
     boxShadow: isDragging
-      ? '0 16px 48px rgba(0,0,0,0.8)'
-      : '0 1px 4px rgba(0,0,0,0.4)',
+      ? 'var(--dash-shadow-xl)'
+      : 'var(--dash-shadow-sm), var(--dash-highlight)',
   }
 
   function handleClick() {
@@ -102,7 +101,7 @@ export function TaskCard({ task, onOpenDetail }: TaskCardProps) {
       whileHover={
         isDragging
           ? undefined
-          : { y: -2, boxShadow: '0 6px 20px rgba(0,0,0,0.3)' }
+          : { y: -2 }
       }
       whileTap={isDragging ? undefined : { scale: 0.98 }}
       transition={{ duration: 0.12 }}
@@ -229,7 +228,7 @@ export function TaskCard({ task, onOpenDetail }: TaskCardProps) {
                     style={{
                       width: '24px',
                       height: '24px',
-                      border: '1.5px solid rgba(255,255,255,0.1)',
+                      border: '1.5px solid var(--dash-border)',
                     }}
                   />
                 ) : (
@@ -240,7 +239,7 @@ export function TaskCard({ task, onOpenDetail }: TaskCardProps) {
                       width: '24px',
                       height: '24px',
                       backgroundColor: 'var(--dash-surface-3)',
-                      border: '1.5px solid rgba(255,255,255,0.1)',
+                      border: '1.5px solid var(--dash-border)',
                       color: 'var(--dash-text-secondary)',
                       fontSize: '10px',
                       fontWeight: 600,

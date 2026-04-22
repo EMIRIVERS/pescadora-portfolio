@@ -43,7 +43,7 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
 
   const serviceClient = createServiceClient()
 
-  const [supabase, { counts, totalBudgetAll, totalBudgetDelivered }] = await Promise.all([
+  const [, { counts, totalBudgetAll, totalBudgetDelivered }] = await Promise.all([
     createClient(),
     serviceClient
       .from('projects')
@@ -70,14 +70,14 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
 
   const total = Object.values(counts).reduce((a, b) => a + b, 0)
 
-  const { data: allClients } = await supabase
+  const { data: allClients } = await serviceClient
     .from('clients')
     .select('id, name')
     .order('name', { ascending: true })
 
   const clients: Pick<Client, 'id' | 'name'>[] = (allClients ?? []) as Pick<Client, 'id' | 'name'>[]
 
-  let query = supabase
+  let query = serviceClient
     .from('projects')
     .select(
       `
