@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef, useState, useTransition } from 'react'
+import React, { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -18,6 +18,7 @@ import {
   Users,
   ArrowLeftRight,
 } from 'lucide-react'
+import LeadScoreBadge, { LeadScoreBreakdown } from './LeadScoreBadge'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -311,92 +312,130 @@ export default function LeadDetailModal({
   // Next action state — seeded from lead if fields exist
   const leadAny = lead as unknown as Record<string, unknown>
   // WA templates
-  const [waTemplateType, setWaTemplateType] = useState<'paid' | 'trade' | null>(null)
+  const [waOpen, setWaOpen] = useState(false)
   const [waCopied, setWaCopied] = useState(false)
 
-  function getWaTemplate(type: 'paid' | 'trade'): string {
+  function getPortfolioLink(category: string): string {
+    if (category.includes('hotel') || category.includes('hospedaje') || category.includes('cabana') || category.includes('resort')) {
+      return 'xicofilms.com/portfolio/stays'
+    }
+    if (category.includes('restaurante') || category.includes('café') || category.includes('bar') || category.includes('cocina') || category.includes('kitchen') || category.includes('pizza') || category.includes('cafe')) {
+      return 'xicofilms.com/portfolio/food'
+    }
+    if (category.includes('tour') || category.includes('buceo') || category.includes('snorkel') || category.includes('sailing') || category.includes('diving') || category.includes('fishing') || category.includes('pesca')) {
+      return 'xicofilms.com/portfolio/adventures'
+    }
+    if (category.includes('spa') || category.includes('yoga') || category.includes('wellness') || category.includes('bienestar') || category.includes('massage')) {
+      return 'xicofilms.com/portfolio/lifestyle'
+    }
+    if (category.includes('real estate') || category.includes('realty')) {
+      return 'xicofilms.com/portfolio/properties'
+    }
+    return 'xicofilms.com'
+  }
+
+  function getWaTemplate(): string {
     const biz = lead.company ?? lead.name
     const category = (lead.project_type ?? '').toLowerCase()
+    const portfolio = getPortfolioLink(category)
+    // Deterministic variant 0-2 per lead so neighbors don't get identical messages
+    const variant = parseInt(lead.id.replace(/-/g, '').charAt(0), 16) % 3
 
-    // Personalización por tipo de negocio
-    let bizLine = ''
-    let tradeFor = 'the experience'
-    let serviceType = 'photography & video content'
+    let hook = ''
+    let serviceType = ''
 
     if (category.includes('hotel') || category.includes('hospedaje') || category.includes('cabana') || category.includes('resort')) {
-      bizLine = `I love the vibe of ${biz} — boutique properties like yours deserve stunning visuals.`
-      tradeFor = 'a few nights\' stay'
+      hook = `Boutique properties like ${biz} deserve visuals that actually do them justice — great photos and video can make a real difference in bookings.`
       serviceType = 'property photography & social media content'
     } else if (category.includes('restaurante') || category.includes('café') || category.includes('bar') || category.includes('cocina') || category.includes('kitchen') || category.includes('pizza') || category.includes('cafe')) {
-      bizLine = `The food and atmosphere at ${biz} look amazing — exactly the kind of place I love shooting.`
-      tradeFor = 'meals / dining credit'
-      serviceType = 'food photography & ambiance shots'
+      hook = `The food and atmosphere at ${biz} are exactly the kind of thing that drives traffic when captured right.`
+      serviceType = 'food photography & ambiance content'
     } else if (category.includes('tour') || category.includes('buceo') || category.includes('snorkel') || category.includes('sailing') || category.includes('diving') || category.includes('fishing') || category.includes('pesca')) {
-      bizLine = `The experiences you offer at ${biz} are exactly the kind of thing that goes viral with great visuals.`
-      tradeFor = 'a tour experience'
+      hook = `The experiences you offer at ${biz} are exactly the kind of thing that performs incredibly well with strong visuals — action content like this goes a long way on social.`
       serviceType = 'action & lifestyle video content'
     } else if (category.includes('spa') || category.includes('yoga') || category.includes('wellness') || category.includes('bienestar') || category.includes('massage')) {
-      bizLine = `${biz} has the kind of calm, beautiful energy that makes for incredible content.`
-      tradeFor = 'a session / treatment'
+      hook = `${biz} has the kind of calm, beautiful energy that makes for incredible content — the sort of thing that converts browsers into bookings.`
       serviceType = 'lifestyle & wellness photography'
     } else if (category.includes('real estate') || category.includes('realty')) {
-      bizLine = `High-quality visuals are everything in real estate — I'd love to help ${biz} stand out.`
-      tradeFor = 'a referral or commission'
+      hook = `High-quality visuals are everything in real estate — we'd love to help ${biz} stand out with content that actually sells.`
       serviceType = 'property & architectural photography'
     } else {
-      bizLine = `I came across ${biz} and I think there's real potential for strong visual content.`
-      tradeFor = 'products / store credit'
+      hook = `We came across ${biz} and honestly see a lot of potential for strong visual content that could really move the needle for you.`
       serviceType = 'brand photography & content'
     }
 
-    if (type === 'paid') {
-      return `Hi! My name is Emi, I'm a professional photographer & content creator.
-
-${bizLine}
-
-I'd love to create ${serviceType} for ${biz} — content you can use on Instagram, Google, and your website.
-
-What I deliver:
-• Professional photos & video (edited, ready to post)
+    const delivers = `What we can deliver:
+• A revamped, high-converting website (demo ready to show you!)
+• Professional photo & video — fully edited, ready to post
 • Social media content package
-• Quick turnaround
+• Fast turnaround`
 
-Would you be open to a quick chat this week?
+    if (variant === 0) {
+      return `Hi! My name is Emi — I'm part of Xico Films, a production company focused on high-impact visual content.
 
-— Emi | Pescadora
-pescadora.mx`
+${hook}
+
+We loved it so much that we actually took the initiative to build a custom web demo for ${biz}, showing how a refreshed site paired with professional content could look.
+
+We'll be on the island May 16–21, which makes it the perfect window to capture fresh footage on-site. We're completely flexible — open to a collaboration or a standard package, whatever fits best.
+
+${delivers}
+
+Would you be open to a quick chat? I'd love to send you the demo link before the trip.
+
+— Emi | Xico Films
+${portfolio}`
     }
 
-    return `Hi! I'm Emi, a professional photographer visiting Caye Caulker.
+    if (variant === 1) {
+      return `Hi! I'm Emi from Xico Films — we specialize in high-impact content for businesses like yours.
 
-${bizLine}
+${hook}
 
-I'd like to propose a collaboration: I'll create professional ${serviceType} for ${biz} — photos and video you can use across all your platforms — in exchange for ${tradeFor}.
+We're heading to Caye Caulker May 16–21 and we went ahead and built a web demo specifically for ${biz} — a real look at what a refreshed website and fresh content could do for you.
 
-No cost to you. You get content that brings in more customers; I get to build my portfolio in Belize.
+We're flexible on how we structure it — a collaboration, a package, whatever works on your end.
 
-Interested? I'm flexible on dates.
+${delivers}
 
-— Emi | Pescadora
-pescadora.mx`
+Mind if I shoot you the demo link? It takes about 2 minutes to look at and gives you a real feel for what we're talking about.
+
+— Emi | Xico Films
+${portfolio}`
+    }
+
+    return `Hi! Emi here, from Xico Films.
+
+${hook}
+
+We'll be in Caye Caulker May 16–21 and we took the time to build a demo for ${biz} — a preview of what a fresh website and professional content could look like for you specifically.
+
+Happy to make it work however is easiest — collaboration, package, open to ideas.
+
+${delivers}
+
+Can I send you the link?
+
+— Emi | Xico Films
+${portfolio}`
   }
 
-  function handleCopyWa(type: 'paid' | 'trade') {
-    const text = getWaTemplate(type)
+  function handleCopyWa() {
+    const text = getWaTemplate()
     navigator.clipboard.writeText(text).then(() => {
       setWaCopied(true)
       setTimeout(() => setWaCopied(false), 2000)
     })
   }
 
-  function handleOpenWa(type: 'paid' | 'trade') {
-    const text = getWaTemplate(type)
+  function handleOpenWa() {
+    const text = getWaTemplate()
     const phone = lead.phone?.replace(/\D/g, '') ?? ''
     const encoded = encodeURIComponent(text)
     if (phone) {
-      window.open(`https://wa.me/${phone}?text=${encoded}`, '_blank')
+      window.location.href = `whatsapp://send?phone=${phone}&text=${encoded}`
     } else {
-      window.open(`https://wa.me/?text=${encoded}`, '_blank')
+      window.location.href = `whatsapp://send?text=${encoded}`
     }
   }
 
@@ -636,14 +675,14 @@ pescadora.mx`
     setAssignedSaving(false)
   }
 
-  function getDiasSinContacto(): { days: number; color: string } {
+  const diasSinContacto = useMemo((): { days: number; color: string } => {
     const ref = localLastContacted ?? lead.created_at
-    const diffMs = Date.now() - new Date(ref).getTime()
+    const diffMs = new Date().getTime() - new Date(ref).getTime()
     const days = Math.floor(diffMs / (1000 * 60 * 60 * 24))
     const color =
       days > 14 ? 'var(--dash-danger)' : days > 7 ? 'var(--dash-warning)' : T.textTertiary
     return { days, color }
-  }
+  }, [localLastContacted, lead.created_at])
 
   function getNextActionDateColor(): string {
     if (!nextActionDate) return T.textPrimary
@@ -827,7 +866,7 @@ pescadora.mx`
               </button>
             </div>
 
-            {/* Status badge + WA quick-link + pending indicator */}
+            {/* Status badge + score badge + WA quick-link + pending indicator */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <span
                 style={{
@@ -843,6 +882,8 @@ pescadora.mx`
               >
                 {STATUS_LABELS[currentStatus]}
               </span>
+
+              <LeadScoreBadge lead={lead} />
 
               {/* WhatsApp quick-open button — Fix 3 */}
               {lead.phone && (
@@ -996,26 +1037,22 @@ pescadora.mx`
                 >
                   {localLastContacted ? formatDate(localLastContacted) : 'Sin contacto'}
                 </span>
-                {(() => {
-                  const { days, color } = getDiasSinContacto()
-                  if (color === T.textTertiary) return null
-                  return (
+                {diasSinContacto.color !== T.textTertiary && (
                     <span
                       style={{
                         fontFamily: T.font,
                         fontSize: 11,
                         fontWeight: 600,
-                        color,
-                        background: `${color}22`,
+                        color: diasSinContacto.color,
+                        background: `${diasSinContacto.color}22`,
                         borderRadius: 10,
                         padding: '2px 8px',
                         alignSelf: 'flex-start',
                       }}
                     >
-                      {days}d sin contacto
+                      {diasSinContacto.days}d sin contacto
                     </span>
-                  )
-                })()}
+                )}
               </div>
 
               <InfoCell
@@ -1182,6 +1219,20 @@ pescadora.mx`
                 </div>
               </div>
             )}
+          </motion.div>
+
+          {/* ---------------------------------------------------------------- */}
+          {/* Section 1b — Lead Score Breakdown                                */}
+          {/* ---------------------------------------------------------------- */}
+          <SectionDivider />
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.12, duration: 0.25 }}
+            style={{ padding: '20px 24px' }}
+          >
+            <SectionHeader>Lead Score</SectionHeader>
+            <LeadScoreBreakdown lead={lead} />
           </motion.div>
 
           {/* ---------------------------------------------------------------- */}
@@ -1540,40 +1591,30 @@ pescadora.mx`
           >
             <SectionHeader>Mensaje WhatsApp</SectionHeader>
 
-            {/* Template selector */}
-            <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-              {(['paid', 'trade'] as const).map((type) => {
-                const active = waTemplateType === type
-                return (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() => setWaTemplateType(active ? null : type)}
-                    style={{
-                      fontFamily: T.font,
-                      fontSize: 12,
-                      fontWeight: 600,
-                      padding: '6px 14px',
-                      borderRadius: 20,
-                      border: 'none',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s',
-                      background: active
-                        ? type === 'paid' ? '#0071E3' : 'var(--dash-success)'
-                        : T.surface3,
-                      color: active ? '#fff' : T.textSecondary,
-                    }}
-                  >
-                    {type === 'paid' ? 'Cobrar' : 'Intercambio'}
-                  </button>
-                )
-              })}
-            </div>
+            <button
+              type="button"
+              onClick={() => setWaOpen((v) => !v)}
+              style={{
+                fontFamily: T.font,
+                fontSize: 12,
+                fontWeight: 600,
+                padding: '6px 14px',
+                borderRadius: 20,
+                border: 'none',
+                cursor: 'pointer',
+                marginBottom: 14,
+                transition: 'all 0.15s',
+                background: waOpen ? '#25D366' : T.surface3,
+                color: waOpen ? '#fff' : T.textSecondary,
+              }}
+            >
+              {waOpen ? 'Ocultar mensaje' : 'Ver mensaje'}
+            </button>
 
             <AnimatePresence>
-              {waTemplateType && (
+              {waOpen && (
                 <motion.div
-                  key={waTemplateType}
+                  key="wa-msg"
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
@@ -1588,7 +1629,6 @@ pescadora.mx`
                       overflow: 'hidden',
                     }}
                   >
-                    {/* Message preview */}
                     <pre
                       style={{
                         margin: 0,
@@ -1599,14 +1639,13 @@ pescadora.mx`
                         lineHeight: 1.7,
                         whiteSpace: 'pre-wrap',
                         wordBreak: 'break-word',
-                        maxHeight: 280,
+                        maxHeight: 320,
                         overflowY: 'auto',
                       }}
                     >
-                      {getWaTemplate(waTemplateType)}
+                      {getWaTemplate()}
                     </pre>
 
-                    {/* Actions bar */}
                     <div
                       style={{
                         display: 'flex',
@@ -1618,7 +1657,7 @@ pescadora.mx`
                     >
                       <button
                         type="button"
-                        onClick={() => handleCopyWa(waTemplateType)}
+                        onClick={handleCopyWa}
                         style={{
                           fontFamily: T.font,
                           fontSize: 12,
@@ -1636,7 +1675,7 @@ pescadora.mx`
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleOpenWa(waTemplateType)}
+                        onClick={handleOpenWa}
                         style={{
                           fontFamily: T.font,
                           fontSize: 12,
