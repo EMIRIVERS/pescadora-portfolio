@@ -119,7 +119,7 @@ export function ContactoSection() {
     fontSize: 'clamp(0.7rem, 1.2vw, 0.8rem)',
     letterSpacing: '0.2em',
     textTransform: 'uppercase',
-    color: hovered ? '#ede8e0' : '#6b6560',
+    color: hovered ? 'var(--color-text)' : 'var(--color-text-muted)',
     textDecoration: 'none',
     transition: 'color 0.25s ease',
     cursor: 'pointer',
@@ -165,7 +165,7 @@ export function ContactoSection() {
       style={{
         padding: 'clamp(4rem, 8vw, 8rem) clamp(1.2rem, 4vw, 2rem) clamp(2rem, 4vw, 4rem)',
         borderTop: '1px solid rgba(255,255,255,0.06)',
-        background: '#050505',
+        background: 'var(--color-bg)',
         overflowX: 'hidden',
       }}
     >
@@ -180,7 +180,7 @@ export function ContactoSection() {
               fontSize: 'clamp(2.2rem, 11vw, 10rem)',
               letterSpacing: '-0.03em',
               lineHeight: 0.88,
-              color: '#ede8e0',
+              color: 'var(--color-text)',
               textTransform: 'uppercase',
               margin: 0,
               overflowWrap: 'break-word',
@@ -193,7 +193,7 @@ export function ContactoSection() {
               <span ref={line2Ref} style={{ display: 'block' }}>QUIERES</span>
             </span>
             <span style={{ display: 'block', overflow: 'hidden' }}>
-              <span ref={line3Ref} style={{ display: 'block', color: '#e8341a' }}>CONTAR?</span>
+              <span ref={line3Ref} style={{ display: 'block', color: 'var(--color-accent)' }}>CONTAR?</span>
             </span>
           </h2>
           <p
@@ -203,7 +203,7 @@ export function ContactoSection() {
               fontSize: 'clamp(0.65rem, 1.2vw, 0.9rem)',
               letterSpacing: 'clamp(0.08em, 0.5vw, 0.25em)',
               textTransform: 'uppercase',
-              color: '#444',
+              color: 'var(--color-text-dim)',
               marginTop: 'clamp(1rem, 3vw, 2rem)',
               lineHeight: 1.8,
               wordBreak: 'break-word' as const,
@@ -216,7 +216,7 @@ export function ContactoSection() {
                 display: 'inline-block',
                 width: '0.6em',
                 height: '1em',
-                backgroundColor: '#444',
+                backgroundColor: 'var(--color-text-dim)',
                 marginLeft: '2px',
                 verticalAlign: 'text-bottom',
               }}
@@ -284,7 +284,7 @@ export function ContactoSection() {
                 fontSize: '0.65rem',
                 letterSpacing: '0.2em',
                 textTransform: 'uppercase',
-                color: '#6b6560',
+                color: 'var(--color-text-muted)',
               }}
             >
               XICO Films &mdash; {new Date().getFullYear()}
@@ -302,12 +302,12 @@ export function ContactoSection() {
                   fontSize: '0.6rem',
                   letterSpacing: '0.15em',
                   textTransform: 'uppercase',
-                  color: '#6b6560',
+                  color: 'var(--color-text-muted)',
                   textDecoration: 'none',
                   transition: 'color 0.25s ease',
                 }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = '#ede8e0' }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = '#6b6560' }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-text)' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-text-muted)' }}
               >
                 Instagram
               </a>
@@ -322,12 +322,12 @@ export function ContactoSection() {
                   fontSize: '0.6rem',
                   letterSpacing: '0.15em',
                   textTransform: 'uppercase',
-                  color: '#6b6560',
+                  color: 'var(--color-text-muted)',
                   textDecoration: 'none',
                   transition: 'color 0.25s ease',
                 }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = '#ede8e0' }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = '#6b6560' }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-text)' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-text-muted)' }}
               >
                 Vimeo
               </a>
@@ -339,7 +339,7 @@ export function ContactoSection() {
             fontSize: '0.5rem',
             letterSpacing: '0.15em',
             textTransform: 'uppercase',
-            color: '#3a3632',
+            color: 'var(--color-text-ghost)',
             marginTop: '1.5rem',
             marginBottom: 0,
           }}>

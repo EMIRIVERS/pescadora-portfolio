@@ -477,6 +477,7 @@ export interface Database {
           status: LeadStatus
           source: LeadSource
           notes: string | null
+          wa_message: string | null
           budget_range: string | null
           project_type: string | null
           assigned_to: string | null
@@ -495,6 +496,7 @@ export interface Database {
           status?: LeadStatus
           source?: LeadSource
           notes?: string | null
+          wa_message?: string | null
           budget_range?: string | null
           project_type?: string | null
           assigned_to?: string | null
@@ -511,6 +513,7 @@ export interface Database {
           status?: LeadStatus
           source?: LeadSource
           notes?: string | null
+          wa_message?: string | null
           budget_range?: string | null
           project_type?: string | null
           assigned_to?: string | null
@@ -597,26 +600,35 @@ export interface Database {
       email_log: {
         Row: {
           id: string
-          created_at: string
+          sent_at: string
           to_email: string
           subject: string
           template_name: string | null
+          related_id: string | null
+          related_type: string | null
           status: string | null
+          error_message: string | null
         }
         Insert: {
           id?: string
-          created_at?: string
+          sent_at?: string
           to_email: string
           subject: string
           template_name?: string | null
+          related_id?: string | null
+          related_type?: string | null
           status?: string | null
+          error_message?: string | null
         }
         Update: {
           id?: string
           to_email?: string
           subject?: string
           template_name?: string | null
+          related_id?: string | null
+          related_type?: string | null
           status?: string | null
+          error_message?: string | null
         }
         Relationships: []
       }

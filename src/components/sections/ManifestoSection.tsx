@@ -152,7 +152,7 @@ export default function ManifestoSection() {
         >
           <span
             style={{
-              color: '#e8341a',
+              color: 'var(--color-accent)',
               marginRight: '0.5rem',
               fontFamily: 'var(--font-geist-mono)',
               fontSize: '0.55rem',
@@ -168,7 +168,7 @@ export default function ManifestoSection() {
               fontFamily: 'var(--font-geist-mono)',
               fontSize: '0.55rem',
               letterSpacing: '0.3em',
-              color: '#6b6560',
+              color: 'var(--color-text-muted)',
               textTransform: 'uppercase',
             }}
           >
@@ -183,7 +183,7 @@ export default function ManifestoSection() {
             fontSize: 'clamp(1.6rem, 3.5vw, 2.6rem)',
             fontWeight: 300,
             lineHeight: 1.4,
-            color: '#ede8e0',
+            color: 'var(--color-text)',
             letterSpacing: '0.01em',
             fontFamily: 'var(--font-geist-sans)',
             margin: 0,
@@ -217,7 +217,7 @@ export default function ManifestoSection() {
                           }}
                           style={{
                             fontWeight: 800,
-                            color: '#ede8e0',
+                            color: 'var(--color-text)',
                             display: 'inline',
                           }}
                         >
@@ -241,7 +241,7 @@ export default function ManifestoSection() {
             fontSize: '0.75rem',
             letterSpacing: '0.2em',
             textTransform: 'uppercase',
-            color: '#8a8078',
+            color: 'var(--color-text-faint)',
             marginTop: 'clamp(1.5rem, 4vw, 3rem)',
             marginBottom: 0,
           }}

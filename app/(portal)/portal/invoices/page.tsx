@@ -38,19 +38,19 @@ const STATUS_LABEL: Record<VisibleStatus, string> = {
 
 const STATUS_STYLE: Record<VisibleStatus, { background: string; color: string; border: string }> = {
   sent: {
-    background: '#FFF7E6',
-    color: '#92400E',
-    border: '1px solid #FDE68A',
+    background: 'var(--portal-badge-sent-bg)',
+    color: 'var(--portal-badge-sent-color)',
+    border: '1px solid var(--portal-badge-sent-border)',
   },
   paid: {
-    background: '#ECFDF5',
-    color: '#065F46',
-    border: '1px solid #A7F3D0',
+    background: 'var(--portal-badge-paid-bg)',
+    color: 'var(--portal-badge-paid-color)',
+    border: '1px solid var(--portal-badge-paid-border)',
   },
   overdue: {
-    background: '#FEF2F2',
-    color: '#991B1B',
-    border: '1px solid #FECACA',
+    background: 'var(--portal-badge-overdue-bg)',
+    color: 'var(--portal-badge-overdue-color)',
+    border: '1px solid var(--portal-badge-overdue-border)',
   },
 }
 
@@ -96,7 +96,7 @@ export default async function PortalInvoicesPage() {
 
   if (!client) {
     return (
-      <main style={{ fontFamily: FONT, minHeight: '100vh', backgroundColor: '#FAFAFA' }}>
+      <main style={{ fontFamily: FONT, minHeight: '100vh', backgroundColor: 'var(--portal-bg)' }}>
         <div style={{ maxWidth: 720, margin: '0 auto', padding: '3rem 1.5rem' }}>
           <Link
             href="/portal"
@@ -105,7 +105,7 @@ export default async function PortalInvoicesPage() {
               alignItems: 'center',
               gap: 6,
               fontSize: 13,
-              color: '#6B7280',
+              color: 'var(--portal-text-muted)',
               textDecoration: 'none',
               marginBottom: '2rem',
             }}
@@ -117,7 +117,7 @@ export default async function PortalInvoicesPage() {
             style={{
               fontSize: 26,
               fontWeight: 600,
-              color: '#111827',
+              color: 'var(--portal-text)',
               margin: '0 0 8px 0',
               letterSpacing: '-0.02em',
             }}
@@ -127,14 +127,14 @@ export default async function PortalInvoicesPage() {
           <div
             style={{
               marginTop: '2.5rem',
-              backgroundColor: '#FFFFFF',
-              border: '1px solid #E5E7EB',
+              backgroundColor: 'var(--portal-surface)',
+              border: '1px solid var(--portal-border)',
               borderRadius: 16,
               padding: '3rem 2rem',
               textAlign: 'center',
             }}
           >
-            <p style={{ fontSize: 15, color: '#6B7280', margin: 0 }}>
+            <p style={{ fontSize: 15, color: 'var(--portal-text-muted)', margin: 0 }}>
               Sin facturas asignadas.
             </p>
           </div>
@@ -157,7 +157,7 @@ export default async function PortalInvoicesPage() {
   )
 
   return (
-    <main style={{ fontFamily: FONT, minHeight: '100vh', backgroundColor: '#FAFAFA' }}>
+    <main style={{ fontFamily: FONT, minHeight: '100vh', backgroundColor: 'var(--portal-bg)' }}>
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '3rem 1.5rem' }}>
         {/* Back link */}
         <Link
@@ -167,7 +167,7 @@ export default async function PortalInvoicesPage() {
             alignItems: 'center',
             gap: 6,
             fontSize: 13,
-            color: '#6B7280',
+            color: 'var(--portal-text-muted)',
             textDecoration: 'none',
             marginBottom: '2rem',
           }}
@@ -182,14 +182,14 @@ export default async function PortalInvoicesPage() {
             style={{
               fontSize: 26,
               fontWeight: 600,
-              color: '#111827',
+              color: 'var(--portal-text)',
               margin: '0 0 6px 0',
               letterSpacing: '-0.02em',
             }}
           >
             Mis facturas
           </h1>
-          <p style={{ fontSize: 13, color: '#6B7280', margin: 0 }}>
+          <p style={{ fontSize: 13, color: 'var(--portal-text-muted)', margin: 0 }}>
             {invoices.length === 0
               ? 'No hay facturas disponibles por ahora.'
               : `${invoices.length} factura${invoices.length !== 1 ? 's' : ''} encontrada${invoices.length !== 1 ? 's' : ''}.`}
@@ -200,17 +200,17 @@ export default async function PortalInvoicesPage() {
         {invoices.length === 0 && (
           <div
             style={{
-              backgroundColor: '#FFFFFF',
-              border: '1px solid #E5E7EB',
+              backgroundColor: 'var(--portal-surface)',
+              border: '1px solid var(--portal-border)',
               borderRadius: 16,
               padding: '3rem 2rem',
               textAlign: 'center',
             }}
           >
-            <p style={{ fontSize: 15, color: '#6B7280', margin: '0 0 12px 0' }}>
+            <p style={{ fontSize: 15, color: 'var(--portal-text-muted)', margin: '0 0 12px 0' }}>
               Sin facturas asignadas.
             </p>
-            <p style={{ fontSize: 13, color: '#9CA3AF', margin: 0 }}>
+            <p style={{ fontSize: 13, color: 'var(--portal-text-dim)', margin: 0 }}>
               Las facturas apareceran aqui cuando sean emitidas.
             </p>
           </div>
@@ -233,8 +233,8 @@ export default async function PortalInvoicesPage() {
                 <div
                   key={invoice.id}
                   style={{
-                    backgroundColor: '#FFFFFF',
-                    border: '1px solid #E5E7EB',
+                    backgroundColor: 'var(--portal-surface)',
+                    border: '1px solid var(--portal-border)',
                     borderRadius: 14,
                     padding: '20px 24px',
                     display: 'flex',
@@ -256,7 +256,7 @@ export default async function PortalInvoicesPage() {
                       style={{
                         fontSize: 15,
                         fontWeight: 600,
-                        color: '#111827',
+                        color: 'var(--portal-text)',
                         letterSpacing: '-0.01em',
                       }}
                     >
@@ -279,9 +279,9 @@ export default async function PortalInvoicesPage() {
 
                   {/* Project */}
                   {projectTitle && (
-                    <p style={{ margin: 0, fontSize: 13, color: '#6B7280' }}>
+                    <p style={{ margin: 0, fontSize: 13, color: 'var(--portal-text-muted)' }}>
                       Proyecto:{' '}
-                      <span style={{ color: '#374151', fontWeight: 500 }}>{projectTitle}</span>
+                      <span style={{ color: 'var(--portal-text-strong)', fontWeight: 500 }}>{projectTitle}</span>
                     </p>
                   )}
 
@@ -293,7 +293,7 @@ export default async function PortalInvoicesPage() {
                       justifyContent: 'space-between',
                       gap: 12,
                       flexWrap: 'wrap',
-                      borderTop: '1px solid #F3F4F6',
+                      borderTop: '1px solid var(--portal-divider)',
                       paddingTop: 12,
                     }}
                   >
@@ -301,18 +301,18 @@ export default async function PortalInvoicesPage() {
                       style={{
                         fontSize: 22,
                         fontWeight: 700,
-                        color: '#111827',
+                        color: 'var(--portal-text)',
                         letterSpacing: '-0.02em',
                       }}
                     >
                       {formatCurrency(Number(invoice.amount), invoice.currency)}
                     </span>
                     {invoice.due_date && (
-                      <span style={{ fontSize: 12, color: '#9CA3AF' }}>
+                      <span style={{ fontSize: 12, color: 'var(--portal-text-dim)' }}>
                         Vence:{' '}
                         <span
                           style={{
-                            color: visibleStatus === 'overdue' ? '#DC2626' : '#6B7280',
+                            color: visibleStatus === 'overdue' ? 'var(--portal-danger)' : 'var(--portal-text-muted)',
                             fontWeight: visibleStatus === 'overdue' ? 600 : 400,
                           }}
                         >

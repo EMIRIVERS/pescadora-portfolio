@@ -30,14 +30,37 @@
 /* ─── Design Tokens ────────────────────────────────────────────────────────── */
 
 :root {
-  --color-bg:         #050505;
-  --color-text:       #ede8e0;
-  --color-text-muted: #6b6560;
-  --color-border:     #1e1e1e;
-  --color-accent:     #e8341a;
-  --color-ink:        #ede8e0;
-  --color-video-bg:   #0a0a0a;
-  --color-video-text: #ede8e0;
+  --color-bg:          #050505;
+  --color-text:        #ede8e0;
+  --color-text-muted:  #6b6560;
+  --color-text-dim:    #555555;
+  --color-text-faint:  #8a8078;
+  --color-text-ghost:  #3a3632;
+  --color-border:      #1e1e1e;
+  --color-accent:      #e8341a;
+  --color-ink:         #ede8e0;
+  --color-video-bg:    #0a0a0a;
+  --color-video-text:  #ede8e0;
+
+  /* Portal (light mode client-facing) */
+  --portal-bg:          #f9f9f9;
+  --portal-surface:     #ffffff;
+  --portal-border:      #e5e7eb;
+  --portal-divider:     #f3f4f6;
+  --portal-text:        #111827;
+  --portal-text-muted:  #6b7280;
+  --portal-text-dim:    #9ca3af;
+  --portal-text-strong: #374151;
+  --portal-danger:      #dc2626;
+  --portal-badge-sent-bg:      #fff7e6;
+  --portal-badge-sent-color:   #92400e;
+  --portal-badge-sent-border:  #fde68a;
+  --portal-badge-paid-bg:      #ecfdf5;
+  --portal-badge-paid-color:   #065f46;
+  --portal-badge-paid-border:  #a7f3d0;
+  --portal-badge-overdue-bg:   #fef2f2;
+  --portal-badge-overdue-color: #991b1b;
+  --portal-badge-overdue-border: #fecaca;
 
   /* Typography scale — golden ratio */
   --text-xs:  0.75rem;
@@ -181,6 +204,17 @@ div:hover > .video-title {
   --dash-warning: #FF9F0A;
   --dash-danger: #FF453A;
   --dash-info: #64D2FF;
+
+  /* Shadow system — dark mode (multi-layer for depth) */
+  --dash-shadow-xs: 0 1px 2px rgba(0,0,0,0.45);
+  --dash-shadow-sm: 0 2px 8px rgba(0,0,0,0.55), 0 1px 2px rgba(0,0,0,0.35);
+  --dash-shadow-md: 0 4px 16px rgba(0,0,0,0.60), 0 2px 6px rgba(0,0,0,0.40), 0 0 0 1px rgba(255,255,255,0.03);
+  --dash-shadow-lg: 0 8px 32px rgba(0,0,0,0.65), 0 4px 12px rgba(0,0,0,0.42), 0 0 0 1px rgba(255,255,255,0.04);
+  --dash-shadow-xl: 0 16px 48px rgba(0,0,0,0.70), 0 8px 24px rgba(0,0,0,0.50), 0 0 0 1px rgba(255,255,255,0.05);
+
+  /* Inner highlight — top edge of elevated surfaces */
+  --dash-highlight: inset 0 1px 0 rgba(255,255,255,0.07);
+  --dash-highlight-strong: inset 0 1px 0 rgba(255,255,255,0.12);
 }
 
 [data-theme="obsidian"] {
@@ -272,6 +306,16 @@ div:hover > .video-title {
   --dash-warning: #9C6800;
   --dash-danger:  #C41D11;
   --dash-info:    #0077AA;
+
+  /* Shadow system — light mode (softer, warm-toned) */
+  --dash-shadow-xs: 0 1px 2px rgba(0,0,0,0.06);
+  --dash-shadow-sm: 0 1px 3px rgba(0,0,0,0.09), 0 2px 8px rgba(0,0,0,0.05);
+  --dash-shadow-md: 0 2px 8px rgba(0,0,0,0.09), 0 4px 16px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04);
+  --dash-shadow-lg: 0 4px 16px rgba(0,0,0,0.11), 0 8px 32px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04);
+  --dash-shadow-xl: 0 8px 32px rgba(0,0,0,0.13), 0 16px 48px rgba(0,0,0,0.09), 0 0 0 1px rgba(0,0,0,0.05);
+
+  --dash-highlight: inset 0 1px 0 rgba(255,255,255,0.85);
+  --dash-highlight-strong: inset 0 1px 0 rgba(255,255,255,0.95);
 }
 
 /* Per-theme pastel vars — applied by JS via applyLightTheme(), */
@@ -597,7 +641,7 @@ div:hover > .video-title {
 
 /* CSS-class-level overrides for admin utility classes */
 [data-theme] .admin-root { background: var(--dash-bg) !important; color: var(--dash-text-primary) !important; }
-[data-theme] .apple-card { background: var(--dash-surface-1) !important; border-color: var(--dash-border) !important; }
+[data-theme] .apple-card { background: var(--dash-surface-1) !important; border-color: var(--dash-border) !important; box-shadow: var(--dash-shadow-sm), var(--dash-highlight) !important; }
 [data-theme] .apple-input { background: var(--dash-surface-2) !important; color: var(--dash-text-primary) !important; }
 [data-theme] .apple-input:focus { border-color: var(--dash-accent) !important; }
 [data-theme] .apple-btn-primary { background: var(--dash-accent) !important; }
@@ -620,8 +664,8 @@ div:hover > .video-title {
   background: var(--dash-surface-1);
   border: 1px solid var(--dash-border);
   border-radius: 16px;
-  box-shadow: var(--dash-shadow, none);
-  transition: background 0.2s ease, border-color 0.2s ease;
+  box-shadow: var(--dash-shadow-sm), var(--dash-highlight);
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .apple-input {
@@ -634,16 +678,18 @@ div:hover > .video-title {
   font-family: inherit;
   width: 100%;
   outline: none;
-  transition: border-color 0.15s, background 0.15s;
+  box-shadow: var(--dash-highlight);
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
 }
 
 .apple-input:focus {
   border-color: var(--dash-accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dash-accent) 15%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dash-accent) 15%, transparent), var(--dash-highlight);
 }
 
 .apple-btn-primary {
   background: var(--dash-accent);
+  background-image: linear-gradient(180deg, color-mix(in srgb, var(--dash-accent) 80%, white) 0%, var(--dash-accent) 100%);
   color: #ffffff;
   border: none;
   border-radius: 10px;
@@ -652,16 +698,20 @@ div:hover > .video-title {
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
-  transition: background 0.15s, opacity 0.15s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.20);
+  transition: background 0.15s, background-image 0.15s, opacity 0.15s, box-shadow 0.15s;
 }
 
 .apple-btn-primary:hover {
   background: var(--dash-accent-hover);
+  background-image: linear-gradient(180deg, color-mix(in srgb, var(--dash-accent-hover) 80%, white) 0%, var(--dash-accent-hover) 100%);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.22);
 }
 
 .apple-btn-primary:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .apple-btn-ghost {
@@ -674,12 +724,15 @@ div:hover > .video-title {
   font-weight: 500;
   cursor: pointer;
   font-family: inherit;
-  transition: background 0.15s, color 0.15s;
+  box-shadow: var(--dash-highlight);
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s, border-color 0.15s;
 }
 
 .apple-btn-ghost:hover {
   background: var(--dash-surface-2);
   color: var(--dash-text-primary);
+  border-color: var(--dash-border-strong);
+  box-shadow: var(--dash-shadow-xs), var(--dash-highlight);
 }
 
 .apple-table-row:hover {
@@ -707,6 +760,12 @@ div:hover > .video-title {
 .admin-scrollbar::-webkit-scrollbar-thumb {
   background: var(--dash-surface-3);
   border-radius: 3px;
+}
+
+/* ─── Sidebar depth shadow ─────────────────────────────────────────────────── */
+
+[data-dash-sidebar] {
+  box-shadow: 1px 0 0 var(--dash-border), 4px 0 24px rgba(0,0,0,0.25);
 }
 
 /* ─── Admin responsive sidebar ─────────────────────────────────────────────── */
@@ -815,11 +874,11 @@ div:hover > .video-title {
 /* ─── Card Hover Standard ──────────────────────────────────────────────────── */
 
 .card-hover {
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.18s cubic-bezier(0.25,0.1,0.25,1), box-shadow 0.18s cubic-bezier(0.25,0.1,0.25,1);
 }
 .card-hover:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  box-shadow: var(--dash-shadow-md);
 }
 
 /* ─── Notification Badge Pulse ─────────────────────────────────────────────── */
@@ -838,6 +897,42 @@ div:hover > .video-title {
 /* Exception: interactive elements keep transform/shadow in their transition */
 .admin-root *:where(button, a, [role="button"]) {
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+/* ─── Elevated Surfaces (modals, dropdowns, popovers) ──────────────────────── */
+
+.dash-elevated {
+  background: var(--dash-surface-2);
+  border: 1px solid var(--dash-border-strong);
+  border-radius: 16px;
+  box-shadow: var(--dash-shadow-lg), var(--dash-highlight);
+}
+
+.dash-dropdown {
+  background: var(--dash-surface-2);
+  border: 1px solid var(--dash-border-strong);
+  border-radius: 12px;
+  box-shadow: var(--dash-shadow-lg), var(--dash-highlight);
+}
+
+.dash-modal {
+  background: var(--dash-surface-1);
+  border: 1px solid var(--dash-border);
+  border-radius: 20px;
+  box-shadow: var(--dash-shadow-xl), var(--dash-highlight-strong);
+}
+
+/* Stat card — metric display blocks */
+.dash-stat-card {
+  background: var(--dash-surface-1);
+  border: 1px solid var(--dash-border);
+  border-radius: 14px;
+  box-shadow: var(--dash-shadow-sm), var(--dash-highlight);
+  transition: transform 0.18s cubic-bezier(0.25,0.1,0.25,1), box-shadow 0.18s cubic-bezier(0.25,0.1,0.25,1);
+}
+.dash-stat-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--dash-shadow-md), var(--dash-highlight);
 }
 
 /* ─── Invoice Print Styles ─────────────────────────────────────────────────── */

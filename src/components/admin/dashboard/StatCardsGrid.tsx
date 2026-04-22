@@ -81,7 +81,7 @@ function StatCard({ label, sublabel, value, displayValue, iconKey, accent, href,
           style={{
             fontSize: displayValue ? '18px' : '32px',
             fontWeight: 700,
-            color: '#F5F5F7',
+            color: 'var(--dash-text-primary)',
             margin: 0,
             lineHeight: 1,
             letterSpacing: '-0.03em',
@@ -95,7 +95,7 @@ function StatCard({ label, sublabel, value, displayValue, iconKey, accent, href,
             style={{
               fontSize: '11px',
               fontWeight: 600,
-              color: '#86868B',
+              color: 'var(--dash-text-secondary)',
               margin: '0 0 2px 0',
               letterSpacing: '0.05em',
               textTransform: 'uppercase',
@@ -103,7 +103,7 @@ function StatCard({ label, sublabel, value, displayValue, iconKey, accent, href,
           >
             {label}
           </p>
-          <p style={{ fontSize: '11px', color: '#48484A', margin: 0 }}>
+          <p style={{ fontSize: '11px', color: 'var(--dash-text-tertiary)', margin: 0 }}>
             {sublabel}
           </p>
         </div>

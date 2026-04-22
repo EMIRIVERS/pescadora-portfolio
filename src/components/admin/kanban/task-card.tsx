@@ -74,7 +74,7 @@ export function TaskCard({ task, onOpenDetail }: TaskCardProps) {
     // Card base styles (applied here to allow isDragging override)
     backgroundColor: isDragging ? 'var(--dash-surface-3)' : 'var(--dash-surface-2)',
     borderRadius: '12px',
-    border: '1px solid rgba(255,255,255,0.06)',
+    border: '1px solid var(--dash-border)',
     borderLeft: `3px solid ${PRIORITY_BORDER_COLOR[task.priority]}`,
     padding: '14px 16px',
     cursor: 'grab',

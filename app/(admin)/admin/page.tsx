@@ -663,17 +663,20 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
           gap: 10px;
           text-decoration: none;
           color: inherit;
-          transition: border-color 0.2s, transform 0.2s;
+          box-shadow: var(--dash-shadow-sm), var(--dash-highlight);
+          transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
         }
         .apd-stat-card:hover {
           border-color: var(--dash-border-strong) !important;
-          transform: translateY(-1px);
+          transform: translateY(-2px);
+          box-shadow: var(--dash-shadow-md), var(--dash-highlight);
         }
         .apd-list-card {
           background: var(--dash-surface-1);
           border: 1px solid var(--dash-border);
           border-radius: 16px;
           overflow: hidden;
+          box-shadow: var(--dash-shadow-sm), var(--dash-highlight);
         }
         .apd-list-item {
           transition: background 0.15s;
@@ -690,15 +693,17 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
           color: var(--dash-text-secondary);
           font-size: 12px;
           text-decoration: none;
-          transition: background 0.15s, color 0.15s;
+          transition: background 0.15s, color 0.15s, box-shadow 0.15s;
           letter-spacing: 0.01em;
+          box-shadow: var(--dash-highlight);
         }
         .apd-quick-link:hover {
           background: var(--dash-surface-3);
           color: var(--dash-text-primary);
+          box-shadow: var(--dash-shadow-xs), var(--dash-highlight);
         }
         .apd-ver-todos {
-          color: #0071E3;
+          color: var(--dash-accent);
           font-size: 13px;
           text-decoration: none;
           transition: opacity 0.15s;
@@ -717,13 +722,13 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
           transition: color 0.15s;
         }
         .apd-project-link:hover {
-          color: #0071E3;
+          color: var(--dash-accent);
         }
         .dh-row:hover {
           background: var(--dash-surface-2);
         }
         .dh-link:hover {
-          color: #0071E3;
+          color: var(--dash-accent);
         }
         .dh-action-primary {
           display: flex;
@@ -731,18 +736,21 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
           justify-content: center;
           gap: 8px;
           padding: 12px 20px;
-          background: #0071E3;
-          border-radius: 10px;
-          color: var(--dash-text-primary);
+          background: var(--dash-accent);
+          background-image: linear-gradient(180deg, color-mix(in srgb, var(--dash-accent) 80%, white) 0%, var(--dash-accent) 100%);
+          border-radius: 11px;
+          color: #ffffff;
           font-size: 14px;
-          font-weight: 500;
+          font-weight: 600;
           text-decoration: none;
-          transition: opacity 0.15s, transform 0.15s;
+          transition: opacity 0.15s, transform 0.15s, box-shadow 0.15s;
           flex: 1;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.18);
         }
         .dh-action-primary:hover {
-          opacity: 0.88;
+          opacity: 0.9;
           transform: translateY(-1px);
+          box-shadow: 0 4px 14px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.18);
         }
         .dh-action-secondary {
           display: flex;
@@ -752,18 +760,20 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
           padding: 12px 20px;
           background: var(--dash-surface-2);
           border: 1px solid var(--dash-border);
-          border-radius: 10px;
+          border-radius: 11px;
           color: var(--dash-text-primary);
           font-size: 14px;
           font-weight: 500;
           text-decoration: none;
-          transition: background 0.15s, border-color 0.15s, transform 0.15s;
+          transition: background 0.15s, border-color 0.15s, transform 0.15s, box-shadow 0.15s;
           flex: 1;
+          box-shadow: var(--dash-highlight);
         }
         .dh-action-secondary:hover {
           background: var(--dash-surface-3);
           border-color: var(--dash-border-strong);
           transform: translateY(-1px);
+          box-shadow: var(--dash-shadow-xs), var(--dash-highlight);
         }
         .apd-actions-grid {
           display: grid;

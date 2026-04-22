@@ -55,7 +55,7 @@ export default function PortfolioHeader({ visible }: PortfolioHeaderProps) {
     fontSize: '0.58rem',
     letterSpacing: '0.18em',
     textTransform: 'uppercase',
-    color: '#6b6560',
+    color: 'var(--color-text-muted)',
     textDecoration: 'none',
     transition: 'color 0.2s',
     cursor: 'pointer',
@@ -74,7 +74,7 @@ export default function PortfolioHeader({ visible }: PortfolioHeaderProps) {
     fontSize: '0.55rem',
     letterSpacing: '0.15em',
     textTransform: 'uppercase',
-    color: '#555',
+    color: 'var(--color-text-dim)',
     textDecoration: 'none',
     transition: 'color 0.2s',
     cursor: 'pointer',
@@ -122,7 +122,7 @@ export default function PortfolioHeader({ visible }: PortfolioHeaderProps) {
               fontSize: '0.72rem',
               letterSpacing: '0.22em',
               textTransform: 'uppercase',
-              color: '#ede8e0',
+              color: 'var(--color-text)',
               whiteSpace: 'nowrap',
               lineHeight: 1,
               background: 'none',
@@ -157,17 +157,17 @@ export default function PortfolioHeader({ visible }: PortfolioHeaderProps) {
           >
             <div style={{ width: 20, height: 14, position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <span style={{
-                display: 'block', width: '100%', height: 1.5, background: '#ede8e0',
+                display: 'block', width: '100%', height: 1.5, background: 'var(--color-text)',
                 transition: 'transform 0.3s, opacity 0.3s',
                 transform: menuOpen ? 'translateY(6.25px) rotate(45deg)' : 'none',
               }} />
               <span style={{
-                display: 'block', width: '100%', height: 1.5, background: '#ede8e0',
+                display: 'block', width: '100%', height: 1.5, background: 'var(--color-text)',
                 transition: 'opacity 0.3s',
                 opacity: menuOpen ? 0 : 1,
               }} />
               <span style={{
-                display: 'block', width: '100%', height: 1.5, background: '#ede8e0',
+                display: 'block', width: '100%', height: 1.5, background: 'var(--color-text)',
                 transition: 'transform 0.3s, opacity 0.3s',
                 transform: menuOpen ? 'translateY(-6.25px) rotate(-45deg)' : 'none',
               }} />
@@ -269,7 +269,7 @@ export default function PortfolioHeader({ visible }: PortfolioHeaderProps) {
           fontSize: '0.78rem',
           letterSpacing: '0.28em',
           textTransform: 'uppercase',
-          color: '#ede8e0',
+          color: 'var(--color-text)',
           whiteSpace: 'nowrap',
           lineHeight: 1,
           background: 'none',
@@ -311,8 +311,8 @@ export default function PortfolioHeader({ visible }: PortfolioHeaderProps) {
             key={id}
             onClick={() => scrollTo(id)}
             style={catBase}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = '#e8341a'; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = '#555'; }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--color-accent)'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--color-text-dim)'; }}
           >
             {label}
           </button>
@@ -329,8 +329,8 @@ export default function PortfolioHeader({ visible }: PortfolioHeaderProps) {
             key={targetId}
             onClick={() => scrollTo(targetId)}
             style={linkBase}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = '#ede8e0'; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = '#6b6560'; }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--color-text)'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--color-text-muted)'; }}
           >
             {label}
           </button>

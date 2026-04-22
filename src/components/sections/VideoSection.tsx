@@ -92,12 +92,12 @@ function VideoTile({ video }: { video: VideoEntry }) {
             width: 52,
             height: 52,
             borderRadius: '50%',
-            border: '1px solid rgba(242,237,230,0.7)',
+            border: '1px solid color-mix(in srgb, var(--color-text) 70%, transparent)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}>
-            <span style={{ color: '#f2ede6', fontSize: '1rem', marginLeft: 4 }}>▶</span>
+            <span style={{ color: 'var(--color-text)', fontSize: '1rem', marginLeft: 4 }}>▶</span>
           </div>
         </div>
 
@@ -110,7 +110,7 @@ function VideoTile({ video }: { video: VideoEntry }) {
           fontSize: '0.6rem',
           letterSpacing: '0.18em',
           textTransform: 'uppercase',
-          color: '#f2ede6',
+          color: 'var(--color-text)',
           opacity: hovered ? 1 : 0.55,
           transition: 'opacity 0.3s',
           pointerEvents: 'none',
@@ -216,7 +216,7 @@ export function VideoSection() {
               fontWeight: 200,
               fontSize: 'clamp(1.2rem, 2.5vw, 1.8rem)',
               letterSpacing: '0.08em',
-              color: '#f2ede6',
+              color: 'var(--color-text)',
               margin: '0 0 1px',
               paddingBottom: '0.75rem',
               borderBottom: '1px solid rgba(255,255,255,0.07)',

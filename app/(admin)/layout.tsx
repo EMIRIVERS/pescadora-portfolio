@@ -8,6 +8,7 @@ import CommandPaletteButton from '@/components/admin/CommandPaletteButton'
 import NotificationBell from '@/components/admin/NotificationBell'
 import NavProgress from '@/components/admin/NavProgress'
 import PageTransition from '@/components/admin/PageTransition'
+import PageBreadcrumb from '@/components/admin/PageBreadcrumb'
 
 export default async function AdminLayout({
   children,
@@ -61,32 +62,39 @@ export default async function AdminLayout({
         <MobileNav profile={profileData} />
 
         {/* Desktop layout: sidebar + content side by side */}
-        <div style={{ display: 'flex' }}>
-          <div className="sidebar-wrapper">
+        <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+          <div
+            className="sidebar-wrapper"
+            style={{ position: 'sticky', top: 0, height: '100vh', flexShrink: 0 }}
+          >
             <Sidebar profile={profileData} />
           </div>
-          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             {/* Top bar */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'flex-end',
-              padding: '10px 28px',
+              justifyContent: 'space-between',
+              padding: '0 24px',
+              height: 48,
               borderBottom: '1px solid var(--dash-border)',
               background: 'var(--dash-surface-1)',
               gap: 8,
+              flexShrink: 0,
               transition: 'background 0.2s ease, border-color 0.2s ease',
             }}>
-              <CommandPaletteButton />
-              <NotificationBell />
+              <PageBreadcrumb />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <CommandPaletteButton />
+                <NotificationBell />
+              </div>
             </div>
             <main
               className="admin-main-content"
               style={{
                 flex: 1,
                 minWidth: 0,
-                overflowY: 'auto',
-                padding: '32px 40px',
+                padding: '28px 32px',
                 display: 'flex',
                 flexDirection: 'column',
               }}

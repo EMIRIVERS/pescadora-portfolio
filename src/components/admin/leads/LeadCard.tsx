@@ -133,7 +133,7 @@ export default function LeadCard({ lead, onClick, accentColor = 'var(--dash-text
 
   return (
     <motion.div
-      whileHover={{ y: -2, boxShadow: '0 8px 24px rgba(0,0,0,0.25)' }}
+      whileHover={{ y: -2, boxShadow: '0 4px 16px rgba(0,0,0,0.60), 0 2px 6px rgba(0,0,0,0.40), 0 0 0 1px rgba(255,255,255,0.03)' }}
       whileTap={{ scale: 0.98 }}
       transition={{ duration: 0.15, ease: 'easeOut' }}
       style={{ borderRadius: '12px' }}
@@ -446,10 +446,10 @@ export default function LeadCard({ lead, onClick, accentColor = 'var(--dash-text
                 }}
                 title="Abrir en WhatsApp"
                 style={{
-                  width: '20px',
-                  height: '20px',
-                  borderRadius: '5px',
-                  background: 'rgba(37,211,102,0.15)',
+                  width: '30px',
+                  height: '30px',
+                  borderRadius: '8px',
+                  background: 'rgba(37,211,102,0.18)',
                   color: '#25D366',
                   fontSize: '9px',
                   fontWeight: 700,
@@ -462,6 +462,7 @@ export default function LeadCard({ lead, onClick, accentColor = 'var(--dash-text
                   fontFamily: 'inherit',
                   lineHeight: 1,
                   padding: 0,
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
                 }}
               >
                 WA

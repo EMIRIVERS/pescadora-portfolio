@@ -123,7 +123,7 @@ export default function TeamMemberCard({ member, currentUserId }: Props) {
   }
 
   // Role badge color
-  const roleBadgeColor = currentRole === 'admin_staff' ? '#BF5AF2' : '#0071E3'
+  const roleBadgeColor = currentRole === 'admin_staff' ? 'var(--dash-purple, #BF5AF2)' : 'var(--dash-accent)'
 
   return (
     <div
@@ -138,8 +138,11 @@ export default function TeamMemberCard({ member, currentUserId }: Props) {
         flexDirection: 'column',
         alignItems: 'center',
         textAlign: 'center',
-        transition: 'background-color 0.15s ease',
+        transition: 'background-color 0.15s ease, box-shadow 0.15s ease',
         gap: '0px',
+        boxShadow: hovered
+          ? '0 4px 16px rgba(0,0,0,0.60), 0 2px 6px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.07)'
+          : '0 2px 8px rgba(0,0,0,0.55), 0 1px 2px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.07)',
       }}
     >
       {/* Avatar */}
@@ -326,7 +329,7 @@ export default function TeamMemberCard({ member, currentUserId }: Props) {
       </div>
 
       {roleError && (
-        <p style={{ marginTop: '4px', fontSize: '11px', color: '#FF453A', marginBottom: 0 }}>
+        <p style={{ marginTop: '4px', fontSize: '11px', color: 'var(--dash-danger)', marginBottom: 0 }}>
           {roleError}
         </p>
       )}
@@ -347,7 +350,7 @@ export default function TeamMemberCard({ member, currentUserId }: Props) {
           cursor: isSelf || adminPending ? 'not-allowed' : 'pointer',
           opacity: isSelf || adminPending ? 0.45 : 1,
           backgroundColor: isAdmin ? 'rgba(255,69,58,0.12)' : 'rgba(48,209,88,0.12)',
-          color: isAdmin ? '#FF453A' : '#30D158',
+          color: isAdmin ? 'var(--dash-danger)' : 'var(--dash-success)',
           transition: 'opacity 0.15s ease, background-color 0.15s ease',
           fontFamily: FONT,
         }}
@@ -356,7 +359,7 @@ export default function TeamMemberCard({ member, currentUserId }: Props) {
       </button>
 
       {adminError && (
-        <p style={{ marginTop: '4px', fontSize: '11px', color: '#FF453A', marginBottom: 0 }}>
+        <p style={{ marginTop: '4px', fontSize: '11px', color: 'var(--dash-danger)', marginBottom: 0 }}>
           {adminError}
         </p>
       )}

@@ -38,6 +38,7 @@ export interface Lead {
   status: LeadStatus;
   source: 'manual' | 'referral' | 'instagram' | 'web' | 'whatsapp' | 'other';
   notes: string | null;
+  wa_message: string | null;
   budget_range: string | null;
   project_type: string | null;
   assigned_to: string | null;

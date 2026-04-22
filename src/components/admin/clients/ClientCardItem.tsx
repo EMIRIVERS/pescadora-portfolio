@@ -89,7 +89,7 @@ export function ClientCardItem({ client, color, index }: ClientCardItemProps) {
     <motion.div
       initial={{ opacity: 0, scale: 0.96, y: 12 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
-      whileHover={{ y: -4, boxShadow: '0 12px 32px rgba(0,0,0,0.25)' }}
+      whileHover={{ y: -4, boxShadow: '0 8px 32px rgba(0,0,0,0.65), 0 4px 12px rgba(0,0,0,0.42), 0 0 0 1px rgba(255,255,255,0.04)' }}
       transition={{ duration: 0.3, delay: Math.min(index, 6) * 0.06, ease: 'easeOut' }}
       className="client-card"
       onClick={handleCardClick}
@@ -307,7 +307,7 @@ export function ClientCardItem({ client, color, index }: ClientCardItemProps) {
         style={{
           marginTop: 'auto',
           paddingTop: '12px',
-          borderTop: '1px solid rgba(255,255,255,0.06)',
+          borderTop: '1px solid var(--dash-border)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'flex-end',
@@ -317,7 +317,7 @@ export function ClientCardItem({ client, color, index }: ClientCardItemProps) {
           style={{
             fontSize: '13px',
             fontWeight: 600,
-            color: '#0071E3',
+            color: 'var(--dash-accent)',
             letterSpacing: '-0.01em',
           }}
         >
