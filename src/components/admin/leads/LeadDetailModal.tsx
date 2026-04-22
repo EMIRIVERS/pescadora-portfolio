@@ -484,12 +484,7 @@ export default function LeadDetailModal({
 
   // ── WA template ────────────────────────────────────────────────────────────
 
-  function getPortfolioLink(category: string): string {
-    if (category.includes('hotel') || category.includes('hospedaje') || category.includes('cabana') || category.includes('resort')) return 'xicofilms.com/portfolio/stays'
-    if (category.includes('restaurante') || category.includes('café') || category.includes('bar') || category.includes('cocina') || category.includes('kitchen') || category.includes('pizza') || category.includes('cafe')) return 'xicofilms.com/portfolio/food'
-    if (category.includes('tour') || category.includes('buceo') || category.includes('snorkel') || category.includes('sailing') || category.includes('diving') || category.includes('fishing') || category.includes('pesca')) return 'xicofilms.com/portfolio/adventures'
-    if (category.includes('spa') || category.includes('yoga') || category.includes('wellness') || category.includes('bienestar') || category.includes('massage')) return 'xicofilms.com/portfolio/lifestyle'
-    if (category.includes('real estate') || category.includes('realty')) return 'xicofilms.com/portfolio/properties'
+  function getPortfolioLink(_category: string): string {
     return 'xicofilms.com'
   }
 

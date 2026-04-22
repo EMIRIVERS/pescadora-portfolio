@@ -15,18 +15,7 @@ const HEADERS = {
 
 // ── Helpers de categoría ──────────────────────────────────────────────────────
 
-function getPortfolioLink(category) {
-  const c = category.toLowerCase()
-  if (c.includes('hotel') || c.includes('hospedaje') || c.includes('cabana') || c.includes('resort') || c.includes('hostel') || c.includes('lodge') || c.includes('glamping'))
-    return 'xicofilms.com/portfolio/stays'
-  if (c.includes('restaurante') || c.includes('café') || c.includes('bar') || c.includes('cocina') || c.includes('kitchen') || c.includes('pizza') || c.includes('cafe') || c.includes('coffee') || c.includes('restaurant') || c.includes('food') || c.includes('grill') || c.includes('bakery') || c.includes('bistro'))
-    return 'xicofilms.com/portfolio/food'
-  if (c.includes('tour') || c.includes('buceo') || c.includes('snorkel') || c.includes('sailing') || c.includes('diving') || c.includes('fishing') || c.includes('pesca') || c.includes('kayak') || c.includes('adventure') || c.includes('excursion'))
-    return 'xicofilms.com/portfolio/adventures'
-  if (c.includes('spa') || c.includes('yoga') || c.includes('wellness') || c.includes('bienestar') || c.includes('massage'))
-    return 'xicofilms.com/portfolio/lifestyle'
-  if (c.includes('real estate') || c.includes('realty') || c.includes('property') || c.includes('properties'))
-    return 'xicofilms.com/portfolio/properties'
+function getPortfolioLink(_category) {
   return 'xicofilms.com'
 }
 
