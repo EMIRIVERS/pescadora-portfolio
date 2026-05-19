@@ -40,15 +40,28 @@ export default function PortfolioHeader({ visible }: PortfolioHeaderProps) {
   const isMobile = useIsMobile();
   const navScrollRef = useRef<HTMLElement>(null);
 
-  const scrollTo = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  // Lenis owns the scroll. Native scrollIntoView/window.scrollTo are
+  // swallowed by it, so route through the exposed Lenis instance. Fall back
+  // to native when Lenis is absent (reduced-motion users / not yet mounted).
+  const HEADER_OFFSET = -80;
+
+  const doScroll = (target: string | number) => {
+    const lenis = (window as unknown as {
+      __lenis?: { scrollTo: (t: string | number, o?: { offset?: number }) => void };
+    }).__lenis;
+    if (lenis) {
+      lenis.scrollTo(target, { offset: typeof target === 'number' ? 0 : HEADER_OFFSET });
+    } else if (typeof target === 'number') {
+      window.scrollTo({ top: target, behavior: 'smooth' });
+    } else {
+      document.querySelector(target)?.scrollIntoView({ behavior: 'smooth' });
+    }
     setMenuOpen(false);
   };
 
-  const scrollTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    setMenuOpen(false);
-  };
+  const scrollTo = (id: string) => doScroll(`#${id}`);
+
+  const scrollTop = () => doScroll(0);
 
   const linkBase: React.CSSProperties = {
     fontFamily: 'var(--font-geist-mono)',

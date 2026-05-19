@@ -27,6 +27,9 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
       syncTouch: true,
     })
     lenisRef.current = lenis
+    // Expose so the fixed header (and any anchor) can drive scroll through
+    // Lenis. Native scrollIntoView/window.scrollTo are swallowed by Lenis.
+    ;(window as unknown as { __lenis?: Lenis }).__lenis = lenis
 
     // Bridge Lenis → ScrollTrigger
     lenis.on('scroll', ScrollTrigger.update)
@@ -41,6 +44,7 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
     return () => {
       ctx.revert()
       lenis.destroy()
+      delete (window as unknown as { __lenis?: Lenis }).__lenis
     }
   }, [])
 
