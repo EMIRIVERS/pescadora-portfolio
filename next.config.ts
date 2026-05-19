@@ -1,6 +1,8 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
+  // Don't advertise the framework.
+  poweredByHeader: false,
   transpilePackages: ['simplex-noise'],
   turbopack: {
     rules: {
@@ -24,6 +26,21 @@ const nextConfig: NextConfig = {
         pathname: '/storage/v1/object/public/**',
       },
     ],
+  },
+  // Conservative, embed-safe security headers (Vimeo/Supabase unaffected).
+  // No HSTS preload / includeSubDomains so this stays fully reversible.
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'X-DNS-Prefetch-Control', value: 'on' },
+          { key: 'Strict-Transport-Security', value: 'max-age=31536000' },
+        ],
+      },
+    ]
   },
 }
 

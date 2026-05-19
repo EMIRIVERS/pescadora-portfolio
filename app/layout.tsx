@@ -2,10 +2,18 @@ import type { Metadata, Viewport } from 'next'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import { Cormorant_Garamond } from 'next/font/google'
+import { SpeedInsights } from '@vercel/speed-insights/next'
+import { Analytics } from '@vercel/analytics/next'
 import Providers from './providers'
 import JsonLd from '@/components/seo/JsonLd'
 import { SITE, SITE_URL } from '@/lib/seo'
 import './globals.css'
+
+// Portfolio stills are served from Supabase Storage and drive the LCP — warm
+// the connection early. React 19 hoists these <link>s into <head>.
+const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL
+  ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin
+  : null
 
 const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
@@ -77,10 +85,18 @@ export default function RootLayout({
   return (
     <html lang="es-MX">
       <body className={`${GeistSans.variable} ${GeistMono.variable} ${cormorant.variable}`}>
+        {supabaseOrigin && (
+          <>
+            <link rel="preconnect" href={supabaseOrigin} crossOrigin="anonymous" />
+            <link rel="dns-prefetch" href={supabaseOrigin} />
+          </>
+        )}
         <JsonLd />
         <Providers>
           {children}
         </Providers>
+        <SpeedInsights />
+        <Analytics />
       </body>
     </html>
   )
