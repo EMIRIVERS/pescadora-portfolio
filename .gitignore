@@ -52,3 +52,6 @@ next-env.d.ts
 *.avi
 *.zip
 Contenido/
+
+# Supabase CLI local cache/temp — must never be committed (leaks project ref)
+supabase/.temp/
