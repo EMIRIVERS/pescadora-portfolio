@@ -76,11 +76,13 @@ export default function MediaBrowser() {
         isFolder: item.id === null, // folders have no id in Supabase Storage
       }))
 
-      // Sort: folders first, then files
+      // Sort: folders first, then files by date (newest first)
       mapped.sort((a, b) => {
         if (a.isFolder && !b.isFolder) return -1
         if (!a.isFolder && b.isFolder) return 1
-        return a.name.localeCompare(b.name)
+        const aDate = a.updated_at ?? a.created_at ?? ''
+        const bDate = b.updated_at ?? b.created_at ?? ''
+        return bDate.localeCompare(aDate) // newest first
       })
 
       setItems(mapped)

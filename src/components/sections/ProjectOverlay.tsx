@@ -8,6 +8,20 @@ import { projectStories } from '@/data/project-stories'
 import type { PhotoEntry, VideoEntry } from '@/types/media'
 import type { PhotoAlbum } from '@/types/media'
 
+const SUPABASE_STORAGE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/storage/v1/object/public/media/`
+
+/**
+ * Resolves a photo source. `cover_url` is stored as an absolute URL while
+ * `storage_path` is bucket-relative and must be prefixed with the public
+ * Supabase Storage URL — otherwise the browser requests a same-origin path
+ * that 404s and the photo silently fails to render.
+ */
+function resolvePhotoSrc(value: string | null | undefined): string | null {
+  if (!value) return null
+  if (/^https?:\/\//.test(value) || value.startsWith('/')) return value
+  return `${SUPABASE_STORAGE}${value}`
+}
+
 function getInitialMobileOverlay(breakpoint: number): boolean {
   if (typeof window === 'undefined') return false
   return window.matchMedia(`(max-width: ${breakpoint}px)`).matches
@@ -184,7 +198,7 @@ function DbAlbumsGrid({ albums, onSelect }: { albums: PhotoAlbum[]; onSelect: (a
   return (
     <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 2, padding: '0 0 4rem' }}>
       {albums.map((album, i) => {
-        const coverPhoto = album.cover_url ?? (album.photos[0]?.storage_path ?? null)
+        const coverPhoto = resolvePhotoSrc(album.cover_url ?? album.photos[0]?.storage_path)
         return (
           <motion.div
             key={album.id}
@@ -252,8 +266,10 @@ function DbAlbumDetail({ album, onBack, onClose }: { album: PhotoAlbum; onBack: 
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={photo.storage_path}
+              src={resolvePhotoSrc(photo.storage_path) ?? ''}
               alt={photo.alt_text || album.label}
+              loading="lazy"
+              decoding="async"
               style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
             />
           </motion.div>

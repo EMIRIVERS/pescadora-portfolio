@@ -1,26 +1,105 @@
-# Pescadora — Claude Code Rules
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project location
+
+The git repo and the Next.js app both live in `pescadora-portfolio/`, a subdirectory of the
+working directory (`Pescadora Full Proyect/`). Run every command from `pescadora-portfolio/`.
+
+Branding note: the codebase is named "Pescadora" / "pescadora-portfolio" but the live product
+is **XICO Films** (see `app/layout.tsx` metadata, email `from`, preloader). This mismatch is
+intentional history — do not "fix" it by renaming one to match the other.
 
 ## Commands
-- `npm run dev` — development server
-- `npm run build` — production build
-- `npm run lint` — ESLint
-- `node scripts/generate-registry.mjs` — regenerate media_registry.json
 
-## Always Do
-- Wrap static images in `next/image` unless loaded into Three.js textures
-- Clean up Three.js geometries, materials, textures in `useEffect` cleanup
-- Clean up GSAP ScrollTriggers in `useEffect` cleanup
-- TypeScript strict — no `any`, no `@ts-ignore`
-- Keep shaders in `.glsl` files, never as template strings in JS
+- `npm run dev` — dev server (uses **webpack**, not turbopack: `next dev --webpack`)
+- `npm run build` — production build (turbopack; applies the `.glsl` raw-loader rule)
+- `npm run lint` — ESLint (`eslint-config-next` core-web-vitals + typescript)
+- `node scripts/generate-registry.mjs` — regenerate `media_registry.json` (never edit it by hand)
+- `node scripts/compress-images.mjs` — batch-compress portfolio stills
+- `npx supabase ...` — Supabase CLI; local stack config in `supabase/config.toml`
 
-## Ask First
-- Before modifying `media_registry.json`
-- Before adding any npm dependency not in: three, gsap, framer-motion, lucide-react
-- Before changing scroll architecture
+No test framework is configured.
 
-## Never Do
-- Never alter `media_registry.json` manually (run the script)
-- Never add emoji to source files
-- Never set `position: absolute` on the WebGL canvas (must be `fixed`)
-- Never commit `.env*.local`
-- Never add icon libraries other than `lucide-react`
+## Architecture: one Next.js app, three surfaces
+
+App Router with route groups, each a distinct product surface gated by `proxy.ts`:
+
+- **`/` (public)** — marketing/portfolio site. Heavy WebGL: Three.js + custom GLSL shaders,
+  GSAP ScrollTrigger, Lenis smooth scroll. Content is CMS-driven from Supabase with ISR
+  (`export const revalidate = 3600` in `app/page.tsx`). `proxy.ts` short-circuits `/` before
+  any Supabase/auth call — keep it that way.
+- **`app/(admin)/admin/*`** — internal CRM/ops dashboard (leads pipeline, projects, kanban,
+  invoices, proposals, clients, team, reports, media browser, automations). Requires
+  `profiles.is_admin_team = true`.
+- **`app/(portal)/portal/*`** — client portal (deliverables + approvals, invoices, files,
+  profile). Requires an authenticated client user.
+- Plus `app/(auth)/login`, `app/cotiza` (public quote/lead form), `app/auth/callback`.
+
+## Auth & data access (read before touching Supabase)
+
+`proxy.ts` is the Next.js 16 middleware (Next 16 renamed `middleware.ts` → `proxy.ts`). It
+refreshes the Supabase session cookie on every matched request and enforces routing:
+`/admin` needs `is_admin_team`, `/portal` needs any auth, logged-in users are bounced off
+`/login` to their home surface.
+
+Three client factories in `src/lib/supabase/server.ts` — pick deliberately:
+
+- `createClient()` — cookie-bound, **RLS-enforced**. Use in Server Components / Route Handlers.
+- `createServiceClient()` — service-role, **bypasses RLS**. Server-only trusted contexts only.
+- `requireAdmin()` — call this first in **every admin server action**; returns `{ userId }` or `{ error }`.
+
+RLS model (defined in `supabase/migrations/`): staff (`is_admin_team`) get full access;
+client rows are read-only and scoped to `profile_id = auth.uid()`. Trusting only `proxy.ts`
+for authz is not enough — server actions must independently verify via `requireAdmin()`.
+
+## Data model
+
+~24 tables across 13 SQL migrations in `supabase/migrations/` (timestamped, additive). Core
+entities: `profiles`, `clients`, `projects`, `project_deliverables`, `task_boards`/`tasks`/
+`task_activity_log`, `leads`, expenses, invoices, proposals, and portfolio
+videos/photos/albums/categories. Enums (`project_status`, `deliverable_status`, etc.) live in
+the first migration `20260329000000_pescadora_platform.sql`. Generated TS types:
+`src/lib/supabase/types.ts`. Schema changes = a new migration file, never editing old ones.
+
+## Server actions — known wart
+
+Server actions are split across **three** locations: `app/actions/*`, `src/lib/actions/*`,
+and a stray `src/app/actions/invoices.ts`. The `src/app/actions/invoices.ts` file is **dead
+code** — the live invoice actions are `app/actions/invoices.ts` (imported via relative paths
+from the admin invoice pages). When adding actions, follow the pattern of the feature you're
+near rather than introducing a fourth convention.
+
+## Other architecture notes
+
+- **Path alias**: `@/*` → `./src/*`. `app/` is NOT under `src/`, so app-internal imports use
+  relative paths; `@/...` only reaches `src/`.
+- **Shaders**: keep GLSL in `.glsl` files under `src/components/canvas/shaders/`. Loaded via
+  `raw-loader` (turbopack rule in `next.config.ts`); typed by `src/types/glsl.d.ts`. Never
+  inline shaders as JS template strings.
+- **Media registry**: `media_registry.json` is generated by `scripts/generate-registry.mjs`
+  and consumed through `src/lib/registry.ts`. Public media is mostly DB-driven now; the JSON
+  registry covers local photo projects.
+- **Email**: Resend via raw `fetch` in `src/lib/email/index.ts`, templates in
+  `src/lib/email/templates.ts`. No-ops gracefully without `RESEND_API_KEY` (a duplicate
+  `email.ts` once crashed builds when the key was absent — don't reintroduce that).
+- **Cron**: `vercel.json` runs `/api/cron/reminders` daily at 09:00 UTC; the route rejects
+  requests without `Authorization: Bearer ${CRON_SECRET}`.
+- **State/data fetching**: TanStack Query (`src/providers/query-provider.tsx`) + Zustand.
+- **Env vars**: `.env.local` holds `NEXT_PUBLIC_SUPABASE_URL`,
+  `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ACCESS_TOKEN`.
+  Code also reads `RESEND_API_KEY`, `EMAIL_FROM`, `ADMIN_EMAIL`, `CRON_SECRET`. `.env*` and
+  `.claude/` are gitignored; never commit them.
+
+## Conventions
+
+- TypeScript strict — no `any`, no `@ts-ignore`.
+- Clean up Three.js geometries/materials/textures **and** GSAP ScrollTriggers in `useEffect`
+  cleanup. Leaked WebGL resources / triggers are a recurring bug source here.
+- Wrap static images in `next/image` unless the image is fed into a Three.js texture.
+- The WebGL canvas must be `position: fixed`, never `absolute`.
+- No emoji in source files. `lucide-react` is the only icon library — don't add others.
+- Ask before: modifying `media_registry.json`, changing scroll architecture, or adding any
+  npm dependency. The Supabase `*.supabase.co` public-storage `remotePattern` in
+  `next.config.ts` is required for portfolio images — don't remove it.

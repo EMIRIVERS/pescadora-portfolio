@@ -103,7 +103,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
     supabase
       .from('tasks')
       .select('id, assignee_id')
-      .eq('board_id', id),
+      .eq('project_id', id),
     getProjectComments(id),
     getExpenses(id),
   ])

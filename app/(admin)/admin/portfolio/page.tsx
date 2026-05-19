@@ -1,6 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/server'
-import VideoManager from '@/components/admin/portfolio/VideoManager'
-import CategoryManager from '@/components/admin/portfolio/CategoryManager'
+import PortfolioTabs from '@/components/admin/portfolio/PortfolioTabs'
 import type { Album } from '@/components/admin/portfolio/PhotoManager'
 
 interface PortfolioVideo {
@@ -18,46 +17,45 @@ interface PortfolioVideo {
   updated_at: string
 }
 
+const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+
 const STAT_CATEGORIES = [
   { key: 'videoclips',   label: 'Videoclips' },
   { key: 'corporativos', label: 'Corporativos' },
   { key: 'restaurantes', label: 'Restaurantes' },
   { key: 'comerciales',  label: 'Comerciales' },
-  { key: 'fotografia',   label: 'Fotografía' },
 ] as const
 
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
-
-// Accent colours per category (subtle tint for the card border / count)
 const CATEGORY_ACCENT: Record<string, string> = {
   videoclips:   '#BF5AF2',
   corporativos: '#0A84FF',
   restaurantes: '#FF9F0A',
   comerciales:  '#30D158',
-  fotografia:   '#FF453A',
   visibles:     '#30D158',
   ocultos:      '#FF453A',
+  fotografia:   '#e8341a',
 }
 
 interface StatCardProps {
   label: string
   count: number
   categoryKey: string
+  sub?: string
 }
 
-function StatCard({ label, count, categoryKey }: StatCardProps) {
+function StatCard({ label, count, categoryKey, sub }: StatCardProps) {
   const accent = CATEGORY_ACCENT[categoryKey] ?? 'var(--dash-text-secondary)'
   return (
     <div
       style={{
         flex: '1 1 120px',
         backgroundColor: 'var(--dash-surface-2)',
-        border: '1px solid rgba(255,255,255,0.08)',
+        border: `1px solid ${categoryKey === 'fotografia' ? 'rgba(232,52,26,0.2)' : 'rgba(255,255,255,0.08)'}`,
         borderRadius: 12,
         padding: '16px 20px',
         display: 'flex',
         flexDirection: 'column',
-        gap: 8,
+        gap: 6,
         fontFamily: FONT,
       }}
     >
@@ -88,7 +86,7 @@ function StatCard({ label, count, categoryKey }: StatCardProps) {
           margin: 0,
           fontSize: 28,
           fontWeight: 600,
-          color: 'var(--dash-text-primary)',
+          color: categoryKey === 'fotografia' ? '#e8341a' : 'var(--dash-text-primary)',
           lineHeight: 1,
           fontFamily: FONT,
           letterSpacing: '-0.02em',
@@ -96,6 +94,9 @@ function StatCard({ label, count, categoryKey }: StatCardProps) {
       >
         {count}
       </p>
+      {sub && (
+        <p style={{ margin: 0, fontSize: 11, color: 'var(--dash-text-tertiary)' }}>{sub}</p>
+      )}
     </div>
   )
 }
@@ -127,6 +128,9 @@ export default async function PortfolioAdminPage() {
   const allCategories: PortfolioCategory[] = (categoriesData ?? []) as PortfolioCategory[]
   const allAlbums: Album[] = (albumsData ?? []) as Album[]
 
+  const rootAlbums = allAlbums.filter((a) => !a.parent_id)
+  const totalPhotos = allAlbums.reduce((sum, a) => sum + (a.portfolio_photos?.length ?? 0), 0)
+
   const categoryCounts = STAT_CATEGORIES.reduce<Record<string, number>>(
     (acc, { key }) => {
       acc[key] = allVideos.filter((v) => v.category === key).length
@@ -135,15 +139,13 @@ export default async function PortfolioAdminPage() {
     {},
   )
 
-  // Full count per slug — includes any slugs not in the static STAT_CATEGORIES list
   const videoCountsBySlug = allVideos.reduce<Record<string, number>>((acc, v) => {
     if (v.category) acc[v.category] = (acc[v.category] ?? 0) + 1
     return acc
   }, {})
 
   const visibleCount = allVideos.filter((v) => v.is_visible).length
-  const hiddenCount  = allVideos.length - visibleCount
-
+  const hiddenCount = allVideos.length - visibleCount
 
   return (
     <div
@@ -151,11 +153,11 @@ export default async function PortfolioAdminPage() {
         padding: '40px 32px',
         fontFamily: FONT,
         minHeight: '100vh',
-        backgroundColor: 'var(--dash-surface-1)',
+        backgroundColor: 'var(--dash-bg)',
       }}
     >
-      {/* ── Header ────────────────────────────────────────────────────────── */}
-      <div style={{ marginBottom: 32 }}>
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
+      <div style={{ marginBottom: 28 }}>
         <h1
           style={{
             margin: 0,
@@ -176,42 +178,49 @@ export default async function PortfolioAdminPage() {
             fontFamily: FONT,
           }}
         >
-          Gestion de videos y contenido
+          Gestión de videos, fotografía y categorías
         </p>
       </div>
 
-      {/* ── Stats row ─────────────────────────────────────────────────────── */}
+      {/* ── Stats row ──────────────────────────────────────────────────────── */}
       <div
         style={{
           display: 'flex',
-          gap: 12,
+          gap: 10,
           marginBottom: 32,
           flexWrap: 'wrap',
         }}
       >
-        <StatCard
-          label="Total"
-          count={allVideos.length}
-          categoryKey="total"
-        />
+        <StatCard label="Videos" count={allVideos.length} categoryKey="total" />
         {STAT_CATEGORIES.map(({ key, label }) => (
           <StatCard key={key} label={label} count={categoryCounts[key] ?? 0} categoryKey={key} />
         ))}
         <StatCard label="Visibles" count={visibleCount} categoryKey="visibles" />
         <StatCard label="Ocultos"  count={hiddenCount}  categoryKey="ocultos" />
-      </div>
-
-      {/* ── Category manager (con albums de fotografía integrados) ──────── */}
-      <div style={{ marginBottom: 32 }}>
-        <CategoryManager
-          initialCategories={allCategories}
-          videoCounts={videoCountsBySlug}
-          photoAlbums={allAlbums}
+        <StatCard
+          label="Fotografía"
+          count={rootAlbums.length}
+          categoryKey="fotografia"
+          sub={`${totalPhotos} foto${totalPhotos !== 1 ? 's' : ''} en total`}
         />
       </div>
 
-      {/* ── Video manager ─────────────────────────────────────────────────── */}
-      <VideoManager initialVideos={allVideos} />
+      {/* ── Divider ────────────────────────────────────────────────────────── */}
+      <div
+        style={{
+          height: 1,
+          background: 'var(--dash-border)',
+          marginBottom: 28,
+        }}
+      />
+
+      {/* ── Tabs: Videos | Fotografía | Categorías ─────────────────────────── */}
+      <PortfolioTabs
+        videos={allVideos}
+        categories={allCategories}
+        albums={allAlbums}
+        videoCounts={videoCountsBySlug}
+      />
     </div>
   )
 }

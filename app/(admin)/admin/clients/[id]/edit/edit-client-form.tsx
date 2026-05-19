@@ -59,7 +59,7 @@ export function EditClientForm({ id, initialName, initialEmail, initialCompany, 
       ...inputBase,
       ...(isPending || isDeleting ? { opacity: 0.45, cursor: 'not-allowed' } : {}),
       ...(focusedField === fieldName
-        ? { border: '1px solid #0071E3', boxShadow: '0 0 0 3px rgba(0,113,227,0.15)' }
+        ? { border: '1px solid var(--dash-accent)', boxShadow: '0 0 0 3px color-mix(in srgb, var(--dash-accent) 20%, transparent)' }
         : {}),
     }
   }
@@ -116,7 +116,7 @@ export function EditClientForm({ id, initialName, initialEmail, initialCompany, 
             borderRadius: '8px',
             padding: '12px 14px',
             fontSize: '13px',
-            color: '#FF453A',
+            color: 'var(--dash-danger)',
           }}
         >
           {generalError}
@@ -126,7 +126,7 @@ export function EditClientForm({ id, initialName, initialEmail, initialCompany, 
       {/* Name */}
       <div>
         <label htmlFor="name" style={fieldLabel}>
-          Nombre <span style={{ color: '#FF453A' }}>*</span>
+          Nombre <span style={{ color: 'var(--dash-danger)' }}>*</span>
         </label>
         <input
           id="name"
@@ -144,7 +144,7 @@ export function EditClientForm({ id, initialName, initialEmail, initialCompany, 
           style={getInputStyle('name')}
         />
         {nameError && (
-          <p style={{ fontSize: '12px', color: '#FF453A', marginTop: '5px' }}>{nameError}</p>
+          <p style={{ fontSize: '12px', color: 'var(--dash-danger)', marginTop: '5px' }}>{nameError}</p>
         )}
       </div>
 
@@ -250,7 +250,7 @@ export function EditClientForm({ id, initialName, initialEmail, initialCompany, 
             borderRadius: '8px',
             backgroundColor: 'rgba(255,69,58,0.1)',
             border: '1px solid rgba(255,69,58,0.25)',
-            color: '#FF453A',
+            color: 'var(--dash-danger)',
             cursor: isBusy ? 'not-allowed' : 'pointer',
             opacity: isBusy ? 0.45 : 1,
             transition: 'all 0.15s ease',
@@ -293,9 +293,10 @@ export function EditClientForm({ id, initialName, initialEmail, initialCompany, 
               fontSize: '14px',
               fontWeight: 500,
               borderRadius: '8px',
-              backgroundColor: '#0071E3',
+              background: 'var(--dash-accent)',
+              backgroundImage: 'linear-gradient(180deg, color-mix(in srgb, var(--dash-accent) 80%, white) 0%, var(--dash-accent) 100%)',
               border: 'none',
-              color: '#FFFFFF',
+              color: '#fff',
               cursor: isBusy ? 'not-allowed' : 'pointer',
               opacity: isBusy ? 0.65 : 1,
               transition: 'all 0.15s ease',

@@ -17,6 +17,10 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
   const lenisRef = useRef<Lenis | null>(null)
 
   useEffect(() => {
+    // Reduced-motion users get native scroll — Lenis hijacking scroll is a
+    // known accessibility/vestibular issue (WCAG 2.3.3).
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
     const lenis = new Lenis({
       lerp: 0.09,
       smoothWheel: true,

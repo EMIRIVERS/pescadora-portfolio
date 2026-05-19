@@ -84,8 +84,11 @@ export default async function Home() {
       cover_url: a.cover_url ?? null,
       photos: (a.portfolio_photos ?? []).sort((x: { sort_order: number }, y: { sort_order: number }) => x.sort_order - y.sort_order),
     }))
-  } catch {
-    // Supabase unavailable — render portfolio with registry fallback
+  } catch (err) {
+    // Supabase unavailable — render portfolio with registry fallback.
+    // Log so a production data outage is diagnosable instead of silently
+    // degrading to an empty/partial portfolio.
+    console.error('[home] Supabase fetch failed, using registry fallback:', err)
   }
 
   return <HomeClient cmsProjects={cmsProjects} videos={videos} categories={categories} photoAlbums={photoAlbums} />

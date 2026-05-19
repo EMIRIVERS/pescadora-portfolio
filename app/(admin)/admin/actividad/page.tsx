@@ -19,11 +19,12 @@ interface RawLeadActivity {
 
 interface RawTaskActivity {
   id: string
-  project_id: string
+  task_id: string
   action: string
-  metadata: Record<string, unknown> | null
+  old_value: string | null
+  new_value: string | null
   created_at: string
-  project: { title: string } | { title: string }[] | null
+  task: { title: string; project_id: string | null; project: { title: string } | null } | null
 }
 
 interface RawLead {
@@ -44,7 +45,7 @@ interface RawDeliverable {
 
 interface RawEmailLog {
   id: string
-  created_at: string
+  sent_at: string
   to_email: string
   subject: string
   template_name: string | null
@@ -106,21 +107,23 @@ export default async function ActividadPage() {
   try {
     const { data } = await supabase
       .from('task_activity_log')
-      .select('id, project_id, action, metadata, created_at, project:projects(title)')
+      .select('id, task_id, action, old_value, new_value, created_at, task:tasks(title, project_id, project:projects(title))')
       .order('created_at', { ascending: false })
       .limit(100)
 
     for (const row of (data ?? []) as unknown as RawTaskActivity[]) {
-      const project = resolveJoined(row.project)
+      const task = Array.isArray(row.task) ? row.task[0] : row.task
+      const project = task?.project && Array.isArray(task.project) ? task.project[0] : task?.project
       const projectTitle = project?.title ?? 'Proyecto desconocido'
+      const projectId = task?.project_id ?? null
       taskActivities.push({
         id: `task-act-${row.id}`,
         type: 'project_action',
         activitySubType: null,
         title: row.action,
-        subtitle: `Proyecto: ${projectTitle}`,
+        subtitle: `Tarea: ${task?.title ?? 'desconocida'} — Proyecto: ${projectTitle}`,
         createdAt: row.created_at,
-        linkHref: `/admin/projects/${row.project_id}`,
+        linkHref: projectId ? `/admin/projects/${projectId}` : '/admin/kanban',
         userName: null,
         leadName: null,
         leadId: null,
@@ -198,10 +201,11 @@ export default async function ActividadPage() {
   // ── Query 5: email_log ─────────────────────────────────────────────────────
   let emailItems: ActivityItem[] = []
   try {
-    const { data } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data } = await (supabase as any)
       .from('email_log')
-      .select('id, created_at, to_email, subject, template_name, status')
-      .order('created_at', { ascending: false })
+      .select('id, sent_at, to_email, subject, template_name, status')
+      .order('sent_at', { ascending: false })
       .limit(100)
 
     for (const row of (data ?? []) as unknown as RawEmailLog[]) {
@@ -211,7 +215,7 @@ export default async function ActividadPage() {
         activitySubType: null,
         title: `Email: ${row.subject}`,
         subtitle: `Para: ${row.to_email}`,
-        createdAt: row.created_at,
+        createdAt: row.sent_at,
         linkHref: '#',
         userName: 'Sistema',
         leadName: null,

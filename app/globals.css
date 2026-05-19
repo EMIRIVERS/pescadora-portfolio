@@ -14,6 +14,11 @@
   100% { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes shaderFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 @keyframes grain {
   0%, 100% { transform: translate(0, 0); }
   10%  { transform: translate(-2%, -3%); }
@@ -936,6 +941,30 @@ div:hover > .video-title {
 }
 
 /* ─── Invoice Print Styles ─────────────────────────────────────────────────── */
+
+/* ─── Reduced Motion (WCAG 2.3.3 / 2.2.2) ──────────────────────────────────── */
+/* Near-instant durations instead of `animation: none` so animated elements
+   still settle on their final state (e.g. fade-in content stays visible). */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .noise-overlay::after,
+  [data-cursor-dot] {
+    animation: none !important;
+  }
+
+  html {
+    scroll-behavior: auto !important;
+  }
+}
 
 @media print {
   /* Hide all admin chrome */

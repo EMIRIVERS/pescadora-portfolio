@@ -51,7 +51,9 @@ const FALLBACK_CATEGORIES: PortfolioCategory[] = [
 
 const VIMEO_BG_PARAMS = 'autoplay=1&muted=1&background=1&loop=1&title=0&byline=0&portrait=0'
 
-function buildAllCards(videos: VideoEntry[], cats: PortfolioCategory[]): ProjectCard[] {
+const SUPABASE_STORAGE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/storage/v1/object/public/media/`
+
+function buildAllCards(videos: VideoEntry[], cats: PortfolioCategory[], photoAlbums: PhotoAlbum[]): ProjectCard[] {
   const videoList = videos.length > 0 ? videos : registry.videos
   const cards: ProjectCard[] = []
 
@@ -59,11 +61,16 @@ function buildAllCards(videos: VideoEntry[], cats: PortfolioCategory[]): Project
     const isPhoto = cat.slug === 'fotografia'
 
     if (isPhoto) {
-      const dbFotos = videoList.filter((v) => (v.category as string) === 'fotografia')
-      if (dbFotos.length > 0) {
-        const autoCover = dbFotos[0]?.vimeoId ?? null
-        cards.push({ name: cat.slug, label: cat.label, coverUrl: cat.cover_url ?? autoCover, count: dbFotos.length, isPhoto: true, previewVimeoId: null })
+      // Priority 1: DB photo albums
+      if (photoAlbums.length > 0) {
+        const first = photoAlbums[0]
+        const firstPhotoUrl = first.photos[0]?.storage_path
+          ? `${SUPABASE_STORAGE}${first.photos[0].storage_path}`
+          : null
+        const autoCover = first.cover_url ?? firstPhotoUrl
+        cards.push({ name: cat.slug, label: cat.label, coverUrl: cat.cover_url ?? autoCover, count: photoAlbums.length, isPhoto: true, previewVimeoId: null })
       } else {
+        // Fallback: registry.photos grouped by project
         const projectMap = new Map<string, string>()
         for (const photo of registry.photos) {
           if (!projectMap.has(photo.project)) projectMap.set(photo.project, photo.url)
@@ -217,6 +224,8 @@ function PortfolioCard({
             <img
               src={card.coverUrl}
               alt={card.name}
+              loading="lazy"
+              decoding="async"
               style={{
                 position: 'absolute', inset: 0,
                 width: '100%', height: '100%',
@@ -284,7 +293,7 @@ function PortfolioCard({
           transition: 'opacity 0.4s ease',
           opacity: hovered ? 1 : 0.6,
         }}>
-          {card.count} {card.name === 'fotografia' ? 'proyectos' : 'videos'}
+          {card.count} {card.name === 'fotografia' ? 'álbumes' : 'videos'}
         </span>
 
         {/* Hover line accent */}
@@ -305,7 +314,7 @@ export default function PortfolioSection({ cmsProjects, videos, categories, phot
   const [openState, setOpenState] = useState<{ project: string; mediaType: OverlayMediaType; origin: OverlayOrigin } | null>(null)
 
   const activeCats = categories && categories.length > 0 ? categories : FALLBACK_CATEGORIES
-  const allCards = useMemo(() => buildAllCards(videos ?? [], activeCats), [videos, activeCats])
+  const allCards = useMemo(() => buildAllCards(videos ?? [], activeCats, photoAlbums ?? []), [videos, activeCats, photoAlbums])
   const fotoEntries = useMemo(
     () => (videos ?? []).filter((v) => (v.category as string) === 'fotografia'),
     [videos]

@@ -13,11 +13,9 @@ import type { VideoEntry } from '@/types/media'
 import { ServiciosSection } from '@/components/sections/ServiciosSection'
 import { ContactoSection } from '@/components/sections/ContactoSection'
 import SmoothScroll from '@/components/providers/SmoothScroll'
-import FilmGrain from '@/components/ui/FilmGrain'
 import DustParticles from '@/components/ui/DustParticles'
 import CursorGlow from '@/components/ui/CursorGlow'
 import AdaptiveCursor from '@/components/ui/AdaptiveCursor'
-import CinemaPreloader from '@/components/ui/CinemaPreloader'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -42,30 +40,16 @@ function useIsTouchDevice(): boolean {
 
 export default function HomeClient({ cmsProjects, videos, categories, photoAlbums }: Props) {
   const [headerVisible, setHeaderVisible] = useState(false)
-  const [preloaderDone, setPreloaderDone] = useState(false)
-  const [loadProgress, setLoadProgress] = useState(0)
   const isTouch = useIsTouchDevice()
 
   const heroWrapperRef = useRef<HTMLDivElement>(null)
   const colorGradeRef = useRef<HTMLDivElement>(null)
   const vignetteRef = useRef<HTMLDivElement>(null)
 
-  /* --- Lock body scroll during preloader --- */
-  useEffect(() => {
-    if (!preloaderDone) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [preloaderDone])
-
   /* --- Header scroll visibility --- */
   useEffect(() => {
     const onScroll = () => {
-      setHeaderVisible(window.scrollY > window.innerHeight * 3.5)
+      setHeaderVisible(window.scrollY > window.innerHeight * 0.8)
     }
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
@@ -73,8 +57,6 @@ export default function HomeClient({ cmsProjects, videos, categories, photoAlbum
 
   /* --- Section transitions (GSAP ScrollTrigger) --- */
   useEffect(() => {
-    if (!preloaderDone) return
-
     const heroWrapper = heroWrapperRef.current
     const colorGrade = colorGradeRef.current
     const vignette = vignetteRef.current
@@ -115,7 +97,6 @@ export default function HomeClient({ cmsProjects, videos, categories, photoAlbum
       scrub: 0.5,
       onUpdate: (self) => {
         const p = self.progress
-        // Find the two surrounding color stops
         let lower = colorStops[0]
         let upper = colorStops[colorStops.length - 1]
         for (let i = 0; i < colorStops.length - 1; i++) {
@@ -128,7 +109,6 @@ export default function HomeClient({ cmsProjects, videos, categories, photoAlbum
         const segRange = upper.pos - lower.pos
         const segProgress = segRange > 0 ? (p - lower.pos) / segRange : 0
 
-        // Parse HSL values for interpolation
         const lMatch = lower.color.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/)
         const uMatch = upper.color.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/)
         if (lMatch && uMatch) {
@@ -149,21 +129,15 @@ export default function HomeClient({ cmsProjects, videos, categories, photoAlbum
       scrub: 0.5,
       onUpdate: (self) => {
         const p = self.progress
-        // Section boundaries at 0.2, 0.4, 0.6, 0.8
         const boundaries = [0.2, 0.4, 0.6, 0.8]
         let closestDist = 1
         for (const b of boundaries) {
           const dist = Math.abs(p - b)
           if (dist < closestDist) closestDist = dist
         }
-        // When close to boundary (within 5%), tighten; otherwise relax
-        const tightness = closestDist < 0.05
-          ? 1 - closestDist / 0.05
-          : 0
-
-        const innerStop = 50 - tightness * 20  // 50% -> 30%
-        const opacity = 0.35 + tightness * 0.20 // 0.35 -> 0.55
-
+        const tightness = closestDist < 0.05 ? 1 - closestDist / 0.05 : 0
+        const innerStop = 50 - tightness * 20
+        const opacity = 0.35 + tightness * 0.20
         vignette.style.background = `radial-gradient(ellipse at center, transparent ${innerStop}%, rgba(0,0,0,${opacity}) 100%)`
       },
     })
@@ -172,18 +146,10 @@ export default function HomeClient({ cmsProjects, videos, categories, photoAlbum
     return () => {
       triggers.forEach((t) => t.kill())
     }
-  }, [preloaderDone])
+  }, [])
 
   return (
     <>
-      {/* Preloader */}
-      {!preloaderDone && (
-        <CinemaPreloader
-          progress={loadProgress}
-          onComplete={() => setPreloaderDone(true)}
-        />
-      )}
-
       {/* Ambient effects -- cursor effects hidden on touch devices */}
       {!isTouch && <DustParticles />}
       {!isTouch && <CursorGlow />}
@@ -220,10 +186,7 @@ export default function HomeClient({ cmsProjects, videos, categories, photoAlbum
 
         <main style={{ position: 'relative', zIndex: 1 }}>
           <div ref={heroWrapperRef} style={{ willChange: 'transform, filter, opacity' }}>
-            <Hero
-              onLoadProgress={setLoadProgress}
-              initialBlur={true}
-            />
+            <Hero />
           </div>
           <div style={{ backgroundColor: '#050505' }}>
             <PortfolioSection cmsProjects={cmsProjects} videos={videos} categories={categories} photoAlbums={photoAlbums} />
