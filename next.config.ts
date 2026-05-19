@@ -11,7 +11,10 @@ const nextConfig: NextConfig = {
     },
   },
   images: {
-    formats: ['image/avif', 'image/webp'],
+    // WebP only: AVIF encodes far slower on-demand, which on a fresh Vercel
+    // deploy with many gallery images shows up as "photos slow to appear".
+    // WebP is ~30% lighter than JPEG, encodes fast, universally supported.
+    formats: ['image/webp'],
     qualities: [50, 65, 75],
     minimumCacheTTL: 2678400,
     remotePatterns: [
