@@ -4,6 +4,8 @@ import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { registry } from '@/lib/registry'
+import { SUPABASE_MEDIA_BASE, isGif, SHIMMER_STYLE, VIMEO_BG_PARAMS } from '@/lib/media'
+import MediaTile from '@/components/portfolio/MediaTile'
 import type { VideoEntry } from '@/types/media'
 import type { PortfolioCategory } from '@/types/media'
 import type { PhotoAlbum } from '@/types/media'
@@ -49,19 +51,6 @@ const FALLBACK_CATEGORIES: PortfolioCategory[] = [
   { slug: 'fotografia',   label: 'Fotografía',   sort_order: 4 },
 ]
 
-const VIMEO_BG_PARAMS = 'autoplay=1&muted=1&background=1&loop=1&title=0&byline=0&portrait=0'
-
-const SUPABASE_STORAGE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/storage/v1/object/public/media/`
-
-/** Shared shimmer skeleton style — dark, matches #111/#0a0a0a aesthetic */
-const SHIMMER_STYLE: React.CSSProperties = {
-  position: 'absolute',
-  inset: 0,
-  background: 'linear-gradient(90deg, #111 25%, #1c1c1c 50%, #111 75%)',
-  backgroundSize: '200% 100%',
-  animation: 'shimmer 1.4s infinite',
-}
-
 function buildAllCards(videos: VideoEntry[], cats: PortfolioCategory[], photoAlbums: PhotoAlbum[]): ProjectCard[] {
   const videoList = videos.length > 0 ? videos : registry.videos
   const cards: ProjectCard[] = []
@@ -74,7 +63,7 @@ function buildAllCards(videos: VideoEntry[], cats: PortfolioCategory[], photoAlb
       if (photoAlbums.length > 0) {
         const first = photoAlbums[0]
         const firstPhotoUrl = first.photos[0]?.storage_path
-          ? `${SUPABASE_STORAGE}${first.photos[0].storage_path}`
+          ? `${SUPABASE_MEDIA_BASE}${first.photos[0].storage_path}`
           : null
         const autoCover = first.cover_url ?? firstPhotoUrl
         cards.push({ name: cat.slug, label: cat.label, coverUrl: cat.cover_url ?? autoCover, count: photoAlbums.length, isPhoto: true, previewVimeoId: null })
@@ -162,10 +151,6 @@ function FrozenGif({ src, alt, hovered }: { src: string; alt: string; hovered: b
       )}
     </>
   )
-}
-
-function isGif(url: string): boolean {
-  return /\.gif(\?|$)/i.test(url)
 }
 
 /* ─── Card con hover preview ─── */
@@ -439,7 +424,16 @@ export default function PortfolioSection({ cmsProjects, videos, categories, phot
 
           <div className="portfolio-grid">
             {cmsProjects.map((project) => (
-              <CmsProjectTile key={project.id} project={project} />
+              <MediaTile
+                key={project.id}
+                src={project.cover_url}
+                alt={`${project.title} — XICO Films`}
+                label={project.title}
+                gradient="cms"
+                labelSize="clamp(1rem, 2vw, 1.6rem)"
+                sizes="(max-width: 800px) 100vw, 50vw"
+                entrance="none"
+              />
             ))}
           </div>
         </div>
@@ -448,46 +442,3 @@ export default function PortfolioSection({ cmsProjects, videos, categories, phot
   )
 }
 
-/** CMS project tiles — display-only (no open action), shimmer on load */
-function CmsProjectTile({ project }: { project: CmsProjectCard }) {
-  const [imgLoaded, setImgLoaded] = useState(false)
-
-  return (
-    <div style={{ position: 'relative', overflow: 'hidden' }}>
-      <div style={{ paddingBottom: '75%', position: 'relative' }}>
-        {project.cover_url ? (
-          <>
-            {!imgLoaded && <div style={SHIMMER_STYLE} />}
-            <Image
-              src={project.cover_url}
-              alt={`${project.title} — XICO Films`}
-              fill
-              sizes="(max-width: 800px) 100vw, 50vw"
-              onLoad={() => setImgLoaded(true)}
-              style={{
-                objectFit: 'cover',
-                opacity: imgLoaded ? 1 : 0,
-                transition: 'opacity 0.4s ease',
-              }}
-            />
-          </>
-        ) : (
-          <div style={{ position: 'absolute', inset: 0, backgroundColor: '#111' }} />
-        )}
-        <div style={{
-          position: 'absolute', inset: 0,
-          background: 'linear-gradient(transparent 30%, rgba(0,0,0,0.85))',
-          pointerEvents: 'none',
-        }} />
-        <span style={{
-          position: 'absolute', bottom: '1rem', left: '1rem',
-          fontSize: 'clamp(1rem, 2vw, 1.6rem)', fontWeight: 700,
-          letterSpacing: '0.02em', textTransform: 'uppercase',
-          color: '#ede8e0', pointerEvents: 'none',
-        }}>
-          {project.title}
-        </span>
-      </div>
-    </div>
-  )
-}

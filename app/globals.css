@@ -7,6 +7,15 @@
   100% { background-position: -200% 0; }
 }
 
+/* ─── Shared interactive-tile focus ring (MediaTile) ───────────────────────── */
+
+.media-tile { outline: none; }
+.media-tile:focus { outline: none; }
+.media-tile:focus-visible {
+  outline: 2px solid #e8341a;
+  outline-offset: 2px;
+}
+
 @keyframes scrollHint {
   0%   { opacity: 1; transform: translateY(0); }
   60%  { opacity: 0; transform: translateY(10px); }

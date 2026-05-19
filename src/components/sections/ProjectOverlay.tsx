@@ -5,31 +5,10 @@ import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { registry } from '@/lib/registry'
 import { projectStories } from '@/data/project-stories'
+import { resolveMediaSrc, VIMEO_PARAMS, SHIMMER_STYLE } from '@/lib/media'
+import MediaTile from '@/components/portfolio/MediaTile'
 import type { PhotoEntry, VideoEntry } from '@/types/media'
 import type { PhotoAlbum } from '@/types/media'
-
-const SUPABASE_STORAGE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/storage/v1/object/public/media/`
-
-/**
- * Resolves a photo source. `cover_url` is stored as an absolute URL while
- * `storage_path` is bucket-relative and must be prefixed with the public
- * Supabase Storage URL — otherwise the browser requests a same-origin path
- * that 404s and the photo silently fails to render.
- */
-function resolvePhotoSrc(value: string | null | undefined): string | null {
-  if (!value) return null
-  if (/^https?:\/\//.test(value) || value.startsWith('/')) return value
-  return `${SUPABASE_STORAGE}${value}`
-}
-
-/** Shared dark shimmer — matches #111 aesthetic, keyframe is from globals.css */
-const SHIMMER_STYLE: React.CSSProperties = {
-  position: 'absolute',
-  inset: 0,
-  background: 'linear-gradient(90deg, #111 25%, #1c1c1c 50%, #111 75%)',
-  backgroundSize: '200% 100%',
-  animation: 'shimmer 1.4s infinite',
-}
 
 function getInitialMobileOverlay(breakpoint: number): boolean {
   if (typeof window === 'undefined') return false
@@ -111,8 +90,6 @@ function InfoCell({ label, value }: { label: string; value: string }) {
     </div>
   )
 }
-
-const VIMEO_PARAMS = 'title=0&byline=0&portrait=0&badge=0&autopause=0&player_id=0&app_id=58479'
 
 /* ─── Clip-path helpers ─── */
 function rectToClipInset(origin: { x: number; y: number; w: number; h: number }): string {
@@ -275,68 +252,20 @@ function DbAlbumsGrid({ albums, onSelect }: { albums: PhotoAlbum[]; onSelect: (a
   const isMobile = useIsMobileOverlay()
   return (
     <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 2, padding: '0 0 4rem' }}>
-      {albums.map((album, i) => {
-        const coverPhoto = resolvePhotoSrc(album.cover_url ?? album.photos[0]?.storage_path)
-        return (
-          <AlbumTile key={album.id} album={album} coverPhoto={coverPhoto} index={i} onSelect={onSelect} />
-        )
-      })}
-    </div>
-  )
-}
-
-function AlbumTile({ album, coverPhoto, index, onSelect }: {
-  album: PhotoAlbum
-  coverPhoto: string | null
-  index: number
-  onSelect: (album: PhotoAlbum) => void
-}) {
-  const [imgLoaded, setImgLoaded] = useState(false)
-  const [hovered, setHovered] = useState(false)
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(album) }
-  }, [album, onSelect])
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, delay: 0.15 + index * 0.07, ease: [0.25, 0.46, 0.45, 0.94] }}
-      role="button"
-      tabIndex={0}
-      aria-label={`Abrir álbum: ${album.label} — ${album.photos.length} fotos`}
-      onClick={() => onSelect(album)}
-      onKeyDown={handleKeyDown}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{ position: 'relative', width: '100%', paddingBottom: '75%', overflow: 'hidden', cursor: 'pointer', outline: 'none' }}
-    >
-      {coverPhoto && !imgLoaded && <div style={SHIMMER_STYLE} />}
-      {coverPhoto && (
-        <Image
-          src={coverPhoto}
+      {albums.map((album, i) => (
+        <MediaTile
+          key={album.id}
+          src={resolveMediaSrc(album.cover_url ?? album.photos[0]?.storage_path)}
           alt={album.label}
-          fill
-          sizes="(max-width: 640px) 100vw, 50vw"
-          onLoad={() => setImgLoaded(true)}
-          style={{
-            objectFit: 'cover',
-            opacity: imgLoaded ? 1 : 0,
-            transition: 'transform 0.6s ease, opacity 0.4s ease',
-            transform: hovered ? 'scale(1.04)' : 'scale(1)',
-          }}
+          label={album.label}
+          meta={`${album.photos.length} fotos`}
+          onActivate={() => onSelect(album)}
+          ariaLabel={`Abrir álbum: ${album.label} — ${album.photos.length} fotos`}
+          entrance="fade-up-30"
+          index={i}
         />
-      )}
-      {!coverPhoto && <div style={{ position: 'absolute', inset: 0, background: '#111' }} />}
-      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(transparent 40%, rgba(0,0,0,0.8))', pointerEvents: 'none' }} />
-      <span style={{ position: 'absolute', bottom: '1rem', left: '1rem', fontFamily: 'var(--font-geist-sans)', fontWeight: 700, fontSize: 'clamp(0.9rem, 2vw, 1.4rem)', letterSpacing: '0.02em', textTransform: 'uppercase', color: '#ede8e0', pointerEvents: 'none' }}>
-        {album.label}
-      </span>
-      <span style={{ position: 'absolute', bottom: '1rem', right: '1rem', fontFamily: 'var(--font-geist-mono)', fontSize: '0.6rem', color: '#6b6560', letterSpacing: '0.15em', textTransform: 'uppercase', pointerEvents: 'none' }}>
-        {album.photos.length} fotos
-      </span>
-    </motion.div>
+      ))}
+    </div>
   )
 }
 
@@ -364,44 +293,16 @@ function DbAlbumDetail({ album, onBack, onClose }: { album: PhotoAlbum; onBack: 
 
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 2, padding: '0 0 4rem' }}>
         {album.photos.map((photo: PhotoAlbum['photos'][number], i: number) => (
-          <AlbumPhotoCell key={photo.id} photo={photo} albumLabel={album.label} index={i} />
+          <MediaTile
+            key={photo.id}
+            src={resolveMediaSrc(photo.storage_path)}
+            alt={photo.alt_text || album.label}
+            entrance="fade-up-20"
+            index={i}
+            gradient="none"
+          />
         ))}
       </div>
-    </motion.div>
-  )
-}
-
-function AlbumPhotoCell({ photo, albumLabel, index }: {
-  photo: PhotoAlbum['photos'][number]
-  albumLabel: string
-  index: number
-}) {
-  const [imgLoaded, setImgLoaded] = useState(false)
-  const src = resolvePhotoSrc(photo.storage_path)
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.05, ease: [0.25, 0.46, 0.45, 0.94] }}
-      style={{ position: 'relative', width: '100%', paddingBottom: '75%', overflow: 'hidden' }}
-    >
-      {src && !imgLoaded && <div style={SHIMMER_STYLE} />}
-      {src && (
-        <Image
-          src={src}
-          alt={photo.alt_text || albumLabel}
-          fill
-          sizes="(max-width: 640px) 100vw, 50vw"
-          loading="lazy"
-          onLoad={() => setImgLoaded(true)}
-          style={{
-            objectFit: 'cover',
-            opacity: imgLoaded ? 1 : 0,
-            transition: 'opacity 0.4s ease',
-          }}
-        />
-      )}
     </motion.div>
   )
 }
@@ -421,61 +322,19 @@ function PhotoProjectsGrid({ onSelect }: { onSelect: (project: string) => void }
   return (
     <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 1, padding: '0 0 4rem' }}>
       {[...projects.entries()].map(([name, data], i) => (
-        <PhotoProjectTile key={name} name={name} data={data} index={i} onSelect={onSelect} />
+        <MediaTile
+          key={name}
+          src={data.url}
+          alt={name}
+          label={name}
+          meta={`${data.count} fotos`}
+          onActivate={() => onSelect(name)}
+          ariaLabel={`Abrir proyecto: ${name} — ${data.count} fotos`}
+          entrance="fade-up-30"
+          index={i}
+        />
       ))}
     </div>
-  )
-}
-
-function PhotoProjectTile({ name, data, index, onSelect }: {
-  name: string
-  data: { url: string; count: number }
-  index: number
-  onSelect: (project: string) => void
-}) {
-  const [imgLoaded, setImgLoaded] = useState(false)
-  const [hovered, setHovered] = useState(false)
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(name) }
-  }, [name, onSelect])
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, delay: 0.15 + index * 0.07, ease: [0.25, 0.46, 0.45, 0.94] }}
-      role="button"
-      tabIndex={0}
-      aria-label={`Abrir proyecto: ${name} — ${data.count} fotos`}
-      onClick={() => onSelect(name)}
-      onKeyDown={handleKeyDown}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{ position: 'relative', width: '100%', paddingBottom: '75%', overflow: 'hidden', cursor: 'pointer', outline: 'none' }}
-    >
-      {!imgLoaded && <div style={SHIMMER_STYLE} />}
-      <Image
-        src={data.url}
-        alt={name}
-        fill
-        sizes="(max-width: 640px) 100vw, 50vw"
-        onLoad={() => setImgLoaded(true)}
-        style={{
-          objectFit: 'cover',
-          opacity: imgLoaded ? 1 : 0,
-          transition: 'transform 0.6s ease, opacity 0.4s ease',
-          transform: hovered ? 'scale(1.04)' : 'scale(1)',
-        }}
-      />
-      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(transparent 40%, rgba(0,0,0,0.8))', pointerEvents: 'none' }} />
-      <span style={{ position: 'absolute', bottom: '1rem', left: '1rem', fontFamily: 'var(--font-geist-sans)', fontWeight: 700, fontSize: 'clamp(0.9rem, 2vw, 1.4rem)', letterSpacing: '0.02em', textTransform: 'uppercase', color: '#ede8e0', pointerEvents: 'none' }}>
-        {name}
-      </span>
-      <span style={{ position: 'absolute', bottom: '1rem', right: '1rem', fontFamily: 'var(--font-geist-mono)', fontSize: '0.6rem', color: '#6b6560', letterSpacing: '0.15em', textTransform: 'uppercase', pointerEvents: 'none' }}>
-        {data.count} fotos
-      </span>
-    </motion.div>
   )
 }
 
@@ -521,32 +380,17 @@ function PhotoProjectDetail({ projectName, onBack, onClose }: { projectName: str
 
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 2, padding: '0 0 4rem' }}>
         {photos.map((photo, i) => (
-          <RegistryPhotoCell key={photo.id} photo={photo} index={i} />
+          <MediaTile
+            key={photo.id}
+            src={photo.url}
+            alt={photo.alt}
+            entrance="none"
+            gradient="none"
+            eager={i < 2}
+          />
         ))}
       </div>
     </motion.div>
-  )
-}
-
-function RegistryPhotoCell({ photo, index }: { photo: PhotoEntry; index: number }) {
-  const [imgLoaded, setImgLoaded] = useState(false)
-  return (
-    <div style={{ position: 'relative', width: '100%', paddingBottom: '75%', overflow: 'hidden' }}>
-      {!imgLoaded && <div style={SHIMMER_STYLE} />}
-      <Image
-        src={photo.url}
-        alt={photo.alt}
-        fill
-        sizes="(max-width: 640px) 100vw, 50vw"
-        loading={index < 2 ? 'eager' : 'lazy'}
-        onLoad={() => setImgLoaded(true)}
-        style={{
-          objectFit: 'cover',
-          opacity: imgLoaded ? 1 : 0,
-          transition: 'opacity 0.4s ease',
-        }}
-      />
-    </div>
   )
 }
 
