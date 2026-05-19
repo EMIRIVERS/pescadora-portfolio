@@ -53,6 +53,15 @@ const VIMEO_BG_PARAMS = 'autoplay=1&muted=1&background=1&loop=1&title=0&byline=0
 
 const SUPABASE_STORAGE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/storage/v1/object/public/media/`
 
+/** Shared shimmer skeleton style — dark, matches #111/#0a0a0a aesthetic */
+const SHIMMER_STYLE: React.CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  background: 'linear-gradient(90deg, #111 25%, #1c1c1c 50%, #111 75%)',
+  backgroundSize: '200% 100%',
+  animation: 'shimmer 1.4s infinite',
+}
+
 function buildAllCards(videos: VideoEntry[], cats: PortfolioCategory[], photoAlbums: PhotoAlbum[]): ProjectCard[] {
   const videoList = videos.length > 0 ? videos : registry.videos
   const cards: ProjectCard[] = []
@@ -172,6 +181,7 @@ function PortfolioCard({
   onOpen: (card: ProjectCard, origin: OverlayOrigin) => void
 }) {
   const [hovered, setHovered] = useState(false)
+  const [imgLoaded, setImgLoaded] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const aspect = isBanner ? '38%' : '56.25%'
 
@@ -181,10 +191,21 @@ function PortfolioCard({
     onOpen(card, { x: rect.left, y: rect.top, w: rect.width, h: rect.height })
   }, [card, onOpen])
 
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      handleClick()
+    }
+  }, [handleClick])
+
   return (
     <motion.div
       ref={ref}
       id={card.name}
+      className="pf-card"
+      role="button"
+      tabIndex={0}
+      aria-label={`Abrir ${card.label} — ${card.count} ${card.name === 'fotografia' ? 'álbumes' : 'videos'}`}
       initial={{ opacity: 0, y: 24 }}
       animate={{
         opacity: 1,
@@ -192,6 +213,7 @@ function PortfolioCard({
         transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94], delay: index * 0.06 },
       }}
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -202,37 +224,43 @@ function PortfolioCard({
       }}
     >
       <div style={{ paddingBottom: aspect, position: 'relative', background: '#111' }}>
+        {/* Shimmer skeleton — fades out once image loads */}
+        {!imgLoaded && card.coverUrl && <div style={SHIMMER_STYLE} />}
+
         {/* Imagen estática de portada */}
         {card.coverUrl && (
           isGif(card.coverUrl) ? (
-            <FrozenGif src={card.coverUrl} alt={card.name} hovered={hovered} />
+            <FrozenGif src={card.coverUrl} alt={`${card.label} — XICO Films`} hovered={hovered} />
           ) : card.isPhoto ? (
             <Image
               src={card.coverUrl}
-              alt={card.name}
+              alt={`${card.label} — XICO Films`}
               fill
               sizes={isBanner ? '100vw' : '(max-width: 800px) 100vw, 50vw'}
+              onLoad={() => setImgLoaded(true)}
               style={{
                 objectFit: 'cover',
-                transition: 'transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94), filter 0.5s ease',
+                transition: 'transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94), filter 0.5s ease, opacity 0.4s ease',
                 transform: hovered ? 'scale(1.05)' : 'scale(1)',
                 filter: hovered ? 'brightness(1.1)' : 'brightness(1)',
+                opacity: imgLoaded ? 1 : 0,
               }}
             />
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={card.coverUrl}
-              alt={card.name}
+              alt={`${card.label} — XICO Films`}
               loading="lazy"
               decoding="async"
+              onLoad={() => setImgLoaded(true)}
               style={{
                 position: 'absolute', inset: 0,
                 width: '100%', height: '100%',
                 objectFit: 'cover',
                 transition: 'transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.5s ease',
                 transform: hovered ? 'scale(1.05)' : 'scale(1)',
-                opacity: hovered && card.previewVimeoId ? 0 : 1,
+                opacity: imgLoaded ? (hovered && card.previewVimeoId ? 0 : 1) : 0,
               }}
             />
           )
@@ -332,21 +360,27 @@ export default function PortfolioSection({ cmsProjects, videos, categories, phot
   }, [])
 
   return (
-    <section id="portfolio" style={{ padding: '0 0 clamp(2rem, 4vw, 4rem)' }}>
+    <section id="portfolio" aria-label="Portafolio" style={{ padding: '0 0 clamp(2rem, 4vw, 4rem)' }}>
 
-      {/* Label */}
-      <div style={{ paddingTop: 'clamp(3rem, 5vw, 5rem)', paddingBottom: 'clamp(1.5rem, 3vw, 2.5rem)', paddingLeft: 'clamp(1.2rem, 4vw, 2rem)' }}>
-        <span style={{
-          fontFamily: 'var(--font-geist-mono)',
-          fontSize: '0.7rem',
-          letterSpacing: '0.3em',
-          textTransform: 'uppercase',
-          color: '#6b6560',
-        }}>
-          <span style={{ color: '#e8341a', marginRight: '0.5rem' }}>──</span>
-          Trabajo
+      {/* Section heading — visible "Trabajo", enriched for the document outline */}
+      <h2 style={{
+        margin: 0,
+        paddingTop: 'clamp(3rem, 5vw, 5rem)',
+        paddingBottom: 'clamp(1.5rem, 3vw, 2.5rem)',
+        paddingLeft: 'clamp(1.2rem, 4vw, 2rem)',
+        fontFamily: 'var(--font-geist-mono)',
+        fontSize: '0.7rem',
+        fontWeight: 400,
+        letterSpacing: '0.3em',
+        textTransform: 'uppercase',
+        color: '#6b6560',
+      }}>
+        <span aria-hidden="true" style={{ color: '#e8341a', marginRight: '0.5rem' }}>──</span>
+        Trabajo
+        <span style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clipPath: 'inset(50%)', whiteSpace: 'nowrap', border: 0 }}>
+          {' '}— Portafolio de video y fotografía publicitaria
         </span>
-      </div>
+      </h2>
 
       {/* Grid unificado */}
       <style>{`
@@ -359,6 +393,11 @@ export default function PortfolioSection({ cmsProjects, videos, categories, phot
           .portfolio-grid {
             grid-template-columns: 1fr;
           }
+        }
+        .pf-card:focus { outline: none; }
+        .pf-card:focus-visible {
+          outline: 2px solid #e8341a;
+          outline-offset: 2px;
         }
       `}</style>
       <div className="portfolio-grid">
@@ -400,38 +439,55 @@ export default function PortfolioSection({ cmsProjects, videos, categories, phot
 
           <div className="portfolio-grid">
             {cmsProjects.map((project) => (
-              <div key={project.id} style={{ position: 'relative', overflow: 'hidden' }}>
-                <div style={{ paddingBottom: '75%', position: 'relative' }}>
-                  {project.cover_url ? (
-                    <Image
-                      src={project.cover_url}
-                      alt={project.title}
-                      fill
-                      sizes="(max-width: 800px) 100vw, 50vw"
-                      style={{ objectFit: 'cover' }}
-                    />
-                  ) : (
-                    <div style={{ position: 'absolute', inset: 0, backgroundColor: '#111' }} />
-                  )}
-                  <div style={{
-                    position: 'absolute', inset: 0,
-                    background: 'linear-gradient(transparent 30%, rgba(0,0,0,0.85))',
-                    pointerEvents: 'none',
-                  }} />
-                  <span style={{
-                    position: 'absolute', bottom: '1rem', left: '1rem',
-                    fontSize: 'clamp(1rem, 2vw, 1.6rem)', fontWeight: 700,
-                    letterSpacing: '0.02em', textTransform: 'uppercase',
-                    color: '#ede8e0', pointerEvents: 'none',
-                  }}>
-                    {project.title}
-                  </span>
-                </div>
-              </div>
+              <CmsProjectTile key={project.id} project={project} />
             ))}
           </div>
         </div>
       )}
     </section>
+  )
+}
+
+/** CMS project tiles — display-only (no open action), shimmer on load */
+function CmsProjectTile({ project }: { project: CmsProjectCard }) {
+  const [imgLoaded, setImgLoaded] = useState(false)
+
+  return (
+    <div style={{ position: 'relative', overflow: 'hidden' }}>
+      <div style={{ paddingBottom: '75%', position: 'relative' }}>
+        {project.cover_url ? (
+          <>
+            {!imgLoaded && <div style={SHIMMER_STYLE} />}
+            <Image
+              src={project.cover_url}
+              alt={`${project.title} — XICO Films`}
+              fill
+              sizes="(max-width: 800px) 100vw, 50vw"
+              onLoad={() => setImgLoaded(true)}
+              style={{
+                objectFit: 'cover',
+                opacity: imgLoaded ? 1 : 0,
+                transition: 'opacity 0.4s ease',
+              }}
+            />
+          </>
+        ) : (
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: '#111' }} />
+        )}
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'linear-gradient(transparent 30%, rgba(0,0,0,0.85))',
+          pointerEvents: 'none',
+        }} />
+        <span style={{
+          position: 'absolute', bottom: '1rem', left: '1rem',
+          fontSize: 'clamp(1rem, 2vw, 1.6rem)', fontWeight: 700,
+          letterSpacing: '0.02em', textTransform: 'uppercase',
+          color: '#ede8e0', pointerEvents: 'none',
+        }}>
+          {project.title}
+        </span>
+      </div>
+    </div>
   )
 }

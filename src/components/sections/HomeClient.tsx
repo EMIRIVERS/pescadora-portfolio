@@ -62,86 +62,93 @@ export default function HomeClient({ cmsProjects, videos, categories, photoAlbum
     const vignette = vignetteRef.current
     if (!heroWrapper || !colorGrade || !vignette) return
 
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
     const triggers: ScrollTrigger[] = []
 
-    /* (a) Hero -> Portfolio "Depth Sink" */
-    const depthSinkTrigger = ScrollTrigger.create({
-      trigger: heroWrapper,
-      start: 'bottom bottom',
-      end: 'bottom top',
-      scrub: 0.8,
-      onUpdate: (self) => {
-        const p = self.progress
-        gsap.set(heroWrapper, {
-          scale: 1 - p * 0.08,
-          filter: `blur(${p * 6}px)`,
-          opacity: 1 - p,
-        })
-      },
-    })
-    triggers.push(depthSinkTrigger)
+    if (!reducedMotion) {
+      /* (a) Hero -> Portfolio "Depth Sink" */
+      const depthSinkTrigger = ScrollTrigger.create({
+        trigger: heroWrapper,
+        start: 'bottom bottom',
+        end: 'bottom top',
+        scrub: 0.8,
+        onUpdate: (self) => {
+          const p = self.progress
+          gsap.set(heroWrapper, {
+            scale: 1 - p * 0.08,
+            filter: `blur(${p * 6}px)`,
+            opacity: 1 - p,
+          })
+        },
+      })
+      triggers.push(depthSinkTrigger)
+    }
 
-    /* (b) Color grade shift */
-    const colorStops: { pos: number; color: string }[] = [
-      { pos: 0, color: 'hsl(220, 30%, 20%)' },
-      { pos: 0.25, color: 'hsl(35, 40%, 25%)' },
-      { pos: 0.50, color: 'hsl(200, 15%, 15%)' },
-      { pos: 0.75, color: 'hsl(185, 25%, 18%)' },
-      { pos: 1.0, color: 'hsl(40, 35%, 22%)' },
+    /* (b) Color grade shift — HSL values precomputed so onUpdate only does cheap math */
+    const colorStops: { pos: number; hsl: [number, number, number] }[] = [
+      { pos: 0,    hsl: [220, 30, 20] },
+      { pos: 0.25, hsl: [35,  40, 25] },
+      { pos: 0.50, hsl: [200, 15, 15] },
+      { pos: 0.75, hsl: [185, 25, 18] },
+      { pos: 1.0,  hsl: [40,  35, 22] },
     ]
 
-    const colorGradeTrigger = ScrollTrigger.create({
-      trigger: document.body,
-      start: 'top top',
-      end: 'bottom bottom',
-      scrub: 0.5,
-      onUpdate: (self) => {
-        const p = self.progress
-        let lower = colorStops[0]
-        let upper = colorStops[colorStops.length - 1]
-        for (let i = 0; i < colorStops.length - 1; i++) {
-          if (p >= colorStops[i].pos && p <= colorStops[i + 1].pos) {
-            lower = colorStops[i]
-            upper = colorStops[i + 1]
-            break
+    if (!reducedMotion) {
+      const colorGradeTrigger = ScrollTrigger.create({
+        trigger: document.body,
+        start: 'top top',
+        end: 'bottom bottom',
+        scrub: 0.5,
+        onUpdate: (self) => {
+          const p = self.progress
+          let lower = colorStops[0]
+          let upper = colorStops[colorStops.length - 1]
+          for (let i = 0; i < colorStops.length - 1; i++) {
+            if (p >= colorStops[i].pos && p <= colorStops[i + 1].pos) {
+              lower = colorStops[i]
+              upper = colorStops[i + 1]
+              break
+            }
           }
-        }
-        const segRange = upper.pos - lower.pos
-        const segProgress = segRange > 0 ? (p - lower.pos) / segRange : 0
-
-        const lMatch = lower.color.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/)
-        const uMatch = upper.color.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/)
-        if (lMatch && uMatch) {
-          const h = Math.round(Number(lMatch[1]) + (Number(uMatch[1]) - Number(lMatch[1])) * segProgress)
-          const s = Math.round(Number(lMatch[2]) + (Number(uMatch[2]) - Number(lMatch[2])) * segProgress)
-          const l = Math.round(Number(lMatch[3]) + (Number(uMatch[3]) - Number(lMatch[3])) * segProgress)
+          const segRange = upper.pos - lower.pos
+          const segProgress = segRange > 0 ? (p - lower.pos) / segRange : 0
+          const h = Math.round(lower.hsl[0] + (upper.hsl[0] - lower.hsl[0]) * segProgress)
+          const s = Math.round(lower.hsl[1] + (upper.hsl[1] - lower.hsl[1]) * segProgress)
+          const l = Math.round(lower.hsl[2] + (upper.hsl[2] - lower.hsl[2]) * segProgress)
           colorGrade.style.backgroundColor = `hsl(${h}, ${s}%, ${l}%)`
-        }
-      },
-    })
-    triggers.push(colorGradeTrigger)
+        },
+      })
+      triggers.push(colorGradeTrigger)
+    } else {
+      // Apply the first color stop statically so the grade overlay is still present.
+      const [h, s, l] = colorStops[0].hsl
+      colorGrade.style.backgroundColor = `hsl(${h}, ${s}%, ${l}%)`
+    }
 
-    /* (c) Breathing vignette */
-    const vignetteTrigger = ScrollTrigger.create({
-      trigger: document.body,
-      start: 'top top',
-      end: 'bottom bottom',
-      scrub: 0.5,
-      onUpdate: (self) => {
-        const p = self.progress
-        const boundaries = [0.2, 0.4, 0.6, 0.8]
-        let closestDist = 1
-        for (const b of boundaries) {
-          const dist = Math.abs(p - b)
-          if (dist < closestDist) closestDist = dist
-        }
-        const tightness = closestDist < 0.05 ? 1 - closestDist / 0.05 : 0
-        const innerStop = 50 - tightness * 20
-        const opacity = 0.35 + tightness * 0.20
-        vignette.style.background = `radial-gradient(ellipse at center, transparent ${innerStop}%, rgba(0,0,0,${opacity}) 100%)`
-      },
-    })
-    triggers.push(vignetteTrigger)
+    if (!reducedMotion) {
+      /* (c) Breathing vignette */
+      const vignetteTrigger = ScrollTrigger.create({
+        trigger: document.body,
+        start: 'top top',
+        end: 'bottom bottom',
+        scrub: 0.5,
+        onUpdate: (self) => {
+          const p = self.progress
+          const boundaries = [0.2, 0.4, 0.6, 0.8]
+          let closestDist = 1
+          for (const b of boundaries) {
+            const dist = Math.abs(p - b)
+            if (dist < closestDist) closestDist = dist
+          }
+          const tightness = closestDist < 0.05 ? 1 - closestDist / 0.05 : 0
+          const innerStop = 50 - tightness * 20
+          const opacity = 0.35 + tightness * 0.20
+          vignette.style.background = `radial-gradient(ellipse at center, transparent ${innerStop}%, rgba(0,0,0,${opacity}) 100%)`
+        },
+      })
+      triggers.push(vignetteTrigger)
+    }
 
     return () => {
       triggers.forEach((t) => t.kill())
@@ -269,6 +276,29 @@ export default function HomeClient({ cmsProjects, videos, categories, photoAlbum
             <ContactoSection />
           </div>
         </main>
+
+        <footer
+          style={{
+            background: 'var(--color-bg)',
+            borderTop: '1px solid rgba(255,255,255,0.06)',
+            padding: '2rem clamp(1.2rem, 4vw, 2rem)',
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '0.75rem 1.5rem',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <span style={{ fontFamily: 'var(--font-geist-sans)', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', fontSize: '0.8rem', color: '#ede8e0' }}>
+            XICO Films
+          </span>
+          <span style={{ fontFamily: 'var(--font-geist-mono)', fontSize: '0.6rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#6b6560' }}>
+            Productora audiovisual · México
+          </span>
+          <span style={{ fontFamily: 'var(--font-geist-mono)', fontSize: '0.6rem', letterSpacing: '0.2em', color: '#3a3632' }}>
+            © {new Date().getFullYear()} XICO Films
+          </span>
+        </footer>
       </SmoothScroll>
     </>
   )

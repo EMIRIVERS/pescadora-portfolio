@@ -22,6 +22,15 @@ function resolvePhotoSrc(value: string | null | undefined): string | null {
   return `${SUPABASE_STORAGE}${value}`
 }
 
+/** Shared dark shimmer — matches #111 aesthetic, keyframe is from globals.css */
+const SHIMMER_STYLE: React.CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  background: 'linear-gradient(90deg, #111 25%, #1c1c1c 50%, #111 75%)',
+  backgroundSize: '200% 100%',
+  animation: 'shimmer 1.4s infinite',
+}
+
 function getInitialMobileOverlay(breakpoint: number): boolean {
   if (typeof window === 'undefined') return false
   return window.matchMedia(`(max-width: ${breakpoint}px)`).matches
@@ -36,6 +45,57 @@ function useIsMobileOverlay(breakpoint = 640): boolean {
     return () => mql.removeEventListener('change', handler)
   }, [breakpoint])
   return mobile
+}
+
+/**
+ * Traps keyboard focus within `containerRef` while mounted.
+ * Returns focus to `returnRef` on cleanup.
+ */
+function useFocusTrap(containerRef: React.RefObject<HTMLElement | null>, returnRef: React.RefObject<HTMLElement | null>) {
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    // Move focus into the overlay on mount
+    const firstFocusable = container.querySelector<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    )
+    firstFocusable?.focus()
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key !== 'Tab') return
+      const focusable = Array.from(
+        container!.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((el) => el.offsetParent !== null) // exclude hidden
+
+      if (focusable.length === 0) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault()
+          last.focus()
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault()
+          first.focus()
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      // Restore focus to the element that opened the overlay
+      returnRef.current?.focus()
+    }
+  // Refs are stable — deps intentionally omitted for mount/unmount-only behavior
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 }
 
 function InfoCell({ label, value }: { label: string; value: string }) {
@@ -93,22 +153,40 @@ function VideoTile({ video, index, hovered, onHover, onClick }: {
 }) {
   const [loaded, setLoaded] = useState(false)
 
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() }
+  }, [onClick])
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, delay: 0.15 + index * 0.07, ease: [0.25, 0.46, 0.45, 0.94] }}
+      role="button"
+      tabIndex={0}
+      aria-label={`Ver video: ${video.title}`}
       onMouseEnter={() => onHover(true)}
       onMouseLeave={() => onHover(false)}
       onClick={onClick}
-      style={{ position: 'relative', width: '100%', paddingBottom: '56.25%', overflow: 'hidden', cursor: 'pointer', background: '#111' }}
+      onKeyDown={handleKeyDown}
+      style={{ position: 'relative', width: '100%', paddingBottom: '56.25%', overflow: 'hidden', cursor: 'pointer', background: '#111', outline: 'none' }}
     >
-      {!loaded && (
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, #1a1a1a 25%, #242424 50%, #1a1a1a 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
-      )}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={`/api/vimeo-thumb?id=${video.vimeoId}`} alt={video.title} onLoad={() => setLoaded(true)}
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: loaded ? 1 : 0, transition: 'opacity 0.3s, transform 0.7s ease', transform: hovered ? 'scale(1.05)' : 'scale(1)' }} />
+      {/* Shimmer skeleton */}
+      {!loaded && <div style={SHIMMER_STYLE} />}
+      {/* Task D: same-origin /api/vimeo-thumb works with next/image (no remotePattern needed) */}
+      <Image
+        src={`/api/vimeo-thumb?id=${video.vimeoId}`}
+        alt={video.title}
+        fill
+        sizes="(max-width: 640px) 100vw, 50vw"
+        onLoad={() => setLoaded(true)}
+        style={{
+          objectFit: 'cover',
+          opacity: loaded ? 1 : 0,
+          transition: 'opacity 0.3s, transform 0.7s ease',
+          transform: hovered ? 'scale(1.05)' : 'scale(1)',
+        }}
+      />
       {hovered && video.vimeoId && (
         <iframe src={`https://player.vimeo.com/video/${video.vimeoId}?autoplay=1&muted=1&background=1&loop=1&${VIMEO_PARAMS}`}
           referrerPolicy="strict-origin-when-cross-origin"
@@ -200,36 +278,65 @@ function DbAlbumsGrid({ albums, onSelect }: { albums: PhotoAlbum[]; onSelect: (a
       {albums.map((album, i) => {
         const coverPhoto = resolvePhotoSrc(album.cover_url ?? album.photos[0]?.storage_path)
         return (
-          <motion.div
-            key={album.id}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.15 + i * 0.07, ease: [0.25, 0.46, 0.45, 0.94] }}
-            onClick={() => onSelect(album)}
-            style={{ position: 'relative', width: '100%', paddingBottom: '75%', overflow: 'hidden', cursor: 'pointer' }}
-          >
-            {coverPhoto && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={coverPhoto}
-                alt={album.label}
-                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.6s ease' }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1.04)' }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1)' }}
-              />
-            )}
-            {!coverPhoto && <div style={{ position: 'absolute', inset: 0, background: '#111' }} />}
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(transparent 40%, rgba(0,0,0,0.8))', pointerEvents: 'none' }} />
-            <span style={{ position: 'absolute', bottom: '1rem', left: '1rem', fontFamily: 'var(--font-geist-sans)', fontWeight: 700, fontSize: 'clamp(0.9rem, 2vw, 1.4rem)', letterSpacing: '0.02em', textTransform: 'uppercase', color: '#ede8e0', pointerEvents: 'none' }}>
-              {album.label}
-            </span>
-            <span style={{ position: 'absolute', bottom: '1rem', right: '1rem', fontFamily: 'var(--font-geist-mono)', fontSize: '0.6rem', color: '#6b6560', letterSpacing: '0.15em', textTransform: 'uppercase', pointerEvents: 'none' }}>
-              {album.photos.length} fotos
-            </span>
-          </motion.div>
+          <AlbumTile key={album.id} album={album} coverPhoto={coverPhoto} index={i} onSelect={onSelect} />
         )
       })}
     </div>
+  )
+}
+
+function AlbumTile({ album, coverPhoto, index, onSelect }: {
+  album: PhotoAlbum
+  coverPhoto: string | null
+  index: number
+  onSelect: (album: PhotoAlbum) => void
+}) {
+  const [imgLoaded, setImgLoaded] = useState(false)
+  const [hovered, setHovered] = useState(false)
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(album) }
+  }, [album, onSelect])
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, delay: 0.15 + index * 0.07, ease: [0.25, 0.46, 0.45, 0.94] }}
+      role="button"
+      tabIndex={0}
+      aria-label={`Abrir álbum: ${album.label} — ${album.photos.length} fotos`}
+      onClick={() => onSelect(album)}
+      onKeyDown={handleKeyDown}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{ position: 'relative', width: '100%', paddingBottom: '75%', overflow: 'hidden', cursor: 'pointer', outline: 'none' }}
+    >
+      {coverPhoto && !imgLoaded && <div style={SHIMMER_STYLE} />}
+      {coverPhoto && (
+        <Image
+          src={coverPhoto}
+          alt={album.label}
+          fill
+          sizes="(max-width: 640px) 100vw, 50vw"
+          onLoad={() => setImgLoaded(true)}
+          style={{
+            objectFit: 'cover',
+            opacity: imgLoaded ? 1 : 0,
+            transition: 'transform 0.6s ease, opacity 0.4s ease',
+            transform: hovered ? 'scale(1.04)' : 'scale(1)',
+          }}
+        />
+      )}
+      {!coverPhoto && <div style={{ position: 'absolute', inset: 0, background: '#111' }} />}
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(transparent 40%, rgba(0,0,0,0.8))', pointerEvents: 'none' }} />
+      <span style={{ position: 'absolute', bottom: '1rem', left: '1rem', fontFamily: 'var(--font-geist-sans)', fontWeight: 700, fontSize: 'clamp(0.9rem, 2vw, 1.4rem)', letterSpacing: '0.02em', textTransform: 'uppercase', color: '#ede8e0', pointerEvents: 'none' }}>
+        {album.label}
+      </span>
+      <span style={{ position: 'absolute', bottom: '1rem', right: '1rem', fontFamily: 'var(--font-geist-mono)', fontSize: '0.6rem', color: '#6b6560', letterSpacing: '0.15em', textTransform: 'uppercase', pointerEvents: 'none' }}>
+        {album.photos.length} fotos
+      </span>
+    </motion.div>
   )
 }
 
@@ -257,24 +364,44 @@ function DbAlbumDetail({ album, onBack, onClose }: { album: PhotoAlbum; onBack: 
 
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 2, padding: '0 0 4rem' }}>
         {album.photos.map((photo: PhotoAlbum['photos'][number], i: number) => (
-          <motion.div
-            key={photo.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: i * 0.05, ease: [0.25, 0.46, 0.45, 0.94] }}
-            style={{ position: 'relative', width: '100%', paddingBottom: '75%', overflow: 'hidden' }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={resolvePhotoSrc(photo.storage_path) ?? ''}
-              alt={photo.alt_text || album.label}
-              loading="lazy"
-              decoding="async"
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-            />
-          </motion.div>
+          <AlbumPhotoCell key={photo.id} photo={photo} albumLabel={album.label} index={i} />
         ))}
       </div>
+    </motion.div>
+  )
+}
+
+function AlbumPhotoCell({ photo, albumLabel, index }: {
+  photo: PhotoAlbum['photos'][number]
+  albumLabel: string
+  index: number
+}) {
+  const [imgLoaded, setImgLoaded] = useState(false)
+  const src = resolvePhotoSrc(photo.storage_path)
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: index * 0.05, ease: [0.25, 0.46, 0.45, 0.94] }}
+      style={{ position: 'relative', width: '100%', paddingBottom: '75%', overflow: 'hidden' }}
+    >
+      {src && !imgLoaded && <div style={SHIMMER_STYLE} />}
+      {src && (
+        <Image
+          src={src}
+          alt={photo.alt_text || albumLabel}
+          fill
+          sizes="(max-width: 640px) 100vw, 50vw"
+          loading="lazy"
+          onLoad={() => setImgLoaded(true)}
+          style={{
+            objectFit: 'cover',
+            opacity: imgLoaded ? 1 : 0,
+            transition: 'opacity 0.4s ease',
+          }}
+        />
+      )}
     </motion.div>
   )
 }
@@ -294,28 +421,61 @@ function PhotoProjectsGrid({ onSelect }: { onSelect: (project: string) => void }
   return (
     <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 1, padding: '0 0 4rem' }}>
       {[...projects.entries()].map(([name, data], i) => (
-        <motion.div
-          key={name}
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: 0.15 + i * 0.07, ease: [0.25, 0.46, 0.45, 0.94] }}
-          onClick={() => onSelect(name)}
-          style={{ position: 'relative', width: '100%', paddingBottom: '75%', overflow: 'hidden', cursor: 'pointer' }}
-        >
-          <Image src={data.url} alt={name} fill style={{ objectFit: 'cover', transition: 'transform 0.6s ease' }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1.04)' }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1)' }}
-          />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(transparent 40%, rgba(0,0,0,0.8))', pointerEvents: 'none' }} />
-          <span style={{ position: 'absolute', bottom: '1rem', left: '1rem', fontFamily: 'var(--font-geist-sans)', fontWeight: 700, fontSize: 'clamp(0.9rem, 2vw, 1.4rem)', letterSpacing: '0.02em', textTransform: 'uppercase', color: '#ede8e0', pointerEvents: 'none' }}>
-            {name}
-          </span>
-          <span style={{ position: 'absolute', bottom: '1rem', right: '1rem', fontFamily: 'var(--font-geist-mono)', fontSize: '0.6rem', color: '#6b6560', letterSpacing: '0.15em', textTransform: 'uppercase', pointerEvents: 'none' }}>
-            {data.count} fotos
-          </span>
-        </motion.div>
+        <PhotoProjectTile key={name} name={name} data={data} index={i} onSelect={onSelect} />
       ))}
     </div>
+  )
+}
+
+function PhotoProjectTile({ name, data, index, onSelect }: {
+  name: string
+  data: { url: string; count: number }
+  index: number
+  onSelect: (project: string) => void
+}) {
+  const [imgLoaded, setImgLoaded] = useState(false)
+  const [hovered, setHovered] = useState(false)
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(name) }
+  }, [name, onSelect])
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, delay: 0.15 + index * 0.07, ease: [0.25, 0.46, 0.45, 0.94] }}
+      role="button"
+      tabIndex={0}
+      aria-label={`Abrir proyecto: ${name} — ${data.count} fotos`}
+      onClick={() => onSelect(name)}
+      onKeyDown={handleKeyDown}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{ position: 'relative', width: '100%', paddingBottom: '75%', overflow: 'hidden', cursor: 'pointer', outline: 'none' }}
+    >
+      {!imgLoaded && <div style={SHIMMER_STYLE} />}
+      <Image
+        src={data.url}
+        alt={name}
+        fill
+        sizes="(max-width: 640px) 100vw, 50vw"
+        onLoad={() => setImgLoaded(true)}
+        style={{
+          objectFit: 'cover',
+          opacity: imgLoaded ? 1 : 0,
+          transition: 'transform 0.6s ease, opacity 0.4s ease',
+          transform: hovered ? 'scale(1.04)' : 'scale(1)',
+        }}
+      />
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(transparent 40%, rgba(0,0,0,0.8))', pointerEvents: 'none' }} />
+      <span style={{ position: 'absolute', bottom: '1rem', left: '1rem', fontFamily: 'var(--font-geist-sans)', fontWeight: 700, fontSize: 'clamp(0.9rem, 2vw, 1.4rem)', letterSpacing: '0.02em', textTransform: 'uppercase', color: '#ede8e0', pointerEvents: 'none' }}>
+        {name}
+      </span>
+      <span style={{ position: 'absolute', bottom: '1rem', right: '1rem', fontFamily: 'var(--font-geist-mono)', fontSize: '0.6rem', color: '#6b6560', letterSpacing: '0.15em', textTransform: 'uppercase', pointerEvents: 'none' }}>
+        {data.count} fotos
+      </span>
+    </motion.div>
   )
 }
 
@@ -360,13 +520,33 @@ function PhotoProjectDetail({ projectName, onBack, onClose }: { projectName: str
       )}
 
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 2, padding: '0 0 4rem' }}>
-        {photos.map((photo) => (
-          <div key={photo.id} style={{ position: 'relative', width: '100%', paddingBottom: '75%', overflow: 'hidden' }}>
-            <Image src={photo.url} alt={photo.alt} fill style={{ objectFit: 'cover' }} />
-          </div>
+        {photos.map((photo, i) => (
+          <RegistryPhotoCell key={photo.id} photo={photo} index={i} />
         ))}
       </div>
     </motion.div>
+  )
+}
+
+function RegistryPhotoCell({ photo, index }: { photo: PhotoEntry; index: number }) {
+  const [imgLoaded, setImgLoaded] = useState(false)
+  return (
+    <div style={{ position: 'relative', width: '100%', paddingBottom: '75%', overflow: 'hidden' }}>
+      {!imgLoaded && <div style={SHIMMER_STYLE} />}
+      <Image
+        src={photo.url}
+        alt={photo.alt}
+        fill
+        sizes="(max-width: 640px) 100vw, 50vw"
+        loading={index < 2 ? 'eager' : 'lazy'}
+        onLoad={() => setImgLoaded(true)}
+        style={{
+          objectFit: 'cover',
+          opacity: imgLoaded ? 1 : 0,
+          transition: 'opacity 0.4s ease',
+        }}
+      />
+    </div>
   )
 }
 
@@ -389,8 +569,15 @@ export default function ProjectOverlay({ projectName, mediaType, origin, onClose
   const [selectedAlbum, setSelectedAlbum] = useState<PhotoAlbum | null>(null)
   const [isClosing, setIsClosing] = useState(false)
   const overlayRef = useRef<HTMLDivElement>(null)
+  // Track the element that triggered the overlay so focus can be restored on close
+  const triggerRef = useRef<HTMLElement | null>(null)
 
   const initialClip = rectToClipInset(origin)
+
+  useEffect(() => {
+    // Capture the currently focused element before the overlay steals focus
+    triggerRef.current = document.activeElement as HTMLElement | null
+  }, [])
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -408,8 +595,15 @@ export default function ProjectOverlay({ projectName, mediaType, origin, onClose
 
   const handleClose = useCallback(() => {
     setIsClosing(true)
-    setTimeout(() => onClose(), 500)
+    setTimeout(() => {
+      onClose()
+      // Restore focus after React has unmounted the overlay
+      triggerRef.current?.focus()
+    }, 500)
   }, [onClose])
+
+  // Focus trap for the main overlay panel
+  useFocusTrap(overlayRef, triggerRef)
 
   const videoSource = videos && videos.length > 0 ? videos : registry.videos
   const overlayVideos: VideoEntry[] = mediaType === 'video'
@@ -420,6 +614,8 @@ export default function ProjectOverlay({ projectName, mediaType, origin, onClose
     'videoclips': 'Videoclips', 'corporativos': 'Corporativos',
     'restaurantes': 'Restaurantes', 'comerciales': 'Comerciales', 'fotografia': 'Fotografía',
   }
+
+  const overlayTitle = CATEGORY_LABEL[projectName] ?? projectName
 
   if (selectedVideo) {
     return (
@@ -443,11 +639,15 @@ export default function ProjectOverlay({ projectName, mediaType, origin, onClose
           WebkitBackdropFilter: 'blur(4px)',
         }}
         onClick={handleClose}
+        aria-hidden="true"
       />
 
       {/* Panel principal con clip-path reveal */}
       <div
         ref={overlayRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={overlayTitle}
         data-lenis-prevent
         style={{
           position: 'fixed', inset: 0, zIndex: 200,
@@ -464,10 +664,6 @@ export default function ProjectOverlay({ projectName, mediaType, origin, onClose
           @keyframes overlayClipReveal {
             from { clip-path: ${initialClip}; -webkit-clip-path: ${initialClip}; }
             to   { clip-path: inset(0px 0px 0px 0px round 0px); -webkit-clip-path: inset(0px 0px 0px 0px round 0px); }
-          }
-          @keyframes shimmer {
-            0%   { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
           }
         `}</style>
 
@@ -486,7 +682,7 @@ export default function ProjectOverlay({ projectName, mediaType, origin, onClose
           }}
         >
           <span style={{ fontFamily: 'var(--font-geist-sans)', fontWeight: 700, fontSize: 'clamp(0.8rem, 1.5vw, 1rem)', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#ede8e0' }}>
-            {CATEGORY_LABEL[projectName] ?? projectName}
+            {overlayTitle}
           </span>
           <button onClick={handleClose} aria-label="Cerrar" style={{ background: 'none', border: 'none', color: '#ede8e0', fontSize: '1.2rem', cursor: 'pointer', padding: '0.25rem 0.5rem', lineHeight: 1, transition: 'transform 0.3s ease', minHeight: 44, minWidth: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'rotate(90deg)' }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'rotate(0deg)' }}>
             &#10005;

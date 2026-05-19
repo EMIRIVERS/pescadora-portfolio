@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import Sidebar from '@/components/admin/sidebar'
@@ -9,6 +10,11 @@ import NotificationBell from '@/components/admin/NotificationBell'
 import NavProgress from '@/components/admin/NavProgress'
 import PageTransition from '@/components/admin/PageTransition'
 import PageBreadcrumb from '@/components/admin/PageBreadcrumb'
+
+// Internal CRM — never index any /admin route.
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+}
 
 export default async function AdminLayout({
   children,
