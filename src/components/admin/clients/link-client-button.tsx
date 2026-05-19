@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect, useRef } from 'react'
 import { Link2, Link2Off, Loader2, X, CheckCircle2 } from 'lucide-react'
-import { linkClientToUser, unlinkClientFromUser } from '../../../../app/actions/clients'
+import { linkClientToUser, unlinkClientFromUser } from '@/lib/actions/clients'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

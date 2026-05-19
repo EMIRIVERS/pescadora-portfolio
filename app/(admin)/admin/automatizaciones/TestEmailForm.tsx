@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState, useTransition } from 'react'
-import { sendTestEmail } from '../../../actions/test-email'
+import { sendTestEmail } from '@/lib/actions/test-email'
 
 interface Props {
   disabled?: boolean

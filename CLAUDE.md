@@ -63,13 +63,13 @@ videos/photos/albums/categories. Enums (`project_status`, `deliverable_status`, 
 the first migration `20260329000000_pescadora_platform.sql`. Generated TS types:
 `src/lib/supabase/types.ts`. Schema changes = a new migration file, never editing old ones.
 
-## Server actions — known wart
+## Server actions — single location
 
-Server actions are split across **three** locations: `app/actions/*`, `src/lib/actions/*`,
-and a stray `src/app/actions/invoices.ts`. The `src/app/actions/invoices.ts` file is **dead
-code** — the live invoice actions are `app/actions/invoices.ts` (imported via relative paths
-from the admin invoice pages). When adding actions, follow the pattern of the feature you're
-near rather than introducing a fourth convention.
+All server actions live in **`src/lib/actions/*`** and are imported via the `@/lib/actions/<name>`
+alias (never deep relative paths). The old `app/actions/*` and stray `src/app/actions/invoices.ts`
+locations were consolidated here; dead actions (`auth.ts`, `invite-client.ts`, the duplicate
+`invoices.ts`) were deleted. When adding a new action, create it in `src/lib/actions/` and
+import it with the `@/` alias — do not reintroduce an `app/actions/` directory.
 
 ## Other architecture notes
 

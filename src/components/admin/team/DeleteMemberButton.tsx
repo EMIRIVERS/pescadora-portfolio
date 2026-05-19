@@ -1,7 +1,7 @@
 'use client'
 
 import { useTransition, useState } from 'react'
-import { removeTeamMember } from '../../../../app/actions/invite-team-member'
+import { removeTeamMember } from '@/lib/actions/invite-team-member'
 
 interface Props {
   memberId: string

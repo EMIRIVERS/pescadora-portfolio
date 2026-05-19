@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Bell, Check } from 'lucide-react'
-import { getNotifications, markAsRead, markAllAsRead } from '../../../app/actions/notifications'
+import { getNotifications, markAsRead, markAllAsRead } from '@/lib/actions/notifications'
 
 interface Notification {
   id: string

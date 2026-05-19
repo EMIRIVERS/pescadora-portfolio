@@ -2,8 +2,8 @@
 
 import Image from 'next/image'
 import { useTransition, useState, useRef } from 'react'
-import { changeTeamMemberRole } from '../../../../app/actions/invite-team-member'
-import { toggleAdminStatus } from '../../../../app/actions/team'
+import { changeTeamMemberRole } from '@/lib/actions/invite-team-member'
+import { toggleAdminStatus } from '@/lib/actions/team'
 import DeleteMemberButton from './DeleteMemberButton'
 
 const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"

@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { useState, useTransition } from 'react'
-import { updateMyProfile } from '../../../../app/actions/invite-team-member'
+import { updateMyProfile } from '@/lib/actions/invite-team-member'
 
 interface Props {
   currentUser: {

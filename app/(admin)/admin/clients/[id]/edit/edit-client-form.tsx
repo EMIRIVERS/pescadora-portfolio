@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
-import { updateClient, deleteClient } from '../../../../../actions/clients'
+import { updateClient, deleteClient } from '@/lib/actions/clients'
 
 interface Props {
   id: string

@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Check, Trash2 } from 'lucide-react'
-import { updateInvoiceStatus, deleteInvoice } from '../../../../actions/invoices'
+import { updateInvoiceStatus, deleteInvoice } from '@/lib/actions/invoices'
 
 const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
 

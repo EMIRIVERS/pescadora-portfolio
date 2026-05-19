@@ -2,7 +2,7 @@
 
 import { useActionState, useRef } from 'react'
 import Link from 'next/link'
-import { submitCotizacion } from '../actions/cotiza'
+import { submitCotizacion } from '@/lib/actions/cotiza'
 
 /* ─── Types ─────────────────────────────────────────────────────────────────── */
 

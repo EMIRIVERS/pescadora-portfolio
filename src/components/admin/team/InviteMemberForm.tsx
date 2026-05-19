@@ -1,6 +1,6 @@
 'use client'
 import { useState, useTransition } from 'react'
-import { inviteTeamMember, addTeamMemberManually } from '../../../../app/actions/invite-team-member'
+import { inviteTeamMember, addTeamMemberManually } from '@/lib/actions/invite-team-member'
 
 const ROLES = ['Fotografo', 'Videografo', 'Editor', 'Director', 'Productor', 'Asistente']
 

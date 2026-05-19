@@ -3,7 +3,7 @@
 import { useState, useTransition, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Loader2, CheckCircle2 } from 'lucide-react'
-import { inviteClientByEmail, createClient } from '../../../../app/actions/clients'
+import { inviteClientByEmail, createClient } from '@/lib/actions/clients'
 
 interface Props {
   onClose: () => void

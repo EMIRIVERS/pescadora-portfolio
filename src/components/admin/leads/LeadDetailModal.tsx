@@ -9,7 +9,7 @@ import {
   deleteLead,
   convertLeadToClient,
 } from '@/lib/actions/leads'
-import { sendLeadEmail } from '../../../../app/actions/send-lead-email'
+import { sendLeadEmail } from '@/lib/actions/send-lead-email'
 import {
   FileText,
   Mail,

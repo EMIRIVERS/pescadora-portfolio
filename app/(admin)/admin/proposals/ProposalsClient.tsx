@@ -7,8 +7,8 @@ import {
   createProposal,
   updateProposalStatus,
   deleteProposal,
-} from '../../../actions/proposals'
-import type { Proposal, ProposalStatus } from '../../../actions/proposals'
+} from '@/lib/actions/proposals'
+import type { Proposal, ProposalStatus } from '@/lib/actions/proposals'
 
 const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
 

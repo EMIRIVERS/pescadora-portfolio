@@ -1,6 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import ProposalsClient from './ProposalsClient'
-import type { Proposal } from '../../../actions/proposals'
+import type { Proposal } from '@/lib/actions/proposals'
 
 const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
 
