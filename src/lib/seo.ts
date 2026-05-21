@@ -2,19 +2,23 @@
  * Centralized SEO constants. Imported by metadata, sitemap, robots and JSON-LD
  * so the canonical origin is defined exactly once.
  *
- * Production origin resolution order:
- *   1. NEXT_PUBLIC_SITE_URL          (set this in Vercel → Project → Env Vars)
- *   2. https://<vercel-prod-domain>  (auto on Vercel before the real domain)
- *   3. https://xicofilms.com         (final hard fallback)
+ * Resolution order:
+ *   1. NEXT_PUBLIC_SITE_URL    (override; set in Vercel → Env Vars if needed)
+ *   2. https://www.xicofilms.com  (production brand canonical — what users see)
+ *
+ * The previous fallback to VERCEL_PROJECT_PRODUCTION_URL was REMOVED on
+ * purpose: it caused canonical/og:url/sitemap to publish the
+ * `carajofilms.vercel.app` URL in production instead of the brand domain
+ * (and the env var was being returned with a stray newline, malforming the
+ * sitemap XML). For preview deploys, set NEXT_PUBLIC_SITE_URL there or rely
+ * on the brand canonical (which is what we want indexed anyway).
  */
 function resolveSiteUrl(): string {
-  const explicit = process.env.NEXT_PUBLIC_SITE_URL
-  if (explicit) return explicit.replace(/\/+$/, '')
-
-  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL
-  if (vercel) return `https://${vercel}`
-
-  return 'https://xicofilms.com'
+  const explicit = process.env.NEXT_PUBLIC_SITE_URL?.trim()
+  const raw = explicit && explicit.length > 0 ? explicit : 'https://www.xicofilms.com'
+  // Belt-and-suspenders: strip whitespace + trailing slashes so any unclean
+  // env value can't break interpolation into <loc>/href/url strings.
+  return raw.trim().replace(/\/+$/, '')
 }
 
 export const SITE_URL = resolveSiteUrl()
