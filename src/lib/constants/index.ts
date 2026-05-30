@@ -1,4 +1,4 @@
-// Pescadora — application constants
+// XICO Films — application constants
 
 import type { ProjectStatus, DeliverableType, DeliverableStatus, TaskPriority } from '@/lib/types'
 

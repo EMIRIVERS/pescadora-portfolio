@@ -218,7 +218,7 @@ function EmptyState({ message }: { message: string }) {
     <div className="border border-zinc-800 rounded-xl p-12 text-center">
       <p className="text-zinc-500 text-sm">{message}</p>
       <a
-        href="mailto:hola@pescadora.mx"
+        href="mailto:hola@xicofilms.com"
         className="inline-block mt-4 text-sky-400 hover:text-sky-300 text-sm transition-colors"
       >
         Contactar a Carajo Films

@@ -1,4 +1,4 @@
-// Pescadora — shared domain types
+// XICO Films — shared domain types
 // Single source of truth for all platform entities.
 
 export type {

@@ -168,7 +168,7 @@ export default async function InvoiceDetailPage({
                   fontFamily: FONT,
                 }}
               >
-                XICO FILMS / PESCADORA
+                XICO FILMS
               </p>
               <p style={{ margin: '4px 0 0', fontSize: 13, color: '#555', fontFamily: FONT }}>
                 Produccion audiovisual
@@ -514,7 +514,7 @@ export default async function InvoiceDetailPage({
             </p>
             <p style={{ margin: 0, fontSize: 12, color: '#888', fontFamily: FONT }}>
               Terminos de pago: 30 dias neto a partir de la fecha de emision.
-              Para consultas sobre esta factura contacte a hola@pescadora.mx
+              Para consultas sobre esta factura contacte a hola@xicofilms.com
             </p>
           </div>
         </div>

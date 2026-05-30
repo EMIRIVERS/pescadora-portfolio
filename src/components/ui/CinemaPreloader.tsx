@@ -8,7 +8,7 @@ interface CinemaPreloaderProps {
   progress: number
 }
 
-const SESSION_KEY = 'pescadora_visited'
+const SESSION_KEY = 'xico_visited'
 const LETTERS = ['X', 'I', 'C', 'O']
 
 export default function CinemaPreloader({ onComplete, progress }: CinemaPreloaderProps) {

@@ -98,7 +98,7 @@ export async function inviteClientByEmail(email: string): Promise<{ error?: stri
   const db = createServiceClient()
   const { error } = await db.auth.admin.inviteUserByEmail(trimmed, {
     data: { role: 'client' },
-    redirectTo: (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://pescadora.studio') + '/auth/callback',
+    redirectTo: (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.xicofilms.com') + '/auth/callback',
   })
   if (error) return { error: error.message }
   return {}

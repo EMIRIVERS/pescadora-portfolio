@@ -178,7 +178,7 @@ export default async function PortalDashboard() {
               Cuando tu proyecto este en marcha aparecera aqui.
             </p>
             <a
-              href="mailto:hola@pescadora.mx"
+              href="mailto:hola@xicofilms.com"
               className="inline-block mt-4 text-sky-400 hover:text-sky-300 text-sm transition-colors"
             >
               Contactar a Carajo Films
