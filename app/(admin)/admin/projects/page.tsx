@@ -139,7 +139,7 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
     `}</style>
     <div
       style={{
-        padding: '40px 32px',
+        padding: 'clamp(20px, 5vw, 40px) clamp(16px, 4vw, 32px)',
         background: T.bg,
         minHeight: '100vh',
         fontFamily: T.font,

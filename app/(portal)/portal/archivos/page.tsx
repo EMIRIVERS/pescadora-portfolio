@@ -60,7 +60,7 @@ export default async function ArchivosPage() {
   const uploads: UploadWithProject[] = (uploadsData ?? []) as UploadWithProject[]
 
   return (
-    <main style={{ minHeight: '100vh', backgroundColor: '#09090b', padding: '40px 24px 80px', fontFamily: S.font }}>
+    <main style={{ minHeight: '100vh', backgroundColor: '#09090b', padding: 'clamp(20px, 5vw, 40px) clamp(16px, 4vw, 24px) 80px', fontFamily: S.font }}>
       <div style={{ maxWidth: 960, margin: '0 auto' }}>
         {/* Header */}
         <div style={{ marginBottom: 32 }}>

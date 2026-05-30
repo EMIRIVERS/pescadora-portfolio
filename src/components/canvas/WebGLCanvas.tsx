@@ -71,7 +71,7 @@ export function WebGLCanvas({ onSceneReady }: WebGLCanvasProps) {
     <canvas
       ref={mountRef}
       className="webgl"
-      aria-label="Galería visual interactiva de Carajo Films"
+      aria-label="Galería visual interactiva de XICO Films"
     />
   )
 }

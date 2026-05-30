@@ -188,6 +188,14 @@ div:hover > .video-title {
     display: none;
   }
 
+  /* iOS Safari auto-zooms when focusing a field with font-size < 16px. Force
+     16px on all form controls on small screens to stop the zoom-and-shift. */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
   .mobile-gallery {
     display: grid !important;
     grid-template-columns: 1fr 1fr;

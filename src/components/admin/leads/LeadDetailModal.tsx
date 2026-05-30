@@ -614,7 +614,7 @@ export default function LeadDetailModal({
           transition={{ type: 'spring', damping: 32, stiffness: 320 }}
           style={{
             position: 'fixed', right: 0, top: 0, bottom: 0,
-            width: 540,
+            width: 'min(540px, 100vw)',
             background: T.surf1,
             borderLeft: `1px solid ${T.border}`,
             display: 'flex',

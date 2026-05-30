@@ -358,7 +358,7 @@ export function ProjectsTable({ rows, pageSize = 15 }: ProjectsTableProps) {
       style={{
         background: T.surface1,
         borderRadius: '16px',
-        overflow: 'hidden',
+        overflowX: 'auto',
       }}
     >
       {/* Table header */}

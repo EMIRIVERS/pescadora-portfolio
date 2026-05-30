@@ -352,10 +352,10 @@ export default function ProposalsClient({ initialProposals, clients }: Props) {
             backgroundColor: 'var(--dash-surface-1)',
             border: '1px solid var(--dash-border)',
             borderRadius: 16,
-            overflow: 'hidden',
+            overflowX: 'auto',
           }}
         >
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <table style={{ width: '100%', minWidth: 680, borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                 {['Titulo', 'Cliente', 'Monto', 'Estado', 'Valida hasta', 'Creada', ''].map((h) => (

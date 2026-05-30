@@ -181,7 +181,7 @@ export default async function PortalDashboard() {
               href="mailto:hola@xicofilms.com"
               className="inline-block mt-4 text-sky-400 hover:text-sky-300 text-sm transition-colors"
             >
-              Contactar a Carajo Films
+              Contactar a XICO Films
             </a>
           </div>
         )}

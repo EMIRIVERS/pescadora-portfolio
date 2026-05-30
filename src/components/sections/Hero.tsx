@@ -6,7 +6,7 @@ export function Hero() {
   return (
     <section
       id="hero"
-      style={{ position: 'relative', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
+      style={{ position: 'relative', height: '100svh', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
     >
       <GradientBackground />
 
@@ -35,7 +35,7 @@ export function Hero() {
         <span style={{
           fontFamily: 'var(--font-geist-sans)',
           fontWeight: 900,
-          fontSize: 'clamp(5rem, 22vw, 18rem)',
+          fontSize: 'clamp(3.5rem, 22vw, 18rem)',
           letterSpacing: '-0.03em',
           lineHeight: 0.85,
           textTransform: 'uppercase',

@@ -169,7 +169,7 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
     `}</style>
     <div
       style={{
-        padding: '40px 32px',
+        padding: 'clamp(20px, 5vw, 40px) clamp(16px, 4vw, 32px)',
         minHeight: '100%',
         backgroundColor: 'var(--dash-bg)',
         fontFamily: SF,
@@ -241,7 +241,7 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
           gap: '12px',
           marginBottom: '32px',
         }}
