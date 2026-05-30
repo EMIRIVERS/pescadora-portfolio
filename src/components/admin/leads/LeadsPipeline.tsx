@@ -1013,7 +1013,7 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
           </h2>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
           {/* Seleccionar toggle */}
           <button
             onClick={toggleSelectionMode}

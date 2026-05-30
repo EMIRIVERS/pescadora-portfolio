@@ -579,7 +579,7 @@ export default async function ReportesPage({ searchParams }: PageProps) {
               {PERIOD_LABEL[period]}
             </p>
           </div>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', flexWrap: 'wrap' }}>
             <ExportButton period={period} from={fromParam} to={toParam} />
             <PeriodSelector currentPeriod={period} currentFrom={fromParam} currentTo={toParam} />
           </div>
