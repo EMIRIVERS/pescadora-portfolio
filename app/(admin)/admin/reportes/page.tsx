@@ -726,7 +726,7 @@ export default async function ReportesPage({ searchParams }: PageProps) {
         </div>
 
         {/* ── Pipeline funnel + Fuentes de leads ───────────────────────────── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: '16px', marginBottom: '20px' }}>
 
           {/* Pipeline funnel */}
           <div className="rpt-card">

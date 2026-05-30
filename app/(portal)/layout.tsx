@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import PortalLogoutButton from '@/components/portal/logout-button'
-import { FolderKanban, FileText, FolderOpen } from 'lucide-react'
+import PortalTabBar from '@/components/portal/PortalTabBar'
 import '../globals.css'
 
 // Authenticated client portal — never index any /portal route.
@@ -102,31 +102,8 @@ export default async function PortalLayout({
           so the fixed tab bar never covers content. */}
       <div className="pt-14 pb-24 sm:pb-0">{children}</div>
 
-      {/* Mobile bottom tab bar — the desktop nav is hidden under `sm`, so this
-          is the only way to reach Facturas / Archivos on a phone. */}
-      <nav className="sm:hidden fixed bottom-0 inset-x-0 z-50 flex border-t border-zinc-800 bg-zinc-950/95 backdrop-blur-md">
-        <a
-          href="/portal"
-          className="flex-1 flex flex-col items-center justify-center gap-1 min-h-[60px] text-zinc-300 active:bg-zinc-800/60 transition-colors"
-        >
-          <FolderKanban className="w-5 h-5" aria-hidden="true" />
-          <span className="text-[11px] font-medium">Proyectos</span>
-        </a>
-        <a
-          href="/portal/invoices"
-          className="flex-1 flex flex-col items-center justify-center gap-1 min-h-[60px] text-zinc-300 active:bg-zinc-800/60 transition-colors"
-        >
-          <FileText className="w-5 h-5" aria-hidden="true" />
-          <span className="text-[11px] font-medium">Facturas</span>
-        </a>
-        <a
-          href="/portal/archivos"
-          className="flex-1 flex flex-col items-center justify-center gap-1 min-h-[60px] text-zinc-300 active:bg-zinc-800/60 transition-colors"
-        >
-          <FolderOpen className="w-5 h-5" aria-hidden="true" />
-          <span className="text-[11px] font-medium">Archivos</span>
-        </a>
-      </nav>
+      {/* Mobile bottom tab bar — desktop nav is hidden under `sm`. */}
+      <PortalTabBar />
     </>
   )
 }

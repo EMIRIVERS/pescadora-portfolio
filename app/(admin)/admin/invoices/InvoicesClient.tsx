@@ -240,7 +240,7 @@ export default function InvoicesClient({ initialInvoices, clients, projects }: P
                 </select>
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 12 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 11, color: 'var(--dash-text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 6, fontFamily: FONT }}>Cliente</label>
                 <select name="client_id" style={{ ...INPUT, appearance: 'none' }}>
