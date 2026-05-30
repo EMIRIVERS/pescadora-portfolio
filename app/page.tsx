@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/server'
 import type { CmsProjectCard } from '@/components/sections/PortfolioSection'
 import HomeClient from '@/components/sections/HomeClient'
 import { Hero } from '@/components/sections/Hero'
@@ -39,7 +39,11 @@ async function PortfolioData() {
   let photoAlbums: PhotoAlbum[] = []
 
   try {
-    const supabase = await createClient()
+    // Anon, cookie-free client so this public CMS page stays statically
+    // cacheable with ISR (revalidate=3600) instead of opting into dynamic
+    // rendering. Reads only public, RLS-readable data (is_public / is_visible)
+    // with the same anon key the site already uses — no privilege change.
+    const supabase = createPublicClient()
 
     const [projectsResult, videosResult, categoriesResult, albumsResult] = await Promise.all([
       supabase

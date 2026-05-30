@@ -50,6 +50,20 @@ export function createServiceClient() {
 }
 
 /**
+ * Anon, cookie-free Supabase client for PUBLIC reads (RLS-enforced with the
+ * anon key). Because it never touches cookies, pages using it stay statically
+ * cacheable (ISR) instead of opting into dynamic rendering. Use only for
+ * public, RLS-readable data (e.g. the marketing home).
+ */
+export function createPublicClient() {
+  return createSupabaseClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { persistSession: false } }
+  )
+}
+
+/**
  * Creates a Supabase client for use in Server Components and Route Handlers.
  * Reads cookies from the Next.js `cookies()` store (read-only in Server Components,
  * read-write in Route Handlers / Server Actions).
