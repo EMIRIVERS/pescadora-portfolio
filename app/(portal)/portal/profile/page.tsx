@@ -84,10 +84,10 @@ export default async function ProfilePage() {
               <p className="text-zinc-600 text-xs">
                 Para cambiar tu email contacta al equipo en{' '}
                 <a
-                  href="mailto:hola@pescadora.mx"
+                  href="mailto:hola@xicofilms.com"
                   className="text-sky-500 hover:text-sky-400 transition-colors"
                 >
-                  hola@pescadora.mx
+                  hola@xicofilms.com
                 </a>
               </p>
             </div>

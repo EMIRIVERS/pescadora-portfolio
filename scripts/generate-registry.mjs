@@ -58,7 +58,7 @@ async function scanPhotos() {
         id: randomUUID(),
         project,
         url: `/media/contenido/${encodeURIComponent(project)}/${encodeURIComponent(file)}`,
-        alt: `${project} — Pescadora`,
+        alt: `${project} — XICO Films`,
         tags: [],
       })
     }

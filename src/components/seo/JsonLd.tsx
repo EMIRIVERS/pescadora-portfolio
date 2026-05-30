@@ -37,6 +37,20 @@ export default function JsonLd() {
         inLanguage: 'es-MX',
         publisher: { '@id': `${SITE_URL}/#organization` },
       },
+      {
+        // No postal address, phone or geo coordinates are defined anywhere in
+        // the repo, so those fields are intentionally omitted rather than
+        // invented — adding fake NAP data would hurt local SEO trust signals.
+        '@type': 'LocalBusiness',
+        '@id': `${SITE_URL}/#localbusiness`,
+        name: SITE.name,
+        description: SITE.description,
+        url: SITE_URL,
+        image: `${SITE_URL}/opengraph-image`,
+        areaServed: { '@type': 'Country', name: 'México' },
+        knowsLanguage: ['es-MX'],
+        parentOrganization: { '@id': `${SITE_URL}/#organization` },
+      },
     ],
   }
 

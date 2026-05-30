@@ -4,12 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project location
 
-The git repo and the Next.js app both live in `pescadora-portfolio/`, a subdirectory of the
-working directory (`Pescadora Full Proyect/`). Run every command from `pescadora-portfolio/`.
+The git repo and the Next.js app both live in `xico-films/`, a subdirectory of the
+working directory (`Xico Portfolio/`). Run every command from `xico-films/`.
 
-Branding note: the codebase is named "Pescadora" / "pescadora-portfolio" but the live product
-is **XICO Films** (see `app/layout.tsx` metadata, email `from`, preloader). This mismatch is
-intentional history — do not "fix" it by renaming one to match the other.
+Branding note: the product is **XICO Films** throughout — npm package name, repo, folder,
+UI/emails (`hola@xicofilms.com`) and canonical domain (`www.xicofilms.com`) are all
+consistent. The only intentional exception: the SQL migration filenames keep their original
+`pescadora_platform` prefix (e.g. `20260329000000_pescadora_platform.sql`) because Supabase
+tracks applied migrations by filename — renaming them would re-trigger migrations. Do not
+rename migration files.
 
 ## Commands
 
@@ -56,7 +59,7 @@ for authz is not enough — server actions must independently verify via `requir
 
 ## Data model
 
-~24 tables across 13 SQL migrations in `supabase/migrations/` (timestamped, additive). Core
+~24 tables across 12 SQL migrations in `supabase/migrations/` (timestamped, additive). Core
 entities: `profiles`, `clients`, `projects`, `project_deliverables`, `task_boards`/`tasks`/
 `task_activity_log`, `leads`, expenses, invoices, proposals, and portfolio
 videos/photos/albums/categories. Enums (`project_status`, `deliverable_status`, etc.) live in

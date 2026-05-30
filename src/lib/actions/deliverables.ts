@@ -15,11 +15,11 @@
 // ---------------------------------------------------------------------------
 
 import { revalidatePath } from 'next/cache'
-import { createServiceClient } from '@/lib/supabase/server'
+import { createServiceClient, requireAdmin, escapeHtml } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email'
 import type { Deliverable, DeliverableRevision, DeliverableType, DeliverableStatus } from '@/lib/supabase/types'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://pescadora.mx'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.xicofilms.com'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -63,16 +63,16 @@ function newDeliverableTemplate(
         <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;width:100%;">
           <tr>
             <td style="background-color:#111111;border:1px solid #222222;border-bottom:1px solid #1a1a1a;border-radius:12px 12px 0 0;padding:32px 40px 24px;text-align:center;">
-              <span style="font-size:22px;font-weight:700;letter-spacing:0.2em;color:#ffffff;text-transform:uppercase;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">PESCADORA</span>
+              <span style="font-size:22px;font-weight:700;letter-spacing:0.2em;color:#ffffff;text-transform:uppercase;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">XICO FILMS</span>
             </td>
           </tr>
           <tr>
             <td style="background-color:#111111;border:1px solid #222222;border-top:none;border-radius:0 0 12px 12px;padding:32px 40px;">
               <p style="margin:0 0 16px;font-size:11px;font-weight:600;letter-spacing:0.15em;color:#555555;text-transform:uppercase;">Nuevo entregable disponible</p>
-              <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#cccccc;">Hola <strong style="color:#ffffff;">${clientName}</strong>,</p>
-              <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#cccccc;">Hay un nuevo entregable listo para revisar en tu proyecto <strong style="color:#ffffff;">${projectTitle}</strong>.</p>
+              <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#cccccc;">Hola <strong style="color:#ffffff;">${escapeHtml(clientName)}</strong>,</p>
+              <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#cccccc;">Hay un nuevo entregable listo para revisar en tu proyecto <strong style="color:#ffffff;">${escapeHtml(projectTitle)}</strong>.</p>
               <div style="background-color:#0a0a0a;border:1px solid #222222;border-left:3px solid #0071E3;border-radius:0 8px 8px 0;padding:16px 20px;margin:0 0 24px;">
-                <p style="margin:0;font-size:15px;line-height:1.6;color:#cccccc;"><strong style="color:#ffffff;">${deliverableTitle}</strong></p>
+                <p style="margin:0;font-size:15px;line-height:1.6;color:#cccccc;"><strong style="color:#ffffff;">${escapeHtml(deliverableTitle)}</strong></p>
               </div>
               <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#cccccc;">Ingresa a tu portal para revisar, aprobar o solicitar cambios.</p>
               <table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0;">
@@ -85,13 +85,13 @@ function newDeliverableTemplate(
               <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                 <tr><td style="height:1px;background-color:#222222;margin:24px 0;font-size:0;line-height:0;">&nbsp;</td></tr>
               </table>
-              <p style="margin:0;font-size:15px;line-height:1.6;color:#cccccc;">El equipo de <strong style="color:#ffffff;">Pescadora</strong></p>
+              <p style="margin:0;font-size:15px;line-height:1.6;color:#cccccc;">El equipo de <strong style="color:#ffffff;">XICO Films</strong></p>
             </td>
           </tr>
           <tr>
             <td style="padding:24px 40px;text-align:center;">
               <p style="margin:0;font-size:12px;color:#555555;letter-spacing:0.05em;">
-                Pescadora &middot; <a href="${SITE_URL}" style="color:#555555;text-decoration:none;">pescadora.mx</a>
+                XICO Films &middot; <a href="${SITE_URL}" style="color:#555555;text-decoration:none;">xicofilms.com</a>
               </p>
             </td>
           </tr>
@@ -110,6 +110,8 @@ function newDeliverableTemplate(
 export async function createDeliverable(
   input: CreateDeliverableInput,
 ): Promise<CreateDeliverableResult> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
   const db = createServiceClient()
 
   // 1. Insert the deliverable
@@ -182,6 +184,8 @@ export interface UpdateDeliverableInput {
 export async function updateDeliverable(
   input: UpdateDeliverableInput,
 ): Promise<{ error?: string; data?: Deliverable }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
   const db = createServiceClient()
 
   if (!input.title.trim()) {
@@ -217,6 +221,8 @@ export async function updateDeliverable(
  * Fetch all revisions for a deliverable, ordered oldest → newest.
  */
 export async function getRevisions(deliverableId: string): Promise<DeliverableRevision[]> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return []
   const db = createServiceClient()
 
   const { data, error } = await db
@@ -241,6 +247,8 @@ export async function addRevision(
   deliverableId: string,
   input: { url: string | null; notes: string | null },
 ): Promise<{ error?: string; data?: DeliverableRevision }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
   const db = createServiceClient()
 
   // Count existing revisions to derive the next revision_number

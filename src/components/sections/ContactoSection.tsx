@@ -41,13 +41,27 @@ export function ContactoSection() {
 
     if (!section || !line1 || !line2 || !line3 || !subtitle || !cursor || !emailLink || !footer) return
 
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    const chars = subtitle.querySelectorAll<HTMLSpanElement>('.char-span')
+
+    if (reducedMotion) {
+      // Reduced motion: skip the reveal animation, leave everything in its final visible state
+      gsap.set([line1, line2, line3], { yPercent: 0 })
+      gsap.set(chars, { opacity: 1 })
+      gsap.set(cursor, { opacity: 0 })
+      gsap.set(emailLink, { x: 0, opacity: 1 })
+      if (waLink) gsap.set(waLink, { x: 0, opacity: 1 })
+      gsap.set(footer, { opacity: 1 })
+      return
+    }
+
     // --- Set initial states ---
 
     // Heading lines: inner spans start pushed down
     gsap.set([line1, line2, line3], { yPercent: 110 })
 
     // Subtitle characters: build char spans
-    const chars = subtitle.querySelectorAll<HTMLSpanElement>('.char-span')
     gsap.set(chars, { opacity: 0 })
 
     // Cursor

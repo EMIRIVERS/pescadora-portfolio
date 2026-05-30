@@ -222,7 +222,7 @@ export default function InvoicesClient({ initialInvoices, clients, projects }: P
             </button>
           </div>
           <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 12 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 11, color: 'var(--dash-text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 6, fontFamily: FONT }}>N Factura *</label>
                 <input name="invoice_number" required style={INPUT} placeholder="FAC-001" />
@@ -240,7 +240,7 @@ export default function InvoicesClient({ initialInvoices, clients, projects }: P
                 </select>
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 12 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 11, color: 'var(--dash-text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 6, fontFamily: FONT }}>Cliente</label>
                 <select name="client_id" style={{ ...INPUT, appearance: 'none' }}>
@@ -256,7 +256,7 @@ export default function InvoicesClient({ initialInvoices, clients, projects }: P
                 </select>
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 12 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 11, color: 'var(--dash-text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 6, fontFamily: FONT }}>Fecha emision</label>
                 <input name="issue_date" type="date" style={INPUT} defaultValue={new Date().toISOString().slice(0, 10)} />
@@ -293,8 +293,8 @@ export default function InvoicesClient({ initialInvoices, clients, projects }: P
           <p style={{ margin: 0, fontSize: 14, color: 'var(--dash-text-tertiary)', fontFamily: FONT }}>Sin facturas todavia.</p>
         </div>
       ) : (
-        <div style={{ backgroundColor: 'var(--dash-surface-1)', border: '1px solid var(--dash-border)', borderRadius: 16, overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div style={{ backgroundColor: 'var(--dash-surface-1)', border: '1px solid var(--dash-border)', borderRadius: 16, overflowX: 'auto' }}>
+          <table style={{ width: '100%', minWidth: 720, borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--dash-border)' }}>
                 {['Factura', 'Cliente', 'Proyecto', 'Monto', 'Estado', 'Emision', 'Vence', ''].map((h) => (

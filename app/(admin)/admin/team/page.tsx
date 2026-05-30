@@ -60,7 +60,7 @@ export default async function AdminTeamPage() {
       style={{
         minHeight: '100vh',
         backgroundColor: 'var(--dash-surface-1)',
-        padding: '40px 32px',
+        padding: 'clamp(20px, 5vw, 40px) clamp(16px, 4vw, 32px)',
         fontFamily:
           "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
       }}

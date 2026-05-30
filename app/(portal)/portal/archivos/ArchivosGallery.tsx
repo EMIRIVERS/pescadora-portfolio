@@ -275,7 +275,7 @@ function FileCard({
               alignItems:     'center',
               justifyContent: 'center',
               gap:            6,
-              height:         30,
+              minHeight:      44,
               borderRadius:   6,
               background:     'rgba(0,113,227,0.12)',
               border:         '1px solid rgba(0,113,227,0.25)',
@@ -296,8 +296,8 @@ function FileCard({
             disabled={deleting}
             title="Eliminar archivo"
             style={{
-              width:          30,
-              height:         30,
+              width:          44,
+              height:         44,
               borderRadius:   6,
               background:     'rgba(255,69,58,0.10)',
               border:         '1px solid rgba(255,69,58,0.20)',
@@ -649,7 +649,7 @@ export default function ArchivosGallery({ initialUploads, projects, clientId }: 
           {/* Responsive grid */}
           <div style={{
             display:               'grid',
-            gridTemplateColumns:   'repeat(auto-fill, minmax(200px, 1fr))',
+            gridTemplateColumns:   'repeat(auto-fill, minmax(150px, 1fr))',
             gap:                   14,
           }}>
             {filtered.map((upload) => (

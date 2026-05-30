@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { absoluteUrl } from '@/lib/seo'
 
 // The /cotiza page itself is a Client Component, so route metadata lives here.
 const title = 'Cotiza tu proyecto audiovisual'
@@ -8,11 +9,11 @@ const description =
 export const metadata: Metadata = {
   title,
   description,
-  alternates: { canonical: '/cotiza' },
+  alternates: { canonical: absoluteUrl('/cotiza') },
   openGraph: {
     title: `${title} — XICO Films`,
     description,
-    url: '/cotiza',
+    url: absoluteUrl('/cotiza'),
     type: 'website',
   },
   twitter: {

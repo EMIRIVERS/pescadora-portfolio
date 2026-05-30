@@ -45,7 +45,7 @@ export default async function AdminLeadsPage() {
         style={{
           maxWidth: '1400px',
           width: '100%',
-          padding: '48px 40px 64px',
+          padding: 'clamp(24px, 6vw, 48px) clamp(16px, 4vw, 40px) 64px',
         }}
       >
         {/* Page header */}

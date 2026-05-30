@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import PortalLogoutButton from '@/components/portal/logout-button'
+import PortalTabBar from '@/components/portal/PortalTabBar'
 import '../globals.css'
 
 // Authenticated client portal — never index any /portal route.
@@ -53,14 +54,14 @@ export default async function PortalLayout({
             <div className="w-5 h-5 relative opacity-80 group-hover:opacity-100 transition-opacity">
               <Image
                 src="/favicon.ico"
-                alt="Carajo Films"
+                alt="XICO Films"
                 fill
                 className="object-contain"
                 sizes="20px"
               />
             </div>
             <span className="text-white/70 group-hover:text-white text-xs font-medium tracking-widest uppercase transition-colors">
-              Carajo Films
+              XICO Films
             </span>
           </a>
 
@@ -97,8 +98,12 @@ export default async function PortalLayout({
         </div>
       </header>
 
-      {/* Page content — offset for fixed nav */}
-      <div className="pt-14">{children}</div>
+      {/* Page content — offset for fixed nav; extra bottom space on mobile
+          so the fixed tab bar never covers content. */}
+      <div className="pt-14 pb-24 sm:pb-0">{children}</div>
+
+      {/* Mobile bottom tab bar — desktop nav is hidden under `sm`. */}
+      <PortalTabBar />
     </>
   )
 }

@@ -419,7 +419,7 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
       .from('projects')
       .select('id, title, end_date, status, client_id')
       .neq('status', 'delivered')
-      .lte('end_date', new Date(Date.now() + 5 * 86400000).toISOString())
+      .lte('end_date', new Date(today.getTime() + 5 * 86400000).toISOString())
       .order('end_date', { ascending: true })
       .limit(3),
     // Delivered projects filtered by selected period for sparkline
@@ -648,7 +648,7 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
         .apd-root {
           background-color: var(--dash-bg);
           min-height: 100vh;
-          padding: 2.5rem 2rem;
+          padding: clamp(1.25rem, 4vw, 2.5rem) clamp(1rem, 4vw, 2rem);
           font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
           color: var(--dash-text-primary);
           box-sizing: border-box;
@@ -1107,7 +1107,7 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
             gap: '16px',
             marginBottom: '16px',
           }}
@@ -1405,7 +1405,7 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
             gap: '16px',
             marginBottom: '28px',
           }}

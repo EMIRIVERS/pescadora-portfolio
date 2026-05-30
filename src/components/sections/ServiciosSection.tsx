@@ -98,7 +98,33 @@ export function ServiciosSection() {
 
     if (!section || !title) return
 
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
     const ctx = gsap.context(() => {
+      if (reducedMotion) {
+        // ----- Reduced motion: apply final visible state statically, no tweens/triggers -----
+        chars.forEach((char) => {
+          if (!char) return
+          gsap.set(char, { y: 0, x: 0, rotation: 0, opacity: 1 })
+        })
+
+        if (items.length > 0) {
+          gsap.set(items, { opacity: 1, y: 0 })
+        }
+
+        numbers.forEach((numEl, i) => {
+          if (!numEl) return
+          numEl.textContent = String(i + 1).padStart(2, '0')
+        })
+
+        dividers.forEach((div) => {
+          if (!div) return
+          gsap.set(div, { scaleX: 1 })
+        })
+
+        return
+      }
+
       // ----- Animation 1: Character scatter-to-assemble on heading -----
       if (chars.length > 0) {
         chars.forEach((char, i) => {

@@ -473,7 +473,7 @@ export default async function ReportesPage({ searchParams }: PageProps) {
         .rpt-root {
           background-color: var(--dash-bg);
           min-height: 100vh;
-          padding: 2.5rem 2rem;
+          padding: clamp(1.25rem, 4vw, 2.5rem) clamp(1rem, 4vw, 2rem);
           font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
           color: var(--dash-text-primary);
           box-sizing: border-box;
@@ -579,14 +579,14 @@ export default async function ReportesPage({ searchParams }: PageProps) {
               {PERIOD_LABEL[period]}
             </p>
           </div>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', flexWrap: 'wrap' }}>
             <ExportButton period={period} from={fromParam} to={toParam} />
             <PeriodSelector currentPeriod={period} currentFrom={fromParam} currentTo={toParam} />
           </div>
         </div>
 
         {/* ── KPIs principales ─────────────────────────────────────────────── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px', marginBottom: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px', marginBottom: '20px' }}>
 
           {/* Revenue total */}
           <div className="rpt-kpi-card" style={{ borderColor: 'rgba(48,209,88,0.2)' }}>
@@ -726,7 +726,7 @@ export default async function ReportesPage({ searchParams }: PageProps) {
         </div>
 
         {/* ── Pipeline funnel + Fuentes de leads ───────────────────────────── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: '16px', marginBottom: '20px' }}>
 
           {/* Pipeline funnel */}
           <div className="rpt-card">
@@ -993,7 +993,7 @@ export default async function ReportesPage({ searchParams }: PageProps) {
             <h2 className="rpt-card-title">Distribucion por Estado</h2>
             <p className="rpt-card-subtitle">Todos los proyectos del periodo</p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', padding: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', padding: '16px' }}>
             {PROJECT_STATUS_ORDER.map((status) => {
               const count = projectsByStatus[status]
               const pct = Math.round((count / totalProjects) * 100)

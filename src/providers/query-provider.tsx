@@ -1,4 +1,4 @@
-// Pescadora — React Query provider
+// XICO Films — React Query provider
 //
 // SETUP REQUIRED before this file compiles:
 //   npm install @tanstack/react-query @tanstack/react-query-devtools

@@ -1,6 +1,6 @@
 'use server'
 import { revalidatePath } from 'next/cache'
-import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { createServiceClient, requireAdmin } from '@/lib/supabase/server'
 import type { ProjectStatus } from '@/lib/supabase/types'
 import { sendEmail } from '@/lib/email'
 import { projectStatusUpdateTemplate } from '@/lib/email/templates'
@@ -16,6 +16,8 @@ export async function updateProjectStatus(
   id: string,
   status: ProjectStatus,
 ): Promise<{ error?: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
   const db = createServiceClient()
 
   const { error } = await db.from('projects').update({ status }).eq('id', id)
@@ -58,6 +60,8 @@ export async function saveInternalNotes(
   projectId: string,
   notes: string,
 ): Promise<{ error?: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
   const db = createServiceClient()
   const { error } = await db
     .from('projects')
@@ -80,6 +84,8 @@ export interface ProjectComment {
 export async function getProjectComments(
   projectId: string,
 ): Promise<ProjectComment[]> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return []
   const db = createServiceClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data } = await (db as any)
@@ -94,15 +100,14 @@ export async function createProjectComment(
   projectId: string,
   content: string,
 ): Promise<{ error?: string }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'No autenticado' }
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
 
   const db = createServiceClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (db as any).from('project_comments').insert({
     project_id: projectId,
-    author_id: user.id,
+    author_id: auth.userId,
     content: content.trim(),
   })
   if (error) return { error: error.message }
@@ -114,6 +119,8 @@ export async function deleteProjectComment(
   commentId: string,
   projectId: string,
 ): Promise<{ error?: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
   const db = createServiceClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (db as any)

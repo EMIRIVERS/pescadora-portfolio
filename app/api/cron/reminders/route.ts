@@ -10,57 +10,70 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const db = createServiceClient()
-  const today = new Date()
-  const in7Days = new Date(today)
-  in7Days.setDate(today.getDate() + 7)
+  try {
+    const db = createServiceClient()
+    const today = new Date()
+    const in7Days = new Date(today)
+    in7Days.setDate(today.getDate() + 7)
 
-  // Buscar proyectos con deadline en los proximos 7 dias
-  const { data: projects } = await db
-    .from('projects')
-    .select('id, title, end_date, client:clients(name)')
-    .not('end_date', 'is', null)
-    .gte('end_date', today.toISOString().split('T')[0])
-    .lte('end_date', in7Days.toISOString().split('T')[0])
-    .neq('status', 'delivered')
+    // Buscar proyectos con deadline en los proximos 7 dias
+    const { data: projects } = await db
+      .from('projects')
+      .select('id, title, end_date, client:clients(name)')
+      .not('end_date', 'is', null)
+      .gte('end_date', today.toISOString().split('T')[0])
+      .lte('end_date', in7Days.toISOString().split('T')[0])
+      .neq('status', 'delivered')
 
-  if (projects && projects.length > 0) {
-    const projectList = projects.map((p) => {
-      const end = new Date(p.end_date as string)
-      const daysLeft = Math.round((end.getTime() - today.getTime()) / 86400000)
-      const clientRaw = p.client as { name: string } | { name: string }[] | null
-      const clientName = Array.isArray(clientRaw)
-        ? (clientRaw[0]?.name ?? 'Sin cliente')
-        : (clientRaw?.name ?? 'Sin cliente')
-      return {
-        title: p.title,
-        clientName,
-        daysLeft,
-        endDate: p.end_date as string,
+    // Buscar leads sin actividad reciente (>3 dias en status 'new' o 'contacted').
+    // Se calcula antes de enviar el email para que un fallo de email no lo bloquee.
+    const threeDaysAgo = new Date(today)
+    threeDaysAgo.setDate(today.getDate() - 3)
+
+    const { data: staleLeads } = await db
+      .from('leads')
+      .select('id, name, email, status')
+      .in('status', ['new', 'contacted'])
+      .lt('updated_at', threeDaysAgo.toISOString())
+      .limit(10)
+
+    if (projects && projects.length > 0) {
+      const projectList = projects.map((p) => {
+        const end = new Date(p.end_date as string)
+        const daysLeft = Math.round((end.getTime() - today.getTime()) / 86400000)
+        const clientRaw = p.client as { name: string } | { name: string }[] | null
+        const clientName = Array.isArray(clientRaw)
+          ? (clientRaw[0]?.name ?? 'Sin cliente')
+          : (clientRaw?.name ?? 'Sin cliente')
+        return {
+          title: p.title,
+          clientName,
+          daysLeft,
+          endDate: p.end_date as string,
+        }
+      })
+
+      // sendEmail ya no-opea/atrapa internamente, pero lo aislamos por si acaso.
+      try {
+        await sendEmail({
+          to: ADMIN_EMAIL,
+          subject: `${projectList.length} proyecto${projectList.length !== 1 ? 's' : ''} con entrega proxima`,
+          html: deadlineReminderTemplate(projectList),
+        })
+      } catch (emailErr) {
+        console.error('[cron/reminders] email failed:', emailErr)
       }
-    })
+    }
 
-    await sendEmail({
-      to: ADMIN_EMAIL,
-      subject: `${projectList.length} proyecto${projectList.length !== 1 ? 's' : ''} con entrega proxima`,
-      html: deadlineReminderTemplate(projectList),
+    return NextResponse.json({
+      ok: true,
+      deadlineProjects: projects?.length ?? 0,
+      staleLeads: staleLeads?.length ?? 0,
     })
+  } catch (err) {
+    console.error('[cron/reminders] failed:', err)
+    // Return 200 so the Vercel scheduler doesn't mark the cron as failed on a
+    // transient DB/network error; the body signals the failure.
+    return NextResponse.json({ ok: false }, { status: 200 })
   }
-
-  // Buscar leads sin actividad reciente (>3 dias en status 'new' o 'contacted')
-  const threeDaysAgo = new Date(today)
-  threeDaysAgo.setDate(today.getDate() - 3)
-
-  const { data: staleLeads } = await db
-    .from('leads')
-    .select('id, name, email, status')
-    .in('status', ['new', 'contacted'])
-    .lt('updated_at', threeDaysAgo.toISOString())
-    .limit(10)
-
-  return NextResponse.json({
-    ok: true,
-    deadlineProjects: projects?.length ?? 0,
-    staleLeads: staleLeads?.length ?? 0,
-  })
 }

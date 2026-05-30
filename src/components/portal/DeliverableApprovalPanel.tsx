@@ -227,6 +227,7 @@ export default function DeliverableApprovalPanel({
             onClick={handleApprove}
             disabled={isPending}
             style={{
+              minHeight: 44,
               padding: '7px 16px',
               borderRadius: 8,
               border: '1px solid rgba(52,199,89,0.35)',
@@ -247,6 +248,7 @@ export default function DeliverableApprovalPanel({
             onClick={() => { setMode('rejecting'); setErrorMsg(null) }}
             disabled={isPending}
             style={{
+              minHeight: 44,
               padding: '7px 16px',
               borderRadius: 8,
               border: '1px solid rgba(255,255,255,0.10)',

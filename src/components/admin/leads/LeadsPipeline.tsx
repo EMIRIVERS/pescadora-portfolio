@@ -188,10 +188,10 @@ function sortLeads(leads: Lead[], sort: SortOption): Lead[] {
 // ── WA templates ─────────────────────────────────────────────────────────────
 
 const WA_TEMPLATE_COBRAR =
-  `Hi! My name is Emi, I'm a professional photographer & content creator based in Mexico, currently visiting Caye Caulker.\n\nI'd love to create professional photography & video content for your business — photos and video you can use on Instagram, Google, and your website.\n\nWould you be open to a quick chat?\n\n— Emi | Pescadora\npescadora.mx`;
+  `Hi! My name is Emi, I'm a professional photographer & content creator based in Mexico, currently visiting Caye Caulker.\n\nI'd love to create professional photography & video content for your business — photos and video you can use on Instagram, Google, and your website.\n\nWould you be open to a quick chat?\n\n— Emi | XICO Films\nxicofilms.com`;
 
 const WA_TEMPLATE_INTERCAMBIO =
-  `Hi! I'm Emi, a professional photographer visiting Caye Caulker.\n\nI'd like to propose a collaboration: I'll create professional photos & video content for your business in exchange for [accommodation / meals / a tour / store credit].\n\nNo cost to you. You get content that brings in more customers.\n\nInterested?\n\n— Emi | Pescadora\npescadora.mx`;
+  `Hi! I'm Emi, a professional photographer visiting Caye Caulker.\n\nI'd like to propose a collaboration: I'll create professional photos & video content for your business in exchange for [accommodation / meals / a tour / store credit].\n\nNo cost to you. You get content that brings in more customers.\n\nInterested?\n\n— Emi | XICO Films\nxicofilms.com`;
 
 // ── Shared input/select style ─────────────────────────────────────────────────
 
@@ -1013,7 +1013,7 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
           </h2>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
           {/* Seleccionar toggle */}
           <button
             onClick={toggleSelectionMode}

@@ -49,7 +49,7 @@ export default function ClientsLoading() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
           gap: '12px',
           marginBottom: '32px',
         }}

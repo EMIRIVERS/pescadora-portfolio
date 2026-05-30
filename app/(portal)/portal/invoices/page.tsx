@@ -97,7 +97,7 @@ export default async function PortalInvoicesPage() {
   if (!client) {
     return (
       <main style={{ fontFamily: FONT, minHeight: '100vh', backgroundColor: 'var(--portal-bg)' }}>
-        <div style={{ maxWidth: 720, margin: '0 auto', padding: '3rem 1.5rem' }}>
+        <div style={{ maxWidth: 720, margin: '0 auto', padding: 'clamp(1.5rem, 5vw, 3rem) clamp(1rem, 4vw, 1.5rem)' }}>
           <Link
             href="/portal"
             style={{
@@ -158,7 +158,7 @@ export default async function PortalInvoicesPage() {
 
   return (
     <main style={{ fontFamily: FONT, minHeight: '100vh', backgroundColor: 'var(--portal-bg)' }}>
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '3rem 1.5rem' }}>
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: 'clamp(1.5rem, 5vw, 3rem) clamp(1rem, 4vw, 1.5rem)' }}>
         {/* Back link */}
         <Link
           href="/portal"

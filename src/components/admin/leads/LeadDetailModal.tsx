@@ -294,6 +294,8 @@ export default function LeadDetailModal({
   const [leadClientTypes, setLeadClientTypes] = useState<ClientType[]>([])
 
   const [localLastContacted, setLocalLastContacted] = useState<string | null>(lead.last_contacted_at)
+  // Freeze "now" at mount so date math stays pure across renders.
+  const [now] = useState(() => Date.now())
 
   const leadAny = lead as unknown as Record<string, unknown>
   const [waCopied, setWaCopied] = useState(false)
@@ -512,12 +514,12 @@ export default function LeadDetailModal({
     const delivers = `What we can deliver:\n• A revamped, high-converting website (demo ready to show you!)\n• Professional photo & video — fully edited, ready to post\n• Social media content package\n• Fast turnaround`
 
     if (variant === 0) {
-      return `Hi! My name is Emi — I'm part of Xico Films, a production company focused on high-impact visual content.\n\n${hook}\n\nWe loved it so much that we actually took the initiative to build a custom web demo for ${biz}, showing how a refreshed site paired with professional content could look.\n\nWe'll be on the island May 16–21, which makes it the perfect window to capture fresh footage on-site. We're completely flexible — open to a collaboration or a standard package, whatever fits best.\n\n${delivers}\n\nWould you be open to a quick chat? I'd love to send you the demo link before the trip.\n\n— Emi | Xico Films\n${portfolio}`
+      return `Hi! My name is Emi — I'm part of XICO Films, a production company focused on high-impact visual content.\n\n${hook}\n\nWe loved it so much that we actually took the initiative to build a custom web demo for ${biz}, showing how a refreshed site paired with professional content could look.\n\nWe'll be on the island May 16–21, which makes it the perfect window to capture fresh footage on-site. We're completely flexible — open to a collaboration or a standard package, whatever fits best.\n\n${delivers}\n\nWould you be open to a quick chat? I'd love to send you the demo link before the trip.\n\n— Emi | XICO Films\n${portfolio}`
     }
     if (variant === 1) {
-      return `Hi! I'm Emi from Xico Films — we specialize in high-impact content for businesses like yours.\n\n${hook}\n\nWe're heading to Caye Caulker May 16–21 and we went ahead and built a web demo specifically for ${biz} — a real look at what a refreshed website and fresh content could do for you.\n\nWe're flexible on how we structure it — a collaboration, a package, whatever works on your end.\n\n${delivers}\n\nMind if I shoot you the demo link? It takes about 2 minutes to look at and gives you a real feel for what we're talking about.\n\n— Emi | Xico Films\n${portfolio}`
+      return `Hi! I'm Emi from XICO Films — we specialize in high-impact content for businesses like yours.\n\n${hook}\n\nWe're heading to Caye Caulker May 16–21 and we went ahead and built a web demo specifically for ${biz} — a real look at what a refreshed website and fresh content could do for you.\n\nWe're flexible on how we structure it — a collaboration, a package, whatever works on your end.\n\n${delivers}\n\nMind if I shoot you the demo link? It takes about 2 minutes to look at and gives you a real feel for what we're talking about.\n\n— Emi | XICO Films\n${portfolio}`
     }
-    return `Hi! Emi here, from Xico Films.\n\n${hook}\n\nWe'll be in Caye Caulker May 16–21 and we took the time to build a demo for ${biz} — a preview of what a fresh website and professional content could look like for you specifically.\n\nHappy to make it work however is easiest — collaboration, package, open to ideas.\n\n${delivers}\n\nCan I send you the link?\n\n— Emi | Xico Films\n${portfolio}`
+    return `Hi! Emi here, from XICO Films.\n\n${hook}\n\nWe'll be in Caye Caulker May 16–21 and we took the time to build a demo for ${biz} — a preview of what a fresh website and professional content could look like for you specifically.\n\nHappy to make it work however is easiest — collaboration, package, open to ideas.\n\n${delivers}\n\nCan I send you the link?\n\n— Emi | XICO Films\n${portfolio}`
   }
 
   function handleCopyWa() {
@@ -541,14 +543,14 @@ export default function LeadDetailModal({
 
   const diasSinContacto = useMemo((): { days: number; color: string } => {
     const ref = localLastContacted ?? lead.created_at
-    const days = Math.floor((Date.now() - new Date(ref).getTime()) / 86400000)
+    const days = Math.floor((now - new Date(ref).getTime()) / 86400000)
     const color = days > 14 ? 'var(--dash-danger)' : days > 7 ? 'var(--dash-warning)' : T.text3
     return { days, color }
-  }, [localLastContacted, lead.created_at])
+  }, [localLastContacted, lead.created_at, now])
 
   function getNextActionDateColor(): string {
     if (!nextActionDate) return T.text1
-    const diffDays = Math.ceil((new Date(nextActionDate + 'T00:00:00').getTime() - new Date().setHours(0,0,0,0)) / 86400000)
+    const diffDays = Math.ceil((new Date(nextActionDate + 'T00:00:00').getTime() - new Date(now).setHours(0,0,0,0)) / 86400000)
     if (diffDays < 0) return 'var(--dash-danger)'
     if (diffDays <= 2) return 'var(--dash-warning)'
     return 'var(--dash-success)'
@@ -612,7 +614,7 @@ export default function LeadDetailModal({
           transition={{ type: 'spring', damping: 32, stiffness: 320 }}
           style={{
             position: 'fixed', right: 0, top: 0, bottom: 0,
-            width: 540,
+            width: 'min(540px, 100vw)',
             background: T.surf1,
             borderLeft: `1px solid ${T.border}`,
             display: 'flex',

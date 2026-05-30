@@ -147,7 +147,7 @@ export function DaysRemaining({ endDate }: { endDate: string | null }) {
 // ── Table columns ─────────────────────────────────────────────────────────────
 
 // Proyecto | Cliente | Presupuesto | Estado | Inicio | Entrega | Dias rest. | ->
-const TABLE_COLS = 'grid-cols-[1fr_140px_120px_160px_90px_90px_80px_36px]'
+const TABLE_COLS = 'grid-cols-[minmax(160px,1fr)_140px_120px_160px_90px_90px_80px_36px]'
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -358,7 +358,7 @@ export function ProjectsTable({ rows, pageSize = 15 }: ProjectsTableProps) {
       style={{
         background: T.surface1,
         borderRadius: '16px',
-        overflow: 'hidden',
+        overflowX: 'auto',
       }}
     >
       {/* Table header */}

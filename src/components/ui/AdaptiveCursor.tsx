@@ -8,7 +8,6 @@ type CursorState = 'default' | 'link' | 'view'
 export default function AdaptiveCursor() {
   const dotRef = useRef<HTMLDivElement>(null)
   const [cursorState, setCursorState] = useState<CursorState>('default')
-  const [visible, setVisible] = useState(true)
   const quickToXRef = useRef<gsap.QuickToFunc | null>(null)
   const quickToYRef = useRef<gsap.QuickToFunc | null>(null)
 
@@ -27,12 +26,10 @@ export default function AdaptiveCursor() {
   }, [])
 
   useEffect(() => {
-    // Hide on touch devices
-    const isTouchDevice = window.matchMedia('(pointer: coarse)').matches
-    if (isTouchDevice) {
-      setVisible(false)
-      return
-    }
+    // Touch devices never get a custom cursor. The parent only mounts this on
+    // non-touch (`!isTouch && <AdaptiveCursor />`), but guard here too so we
+    // never inject `cursor: none` or listeners on a coarse pointer.
+    if (window.matchMedia('(pointer: coarse)').matches) return
 
     const dot = dotRef.current
     if (!dot) return
@@ -62,8 +59,6 @@ export default function AdaptiveCursor() {
       quickToYRef.current = null
     }
   }, [handleMouseOver])
-
-  if (!visible) return null
 
   const isLink = cursorState === 'link'
   const isView = cursorState === 'view'

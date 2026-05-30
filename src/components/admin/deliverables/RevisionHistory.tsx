@@ -79,13 +79,19 @@ export function RevisionHistory({ deliverableId, currentUrl }: RevisionHistoryPr
   // Load revisions on mount
   useEffect(() => {
     let cancelled = false
+    // Reset the loading indicator whenever the deliverable to display changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true)
-    getRevisions(deliverableId).then((rows) => {
-      if (!cancelled) {
-        setRevisions(rows)
-        setLoading(false)
-      }
-    })
+    getRevisions(deliverableId)
+      .then((rows) => {
+        if (!cancelled) {
+          setRevisions(rows)
+          setLoading(false)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setLoading(false)
+      })
     return () => { cancelled = true }
   }, [deliverableId])
 

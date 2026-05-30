@@ -250,7 +250,7 @@ export default function DeliverableComments({ deliverableId }: DeliverableCommen
         <button
           type="submit"
           disabled={submitting || !text.trim()}
-          className="self-end inline-flex items-center justify-center w-8 h-8 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/20 hover:border-sky-500/30 text-sky-400 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 shrink-0"
+          className="self-end inline-flex items-center justify-center w-11 h-11 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/20 hover:border-sky-500/30 text-sky-400 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 shrink-0"
           title="Enviar comentario"
         >
           <Send className="w-3.5 h-3.5" strokeWidth={2} />

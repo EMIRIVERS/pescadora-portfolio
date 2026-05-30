@@ -1,6 +1,6 @@
 'use server'
 import { revalidatePath } from 'next/cache'
-import { createServiceClient } from '@/lib/supabase/server'
+import { createServiceClient, requireAdmin } from '@/lib/supabase/server'
 
 export type ProposalStatus = 'draft' | 'sent' | 'accepted' | 'rejected'
 
@@ -29,6 +29,8 @@ export interface Proposal {
 // ─── Read ─────────────────────────────────────────────────────────────────────
 
 export async function getProposals(): Promise<Proposal[]> {
+  const auth = await requireAdmin()
+  if ('error' in auth) throw new Error(auth.error)
   const db = createServiceClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (db as any)
@@ -54,6 +56,8 @@ export interface CreateProposalData {
 }
 
 export async function createProposal(data: CreateProposalData): Promise<{ error?: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
   const db = createServiceClient()
   if (!data.title.trim()) return { error: 'El título es obligatorio.' }
 
@@ -81,6 +85,8 @@ export async function updateProposal(
   id: string,
   data: Partial<CreateProposalData>,
 ): Promise<{ error?: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
   const db = createServiceClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (db as any)
@@ -98,6 +104,8 @@ export async function updateProposalStatus(
   id: string,
   status: ProposalStatus,
 ): Promise<{ error?: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
   const db = createServiceClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (db as any)
@@ -112,6 +120,8 @@ export async function updateProposalStatus(
 // ─── Delete ───────────────────────────────────────────────────────────────────
 
 export async function deleteProposal(id: string): Promise<{ error?: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
   const db = createServiceClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (db as any).from('proposals').delete().eq('id', id)
