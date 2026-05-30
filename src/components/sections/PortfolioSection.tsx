@@ -168,7 +168,27 @@ function PortfolioCard({
   const [hovered, setHovered] = useState(false)
   const [imgLoaded, setImgLoaded] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const aspect = isBanner ? '38%' : '56.25%'
+
+  const clearHoverTimer = useCallback(() => {
+    if (hoverTimer.current !== null) {
+      clearTimeout(hoverTimer.current)
+      hoverTimer.current = null
+    }
+  }, [])
+
+  const handleMouseEnter = useCallback(() => {
+    clearHoverTimer()
+    hoverTimer.current = setTimeout(() => setHovered(true), 130)
+  }, [clearHoverTimer])
+
+  const handleMouseLeave = useCallback(() => {
+    clearHoverTimer()
+    setHovered(false)
+  }, [clearHoverTimer])
+
+  useEffect(() => () => clearHoverTimer(), [clearHoverTimer])
 
   const handleClick = useCallback(() => {
     if (!ref.current) return
@@ -199,8 +219,8 @@ function PortfolioCard({
       }}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       style={{
         position: 'relative',
         overflow: 'hidden',
@@ -336,6 +356,9 @@ export default function PortfolioSection({ cmsProjects, videos, categories, phot
   const videoCards = allCards.filter((c) => !c.isPhoto)
   const photoCards = allCards.filter((c) => c.isPhoto)
 
+  // True only cuando ninguna card tiene media real (portada) que mostrar.
+  const hasRealMedia = allCards.some((c) => c.coverUrl !== null)
+
   const handleOpen = useCallback((card: ProjectCard, origin: OverlayOrigin) => {
     setOpenState({
       project: card.name,
@@ -385,14 +408,68 @@ export default function PortfolioSection({ cmsProjects, videos, categories, phot
           outline-offset: 2px;
         }
       `}</style>
-      <div className="portfolio-grid">
-        {videoCards.map((card, index) => (
-          <PortfolioCard key={card.name} card={card} index={index} onOpen={handleOpen} />
-        ))}
-        {photoCards.map((card, index) => (
-          <PortfolioCard key={card.name} card={card} index={videoCards.length + index} isBanner onOpen={handleOpen} />
-        ))}
-      </div>
+      {hasRealMedia ? (
+        <div className="portfolio-grid">
+          {videoCards.map((card, index) => (
+            <PortfolioCard key={card.name} card={card} index={index} onOpen={handleOpen} />
+          ))}
+          {photoCards.map((card, index) => (
+            <PortfolioCard key={card.name} card={card} index={videoCards.length + index} isBanner onOpen={handleOpen} />
+          ))}
+        </div>
+      ) : (
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center',
+          padding: 'clamp(3rem, 8vw, 6rem) clamp(1.2rem, 4vw, 2rem)',
+          gap: '0.9rem',
+        }}>
+          <p style={{
+            margin: 0,
+            fontFamily: 'var(--font-geist-sans)',
+            fontSize: 'clamp(1rem, 2vw, 1.4rem)',
+            fontWeight: 600,
+            letterSpacing: '0.01em',
+            color: '#ede8e0',
+          }}>
+            Estamos preparando nuevo trabajo.
+          </p>
+          <p style={{
+            margin: 0,
+            maxWidth: '34rem',
+            fontFamily: 'var(--font-geist-sans)',
+            fontSize: 'clamp(0.85rem, 1.4vw, 1rem)',
+            lineHeight: 1.6,
+            color: '#6b6560',
+          }}>
+            Mientras tanto, cuéntanos tu proyecto. Escríbenos a{' '}
+            <a
+              href="mailto:hola@xicofilms.com"
+              style={{
+                color: '#e8341a',
+                textDecoration: 'none',
+                fontWeight: 600,
+              }}
+            >
+              hola@xicofilms.com
+            </a>
+            {' '}y conversemos.
+          </p>
+          <span aria-hidden="true" style={{
+            marginTop: '0.4rem',
+            fontFamily: 'var(--font-geist-mono)',
+            fontSize: '0.6rem',
+            letterSpacing: '0.2em',
+            textTransform: 'uppercase',
+            color: '#e8341a',
+          }}>
+            ──
+          </span>
+        </div>
+      )}
 
       {/* Overlay */}
       {openState !== null && (

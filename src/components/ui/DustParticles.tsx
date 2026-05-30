@@ -68,6 +68,49 @@ export default function DustParticles() {
       createParticle(w, h)
     )
 
+    const drawParticle = (p: Particle, brownX: number, brownY: number) => {
+      const drawX = p.x + brownX
+      const drawY = p.y + brownY
+      const [r, g, b] = p.color
+
+      if (p.size > 2.5) {
+        // Larger particles get slight blur via radial gradient
+        const grad = ctx.createRadialGradient(drawX, drawY, 0, drawX, drawY, p.size * 1.5)
+        grad.addColorStop(0, `rgba(${r},${g},${b},${p.opacity})`)
+        grad.addColorStop(1, `rgba(${r},${g},${b},0)`)
+        ctx.fillStyle = grad
+        ctx.beginPath()
+        ctx.arc(drawX, drawY, p.size * 1.5, 0, Math.PI * 2)
+        ctx.fill()
+      } else {
+        ctx.fillStyle = `rgba(${r},${g},${b},${p.opacity})`
+        ctx.beginPath()
+        ctx.arc(drawX, drawY, p.size, 0, Math.PI * 2)
+        ctx.fill()
+      }
+    }
+
+    const handleResize = () => {
+      w = Math.floor(window.innerWidth / 2)
+      h = Math.floor(window.innerHeight / 2)
+      canvas.width = w
+      canvas.height = h
+    }
+
+    // Respect prefers-reduced-motion: draw a single static frame, no rAF loop.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      ctx.clearRect(0, 0, w, h)
+      for (const p of particles) {
+        drawParticle(p, 0, 0)
+      }
+
+      window.addEventListener('resize', handleResize)
+
+      return () => {
+        window.removeEventListener('resize', handleResize)
+      }
+    }
+
     let lastFrameTime = 0
     let animId = 0
 
@@ -93,36 +136,11 @@ export default function DustParticles() {
         if (p.y < -10) p.y = h + 10
         if (p.y > h + 10) p.y = -10
 
-        const drawX = p.x + brownX
-        const drawY = p.y + brownY
-        const [r, g, b] = p.color
-
-        if (p.size > 2.5) {
-          // Larger particles get slight blur via radial gradient
-          const grad = ctx.createRadialGradient(drawX, drawY, 0, drawX, drawY, p.size * 1.5)
-          grad.addColorStop(0, `rgba(${r},${g},${b},${p.opacity})`)
-          grad.addColorStop(1, `rgba(${r},${g},${b},0)`)
-          ctx.fillStyle = grad
-          ctx.beginPath()
-          ctx.arc(drawX, drawY, p.size * 1.5, 0, Math.PI * 2)
-          ctx.fill()
-        } else {
-          ctx.fillStyle = `rgba(${r},${g},${b},${p.opacity})`
-          ctx.beginPath()
-          ctx.arc(drawX, drawY, p.size, 0, Math.PI * 2)
-          ctx.fill()
-        }
+        drawParticle(p, brownX, brownY)
       }
     }
 
     animId = requestAnimationFrame(render)
-
-    const handleResize = () => {
-      w = Math.floor(window.innerWidth / 2)
-      h = Math.floor(window.innerHeight / 2)
-      canvas.width = w
-      canvas.height = h
-    }
 
     window.addEventListener('resize', handleResize)
 

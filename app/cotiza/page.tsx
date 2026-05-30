@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useRef } from 'react'
+import { useActionState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { submitCotizacion } from '@/lib/actions/cotiza'
 
@@ -31,6 +31,7 @@ const BUDGET_RANGES = [
 
 export default function CotizaPage() {
   const formRef = useRef<HTMLFormElement>(null)
+  const feedbackRef = useRef<HTMLDivElement>(null)
 
   const [state, action, pending] = useActionState<ActionState, FormData>(
     async (prev, formData) => {
@@ -42,6 +43,14 @@ export default function CotizaPage() {
     },
     null,
   )
+
+  // On a successful (or failed) submission the feedback message can land below
+  // the fold on mobile, making users think nothing happened. Bring it into view.
+  useEffect(() => {
+    if (state?.success || state?.error) {
+      feedbackRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }, [state?.success, state?.error])
 
   return (
     <>
@@ -382,30 +391,32 @@ export default function CotizaPage() {
             </button>
 
             {/* ── Feedback ──────────────────────────────────────────────────── */}
-            {state?.success && (
-              <div role="status" className="cq-success">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-                <span>Recibido. Te contactamos pronto.</span>
-              </div>
-            )}
+            <div ref={feedbackRef}>
+              {state?.success && (
+                <div role="status" aria-live="polite" className="cq-success">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  <span>Recibido. Te contactamos pronto.</span>
+                </div>
+              )}
 
-            {state?.error && (
-              <div role="alert" className="cq-error">
-                {state.error}
-              </div>
-            )}
+              {state?.error && (
+                <div role="alert" aria-live="assertive" className="cq-error">
+                  {state.error}
+                </div>
+              )}
+            </div>
 
           </form>
         </div>
