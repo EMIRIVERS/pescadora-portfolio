@@ -172,22 +172,25 @@ export default async function AdminBuscarPage({ searchParams }: PageProps) {
   if (q.length > 0) {
     searched = true
     const supabase = createServiceClient()
+    // Strip PostgREST structural metacharacters so `q` cannot inject extra
+    // filters into the `.or()` expressions below.
+    const safeQ = q.replace(/[,()]/g, ' ')
 
     const [projectsRes, clientsRes, leadsRes] = await Promise.all([
       supabase
         .from('projects')
         .select('id, title, status, created_at')
-        .ilike('title', `%${q}%`)
+        .ilike('title', `%${safeQ}%`)
         .limit(10),
       supabase
         .from('clients')
         .select('id, name, email, company')
-        .or(`name.ilike.%${q}%,email.ilike.%${q}%,company.ilike.%${q}%`)
+        .or(`name.ilike.%${safeQ}%,email.ilike.%${safeQ}%,company.ilike.%${safeQ}%`)
         .limit(10),
       supabase
         .from('leads')
         .select('id, name, email, company, status')
-        .or(`name.ilike.%${q}%,email.ilike.%${q}%`)
+        .or(`name.ilike.%${safeQ}%,email.ilike.%${safeQ}%`)
         .limit(10),
     ])
 

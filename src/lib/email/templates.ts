@@ -5,6 +5,16 @@
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://xicofilms.com'
 
+/** Escapes user/DB-derived values before interpolating them into email HTML. */
+function esc(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+}
+
 // ---------------------------------------------------------------------------
 // Shared layout helpers
 // ---------------------------------------------------------------------------
@@ -82,11 +92,11 @@ function bodyText(text: string): string {
 // ---------------------------------------------------------------------------
 
 export function leadWelcomeTemplate(name: string, projectType: string | null): string {
-  const typeLabel = projectType ? ` para <strong style="color:#ffffff;">${projectType}</strong>` : ''
+  const typeLabel = projectType ? ` para <strong style="color:#ffffff;">${esc(projectType)}</strong>` : ''
 
   const body = `
     ${sectionTitle('Confirmacion de solicitud')}
-    ${bodyText(`Hola <strong style="color:#ffffff;">${name}</strong>,`)}
+    ${bodyText(`Hola <strong style="color:#ffffff;">${esc(name)}</strong>,`)}
     ${bodyText(`Recibimos tu solicitud de cotizacion${typeLabel}. Nuestro equipo la revisara y se pondra en contacto contigo en menos de <strong style="color:#ffffff;">24 horas habiles</strong>.`)}
     ${bodyText('Mientras tanto, si tienes algun detalle adicional que quieras compartir, puedes responder directamente a este correo.')}
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
@@ -117,7 +127,7 @@ function leadRow(label: string, value: string | null): string {
   if (!value) return ''
   return `<tr>
     <td style="padding:10px 16px;font-size:12px;font-weight:600;letter-spacing:0.08em;color:#888888;text-transform:uppercase;width:140px;vertical-align:top;border-bottom:1px solid #1a1a1a;">${label}</td>
-    <td style="padding:10px 16px;font-size:14px;color:#dddddd;border-bottom:1px solid #1a1a1a;word-break:break-word;">${value}</td>
+    <td style="padding:10px 16px;font-size:14px;color:#dddddd;border-bottom:1px solid #1a1a1a;word-break:break-word;">${esc(value)}</td>
   </tr>`
 }
 
@@ -153,7 +163,7 @@ export function leadAdminNotifyTemplate(lead: LeadNotifyData): string {
 function statusMessage(name: string, newStatus: string): string {
   if (newStatus === 'qualified') {
     return `
-      ${bodyText(`Hola <strong style="color:#ffffff;">${name}</strong>,`)}
+      ${bodyText(`Hola <strong style="color:#ffffff;">${esc(name)}</strong>,`)}
       ${bodyText('Tenemos buenas noticias. Tu solicitud ha sido revisada y tu proyecto es exactamente el tipo de trabajo que nos apasiona.')}
       ${bodyText('Un miembro de nuestro equipo se comunicara contigo muy pronto para agendar una llamada y profundizar en los detalles.')}
       ${bodyText('Gracias por tu paciencia, estamos emocionados de conocer mas sobre tu vision.')}
@@ -161,13 +171,13 @@ function statusMessage(name: string, newStatus: string): string {
   }
   if (newStatus === 'proposal') {
     return `
-      ${bodyText(`Hola <strong style="color:#ffffff;">${name}</strong>,`)}
+      ${bodyText(`Hola <strong style="color:#ffffff;">${esc(name)}</strong>,`)}
       ${bodyText('Hemos preparado una propuesta personalizada para tu proyecto. La recibiras en detalle en los proximos momentos.')}
       ${bodyText('Tomatelo con calma, revisa cada punto y no dudes en contactarnos con cualquier pregunta o ajuste.')}
       ${bodyText('Estamos comprometidos a que esto quede exactamente como lo imaginas.')}
     `
   }
-  return bodyText(`Tu solicitud ha avanzado al estado: <strong style="color:#ffffff;">${newStatus}</strong>. Pronto estaremos en contacto.`)
+  return bodyText(`Tu solicitud ha avanzado al estado: <strong style="color:#ffffff;">${esc(newStatus)}</strong>. Pronto estaremos en contacto.`)
 }
 
 export function leadStatusUpdateTemplate(name: string, newStatus: string): string {
@@ -191,8 +201,8 @@ export function projectStartedTemplate(clientName: string, projectTitle: string)
 
   const body = `
     ${sectionTitle('Tu proyecto ha comenzado')}
-    ${bodyText(`Hola <strong style="color:#ffffff;">${clientName}</strong>,`)}
-    ${bodyText(`Nos complace informarte que tu proyecto <strong style="color:#ffffff;">${projectTitle}</strong> ha dado inicio oficialmente.`)}
+    ${bodyText(`Hola <strong style="color:#ffffff;">${esc(clientName)}</strong>,`)}
+    ${bodyText(`Nos complace informarte que tu proyecto <strong style="color:#ffffff;">${esc(projectTitle)}</strong> ha dado inicio oficialmente.`)}
     ${bodyText('Desde el portal de clientes podras hacer seguimiento a cada etapa del proceso: desde la pre-produccion hasta la entrega final.')}
     ${bodyText('Nos estaremos comunicando contigo en cada avance importante. Gracias por ser parte de este proyecto.')}
     ${ctaButton('Ver mi proyecto', portalUrl)}
@@ -219,7 +229,7 @@ function projectStatusMessage(status: string): string {
     case 'delivered':
       return bodyText('Tu proyecto ha sido <strong style="color:#ffffff;">entregado</strong>. Fue un placer trabajar contigo. Revisa el material en tu portal y haznos saber si tienes algun comentario.')
     default:
-      return bodyText(`El estado de tu proyecto ha cambiado a: <strong style="color:#ffffff;">${status}</strong>.`)
+      return bodyText(`El estado de tu proyecto ha cambiado a: <strong style="color:#ffffff;">${esc(status)}</strong>.`)
   }
 }
 
@@ -232,8 +242,8 @@ export function projectStatusUpdateTemplate(
 
   const body = `
     ${sectionTitle('Actualizacion de proyecto')}
-    ${bodyText(`Hola <strong style="color:#ffffff;">${clientName}</strong>,`)}
-    ${bodyText(`Hay novedades sobre tu proyecto <strong style="color:#ffffff;">${projectTitle}</strong>:`)}
+    ${bodyText(`Hola <strong style="color:#ffffff;">${esc(clientName)}</strong>,`)}
+    ${bodyText(`Hay novedades sobre tu proyecto <strong style="color:#ffffff;">${esc(projectTitle)}</strong>:`)}
     <div style="background-color:#0a0a0a;border:1px solid #222222;border-left:3px solid #0071E3;border-radius:0 8px 8px 0;padding:16px 20px;margin:0 0 24px;">
       ${projectStatusMessage(status)}
     </div>
@@ -273,11 +283,11 @@ function deadlineRow(project: DeadlineProject): string {
 
   return `<tr>
     <td style="padding:14px 16px;border-bottom:1px solid #1a1a1a;vertical-align:top;">
-      <p style="margin:0 0 2px;font-size:14px;font-weight:600;color:#ffffff;">${project.title}</p>
-      <p style="margin:0;font-size:12px;color:#888888;">${project.clientName}</p>
+      <p style="margin:0 0 2px;font-size:14px;font-weight:600;color:#ffffff;">${esc(project.title)}</p>
+      <p style="margin:0;font-size:12px;color:#888888;">${esc(project.clientName)}</p>
     </td>
     <td style="padding:14px 16px;border-bottom:1px solid #1a1a1a;vertical-align:top;text-align:center;">
-      <p style="margin:0;font-size:12px;color:#888888;">${project.endDate}</p>
+      <p style="margin:0;font-size:12px;color:#888888;">${esc(project.endDate)}</p>
     </td>
     <td style="padding:14px 16px;border-bottom:1px solid #1a1a1a;vertical-align:top;text-align:right;">
       <span style="display:inline-block;padding:4px 10px;border-radius:20px;background-color:${color}22;color:${color};font-size:12px;font-weight:600;">${daysLabel}</span>

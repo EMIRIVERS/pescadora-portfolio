@@ -22,6 +22,20 @@ export async function submitCotizacion(
     return { error: 'Ingresa un email valido.' }
   }
 
+  // Length caps on this public, unauthenticated endpoint to prevent abusive
+  // oversized payloads.
+  if (
+    name.length > 120 ||
+    email.length > 200 ||
+    phone.length > 40 ||
+    company.length > 150 ||
+    project_type.length > 100 ||
+    budget_range.length > 100 ||
+    message.length > 4000
+  ) {
+    return { error: 'Uno o mas campos exceden la longitud permitida.' }
+  }
+
   const service = createServiceClient()
 
   const { error: dbError } = await service.from('leads').insert({

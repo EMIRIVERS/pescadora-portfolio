@@ -20,8 +20,12 @@ export default function NavProgress() {
     if (hideTimer.current !== null) clearTimeout(hideTimer.current)
     if (fadeTimer.current !== null) clearTimeout(fadeTimer.current)
 
+    /* eslint-disable react-hooks/set-state-in-effect -- the progress bar must
+       reset its visibility in response to each route change; this is the
+       intended "subscribe to the router" effect. */
     setFading(false)
     setVisible(true)
+    /* eslint-enable react-hooks/set-state-in-effect */
 
     // After the fill animation (0.4s) keep bar visible briefly then fade
     hideTimer.current = setTimeout(() => {

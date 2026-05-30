@@ -419,7 +419,7 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
       .from('projects')
       .select('id, title, end_date, status, client_id')
       .neq('status', 'delivered')
-      .lte('end_date', new Date(Date.now() + 5 * 86400000).toISOString())
+      .lte('end_date', new Date(today.getTime() + 5 * 86400000).toISOString())
       .order('end_date', { ascending: true })
       .limit(3),
     // Delivered projects filtered by selected period for sparkline

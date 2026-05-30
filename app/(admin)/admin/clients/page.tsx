@@ -79,7 +79,9 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
         .select('id, name, email, company, avatar_url, profile_id, created_at')
         .order('name', { ascending: true })
       if (q) {
-        query = query.or(`name.ilike.%${q}%,email.ilike.%${q}%,company.ilike.%${q}%`)
+        // Strip PostgREST structural metacharacters to prevent filter injection.
+        const safeQ = q.replace(/[,()]/g, ' ')
+        query = query.or(`name.ilike.%${safeQ}%,email.ilike.%${safeQ}%,company.ilike.%${safeQ}%`)
       }
       return query
     })(),

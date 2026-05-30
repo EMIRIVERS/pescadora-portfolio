@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient, requireAdmin } from '@/lib/supabase/server'
 import type { Lead, LeadStatus, LeadSource, LeadActivityType } from '@/lib/supabase/types'
 import { sendEmail, ADMIN_EMAIL } from '@/lib/email'
 import {
@@ -34,6 +34,8 @@ function revalidateLeads() {
 export async function createLead(
   formData: FormData
 ): Promise<{ lead?: Lead; error?: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
   const userId = await getCurrentUserId()
   const db = createServiceClient()
 
@@ -117,6 +119,8 @@ export async function updateLead(
   id: string,
   formData: FormData
 ): Promise<{ lead?: Lead; error?: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
   const userId = await getCurrentUserId()
   const db = createServiceClient()
 
@@ -193,6 +197,8 @@ export async function updateLead(
 // ---------------------------------------------------------------------------
 
 export async function deleteLead(id: string): Promise<{ error?: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
   const db = createServiceClient()
 
   const { error } = await db.from('leads').delete().eq('id', id)
@@ -213,6 +219,8 @@ export async function updateLeadStatus(
   id: string,
   status: LeadStatus
 ): Promise<{ error?: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
   const userId = await getCurrentUserId()
   const db = createServiceClient()
 
@@ -269,6 +277,8 @@ export async function addLeadActivity(
   type: LeadActivityType,
   content: string
 ): Promise<{ error?: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
   const userId = await getCurrentUserId()
   const db = createServiceClient()
 
@@ -302,6 +312,8 @@ export async function addLeadActivity(
 export async function convertLeadToClient(
   leadId: string
 ): Promise<{ clientId?: string; error?: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
   const userId = await getCurrentUserId()
   const db = createServiceClient()
 

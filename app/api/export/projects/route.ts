@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/server'
+import { createServiceClient, requireAdmin } from '@/lib/supabase/server'
 
 // ─── Period helpers (mirrors reportes/page.tsx logic) ─────────────────────────
 
@@ -53,6 +53,9 @@ interface ProjectExportRow {
 
 // GET /api/export/projects?period=month
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return new NextResponse('Unauthorized', { status: 401 })
+
   const { searchParams } = new URL(request.url)
   const rawPeriod = searchParams.get('period') ?? 'all'
   const period: Period = (['month', '3months', 'year', 'all'] as const).includes(

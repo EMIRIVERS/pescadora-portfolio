@@ -44,7 +44,15 @@ export function RadialGallery({ scene, camera, sectionSelector }: RadialGalleryP
   }, [scene])
 
   useEffect(() => {
-    init()
+    let cancelled = false
+    // init() is async: if the component unmounts before it resolves, dispose
+    // the planes it created so their GPU textures/geometries don't leak.
+    init().then(() => {
+      if (cancelled) {
+        planesRef.current.forEach((p) => p.dispose())
+        planesRef.current = []
+      }
+    })
 
     const trigger = ScrollTrigger.create({
       trigger: sectionSelector,
@@ -72,6 +80,7 @@ export function RadialGallery({ scene, camera, sectionSelector }: RadialGalleryP
     rafRef.current = requestAnimationFrame(tick)
 
     return () => {
+      cancelled = true
       trigger.kill()
       cancelAnimationFrame(rafRef.current)
       planesRef.current.forEach((p) => p.dispose())

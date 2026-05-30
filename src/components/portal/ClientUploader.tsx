@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { ClientUpload } from '@/lib/supabase/types'
 
@@ -56,7 +56,9 @@ interface Props {
 // ---------------------------------------------------------------------------
 
 export default function ClientUploader({ projectId, clientId }: Props) {
-  const supabase = createClient()
+  // Memoize so the client identity is stable across renders — otherwise the
+  // load effect below re-runs on every render and re-fetches in a loop.
+  const supabase = useMemo(() => createClient(), [])
 
   const [uploads, setUploads]         = useState<ClientUpload[]>([])
   const [loading, setLoading]         = useState(true)
@@ -70,24 +72,25 @@ export default function ClientUploader({ projectId, clientId }: Props) {
   // Load existing uploads
   // ---------------------------------------------------------------------------
 
-  const loadUploads = useCallback(async () => {
-    setLoading(true)
-    const { data, error: fetchError } = await supabase
-      .from('client_uploads')
-      .select('*')
-      .eq('project_id', projectId)
-      .eq('client_id', clientId)
-      .order('uploaded_at', { ascending: false })
-
-    if (!fetchError && data) {
-      setUploads(data as ClientUpload[])
-    }
-    setLoading(false)
-  }, [supabase, projectId, clientId])
-
   useEffect(() => {
-    void loadUploads()
-  }, [loadUploads])
+    let active = true
+    const run = async () => {
+      const { data, error: fetchError } = await supabase
+        .from('client_uploads')
+        .select('*')
+        .eq('project_id', projectId)
+        .eq('client_id', clientId)
+        .order('uploaded_at', { ascending: false })
+
+      if (!active) return
+      if (!fetchError && data) {
+        setUploads(data as ClientUpload[])
+      }
+      setLoading(false)
+    }
+    void run()
+    return () => { active = false }
+  }, [supabase, projectId, clientId])
 
   // ---------------------------------------------------------------------------
   // Upload handler
@@ -139,6 +142,8 @@ export default function ClientUploader({ projectId, clientId }: Props) {
       .single()
 
     if (insertError || !row) {
+      // Roll back the orphaned storage object so it doesn't linger invisibly.
+      await supabase.storage.from('media').remove([storagePath])
       setError(`Error al registrar el archivo: ${insertError?.message ?? 'desconocido'}`)
     } else {
       setUploads((prev) => [row as ClientUpload, ...prev])

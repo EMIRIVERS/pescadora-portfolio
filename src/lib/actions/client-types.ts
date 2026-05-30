@@ -1,6 +1,6 @@
 'use server'
 
-import { createServiceClient } from '@/lib/supabase/server'
+import { createServiceClient, requireAdmin } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 export interface ClientType {
@@ -14,6 +14,8 @@ export interface ClientType {
 type AnyTable = any
 
 export async function getAllClientTypes(): Promise<ClientType[]> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return []
   const db = createServiceClient()
   const { data } = await (db as AnyTable)
     .from('client_types')
@@ -23,6 +25,8 @@ export async function getAllClientTypes(): Promise<ClientType[]> {
 }
 
 export async function getLeadClientTypes(leadId: string): Promise<ClientType[]> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return []
   const db = createServiceClient()
   const { data } = await (db as AnyTable)
     .from('lead_client_types')
@@ -36,6 +40,8 @@ export async function getLeadClientTypes(leadId: string): Promise<ClientType[]> 
 }
 
 export async function createClientType(label: string, color: string): Promise<ClientType> {
+  const auth = await requireAdmin()
+  if ('error' in auth) throw new Error(auth.error)
   const db = createServiceClient()
   const { data: existing } = await (db as AnyTable)
     .from('client_types')
@@ -54,12 +60,16 @@ export async function createClientType(label: string, color: string): Promise<Cl
 }
 
 export async function deleteClientType(id: string): Promise<void> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return
   const db = createServiceClient()
   await (db as AnyTable).from('client_types').delete().eq('id', id)
   revalidatePath('/admin/leads')
 }
 
 export async function setLeadClientTypes(leadId: string, typeIds: string[]): Promise<void> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return
   const db = createServiceClient()
   await (db as AnyTable).from('lead_client_types').delete().eq('lead_id', leadId)
   if (typeIds.length > 0) {

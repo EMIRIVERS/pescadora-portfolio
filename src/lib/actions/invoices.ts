@@ -1,10 +1,12 @@
 'use server'
 import { revalidatePath } from 'next/cache'
-import { createServiceClient } from '@/lib/supabase/server'
+import { createServiceClient, requireAdmin } from '@/lib/supabase/server'
 
 export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled'
 
 export async function getInvoices() {
+  const auth = await requireAdmin()
+  if ('error' in auth) return []
   const db = createServiceClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (db as any)
@@ -15,6 +17,8 @@ export async function getInvoices() {
 }
 
 export async function createInvoice(formData: FormData): Promise<{ error?: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
   const db = createServiceClient()
   const invoice_number = String(formData.get('invoice_number') ?? '').trim()
   if (!invoice_number) return { error: 'El número de factura es obligatorio.' }
@@ -41,6 +45,8 @@ export async function createInvoice(formData: FormData): Promise<{ error?: strin
 }
 
 export async function updateInvoice(id: string, formData: FormData): Promise<{ error?: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
   const db = createServiceClient()
   const amount = parseFloat(String(formData.get('amount') ?? '0'))
 
@@ -64,6 +70,8 @@ export async function updateInvoice(id: string, formData: FormData): Promise<{ e
 }
 
 export async function updateInvoiceStatus(id: string, status: InvoiceStatus): Promise<{ error?: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
   const db = createServiceClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (db as any).from('invoices').update({ status, updated_at: new Date().toISOString() }).eq('id', id)
@@ -73,6 +81,8 @@ export async function updateInvoiceStatus(id: string, status: InvoiceStatus): Pr
 }
 
 export async function deleteInvoice(id: string): Promise<{ error?: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
   const db = createServiceClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (db as any).from('invoices').delete().eq('id', id)

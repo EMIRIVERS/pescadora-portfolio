@@ -1,8 +1,10 @@
 'use server'
-import { createServiceClient, createClient } from '@/lib/supabase/server'
+import { createServiceClient, createClient, requireAdmin } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 export async function removeTeamMember(profileId: string): Promise<{ error?: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
   if (!profileId) return { error: 'ID de perfil requerido' }
 
   const db = createServiceClient()
@@ -38,6 +40,8 @@ export async function updateMyProfile(formData: FormData): Promise<{ error?: str
 }
 
 export async function inviteTeamMember(formData: FormData): Promise<{ error?: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
   const email = String(formData.get('email') ?? '').trim().toLowerCase()
   const role = String(formData.get('role') ?? 'Asistente').trim()
 
@@ -77,6 +81,8 @@ export async function changeTeamMemberRole(
   profileId: string,
   newRole: string,
 ): Promise<{ error?: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
   if (!profileId) return { error: 'ID de perfil requerido' }
   const db = createServiceClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -100,6 +106,8 @@ export async function addTeamMemberManually(
   const trimmedEmail = email.trim().toLowerCase()
   const trimmedRole = role.trim() || 'Asistente'
 
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
   if (!trimmedName) return { error: 'El nombre es obligatorio.' }
   if (!trimmedEmail) return { error: 'El email es obligatorio.' }
 

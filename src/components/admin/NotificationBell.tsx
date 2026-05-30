@@ -53,15 +53,15 @@ export default function NotificationBell() {
 
   const unread = notifications.filter((n) => !n.is_read).length
 
-  async function load() {
-    const data = await getNotifications(20)
-    setNotifications(data as Notification[])
-  }
-
   useEffect(() => {
+    let active = true
+    const load = async () => {
+      const data = await getNotifications(20)
+      if (active) setNotifications(data as Notification[])
+    }
     void load()
     const interval = setInterval(() => { void load() }, 30000)
-    return () => clearInterval(interval)
+    return () => { active = false; clearInterval(interval) }
   }, [])
 
   // Outside click

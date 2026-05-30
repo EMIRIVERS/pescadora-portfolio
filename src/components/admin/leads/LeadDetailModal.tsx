@@ -294,6 +294,8 @@ export default function LeadDetailModal({
   const [leadClientTypes, setLeadClientTypes] = useState<ClientType[]>([])
 
   const [localLastContacted, setLocalLastContacted] = useState<string | null>(lead.last_contacted_at)
+  // Freeze "now" at mount so date math stays pure across renders.
+  const [now] = useState(() => Date.now())
 
   const leadAny = lead as unknown as Record<string, unknown>
   const [waCopied, setWaCopied] = useState(false)
@@ -541,14 +543,14 @@ export default function LeadDetailModal({
 
   const diasSinContacto = useMemo((): { days: number; color: string } => {
     const ref = localLastContacted ?? lead.created_at
-    const days = Math.floor((Date.now() - new Date(ref).getTime()) / 86400000)
+    const days = Math.floor((now - new Date(ref).getTime()) / 86400000)
     const color = days > 14 ? 'var(--dash-danger)' : days > 7 ? 'var(--dash-warning)' : T.text3
     return { days, color }
-  }, [localLastContacted, lead.created_at])
+  }, [localLastContacted, lead.created_at, now])
 
   function getNextActionDateColor(): string {
     if (!nextActionDate) return T.text1
-    const diffDays = Math.ceil((new Date(nextActionDate + 'T00:00:00').getTime() - new Date().setHours(0,0,0,0)) / 86400000)
+    const diffDays = Math.ceil((new Date(nextActionDate + 'T00:00:00').getTime() - new Date(now).setHours(0,0,0,0)) / 86400000)
     if (diffDays < 0) return 'var(--dash-danger)'
     if (diffDays <= 2) return 'var(--dash-warning)'
     return 'var(--dash-success)'

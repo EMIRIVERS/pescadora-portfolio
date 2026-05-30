@@ -1,9 +1,11 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createServiceClient } from '@/lib/supabase/server'
+import { createServiceClient, requireAdmin } from '@/lib/supabase/server'
 
 export async function createCategory(formData: FormData) {
+  const auth = await requireAdmin()
+  if ('error' in auth) throw new Error(auth.error)
   const slug = String(formData.get('slug') ?? '').trim().toLowerCase().replace(/\s+/g, '_')
   const label = String(formData.get('label') ?? '').trim()
   if (!slug || !label) throw new Error('slug y label son obligatorios')
@@ -30,6 +32,8 @@ export async function updateCategory(
   oldSlug: string,
   data: { label?: string; slug?: string; sort_order?: number; is_visible?: boolean }
 ): Promise<{ error?: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
   if (data.label !== undefined && !data.label.trim()) return { error: 'label es obligatorio' }
   const db = createServiceClient()
 
@@ -52,6 +56,8 @@ export async function updateCategory(
 }
 
 export async function deleteCategory(id: string) {
+  const auth = await requireAdmin()
+  if ('error' in auth) throw new Error(auth.error)
   const db = createServiceClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (db as any).from("portfolio_categories").delete().eq('id', id)
@@ -61,6 +67,8 @@ export async function deleteCategory(id: string) {
 }
 
 export async function toggleCategoryVisibility(id: string, is_visible: boolean) {
+  const auth = await requireAdmin()
+  if ('error' in auth) throw new Error(auth.error)
   const db = createServiceClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (db as any).from("portfolio_categories").update({ is_visible }).eq('id', id)
@@ -70,6 +78,8 @@ export async function toggleCategoryVisibility(id: string, is_visible: boolean) 
 }
 
 export async function updateCategoryCover(slug: string, coverUrl: string | null) {
+  const auth = await requireAdmin()
+  if ('error' in auth) throw new Error(auth.error)
   const db = createServiceClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (db as any)
@@ -82,6 +92,8 @@ export async function updateCategoryCover(slug: string, coverUrl: string | null)
 }
 
 export async function reorderCategories(id: string, adjacentId: string, myOrder: number, adjacentOrder: number) {
+  const auth = await requireAdmin()
+  if ('error' in auth) throw new Error(auth.error)
   const db = createServiceClient()
   await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

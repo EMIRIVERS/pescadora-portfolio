@@ -21,7 +21,7 @@
 // ---------------------------------------------------------------------------
 
 import { revalidatePath } from 'next/cache'
-import { createServiceClient } from '@/lib/supabase/server'
+import { createServiceClient, requireAdmin } from '@/lib/supabase/server'
 import type { ProjectExpense } from '@/lib/supabase/types'
 
 export interface CreateExpenseInput {
@@ -34,6 +34,8 @@ export interface CreateExpenseInput {
 }
 
 export async function getExpenses(projectId: string): Promise<ProjectExpense[]> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return []
   const db = createServiceClient()
   const { data } = await db
     .from('project_expenses')
@@ -46,6 +48,8 @@ export async function getExpenses(projectId: string): Promise<ProjectExpense[]> 
 export async function createExpense(
   input: CreateExpenseInput,
 ): Promise<{ data?: ProjectExpense; error?: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
   const db = createServiceClient()
   const { data, error } = await db
     .from('project_expenses')
@@ -70,6 +74,8 @@ export async function deleteExpense(
   expenseId: string,
   projectId: string,
 ): Promise<{ error?: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
   const db = createServiceClient()
   const { error } = await db.from('project_expenses').delete().eq('id', expenseId)
   if (error) return { error: error.message }

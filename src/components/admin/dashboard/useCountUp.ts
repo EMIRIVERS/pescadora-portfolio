@@ -6,16 +6,13 @@ export function useCountUp(target: number, duration = 0.8): number {
   const [count, setCount] = useState(0)
 
   useEffect(() => {
-    if (target === 0) {
-      setCount(0)
-      return
-    }
-
     const startTime = performance.now()
     const durationMs = duration * 1000
 
     let rafId: number
 
+    // Animate toward `target`; when target is 0 this settles at 0 on the first
+    // frame (no synchronous setState needed in the effect body).
     function tick(now: number) {
       const elapsed = now - startTime
       const progress = Math.min(elapsed / durationMs, 1)
