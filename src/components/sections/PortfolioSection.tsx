@@ -4,7 +4,7 @@ import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { registry } from '@/lib/registry'
-import { SUPABASE_MEDIA_BASE, isGif, SHIMMER_STYLE, VIMEO_BG_PARAMS } from '@/lib/media'
+import { SUPABASE_MEDIA_BASE, isGif, isVideo, SHIMMER_STYLE, VIMEO_BG_PARAMS } from '@/lib/media'
 import MediaTile from '@/components/portfolio/MediaTile'
 import type { VideoEntry } from '@/types/media'
 import type { PortfolioCategory } from '@/types/media'
@@ -255,7 +255,25 @@ function PortfolioCard({
 
         {/* Imagen estática de portada */}
         {card.coverUrl && (
-          isGif(card.coverUrl) ? (
+          isVideo(card.coverUrl) ? (
+            <video
+              src={card.coverUrl}
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="metadata"
+              onLoadedData={() => setImgLoaded(true)}
+              style={{
+                position: 'absolute', inset: 0,
+                width: '100%', height: '100%',
+                objectFit: 'cover',
+                transition: 'transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.5s ease',
+                transform: hovered ? 'scale(1.05)' : 'scale(1)',
+                opacity: imgLoaded ? 1 : 0,
+              }}
+            />
+          ) : isGif(card.coverUrl) ? (
             <FrozenGif src={card.coverUrl} alt={`${card.label} — XICO Films`} hovered={hovered} />
           ) : card.isPhoto ? (
             <Image

@@ -29,6 +29,12 @@ export function isGif(url: string): boolean {
   return /\.gif(\?|$)/i.test(url)
 }
 
+/** True for video cover URLs (`.mp4`/`.webm`). Used to render covers as a
+ *  looping muted <video> instead of a heavy animated GIF. */
+export function isVideo(url: string): boolean {
+  return /\.(mp4|webm)(\?|$)/i.test(url)
+}
+
 /** Vimeo player chrome-stripping params for the full/detail player. */
 export const VIMEO_PARAMS = 'title=0&byline=0&portrait=0&badge=0&autopause=0&player_id=0&app_id=58479'
 
