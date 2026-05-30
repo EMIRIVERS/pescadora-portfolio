@@ -103,8 +103,28 @@ function buildAllCards(videos: VideoEntry[], cats: PortfolioCategory[], photoAlb
 function FrozenGif({ src, alt, hovered }: { src: string; alt: string; hovered: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [frozen, setFrozen] = useState(false)
+  // These cover GIFs can be very large; only fetch when the card is near the
+  // viewport so the initial page load isn't blocked downloading them all.
+  const [inView, setInView] = useState(false)
 
   useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true)
+          obs.disconnect()
+        }
+      },
+      { rootMargin: '300px' },
+    )
+    obs.observe(canvas)
+    return () => obs.disconnect()
+  }, [])
+
+  useEffect(() => {
+    if (!inView) return
     const canvas = canvasRef.current
     if (!canvas) return
     const img = new window.Image()
@@ -119,7 +139,7 @@ function FrozenGif({ src, alt, hovered }: { src: string; alt: string; hovered: b
       }
     }
     img.src = src
-  }, [src])
+  }, [inView, src])
 
   return (
     <>
@@ -134,12 +154,13 @@ function FrozenGif({ src, alt, hovered }: { src: string; alt: string; hovered: b
           transition: 'opacity 0.3s ease',
         }}
       />
-      {/* GIF real, solo visible en hover */}
-      {(hovered || !frozen) && (
+      {/* GIF real, solo se descarga/visible una vez en viewport y en hover */}
+      {inView && (hovered || !frozen) && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={src}
           alt={alt}
+          loading="lazy"
           style={{
             position: 'absolute', inset: 0,
             width: '100%', height: '100%',
