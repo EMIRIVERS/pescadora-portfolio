@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { sendEmail, ADMIN_EMAIL } from '@/lib/email'
 import { deadlineReminderTemplate } from '@/lib/email/templates'
+import { notify } from '@/lib/notify'
 
 export async function GET(request: NextRequest) {
   // Verificar que viene de Vercel Cron (bearer token)
@@ -37,6 +38,49 @@ export async function GET(request: NextRequest) {
       .lt('updated_at', threeDaysAgo.toISOString())
       .limit(10)
 
+    const todayStr = today.toISOString().split('T')[0]
+
+    // Facturas vencidas: 'sent' con due_date pasado → marcar 'overdue' + avisar.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: overdue } = await (db as any)
+      .from('invoices')
+      .select('id, invoice_number')
+      .eq('status', 'sent')
+      .lt('due_date', todayStr)
+    let overdueCount = 0
+    for (const inv of (overdue ?? []) as { id: string; invoice_number: string }[]) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (db as any).from('invoices').update({ status: 'overdue' }).eq('id', inv.id)
+      await notify({
+        title: 'Factura vencida',
+        body: `La factura ${inv.invoice_number} pasó su fecha de vencimiento.`,
+        type: 'warning',
+        entityType: 'invoice',
+        entityId: inv.id,
+      })
+      overdueCount++
+    }
+
+    // Eventos de calendario en los próximos 2 días (pendientes) → avisar.
+    const in2Days = new Date(today)
+    in2Days.setDate(today.getDate() + 2)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: upcoming } = await (db as any)
+      .from('calendar_events')
+      .select('id, title, type, event_date')
+      .eq('status', 'pendiente')
+      .gte('event_date', todayStr)
+      .lte('event_date', in2Days.toISOString().split('T')[0])
+    for (const ev of (upcoming ?? []) as { id: string; title: string; event_date: string }[]) {
+      await notify({
+        title: 'Evento próximo',
+        body: `${ev.title} — ${ev.event_date}`,
+        type: 'info',
+        entityType: 'calendar',
+        entityId: ev.id,
+      })
+    }
+
     if (projects && projects.length > 0) {
       const projectList = projects.map((p) => {
         const end = new Date(p.end_date as string)
@@ -69,6 +113,8 @@ export async function GET(request: NextRequest) {
       ok: true,
       deadlineProjects: projects?.length ?? 0,
       staleLeads: staleLeads?.length ?? 0,
+      overdueInvoices: overdueCount,
+      upcomingEvents: upcoming?.length ?? 0,
     })
   } catch (err) {
     console.error('[cron/reminders] failed:', err)

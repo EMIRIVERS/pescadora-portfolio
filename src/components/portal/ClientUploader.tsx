@@ -106,6 +106,12 @@ export default function ClientUploader({ projectId, clientId }: Props) {
       return
     }
 
+    const BLOCKED = /\.(html?|svg|js|mjs|cjs|exe|sh|bat|cmd|php|asp|aspx|jsp)$/i
+    if (BLOCKED.test(file.name)) {
+      setError('Formato no permitido. Sube imágenes, PDFs o videos.')
+      return
+    }
+
     setUploading(true)
     setProgress(`Subiendo ${file.name}...`)
 

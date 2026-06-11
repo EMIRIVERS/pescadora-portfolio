@@ -2,9 +2,10 @@
 
 import { useState, useTransition, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Printer, Trash2, X, Check, AlertCircle, Info } from 'lucide-react'
-import { createInvoice, updateInvoiceStatus, deleteInvoice } from '@/lib/actions/invoices'
+import { Plus, Printer, Trash2, Pencil, Check, AlertCircle, Info } from 'lucide-react'
+import { updateInvoiceStatus, deleteInvoice } from '@/lib/actions/invoices'
 import type { Invoice } from './page'
+import InvoiceBuilder, { type EditingInvoice } from '@/components/admin/billing/InvoiceBuilder'
 
 const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
 
@@ -61,19 +62,6 @@ interface Props {
   initialInvoices: Invoice[]
   clients: { id: string; name: string }[]
   projects: { id: string; title: string }[]
-}
-
-const INPUT: React.CSSProperties = {
-  width: '100%',
-  backgroundColor: 'var(--dash-surface-3)',
-  border: '1px solid var(--dash-border)',
-  borderRadius: 8,
-  padding: '8px 12px',
-  fontSize: 13,
-  color: 'var(--dash-text-primary)',
-  fontFamily: FONT,
-  outline: 'none',
-  boxSizing: 'border-box',
 }
 
 function NotesCell({ notes }: { notes: string }) {
@@ -137,23 +125,40 @@ function NotesCell({ notes }: { notes: string }) {
   )
 }
 
+function toEditing(inv: Invoice): EditingInvoice {
+  return {
+    id: inv.id,
+    invoice_number: inv.invoice_number,
+    title: inv.title,
+    items: inv.items,
+    client_type: inv.client_type,
+    currency: inv.currency,
+    status: inv.status,
+    client_id: inv.client_id,
+    project_id: inv.project_id,
+    issue_date: inv.issue_date,
+    due_date: inv.due_date,
+    fiscal_data: inv.fiscal_data,
+    notes: inv.notes,
+    tax: inv.tax,
+  }
+}
+
 export default function InvoicesClient({ initialInvoices, clients, projects }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices)
-  const [showForm, setShowForm] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [builderOpen, setBuilderOpen] = useState(false)
+  const [editing, setEditing] = useState<EditingInvoice | null>(null)
 
-  function handleCreate(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setError(null)
-    const fd = new FormData(e.currentTarget)
-    startTransition(async () => {
-      const result = await createInvoice(fd)
-      if (result.error) { setError(result.error); return }
-      setShowForm(false)
-      router.refresh()
-    })
+  function openNew() {
+    setEditing(null)
+    setBuilderOpen(true)
+  }
+
+  function openEdit(inv: Invoice) {
+    setEditing(toEditing(inv))
+    setBuilderOpen(true)
   }
 
   function handleStatusChange(id: string, status: Invoice['status']) {
@@ -200,7 +205,7 @@ export default function InvoicesClient({ initialInvoices, clients, projects }: P
         <span style={{ fontSize: 13, color: 'var(--dash-text-tertiary)', fontFamily: FONT }}>{invoices.length} factura{invoices.length !== 1 ? 's' : ''}</span>
         <button
           type="button"
-          onClick={() => setShowForm(true)}
+          onClick={openNew}
           style={{
             display: 'flex', alignItems: 'center', gap: 6,
             padding: '8px 16px', backgroundColor: '#0071E3', border: 'none',
@@ -211,81 +216,6 @@ export default function InvoicesClient({ initialInvoices, clients, projects }: P
           <Plus size={14} strokeWidth={2} /> Nueva factura
         </button>
       </div>
-
-      {/* Form */}
-      {showForm && (
-        <div style={{ backgroundColor: 'var(--dash-surface-2)', border: '1px solid var(--dash-border)', borderRadius: 16, padding: 24, marginBottom: 16 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--dash-text-secondary)', letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: FONT }}>Nueva factura</span>
-            <button type="button" onClick={() => setShowForm(false)} style={{ border: 'none', background: 'transparent', color: 'var(--dash-text-tertiary)', cursor: 'pointer' }}>
-              <X size={16} strokeWidth={1.5} />
-            </button>
-          </div>
-          <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 12 }}>
-              <div>
-                <label style={{ display: 'block', fontSize: 11, color: 'var(--dash-text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 6, fontFamily: FONT }}>N Factura *</label>
-                <input name="invoice_number" required style={INPUT} placeholder="FAC-001" />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 11, color: 'var(--dash-text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 6, fontFamily: FONT }}>Monto *</label>
-                <input name="amount" type="number" min="0" step="0.01" required style={INPUT} placeholder="0.00" />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 11, color: 'var(--dash-text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 6, fontFamily: FONT }}>Moneda</label>
-                <select name="currency" style={{ ...INPUT, appearance: 'none' }}>
-                  <option value="MXN">MXN</option>
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                </select>
-              </div>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 12 }}>
-              <div>
-                <label style={{ display: 'block', fontSize: 11, color: 'var(--dash-text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 6, fontFamily: FONT }}>Cliente</label>
-                <select name="client_id" style={{ ...INPUT, appearance: 'none' }}>
-                  <option value="">Sin cliente</option>
-                  {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 11, color: 'var(--dash-text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 6, fontFamily: FONT }}>Proyecto</label>
-                <select name="project_id" style={{ ...INPUT, appearance: 'none' }}>
-                  <option value="">Sin proyecto</option>
-                  {projects.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
-                </select>
-              </div>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 12 }}>
-              <div>
-                <label style={{ display: 'block', fontSize: 11, color: 'var(--dash-text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 6, fontFamily: FONT }}>Fecha emision</label>
-                <input name="issue_date" type="date" style={INPUT} defaultValue={new Date().toISOString().slice(0, 10)} />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 11, color: 'var(--dash-text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 6, fontFamily: FONT }}>Fecha vencimiento</label>
-                <input name="due_date" type="date" style={INPUT} />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 11, color: 'var(--dash-text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 6, fontFamily: FONT }}>Estado</label>
-                <select name="status" style={{ ...INPUT, appearance: 'none' }}>
-                  {Object.entries(STATUS_STYLES).map(([v, s]) => <option key={v} value={v}>{s.label}</option>)}
-                </select>
-              </div>
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: 11, color: 'var(--dash-text-secondary)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 6, fontFamily: FONT }}>Notas</label>
-              <textarea name="notes" rows={2} style={{ ...INPUT, resize: 'vertical' }} placeholder="Notas internas..." />
-            </div>
-            {error && <p style={{ margin: 0, fontSize: 13, color: 'var(--dash-danger)', fontFamily: FONT }}>{error}</p>}
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button type="submit" disabled={isPending} style={{ padding: '9px 20px', backgroundColor: '#0071E3', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 500, color: '#fff', cursor: isPending ? 'not-allowed' : 'pointer', opacity: isPending ? 0.5 : 1, fontFamily: FONT }}>
-                {isPending ? 'Guardando...' : 'Crear factura'}
-              </button>
-              <button type="button" onClick={() => setShowForm(false)} style={{ padding: '9px 16px', border: 'none', background: 'transparent', color: 'var(--dash-text-tertiary)', cursor: 'pointer', fontSize: 13, fontFamily: FONT }}>Cancelar</button>
-            </div>
-          </form>
-        </div>
-      )}
 
       {/* Table */}
       {invoices.length === 0 ? (
@@ -423,6 +353,14 @@ export default function InvoicesClient({ initialInvoices, clients, projects }: P
                         )}
                         <button
                           type="button"
+                          onClick={() => openEdit(inv)}
+                          style={{ border: 'none', background: 'transparent', color: 'var(--dash-text-secondary)', cursor: 'pointer', padding: 4, borderRadius: 6 }}
+                          title="Editar factura"
+                        >
+                          <Pencil size={14} strokeWidth={1.5} />
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => router.push(`/admin/invoices/${inv.id}`)}
                           style={{ border: 'none', background: 'transparent', color: 'var(--dash-text-secondary)', cursor: 'pointer', padding: 4, borderRadius: 6 }}
                           title="Ver / Imprimir factura"
@@ -446,6 +384,16 @@ export default function InvoicesClient({ initialInvoices, clients, projects }: P
           </table>
         </div>
       )}
+
+      {/* Builder */}
+      <InvoiceBuilder
+        open={builderOpen}
+        editing={editing}
+        clients={clients}
+        projects={projects}
+        onClose={() => setBuilderOpen(false)}
+        onSaved={() => router.refresh()}
+      />
     </div>
   )
 }

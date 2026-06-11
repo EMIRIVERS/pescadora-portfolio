@@ -62,27 +62,41 @@ function StatCard({ label, sublabel, value, displayValue, iconKey, accent, href,
       transition={{ duration: 0.3, delay: index * 0.05 }}
       whileHover={{ y: -2 }}
     >
-      <Link href={href} className="apd-stat-card" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        <div
-          style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: '10px',
-            background: `${accent}1A`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          <Icon size={18} color={accent} strokeWidth={1.8} />
+      <Link href={href} className="apd-stat-card" style={{ '--card-accent': accent } as React.CSSProperties}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div
+            style={{
+              width: '34px',
+              height: '34px',
+              borderRadius: '9px',
+              background: `${accent}26`,
+              border: `1px solid ${accent}33`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <Icon size={17} color={accent} strokeWidth={1.8} />
+          </div>
+          <span
+            style={{
+              fontFamily: 'var(--dash-font-mono)',
+              fontSize: '10px',
+              letterSpacing: '0.12em',
+              color: 'var(--dash-text-tertiary)',
+            }}
+          >
+            {String(index + 1).padStart(2, '0')}
+          </span>
         </div>
         <p
           style={{
-            fontSize: displayValue ? '18px' : '32px',
-            fontWeight: 700,
+            fontFamily: 'var(--dash-font-display)',
+            fontSize: displayValue ? '28px' : '40px',
+            fontWeight: 600,
             color: 'var(--dash-text-primary)',
-            margin: 0,
+            margin: '4px 0 0',
             lineHeight: 1,
             letterSpacing: '-0.03em',
             wordBreak: 'break-all',
@@ -93,11 +107,12 @@ function StatCard({ label, sublabel, value, displayValue, iconKey, accent, href,
         <div>
           <p
             style={{
-              fontSize: '11px',
-              fontWeight: 600,
+              fontFamily: 'var(--dash-font-mono)',
+              fontSize: '10px',
+              fontWeight: 700,
               color: 'var(--dash-text-secondary)',
-              margin: '0 0 2px 0',
-              letterSpacing: '0.05em',
+              margin: '0 0 3px 0',
+              letterSpacing: '0.14em',
               textTransform: 'uppercase',
             }}
           >

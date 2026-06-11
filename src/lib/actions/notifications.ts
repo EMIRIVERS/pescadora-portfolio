@@ -6,8 +6,7 @@ export async function getNotifications(limit = 30) {
   const auth = await requireAdmin()
   if ('error' in auth) return []
   const db = createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (db as any)
+  const { data, error } = await db
     .from('notifications')
     .select('*')
     .order('created_at', { ascending: false })
@@ -20,8 +19,11 @@ export async function markAsRead(id: string): Promise<void> {
   const auth = await requireAdmin()
   if ('error' in auth) return
   const db = createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (db as any).from('notifications').update({ is_read: true }).eq('id', id)
+  const { error } = await db.from('notifications').update({ is_read: true }).eq('id', id)
+  if (error) {
+    console.error(`[notifications] markAsRead failed (id: ${id}):`, error.message)
+    return
+  }
   revalidatePath('/admin')
 }
 
@@ -29,8 +31,14 @@ export async function markAllAsRead(): Promise<void> {
   const auth = await requireAdmin()
   if ('error' in auth) return
   const db = createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (db as any).from('notifications').update({ is_read: true }).eq('is_read', false)
+  const { error } = await db
+    .from('notifications')
+    .update({ is_read: true })
+    .eq('is_read', false)
+  if (error) {
+    console.error('[notifications] markAllAsRead failed:', error.message)
+    return
+  }
   revalidatePath('/admin')
 }
 
@@ -44,6 +52,10 @@ export async function createNotification(
   const auth = await requireAdmin()
   if ('error' in auth) return
   const db = createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (db as any).from('notifications').insert({ title, body, type, entity_type, entity_id })
+  const { error } = await db
+    .from('notifications')
+    .insert({ title, body, type, entity_type, entity_id })
+  if (error) {
+    console.error(`[notifications] createNotification failed ("${title}"):`, error.message)
+  }
 }

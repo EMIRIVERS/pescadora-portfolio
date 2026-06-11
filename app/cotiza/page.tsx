@@ -274,6 +274,24 @@ export default function CotizaPage() {
 
           <form ref={formRef} action={action} noValidate>
 
+            {/* Honeypot: oculto para humanos; si llega con valor, el server lo
+                descarta en silencio. No usar display:none (algunos bots lo saltan). */}
+            <input
+              type="text"
+              name="website"
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                left: '-9999px',
+                width: 1,
+                height: 1,
+                opacity: 0,
+                pointerEvents: 'none',
+              }}
+            />
+
             {/* ── Tipo de produccion ─────────────────────────────────────────── */}
             <div className="cq-field">
               <span className="cq-label">Tipo de produccion</span>

@@ -1,6 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { resolvePortalClient, portalLink } from '@/lib/portal/preview'
 import type { Deliverable, Project, ProjectStatus } from '@/lib/supabase/types'
 import ProjectTimeline from '@/components/portal/project-timeline'
 import DeliverableCard from '@/components/portal/deliverable-card'
@@ -51,30 +51,17 @@ function formatDate(dateStr: string | null): string {
 
 interface PageProps {
   params: Promise<{ id: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }
 
-export default async function ProjectPage({ params }: PageProps) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) redirect('/login')
+export default async function ProjectPage({ params, searchParams }: PageProps) {
+  const sp = await searchParams
+  const ctx = await resolvePortalClient(sp)
+  if (!ctx) redirect('/login')
+  const { supabase, clientId, clientName, isAdminPreview } = ctx
+  const client = { id: clientId, name: clientName }
 
   const { id } = await params
-
-  // Resolve the client record for this authenticated user
-  const { data: client } = await supabase
-    .from('clients')
-    .select('id, name')
-    .eq('profile_id', user.id)
-    .single()
-
-  if (!client) {
-    // Authenticated but no client record — go back to login
-    redirect('/login')
-  }
 
   // Fetch the project — must belong to this client
   const { data: projectRow, error: projectError } = await supabase
@@ -122,7 +109,7 @@ export default async function ProjectPage({ params }: PageProps) {
       <div className="mx-auto max-w-4xl px-4 sm:px-6 py-12">
         {/* Back link */}
         <Link
-          href="/portal"
+          href={portalLink('/portal', ctx)}
           className="inline-flex items-center gap-1.5 text-zinc-500 hover:text-white text-sm transition-colors mb-8"
         >
           <span>&larr;</span>
@@ -213,7 +200,13 @@ export default async function ProjectPage({ params }: PageProps) {
           <h2 className="text-zinc-300 text-xs font-medium uppercase tracking-widest mb-5">
             Tus archivos
           </h2>
-          <ClientUploader projectId={project.id} clientId={client.id} />
+          {isAdminPreview ? (
+            <div className="border border-amber-900/40 bg-amber-950/20 rounded-xl p-6 text-amber-300 text-sm">
+              Subida de archivos deshabilitada en modo preview.
+            </div>
+          ) : (
+            <ClientUploader projectId={project.id} clientId={client.id} />
+          )}
         </section>
       </div>
     </main>

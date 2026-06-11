@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createServiceClient, requireAdmin } from '@/lib/supabase/server'
+import { logAudit } from '@/lib/audit'
 
 function toSlug(str: string) {
   return str
@@ -28,8 +29,7 @@ export async function createAlbum(formData: FormData, parentId?: string | null):
 
   const db = createServiceClient()
   // Calculate next sort_order within the same parent scope
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let maxQuery = (db as any)
+  let maxQuery = db
     .from('photo_albums')
     .select('sort_order')
     .order('sort_order', { ascending: false })
@@ -40,18 +40,24 @@ export async function createAlbum(formData: FormData, parentId?: string | null):
     maxQuery = maxQuery.is('parent_id', null)
   }
   const { data: max } = await maxQuery.maybeSingle()
-  const sort_order = ((max as { sort_order: number } | null)?.sort_order ?? -1) + 1
+  const sort_order = (max?.sort_order ?? -1) + 1
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (db as any).from('photo_albums').insert({
+  const { data: album, error } = await db.from('photo_albums').insert({
     slug,
     label,
     sort_order,
     parent_id: parentId ?? null,
   }).select('id, slug, label, sort_order, is_visible, parent_id, cover_url').single()
   if (error) throw new Error(error.message)
+  await logAudit({
+    action: 'album.create',
+    actorId: auth.userId,
+    entityType: 'album',
+    entityId: album.id,
+    summary: `Álbum creado: ${label}`,
+  })
   revalidatePath('/admin/portfolio')
-  return { ...(data as { id: string; slug: string; label: string; sort_order: number; is_visible: boolean; parent_id: string | null; cover_url: string | null }), portfolio_photos: [] as [] }
+  return { ...album, portfolio_photos: [] as [] }
 }
 
 export async function updateAlbum(
@@ -62,9 +68,15 @@ export async function updateAlbum(
   if ('error' in auth) throw new Error(auth.error)
 
   const db = createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (db as any).from('photo_albums').update(data).eq('id', id)
+  const { error } = await db.from('photo_albums').update(data).eq('id', id)
   if (error) throw new Error(error.message)
+  await logAudit({
+    action: 'album.update',
+    actorId: auth.userId,
+    entityType: 'album',
+    entityId: id,
+    summary: 'Álbum actualizado',
+  })
   revalidatePath('/admin/portfolio')
 }
 
@@ -75,29 +87,33 @@ export async function deleteAlbum(id: string) {
   const db = createServiceClient()
 
   // Collect all album IDs to delete (this album + all sub-albums recursively)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: subAlbums } = await (db as any)
+  const { data: subAlbums } = await db
     .from('photo_albums')
     .select('id')
     .eq('parent_id', id)
-  const albumIds = [id, ...((subAlbums ?? []) as { id: string }[]).map((a) => a.id)]
+  const albumIds = [id, ...(subAlbums ?? []).map((a) => a.id)]
 
   // Clean up storage files for all albums
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: photos } = await (db as any)
+  const { data: photos } = await db
     .from('portfolio_photos')
     .select('storage_path')
     .in('album_id', albumIds)
   if (photos && photos.length > 0) {
-    const paths = (photos as { storage_path: string }[])
+    const paths = photos
       .map((p) => p.storage_path)
       .filter((p) => p?.trim())
     if (paths.length > 0) await db.storage.from('media').remove(paths)
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (db as any).from('photo_albums').delete().eq('id', id)
+  const { error } = await db.from('photo_albums').delete().eq('id', id)
   if (error) throw new Error(error.message)
+  await logAudit({
+    action: 'album.delete',
+    actorId: auth.userId,
+    entityType: 'album',
+    entityId: id,
+    summary: 'Álbum eliminado',
+  })
   revalidatePath('/admin/portfolio')
 }
 
@@ -112,11 +128,17 @@ export async function reorderAlbums(
 
   const db = createServiceClient()
   await Promise.all([
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (db as any).from('photo_albums').update({ sort_order: adjOrder }).eq('id', id),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (db as any).from('photo_albums').update({ sort_order: myOrder }).eq('id', adjId),
+    db.from('photo_albums').update({ sort_order: adjOrder }).eq('id', id),
+    db.from('photo_albums').update({ sort_order: myOrder }).eq('id', adjId),
   ])
+  await logAudit({
+    action: 'album.reorder',
+    actorId: auth.userId,
+    entityType: 'album',
+    entityId: id,
+    summary: 'Orden de álbumes actualizado',
+    metadata: { adjId },
+  })
   revalidatePath('/admin/portfolio')
 }
 
@@ -133,8 +155,7 @@ export async function addPhoto(
   if ('error' in auth) throw new Error(auth.error)
 
   const db = createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (db as any).from('portfolio_photos').insert({
+  const { data, error } = await db.from('portfolio_photos').insert({
     album_id: albumId,
     storage_path: storagePath,
     url: url ?? null,
@@ -142,8 +163,17 @@ export async function addPhoto(
     sort_order: sortOrder,
   }).select('id').single()
   if (error) throw new Error(error.message)
+  const photoId = data.id
+  await logAudit({
+    action: 'photo.create',
+    actorId: auth.userId,
+    entityType: 'photo',
+    entityId: photoId,
+    summary: 'Foto agregada al álbum',
+    metadata: { albumId },
+  })
   revalidatePath('/admin/portfolio')
-  return { id: (data as { id: string }).id }
+  return { id: photoId }
 }
 
 export async function deletePhoto(id: string, storagePath: string) {
@@ -154,9 +184,15 @@ export async function deletePhoto(id: string, storagePath: string) {
   if (storagePath?.trim()) {
     await db.storage.from('media').remove([storagePath])
   }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (db as any).from('portfolio_photos').delete().eq('id', id)
+  const { error } = await db.from('portfolio_photos').delete().eq('id', id)
   if (error) throw new Error(error.message)
+  await logAudit({
+    action: 'photo.delete',
+    actorId: auth.userId,
+    entityType: 'photo',
+    entityId: id,
+    summary: 'Foto eliminada',
+  })
   revalidatePath('/admin/portfolio')
 }
 
@@ -167,9 +203,15 @@ export async function reorderPhotos(updates: { id: string; sort_order: number }[
   const db = createServiceClient()
   await Promise.all(
     updates.map(({ id, sort_order }) =>
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (db as any).from('portfolio_photos').update({ sort_order }).eq('id', id),
+      db.from('portfolio_photos').update({ sort_order }).eq('id', id),
     ),
   )
+  await logAudit({
+    action: 'photo.reorder',
+    actorId: auth.userId,
+    entityType: 'photo',
+    entityId: updates[0]?.id ?? null,
+    summary: 'Orden de fotos actualizado',
+  })
   revalidatePath('/admin/portfolio')
 }

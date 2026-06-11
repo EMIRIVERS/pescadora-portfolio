@@ -415,9 +415,28 @@ export default function ClientDetailClient({ client, projects, invoices, leads, 
               &larr; Clientes
             </Link>
             <span style={{ color: 'var(--dash-border)', fontSize: '14px' }}>/</span>
-            <span style={{ fontSize: '14px', color: 'var(--dash-text-primary)', fontWeight: 500 }}>
+            <span style={{ fontSize: '14px', color: 'var(--dash-text-primary)', fontWeight: 500, flex: 1 }}>
               {localClient.name}
             </span>
+            <Link
+              href={`/portal?as_client=${localClient.id}`}
+              target="_blank"
+              rel="noopener"
+              style={{
+                fontSize: '12px',
+                fontWeight: 600,
+                padding: '6px 12px',
+                borderRadius: '8px',
+                border: '1px solid var(--dash-border-strong)',
+                background: 'var(--dash-surface-2)',
+                color: 'var(--dash-text-primary)',
+                textDecoration: 'none',
+                whiteSpace: 'nowrap',
+              }}
+              title="Abrir el portal de este cliente en una pestaña nueva (modo preview, solo lectura)"
+            >
+              Ver portal del cliente &nearr;
+            </Link>
           </div>
         </div>
 

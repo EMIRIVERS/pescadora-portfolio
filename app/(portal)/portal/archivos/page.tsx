@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { resolvePortalClient } from '@/lib/portal/preview'
 import type { ClientUpload } from '@/lib/supabase/types'
 import ArchivosGallery from './ArchivosGallery'
 
@@ -13,33 +13,16 @@ type UploadWithProject = ClientUpload & {
   project: { id: string; title: string } | null
 }
 
-export default async function ArchivosPage() {
-  const supabase = await createClient()
+interface ArchivosPageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
-  // Resolve the client row linked to this authenticated user
-  const { data: clientRow } = await supabase
-    .from('clients')
-    .select('id')
-    .eq('profile_id', user.id)
-    .single()
-
-  if (!clientRow) {
-    return (
-      <main style={{ minHeight: '100vh', backgroundColor: '#09090b', padding: '40px 24px', fontFamily: S.font }}>
-        <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <h1 style={{ fontSize: 28, fontWeight: 700, color: S.textPrimary, marginBottom: 8 }}>
-            Mis archivos
-          </h1>
-          <p style={{ color: S.textTertiary, fontSize: 14 }}>
-            No se encontro perfil de cliente asociado a tu cuenta.
-          </p>
-        </div>
-      </main>
-    )
-  }
+export default async function ArchivosPage({ searchParams }: ArchivosPageProps) {
+  const sp = await searchParams
+  const ctx = await resolvePortalClient(sp)
+  if (!ctx) redirect('/login')
+  const { supabase, clientId } = ctx
+  const clientRow = { id: clientId }
 
   // Fetch this client's projects (for the upload selector + filter dropdown)
   const { data: projectsData } = await supabase

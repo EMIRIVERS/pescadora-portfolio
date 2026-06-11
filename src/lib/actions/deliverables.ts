@@ -16,6 +16,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createServiceClient, requireAdmin, escapeHtml } from '@/lib/supabase/server'
+import { logAudit } from '@/lib/audit'
 import { sendEmail } from '@/lib/email'
 import type { Deliverable, DeliverableRevision, DeliverableType, DeliverableStatus } from '@/lib/supabase/types'
 
@@ -132,7 +133,20 @@ export async function createDeliverable(
     return { error: insertError?.message ?? 'No se pudo agregar el entregable.' }
   }
 
+  await logAudit({
+    action: 'deliverable.create',
+    actorId: auth.userId,
+    entityType: 'deliverable',
+    entityId: (deliverable as Deliverable).id,
+    summary: `Entregable creado: ${input.title}`,
+    metadata: { projectId: input.projectId },
+  })
+
   revalidatePath(`/admin/projects/${input.projectId}`)
+  // El portal del cliente muestra los entregables — invalidar también sus rutas
+  revalidatePath('/portal')
+  revalidatePath('/portal/deliverables')
+  revalidatePath(`/portal/projects/${input.projectId}`)
 
   // 2. Send email notification to the client — fire-and-forget
   try {
@@ -209,7 +223,20 @@ export async function updateDeliverable(
 
   if (error) return { error: error.message }
 
+  await logAudit({
+    action: 'deliverable.update',
+    actorId: auth.userId,
+    entityType: 'deliverable',
+    entityId: input.id,
+    summary: `Entregable actualizado: ${input.title.trim()}`,
+    metadata: { projectId: input.projectId },
+  })
+
   revalidatePath(`/admin/projects/${input.projectId}`)
+  // El portal del cliente muestra los entregables — invalidar también sus rutas
+  revalidatePath('/portal')
+  revalidatePath('/portal/deliverables')
+  revalidatePath(`/portal/projects/${input.projectId}`)
   return { data: data as Deliverable }
 }
 
@@ -276,6 +303,14 @@ export async function addRevision(
     return { error: insertError?.message ?? 'No se pudo agregar la revision.' }
   }
 
+  await logAudit({
+    action: 'deliverable.revision',
+    actorId: auth.userId,
+    entityType: 'deliverable',
+    entityId: deliverableId,
+    summary: `Revisión ${revisionNumber} agregada al entregable`,
+  })
+
   // Update the parent deliverable url to always point to the latest revision
   if (input.url) {
     const { error: updateError } = await db
@@ -297,6 +332,7 @@ export async function addRevision(
 
   if (deliverableRow?.project_id) {
     revalidatePath(`/admin/projects/${deliverableRow.project_id}`)
+    revalidatePath('/portal/deliverables')
     revalidatePath(`/portal/projects/${deliverableRow.project_id}`)
   }
 

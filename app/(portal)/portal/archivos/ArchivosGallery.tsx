@@ -346,6 +346,15 @@ function GalleryUploader({
     const MAX = 200 * 1024 * 1024
     if (file.size > MAX) { setError('El archivo excede el limite de 200 MB.'); return }
 
+    // Bloquear extensiones ejecutables / XSS desde el bucket público (html/svg/js).
+    // Las URLs son servidas desde supabase.co así que un .html con JS quedaría same-origin
+    // del dominio de Storage, no del nuestro — pero igual rechazamos por defecto.
+    const BLOCKED = /\.(html?|svg|js|mjs|cjs|exe|sh|bat|cmd|php|asp|aspx|jsp)$/i
+    if (BLOCKED.test(file.name)) {
+      setError('Formato no permitido. Sube imágenes, PDFs o videos.')
+      return
+    }
+
     setUploading(true)
     setProgress(`Subiendo ${file.name}...`)
 
@@ -518,29 +527,29 @@ export default function ArchivosGallery({ initialUploads, projects, clientId }: 
     const confirmed = window.confirm('Eliminar este archivo permanentemente?')
     if (!confirmed) return
 
-    // Optimistic remove
     setDeletingIds((prev) => new Set([...prev, id]))
 
-    // Derive the storage path from the public URL
-    // URL format: ...supabase.co/storage/v1/object/public/media/<path>
-    const marker = '/object/public/media/'
-    const markerIdx = fileUrl.indexOf(marker)
-    const storagePath = markerIdx !== -1 ? fileUrl.slice(markerIdx + marker.length) : null
-
-    if (storagePath) {
-      await supabase.storage.from('media').remove([storagePath])
-    }
-
+    // 1. Borrar primero el row de DB (RLS valida ownership).
+    // Si el row se borra pero el archivo queda huérfano es preferible al
+    // caso inverso: archivo borrado y URL en DB que apunta a 404.
     const { error: deleteErr } = await supabase
       .from('client_uploads')
       .delete()
       .eq('id', id)
 
     if (deleteErr) {
-      // Rollback optimistic removal
       setDeletingIds((prev) => { const next = new Set(prev); next.delete(id); return next })
       alert(`Error al eliminar: ${deleteErr.message}`)
       return
+    }
+
+    // 2. Best-effort: borrar el binario de Storage. Si falla queda huérfano
+    // (limpiable con cron), pero la UX al usuario ya es correcta.
+    const marker = '/object/public/media/'
+    const markerIdx = fileUrl.indexOf(marker)
+    const storagePath = markerIdx !== -1 ? fileUrl.slice(markerIdx + marker.length) : null
+    if (storagePath) {
+      await supabase.storage.from('media').remove([storagePath])
     }
 
     setUploads((prev) => prev.filter((u) => u.id !== id))

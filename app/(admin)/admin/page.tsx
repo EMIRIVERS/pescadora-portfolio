@@ -14,6 +14,8 @@ import { createServiceClient } from '@/lib/supabase/server'
 import type { ProjectStatus, LeadStatus, LeadSource, DeliverableStatus } from '@/lib/supabase/types'
 import { StatCardsGrid } from '@/components/admin/dashboard/StatCardsGrid'
 import type { StatCardData } from '@/components/admin/dashboard/StatCardsGrid'
+import { AgendaWidget } from '@/components/admin/dashboard/AgendaWidget'
+import type { AgendaEvent } from '@/components/admin/dashboard/AgendaWidget'
 import { FadeIn } from '@/components/admin/dashboard/FadeIn'
 import { AnimatedProjectsList } from '@/components/admin/dashboard/AnimatedProjectsList'
 import type { ProjectRow } from '@/components/admin/dashboard/AnimatedProjectsList'
@@ -444,6 +446,33 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
       .lt('created_at', staleLeadsThreshold),
   ])
 
+  // Agenda operativa: próximos eventos (grabaciones, cobros, entregas) pendientes.
+  const agendaTodayIso = new Date().toISOString().split('T')[0]
+  const { data: agendaRaw } = await dbAny
+    .from('calendar_events')
+    .select('id, title, type, event_date, event_time, projects(title), clients(name)')
+    .eq('status', 'pendiente')
+    .gte('event_date', agendaTodayIso)
+    .order('event_date', { ascending: true })
+    .limit(6)
+  const agendaEvents: AgendaEvent[] = ((agendaRaw ?? []) as Array<{
+    id: string
+    title: string
+    type: string
+    event_date: string
+    event_time: string | null
+    projects: { title: string } | null
+    clients: { name: string } | null
+  }>).map((e) => ({
+    id: e.id,
+    title: e.title,
+    type: e.type,
+    event_date: e.event_date,
+    event_time: e.event_time,
+    project_title: e.projects?.title ?? null,
+    client_name: e.clients?.name ?? null,
+  }))
+
   // Aggregate leads by status
   const leadsByStatus: LeadsByStatus = {
     new: 0,
@@ -653,24 +682,100 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
           color: var(--dash-text-primary);
           box-sizing: border-box;
         }
+        /* ── Hero cinematográfico ── */
+        .apd-hero {
+          position: relative;
+          isolation: isolate;
+          margin-bottom: 2.75rem;
+          padding: 6px 0 26px;
+        }
+        .apd-hero-bg {
+          position: absolute;
+          inset: -60px -12% -10px -12%;
+          z-index: 0;
+          pointer-events: none;
+          overflow: hidden;
+        }
+        .apd-hero-bg::before {
+          content: '';
+          position: absolute;
+          top: -140px; left: 4%;
+          width: min(560px, 70%); height: 360px;
+          background: radial-gradient(circle at 30% 35%, color-mix(in srgb, var(--dash-accent) 32%, transparent), transparent 64%);
+          filter: blur(18px);
+          opacity: 0.55;
+        }
+        .apd-hero-bg::after {
+          content: '';
+          position: absolute; inset: 0;
+          opacity: 0.4;
+          mix-blend-mode: overlay;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+        .apd-hero > * { position: relative; z-index: 1; }
+        .apd-hero-kicker {
+          font-family: var(--dash-font-mono);
+          font-size: 11px; letter-spacing: 0.34em; text-transform: uppercase;
+          color: var(--dash-text-secondary);
+          margin: 0 0 16px; display: inline-flex; align-items: center; gap: 11px;
+        }
+        .apd-hero-kicker::before {
+          content: ''; width: 26px; height: 1px; background: var(--dash-accent);
+        }
+        .apd-hero-title {
+          font-family: var(--dash-font-display);
+          font-optical-sizing: auto;
+          font-weight: 600;
+          font-size: clamp(2.4rem, 6vw, 4.1rem);
+          line-height: 0.96; letter-spacing: -0.022em;
+          color: var(--dash-text-primary); margin: 0;
+        }
+        .apd-hero-title em { font-style: italic; font-weight: 500; color: var(--dash-accent); }
+        .apd-hero-meta {
+          font-family: var(--dash-font-mono);
+          font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;
+          color: var(--dash-text-secondary);
+          margin: 20px 0 0; display: flex; gap: 16px; flex-wrap: wrap; align-items: center;
+        }
+        .apd-hero-meta .dot { width: 4px; height: 4px; border-radius: 4px; background: var(--dash-text-tertiary); }
+        .apd-hero-rule {
+          height: 1px; margin-top: 22px;
+          background: linear-gradient(90deg, var(--dash-border-strong), transparent 80%);
+        }
+        /* ── Stat cards estilo "claqueta" ── */
         .apd-stat-card {
-          background: var(--dash-surface-1);
+          position: relative;
+          overflow: hidden;
+          background: linear-gradient(180deg, var(--dash-surface-2), var(--dash-surface-1) 70%);
           border: 1px solid var(--dash-border);
-          border-radius: 16px;
-          padding: 20px 24px;
+          border-radius: 14px;
+          padding: 22px 22px 18px;
           display: flex;
           flex-direction: column;
-          gap: 10px;
+          gap: 12px;
           text-decoration: none;
           color: inherit;
           box-shadow: var(--dash-shadow-sm), var(--dash-highlight);
-          transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+          transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+        }
+        .apd-stat-card::before {
+          content: '';
+          position: absolute; top: 0; left: 0; right: 0; height: 2px;
+          background: linear-gradient(90deg, var(--card-accent, var(--dash-accent)), transparent 72%);
+          opacity: 0.9;
+        }
+        .apd-stat-card::after {
+          content: '';
+          position: absolute; inset: 0; opacity: 0; pointer-events: none;
+          transition: opacity 0.25s;
+          background: radial-gradient(130% 90% at 0% 0%, color-mix(in srgb, var(--card-accent, var(--dash-accent)) 15%, transparent), transparent 55%);
         }
         .apd-stat-card:hover {
-          border-color: var(--dash-border-strong) !important;
-          transform: translateY(-2px);
-          box-shadow: var(--dash-shadow-md), var(--dash-highlight);
+          border-color: color-mix(in srgb, var(--card-accent, var(--dash-accent)) 50%, var(--dash-border-strong)) !important;
+          transform: translateY(-3px);
+          box-shadow: var(--dash-shadow-lg), var(--dash-highlight-strong);
         }
+        .apd-stat-card:hover::after { opacity: 1; }
         .apd-list-card {
           background: var(--dash-surface-1);
           border: 1px solid var(--dash-border);
@@ -811,34 +916,33 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
 
       <div className="apd-root">
 
-        {/* ── Header ── */}
-        <div style={{ marginBottom: '2.5rem' }}>
-          <h1
-            style={{
-              fontSize: '28px',
-              fontWeight: 600,
-              color: 'var(--dash-text-primary)',
-              margin: '0 0 6px 0',
-              letterSpacing: '-0.02em',
-            }}
-          >
-            {greetingLabel()}, Emi
+        {/* ── Hero cinematográfico ── */}
+        <header className="apd-hero">
+          <div className="apd-hero-bg" aria-hidden="true" />
+          <p className="apd-hero-kicker">XICO Films — Panel de control</p>
+          <h1 className="apd-hero-title">
+            {greetingLabel()}, <em>Emi</em>
           </h1>
-          <p
-            style={{
-              fontSize: '13px',
-              color: 'var(--dash-text-secondary)',
-              margin: 0,
-              textTransform: 'capitalize',
-            }}
-          >
-            {todayLabel()}
-          </p>
-        </div>
+          <div className="apd-hero-meta">
+            <span style={{ textTransform: 'capitalize' }}>{todayLabel()}</span>
+            <span className="dot" />
+            <span>{activeProjects ?? 0} en producción</span>
+            <span className="dot" />
+            <span>{agendaEvents.length} en agenda</span>
+          </div>
+          <div className="apd-hero-rule" />
+        </header>
 
         {/* ── Stat cards row — animated client component ── */}
         <FadeIn delay={0}>
           <StatCardsGrid cards={statCardData} />
+        </FadeIn>
+
+        {/* Agenda operativa: próximos eventos del calendario */}
+        <FadeIn delay={0.05}>
+          <div style={{ marginTop: 20 }}>
+            <AgendaWidget events={agendaEvents} />
+          </div>
         </FadeIn>
 
         {/* ── Proyectos entregados sparkline card with period selector ── */}

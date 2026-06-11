@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { resolvePortalClient, portalLink } from '@/lib/portal/preview'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -78,28 +78,23 @@ function formatDate(dateStr: string): string {
 // Page
 // ---------------------------------------------------------------------------
 
-export default async function PortalInvoicesPage() {
-  const supabase = await createClient()
+interface PortalInvoicesPageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) redirect('/login')
-
-  // Resolve client record for this user
-  const { data: client } = await supabase
-    .from('clients')
-    .select('id, name')
-    .eq('profile_id', user.id)
-    .single()
+export default async function PortalInvoicesPage({ searchParams }: PortalInvoicesPageProps) {
+  const sp = await searchParams
+  const ctx = await resolvePortalClient(sp)
+  if (!ctx) redirect('/login')
+  const { supabase, clientId, clientName } = ctx
+  const client = { id: clientId, name: clientName }
 
   if (!client) {
     return (
       <main style={{ fontFamily: FONT, minHeight: '100vh', backgroundColor: 'var(--portal-bg)' }}>
         <div style={{ maxWidth: 720, margin: '0 auto', padding: 'clamp(1.5rem, 5vw, 3rem) clamp(1rem, 4vw, 1.5rem)' }}>
           <Link
-            href="/portal"
+            href={portalLink('/portal', ctx)}
             style={{
               display: 'inline-flex',
               alignItems: 'center',

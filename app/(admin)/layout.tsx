@@ -36,7 +36,7 @@ export default async function AdminLayout({
   const service = createServiceClient()
   const { data: profile, error: profileError } = await service
     .from('profiles')
-    .select('id, full_name, email, avatar_url, is_admin_team')
+    .select('id, full_name, email, avatar_url, is_admin_team, staff_role')
     .eq('id', user.id)
     .single()
 
@@ -48,6 +48,7 @@ export default async function AdminLayout({
     full_name: profile.full_name,
     email: profile.email,
     avatar_url: profile.avatar_url,
+    staff_role: profile.staff_role,
   }
 
   return (

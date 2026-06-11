@@ -13,15 +13,22 @@ const ALL_STATUSES: LeadStatus[] = [
   'lost',
 ]
 
+// The pipeline is a kanban board, so instead of page-based pagination we cap
+// the query at the most recent leads and surface a notice when truncated.
+const LEADS_LIMIT = 300
+
 export default async function AdminLeadsPage() {
   const supabase = createServiceClient()
 
-  const { data, error } = await supabase
+  const { data, error, count } = await supabase
     .from('leads')
-    .select('*')
+    .select('*', { count: 'exact' })
     .order('created_at', { ascending: false })
+    .limit(LEADS_LIMIT)
 
   const leads: Lead[] = data ?? []
+  const totalCount = count ?? leads.length
+  const isTruncated = totalCount > leads.length
 
   const countsByStatus = ALL_STATUSES.reduce<Record<LeadStatus, number>>(
     (acc, status) => {
@@ -31,6 +38,8 @@ export default async function AdminLeadsPage() {
     {} as Record<LeadStatus, number>
   )
 
+  // Stats are computed over the loaded leads so the per-status percentages in
+  // LeadsStats stay consistent; the real total is shown in the notice below.
   const total = leads.length
 
   return (
@@ -133,6 +142,30 @@ export default async function AdminLeadsPage() {
 
         {/* Stats strip */}
         <LeadsStats counts={countsByStatus} total={total} />
+
+        {/* Truncation notice — the board only shows the most recent leads */}
+        {isTruncated && (
+          <div
+            style={{
+              marginBottom: '24px',
+              padding: '12px 20px',
+              backgroundColor: 'var(--dash-surface-1)',
+              border: '1px solid rgba(255, 159, 10, 0.25)',
+              borderRadius: '12px',
+            }}
+          >
+            <p
+              style={{
+                fontSize: '13px',
+                color: 'rgba(255, 159, 10, 0.85)',
+                margin: 0,
+              }}
+            >
+              Mostrando los {leads.length} leads mas recientes de {totalCount}. Los
+              leads mas antiguos no aparecen en el tablero.
+            </p>
+          </div>
+        )}
 
         {/* Empty state — shown when there are no leads at all */}
         {leads.length === 0 && !error && (

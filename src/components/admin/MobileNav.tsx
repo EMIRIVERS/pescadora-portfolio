@@ -6,7 +6,7 @@ import Sidebar from '@/components/admin/sidebar'
 import type { Profile } from '@/lib/supabase/types'
 
 interface MobileNavProps {
-  profile: Pick<Profile, 'full_name' | 'email' | 'avatar_url'>
+  profile: Pick<Profile, 'full_name' | 'email' | 'avatar_url' | 'staff_role'>
 }
 
 export default function MobileNav({ profile }: MobileNavProps) {

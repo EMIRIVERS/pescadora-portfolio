@@ -1,7 +1,19 @@
-import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+import { resolvePortalClient, portalLink } from '@/lib/portal/preview'
 import type { ProjectWithClient, ProjectStatus } from '@/lib/supabase/types'
+import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS, type CalendarEventType } from '@/lib/calendar/types'
+
+interface UpcomingEvent {
+  id: string
+  title: string
+  type: CalendarEventType
+  event_date: string
+}
+
+function fmtShortDate(iso: string): string {
+  return new Date(iso + 'T00:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })
+}
 
 // ---------------------------------------------------------------------------
 // Display helpers
@@ -28,30 +40,26 @@ const PHASE_ORDER: ProjectStatus[] = [
 // Page
 // ---------------------------------------------------------------------------
 
-export default async function PortalDashboard() {
-  const supabase = await createClient()
+interface PortalDashboardProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) redirect('/login')
-
-  // Resolve the client record linked to this user's profile
-  const { data: client } = await supabase
-    .from('clients')
-    .select('id, name')
-    .eq('profile_id', user.id)
-    .single()
+export default async function PortalDashboard({ searchParams }: PortalDashboardProps) {
+  const sp = await searchParams
+  const ctx = await resolvePortalClient(sp)
+  if (!ctx) {
+    // Usuario autenticado pero sin row en clients → mandar al login para reintentar.
+    redirect('/login')
+  }
+  const { supabase, clientId, clientName } = ctx
+  const client = { id: clientId, name: clientName }
 
   // Fetch all projects for this client
-  const { data: projectRows } = client
-    ? await supabase
-        .from('projects')
-        .select('*, client:clients(*)')
-        .eq('client_id', client.id)
-        .order('created_at', { ascending: false })
-    : { data: null }
+  const { data: projectRows } = await supabase
+    .from('projects')
+    .select('*, client:clients(*)')
+    .eq('client_id', client.id)
+    .order('created_at', { ascending: false })
 
   const projects: ProjectWithClient[] = (projectRows ?? []) as ProjectWithClient[]
 
@@ -72,8 +80,20 @@ export default async function PortalDashboard() {
     return { done: rows.filter((d) => d.status === 'approved').length, total: rows.length }
   }
 
-  const clientName = client?.name ?? user.email ?? 'Cliente'
-  const firstName = clientName.split(/\s|@/)[0]
+  // Próximas fechas del calendario operativo (filtro explícito client_id + RLS).
+  const today = new Date().toISOString().slice(0, 10)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: eventRows } = await (supabase as any)
+    .from('calendar_events')
+    .select('id, title, type, event_date')
+    .eq('client_id', client.id)
+    .gte('event_date', today)
+    .order('event_date', { ascending: true })
+    .limit(4)
+  const upcoming = (eventRows ?? []) as UpcomingEvent[]
+
+  const displayName = clientName ?? 'Cliente'
+  const firstName = displayName.split(/\s/)[0]
 
   return (
     <main className="min-h-screen bg-zinc-950">
@@ -93,6 +113,41 @@ export default async function PortalDashboard() {
           </p>
         </div>
 
+        {/* Próximas fechas + acceso a rendimiento */}
+        {upcoming.length > 0 && (
+          <div className="mb-10">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-zinc-300 text-sm font-medium">Próximas fechas</h2>
+              <div className="flex items-center gap-3">
+                <Link href={portalLink('/portal/calendario', ctx)} className="text-sky-400 hover:text-sky-300 text-xs">
+                  Ver calendario
+                </Link>
+                <Link href={portalLink('/portal/rendimiento', ctx)} className="text-sky-400 hover:text-sky-300 text-xs">
+                  Mi rendimiento
+                </Link>
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {upcoming.map((ev) => (
+                <Link
+                  key={ev.id}
+                  href={portalLink('/portal/calendario', ctx)}
+                  className="border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition-colors"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="w-2 h-2 rounded-full" style={{ background: EVENT_TYPE_COLORS[ev.type] }} />
+                    <span className="text-xs uppercase tracking-wide" style={{ color: EVENT_TYPE_COLORS[ev.type] }}>
+                      {EVENT_TYPE_LABELS[ev.type]}
+                    </span>
+                  </div>
+                  <p className="text-white text-sm font-medium truncate">{ev.title}</p>
+                  <p className="text-zinc-500 text-xs mt-1 capitalize">{fmtShortDate(ev.event_date)}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Project cards */}
         {projects.length > 0 && (
           <div className="grid gap-5 sm:grid-cols-2">
@@ -105,7 +160,7 @@ export default async function PortalDashboard() {
               return (
                 <Link
                   key={project.id}
-                  href={`/portal/projects/${project.id}`}
+                  href={portalLink(`/portal/projects/${project.id}`, ctx)}
                   className="group block bg-zinc-900 border border-zinc-800 rounded-xl p-6 hover:border-zinc-700 transition-all duration-200"
                 >
                   {/* Header */}

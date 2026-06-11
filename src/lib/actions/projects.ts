@@ -1,6 +1,7 @@
 'use server'
 import { revalidatePath } from 'next/cache'
 import { createServiceClient, requireAdmin } from '@/lib/supabase/server'
+import { logAudit } from '@/lib/audit'
 import type { ProjectStatus } from '@/lib/supabase/types'
 import { sendEmail } from '@/lib/email'
 import { projectStatusUpdateTemplate } from '@/lib/email/templates'
@@ -22,6 +23,14 @@ export async function updateProjectStatus(
 
   const { error } = await db.from('projects').update({ status }).eq('id', id)
   if (error) return { error: error.message }
+
+  await logAudit({
+    action: 'project.status',
+    actorId: auth.userId,
+    entityType: 'project',
+    entityId: id,
+    summary: `Estado de proyecto cambiado a ${STATUS_LABELS[status]}`,
+  })
 
   revalidatePath('/admin/projects')
   revalidatePath(`/admin/projects/${id}`)
@@ -65,9 +74,16 @@ export async function saveInternalNotes(
   const db = createServiceClient()
   const { error } = await db
     .from('projects')
-    .update({ internal_notes: notes || null } as Record<string, unknown>)
+    .update({ internal_notes: notes || null })
     .eq('id', projectId)
   if (error) return { error: error.message }
+  await logAudit({
+    action: 'project.update',
+    actorId: auth.userId,
+    entityType: 'project',
+    entityId: projectId,
+    summary: 'Notas internas del proyecto actualizadas',
+  })
   revalidatePath(`/admin/projects/${projectId}`)
   return {}
 }
@@ -87,8 +103,7 @@ export async function getProjectComments(
   const auth = await requireAdmin()
   if ('error' in auth) return []
   const db = createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data } = await (db as any)
+  const { data } = await db
     .from('project_comments')
     .select('*, author:profiles(full_name, avatar_url)')
     .eq('project_id', projectId)
@@ -104,13 +119,19 @@ export async function createProjectComment(
   if ('error' in auth) return { error: auth.error }
 
   const db = createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (db as any).from('project_comments').insert({
+  const { error } = await db.from('project_comments').insert({
     project_id: projectId,
     author_id: auth.userId,
     content: content.trim(),
   })
   if (error) return { error: error.message }
+  await logAudit({
+    action: 'project.comment_create',
+    actorId: auth.userId,
+    entityType: 'project',
+    entityId: projectId,
+    summary: 'Comentario agregado al proyecto',
+  })
   revalidatePath(`/admin/projects/${projectId}`)
   return {}
 }
@@ -122,12 +143,19 @@ export async function deleteProjectComment(
   const auth = await requireAdmin()
   if ('error' in auth) return { error: auth.error }
   const db = createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (db as any)
+  const { error } = await db
     .from('project_comments')
     .delete()
     .eq('id', commentId)
   if (error) return { error: error.message }
+  await logAudit({
+    action: 'project.comment_delete',
+    actorId: auth.userId,
+    entityType: 'project',
+    entityId: projectId,
+    summary: 'Comentario eliminado del proyecto',
+    metadata: { commentId },
+  })
   revalidatePath(`/admin/projects/${projectId}`)
   return {}
 }

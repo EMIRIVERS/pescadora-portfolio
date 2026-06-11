@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { notify } from '@/lib/notify'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -28,16 +29,19 @@ async function resolveClientId(): Promise<string> {
   return client.id
 }
 
-/** Verifies the deliverable belongs to the authenticated client's projects. */
+/**
+ * Verifies the deliverable belongs to the authenticated client's projects.
+ * Returns the deliverable's project_id (needed to revalidate rutas admin).
+ */
 async function verifyDeliverableOwnership(
   deliverableId: string,
   clientId: string,
-): Promise<void> {
+): Promise<string> {
   const supabase = await createClient()
 
   const { data, error } = await supabase
     .from('project_deliverables')
-    .select('id, projects!inner(client_id)')
+    .select('id, project_id, projects!inner(client_id)')
     .eq('id', deliverableId)
     .single()
 
@@ -49,6 +53,8 @@ async function verifyDeliverableOwnership(
   if (project.client_id !== clientId) {
     throw new Error('No tienes permiso para modificar este entregable')
   }
+
+  return data.project_id
 }
 
 // ---------------------------------------------------------------------------
@@ -61,7 +67,7 @@ export async function approveDeliverable(
 ): Promise<{ error?: string }> {
   try {
     const clientId = await resolveClientId()
-    await verifyDeliverableOwnership(deliverableId, clientId)
+    const projectId = await verifyDeliverableOwnership(deliverableId, clientId)
 
     const db = createServiceClient()
 
@@ -77,8 +83,12 @@ export async function approveDeliverable(
 
     if (error) return { error: error.message }
 
+    await notify({ title: 'Entrega aprobada', body: 'El cliente aprobó una entrega.', type: 'success', entityType: 'deliverable', entityId: deliverableId })
+
     revalidatePath('/portal/deliverables')
     revalidatePath('/portal/projects/[id]', 'page')
+    // El admin también muestra el estado del entregable
+    revalidatePath(`/admin/projects/${projectId}`)
 
     return {}
   } catch (err) {
@@ -96,7 +106,7 @@ export async function rejectDeliverable(
 
   try {
     const clientId = await resolveClientId()
-    await verifyDeliverableOwnership(deliverableId, clientId)
+    const projectId = await verifyDeliverableOwnership(deliverableId, clientId)
 
     const db = createServiceClient()
 
@@ -112,8 +122,12 @@ export async function rejectDeliverable(
 
     if (error) return { error: error.message }
 
+    await notify({ title: 'Cambios solicitados', body: `El cliente pidió cambios en una entrega: ${feedback.trim().slice(0, 200)}`, type: 'warning', entityType: 'deliverable', entityId: deliverableId })
+
     revalidatePath('/portal/deliverables')
     revalidatePath('/portal/projects/[id]', 'page')
+    // El admin también muestra el estado del entregable
+    revalidatePath(`/admin/projects/${projectId}`)
 
     return {}
   } catch (err) {

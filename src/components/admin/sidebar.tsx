@@ -18,6 +18,7 @@ import {
   Search,
   BarChart2,
   Activity,
+  ShieldCheck,
   LogOut,
   Receipt,
   ImageIcon,
@@ -28,6 +29,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/lib/supabase/types'
+import { canSeeNav } from '@/lib/auth/permissions'
 import ThemeSwitcher, {
   THEMES,
   type Theme,
@@ -95,6 +97,7 @@ const NAV_GROUPS: NavGroup[] = [
       { label: 'Buscar',          href: '/admin/buscar',           icon: <Search   size={15} strokeWidth={1.5} /> },
       { label: 'Reportes',        href: '/admin/reportes',         icon: <BarChart2 size={15} strokeWidth={1.5} /> },
       { label: 'Actividad',       href: '/admin/actividad',        icon: <Activity  size={15} strokeWidth={1.5} /> },
+      { label: 'Auditoría',       href: '/admin/auditoria',        icon: <ShieldCheck size={15} strokeWidth={1.5} /> },
     ],
   },
 ]
@@ -102,7 +105,7 @@ const NAV_GROUPS: NavGroup[] = [
 interface BadgeCounts { leads: number; invoices: number }
 
 interface SidebarProps {
-  profile: Pick<Profile, 'full_name' | 'email' | 'avatar_url'>
+  profile: Pick<Profile, 'full_name' | 'email' | 'avatar_url' | 'staff_role'>
 }
 
 function resolveStoredTheme(): Theme {
@@ -233,12 +236,22 @@ export default function Sidebar({ profile }: SidebarProps) {
   const pathname  = usePathname()
   const router    = useRouter()
   const supabase  = createClient()
+  const staffRole = profile.staff_role ?? null
 
-  const [isLight,   setIsLight]   = useState(resolveStoredMode)
-  const [collapsed, setCollapsed] = useState(resolveStoredCollapsed)
+  // IMPORTANT: initial state must match SSR (no window/localStorage reads here)
+  // to avoid hydration mismatch. We hydrate real values inside a useEffect.
+  const [isLight,   setIsLight]   = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
   const [badges,    setBadges]    = useState<BadgeCounts>({ leads: 0, invoices: 0 })
-  const [themeColors, setThemeColors] = useState<Theme>(resolveStoredTheme)
+  const [themeColors, setThemeColors] = useState<Theme>(THEMES[0])
   const [logoutHovered, setLogoutHovered] = useState(false)
+
+  // After mount, read persisted preferences (avoids SSR/CSR hydration mismatch)
+  useEffect(() => {
+    setIsLight(resolveStoredMode())
+    setCollapsed(resolveStoredCollapsed())
+    setThemeColors(resolveStoredTheme())
+  }, [])
 
   const openCommandPalette = useCallback(() => {
     window.dispatchEvent(new Event('open-command-palette'))
@@ -449,7 +462,10 @@ export default function Sidebar({ profile }: SidebarProps) {
 
       {/* ── Navigation ───────────────────────────────────────────────────── */}
       <nav style={{ flex: 1, padding: collapsed ? '8px 6px' : '8px 10px', display: 'flex', flexDirection: 'column', gap: 0, overflowY: 'auto', overflowX: 'hidden' }}>
-        {NAV_GROUPS.map((group, gIndex) => (
+        {NAV_GROUPS.map((group, gIndex) => {
+          const visibleItems = group.items.filter((item) => canSeeNav(staffRole, item.href))
+          if (visibleItems.length === 0) return null
+          return (
           <div key={gIndex} style={{ marginBottom: group.label ? 16 : 8 }}>
             {/* Section label */}
             <AnimatePresence>
@@ -478,7 +494,7 @@ export default function Sidebar({ profile }: SidebarProps) {
               )}
             </AnimatePresence>
 
-            {group.items.map((item) => {
+            {visibleItems.map((item) => {
               const badge = item.badgeKey ? badges[item.badgeKey] : undefined
               return (
                 <NavLink
@@ -492,7 +508,8 @@ export default function Sidebar({ profile }: SidebarProps) {
               )
             })}
           </div>
-        ))}
+          )
+        })}
       </nav>
 
       {/* ── Footer ───────────────────────────────────────────────────────── */}

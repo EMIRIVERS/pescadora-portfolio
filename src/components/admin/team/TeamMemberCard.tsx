@@ -3,7 +3,9 @@
 import Image from 'next/image'
 import { useTransition, useState, useRef } from 'react'
 import { changeTeamMemberRole } from '@/lib/actions/invite-team-member'
-import { toggleAdminStatus } from '@/lib/actions/team'
+import { toggleAdminStatus, setStaffRole } from '@/lib/actions/team'
+import { STAFF_ROLES, STAFF_ROLE_LABELS } from '@/lib/auth/permissions'
+import type { StaffRole } from '@/lib/supabase/types'
 import DeleteMemberButton from './DeleteMemberButton'
 
 const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
@@ -28,9 +30,12 @@ interface Props {
     avatar_url: string | null
     is_admin_team: boolean
     role: string | null
+    staff_role: StaffRole | null
     created_at: string
   }
   currentUserId: string
+  /** El usuario actual es owner → puede asignar permisos (staff_role). */
+  canManageRoles: boolean
 }
 
 function nameToHsl(name: string): string {
@@ -48,8 +53,29 @@ function formatDate(iso: string): string {
   return d.toLocaleDateString('es-ES', { year: 'numeric', month: 'long' })
 }
 
-export default function TeamMemberCard({ member, currentUserId }: Props) {
+export default function TeamMemberCard({ member, currentUserId, canManageRoles }: Props) {
   const isSelf = member.id === currentUserId
+
+  const [staffRole, setStaffRoleState] = useState<StaffRole | null>(member.staff_role)
+  const [staffRoleError, setStaffRoleError] = useState<string | null>(null)
+  const [staffPending, startStaffTransition] = useTransition()
+
+  function handleStaffRoleChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const next = e.target.value as StaffRole
+    const prev = staffRole
+    setStaffRole_(next, prev)
+  }
+  function setStaffRole_(next: StaffRole, prev: StaffRole | null) {
+    setStaffRoleState(next)
+    setStaffRoleError(null)
+    startStaffTransition(async () => {
+      const result = await setStaffRole(member.id, next)
+      if (result.error) {
+        setStaffRoleError(result.error)
+        setStaffRoleState(prev)
+      }
+    })
+  }
 
   const displayName = member.full_name ?? member.email ?? '?'
   const initial = displayName[0]?.toUpperCase() ?? '?'
@@ -331,6 +357,54 @@ export default function TeamMemberCard({ member, currentUserId }: Props) {
       {roleError && (
         <p style={{ marginTop: '4px', fontSize: '11px', color: 'var(--dash-danger)', marginBottom: 0 }}>
           {roleError}
+        </p>
+      )}
+
+      {/* Permisos (RBAC staff_role) */}
+      {isAdmin && (
+        <div style={{ marginTop: '10px', width: '100%' }}>
+          <p style={{ margin: '0 0 4px', fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--dash-text-tertiary)', fontFamily: FONT }}>
+            Permisos
+          </p>
+          {canManageRoles ? (
+            <select
+              value={staffRole ?? ''}
+              onChange={handleStaffRoleChange}
+              disabled={staffPending}
+              style={{
+                width: '100%',
+                backgroundColor: 'var(--dash-surface-3)',
+                border: '1px solid var(--dash-border)',
+                borderRadius: '8px',
+                color: 'var(--dash-text-primary)',
+                fontSize: '13px',
+                fontWeight: 500,
+                padding: '6px 10px',
+                appearance: 'none',
+                cursor: staffPending ? 'not-allowed' : 'pointer',
+                fontFamily: FONT,
+                outline: 'none',
+                opacity: staffPending ? 0.6 : 1,
+              }}
+            >
+              {staffRole === null && <option value="">Sin rol</option>}
+              {STAFF_ROLES.map((r) => (
+                <option key={r} value={r} style={{ backgroundColor: 'var(--dash-surface-3)', color: 'var(--dash-text-primary)' }}>
+                  {STAFF_ROLE_LABELS[r]}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <span style={{ display: 'inline-block', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, backgroundColor: 'rgba(0,113,227,0.15)', color: '#0071E3', fontFamily: FONT }}>
+              {staffRole ? STAFF_ROLE_LABELS[staffRole] : 'Sin rol'}
+            </span>
+          )}
+        </div>
+      )}
+
+      {staffRoleError && (
+        <p style={{ marginTop: '4px', fontSize: '11px', color: 'var(--dash-danger)', marginBottom: 0 }}>
+          {staffRoleError}
         </p>
       )}
 

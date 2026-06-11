@@ -1,6 +1,8 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import CalendarView from '@/components/admin/CalendarView'
 import type { CalendarProject, CalendarDeliverable, CalendarTask } from '@/components/admin/CalendarView'
+import OpEventsManager from '@/components/admin/OpEventsManager'
+import { getCalendarEvents } from '@/lib/actions/calendar'
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
@@ -22,6 +24,10 @@ export default async function CalendarPage() {
     { data: projectsRaw },
     { data: deliverablesRaw },
     { data: tasksRaw },
+    { data: clientsRaw },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    { data: invoicesRaw },
+    events,
   ] = await Promise.all([
     supabase
       .from('projects')
@@ -37,7 +43,14 @@ export default async function CalendarPage() {
       .select('id, title, priority, due_date, board_id, task_boards!inner(project_id)')
       .not('due_date', 'is', null)
       .order('due_date', { ascending: true }),
+    supabase.from('clients').select('id, name').order('name'),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any).from('invoices').select('id, invoice_number').order('created_at', { ascending: false }),
+    getCalendarEvents(),
   ])
+
+  const clients = (clientsRaw ?? []) as { id: string; name: string }[]
+  const invoices = (invoicesRaw ?? []) as { id: string; invoice_number: string }[]
 
   const projects: CalendarProject[] = (projectsRaw ?? []) as CalendarProject[]
   const deliverables: CalendarDeliverable[] = (deliverablesRaw ?? []) as CalendarDeliverable[]
@@ -105,6 +118,9 @@ export default async function CalendarPage() {
           {taskCount} tarea{taskCount !== 1 ? 's' : ''} con fecha
         </p>
       </div>
+
+      {/* Agenda operativa: eventos tipados (grabación, entrega, cobro, reunión) */}
+      <OpEventsManager events={events} clients={clients} projects={projects} invoices={invoices} />
 
       {/* Calendar card */}
       <div

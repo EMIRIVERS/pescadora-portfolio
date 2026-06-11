@@ -1,6 +1,16 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import type { Database } from '@/lib/supabase/types'
+import type { Database, StaffRole } from '@/lib/supabase/types'
+
+// Secciones del admin que solo ciertos roles pueden abrir. Lo no listado es
+// visible para cualquier staff. Esto es UX/conveniencia: la autorización real
+// vive en requireRole() de cada server action (CLAUDE.md).
+const SECTION_MIN: { prefix: string; roles: StaffRole[] }[] = [
+  { prefix: '/admin/invoices', roles: ['owner', 'finance'] },
+  { prefix: '/admin/reportes', roles: ['owner', 'producer', 'finance'] },
+  { prefix: '/admin/automatizaciones', roles: ['owner', 'producer'] },
+  { prefix: '/admin/auditoria', roles: ['owner'] },
+]
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -45,7 +55,7 @@ export async function proxy(request: NextRequest) {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('is_admin_team')
+      .select('is_admin_team, staff_role')
       .eq('id', user.id)
       .single()
 
@@ -56,6 +66,18 @@ export async function proxy(request: NextRequest) {
       url.searchParams.delete('redirectTo')
       return NextResponse.redirect(url)
     }
+
+    // Gating por rol: si la sección está restringida y el rol no aplica, al panel.
+    if (profile?.is_admin_team) {
+      const section = SECTION_MIN.find((s) => pathname.startsWith(s.prefix))
+      const role = profile.staff_role as StaffRole | null
+      if (section && (!role || !section.roles.includes(role))) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/admin'
+        url.searchParams.delete('redirectTo')
+        return NextResponse.redirect(url)
+      }
+    }
   }
 
   // Protect /portal/*
@@ -64,6 +86,30 @@ export async function proxy(request: NextRequest) {
       const url = request.nextUrl.clone()
       url.pathname = '/login'
       return NextResponse.redirect(url)
+    }
+
+    // Modo "ver portal como cliente" para staff admin: si llega ?as_client=<uuid>
+    // y el usuario es admin_team, lo dejamos pasar al portal. Setamos un header
+    // en el request para que el layout sepa que está en preview (las server
+    // actions siguen atadas a la sesión real → no se puede aprobar / comentar
+    // / borrar como cliente).
+    const asClient = request.nextUrl.searchParams.get('as_client')
+    if (asClient) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_admin_team')
+        .eq('id', user.id)
+        .single()
+      if (profile?.is_admin_team) {
+        const requestHeaders = new Headers(request.headers)
+        requestHeaders.set('x-portal-preview-client', asClient)
+        const previewResponse = NextResponse.next({ request: { headers: requestHeaders } })
+        // Re-apply Supabase cookies on the new response.
+        supabaseResponse.cookies.getAll().forEach((c) => {
+          previewResponse.cookies.set(c.name, c.value, c)
+        })
+        return previewResponse
+      }
     }
   }
 

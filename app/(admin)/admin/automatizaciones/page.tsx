@@ -1,31 +1,12 @@
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { createServiceClient } from '@/lib/supabase/server'
 import { TestEmailForm } from './TestEmailForm'
-
-// Minimal DB schema covering only the tables used in this page.
-// Extend once the generated types are regenerated post-migration.
-interface EmailLogDatabase {
-  public: {
-    Tables: {
-      email_log: {
-        Row: EmailLogRow
-        Insert: Omit<EmailLogRow, 'id' | 'sent_at'>
-        Update: Partial<Omit<EmailLogRow, 'id'>>
-        Relationships: []
-      }
-    }
-    Views: Record<string, never>
-    Functions: Record<string, never>
-    Enums: Record<string, never>
-    CompositeTypes: Record<string, never>
-  }
-}
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface EmailLogRow {
   id: string
   to_email: string
   subject: string
-  template_name: string
+  template_name: string | null
   sent_at: string
 }
 
@@ -80,11 +61,7 @@ function formatDateTime(iso: string): string {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default async function AutomatizacionesPage() {
-  const supabase = createSupabaseClient<EmailLogDatabase>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false } },
-  )
+  const supabase = createServiceClient()
 
   const apiKeyConfigured = Boolean(process.env.RESEND_API_KEY)
   const cronSecretConfigured = Boolean(process.env.CRON_SECRET)

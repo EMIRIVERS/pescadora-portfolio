@@ -1,10 +1,12 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { FolderKanban, FileText, FolderOpen } from 'lucide-react'
+import { FolderKanban, FileText, FolderOpen, CalendarDays, TrendingUp } from 'lucide-react'
 
 const TABS = [
   { href: '/portal', label: 'Proyectos', Icon: FolderKanban, exact: true },
+  { href: '/portal/calendario', label: 'Calendario', Icon: CalendarDays, exact: false },
+  { href: '/portal/rendimiento', label: 'Rendimiento', Icon: TrendingUp, exact: false },
   { href: '/portal/invoices', label: 'Facturas', Icon: FileText, exact: false },
   { href: '/portal/archivos', label: 'Archivos', Icon: FolderOpen, exact: false },
 ] as const

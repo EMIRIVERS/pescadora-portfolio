@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { resolvePortalClient, portalLink } from '@/lib/portal/preview'
 import type { Deliverable, DeliverableStatus, DeliverableType, Project } from '@/lib/supabase/types'
 // Note: deliverables are fetched flat and joined to projects in memory.
 import DeliverableCard from '@/components/portal/deliverable-card'
@@ -40,41 +40,21 @@ function matchesFilter(deliverable: Deliverable, filter: FilterTab): boolean {
 // ---------------------------------------------------------------------------
 
 interface PageProps {
-  searchParams: Promise<{ filter?: string }>
+  searchParams: Promise<{ filter?: string; as_client?: string }>
 }
 
 export default async function DeliverablesPage({ searchParams }: PageProps) {
-  const supabase = await createClient()
+  const sp = await searchParams
+  const ctx = await resolvePortalClient(sp)
+  if (!ctx) redirect('/login')
+  const { supabase, clientId, clientName } = ctx
+  const client = { id: clientId, name: clientName }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) redirect('/login')
-
-  const { filter: rawFilter } = await searchParams
+  const rawFilter = sp.filter
   const activeFilter: FilterTab =
     rawFilter === 'wip' || rawFilter === 'finales' || rawFilter === 'aprobados'
       ? rawFilter
       : 'todos'
-
-  // Resolve the client record linked to this user's profile
-  const { data: client } = await supabase
-    .from('clients')
-    .select('id, name')
-    .eq('profile_id', user.id)
-    .single()
-
-  if (!client) {
-    return (
-      <main className="min-h-screen bg-zinc-950">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 py-12">
-          <PageHeader />
-          <EmptyState message="No tienes una cuenta de cliente activa." />
-        </div>
-      </main>
-    )
-  }
 
   // Fetch all projects for this client
   const { data: projectRows } = await supabase
@@ -119,8 +99,8 @@ export default async function DeliverablesPage({ searchParams }: PageProps) {
         <div className="flex items-center gap-1.5 mb-8 flex-wrap">
           {FILTER_TABS.map(({ key, label }) => {
             const isActive = key === activeFilter
-            const href =
-              key === 'todos' ? '/portal/deliverables' : `/portal/deliverables?filter=${key}`
+            const baseHref = key === 'todos' ? '/portal/deliverables' : `/portal/deliverables?filter=${key}`
+            const href = portalLink(baseHref, ctx)
             return (
               <Link
                 key={key}

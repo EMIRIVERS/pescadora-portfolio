@@ -437,6 +437,7 @@ export default function LeadDetailModal({
   }
 
   async function handleSaveNextAction() {
+    if (nextActionSaving) return
     setNextActionSaving(true)
     const supabase = createClient()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -450,6 +451,7 @@ export default function LeadDetailModal({
   }
 
   async function handleSaveBudget(raw: string) {
+    if (budgetSaving) return
     const num = raw === '' ? null : Number(raw)
     if (raw !== '' && isNaN(num as number)) return
     setBudgetSaving(true)
@@ -461,6 +463,7 @@ export default function LeadDetailModal({
   }
 
   async function handleSaveWaMessage() {
+    if (waMessageSaving) return
     setWaMessageSaving(true)
     const supabase = createClient()
     await supabase.from('leads').update({ wa_message: waMessage || null }).eq('id', lead.id)
@@ -470,6 +473,7 @@ export default function LeadDetailModal({
   }
 
   async function handleSourceChange(newSource: Lead['source']) {
+    if (sourceSaving) return
     setSourceValue(newSource)
     setSourceSaving(true)
     const supabase = createClient()
@@ -478,6 +482,7 @@ export default function LeadDetailModal({
   }
 
   async function handleAssignedChange(value: string) {
+    if (assignedSaving) return
     setAssignedSaving(true)
     const supabase = createClient()
     await supabase.from('leads').update({ assigned_to: value.trim() || null }).eq('id', lead.id)

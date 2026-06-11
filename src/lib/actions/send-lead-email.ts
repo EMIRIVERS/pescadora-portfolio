@@ -28,12 +28,15 @@ export async function sendLeadEmail(
 
   await sendEmail({ to: lead.email, subject, html })
 
-  // Log activity
-  await db.from('lead_activities').insert({
+  // Log activity (secundario: el email ya se envió, no se reporta como fallo)
+  const { error: activityError } = await db.from('lead_activities').insert({
     lead_id: leadId,
     type: 'email',
     content: `Email enviado: "${subject}"`,
   })
+  if (activityError) {
+    console.error(`[sendLeadEmail] Failed to log email activity (lead: ${leadId}):`, activityError.message)
+  }
 
   return {}
 }

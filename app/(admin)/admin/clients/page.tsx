@@ -24,10 +24,12 @@ const AVATAR_PALETTE = [
 
 const ACTIVE_STATUSES: ProjectStatus[] = ['pre_production', 'production', 'post_production']
 
+// Clients shown per page; controlled via the ?page= search param.
+const PAGE_SIZE = 48
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface ProjectRow {
-  id: string
   status: ProjectStatus
   created_at: string
   client_id: string | null
@@ -61,37 +63,55 @@ function avatarColor(name: string): string {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 interface PageProps {
-  searchParams: Promise<{ q?: string }>
+  searchParams: Promise<{ q?: string; page?: string }>
 }
 
 export default async function AdminClientsPage({ searchParams }: PageProps) {
-  const { q } = await searchParams
+  const { q, page } = await searchParams
+  const currentPage = Math.max(1, Number.parseInt(page ?? '1', 10) || 1)
+  const rangeFrom = (currentPage - 1) * PAGE_SIZE
+  const rangeTo = rangeFrom + PAGE_SIZE - 1
   const supabase = createServiceClient()
 
+  // Strip PostgREST structural metacharacters to prevent filter injection.
+  const safeQ = q ? q.replace(/[,()]/g, ' ') : null
+  const qFilter = safeQ
+    ? `name.ilike.%${safeQ}%,email.ilike.%${safeQ}%,company.ilike.%${safeQ}%`
+    : null
+
   const [
-    { data: clientsData, error: clientsError },
+    { data: clientsData, error: clientsError, count: clientsCount },
     { data: projectsData },
     { data: leadsData },
+    { count: activeClientsCount },
   ] = await Promise.all([
     (() => {
       let query = supabase
         .from('clients')
-        .select('id, name, email, company, avatar_url, profile_id, created_at')
+        .select('id, name, email, company, avatar_url, profile_id, created_at', {
+          count: 'exact',
+        })
         .order('name', { ascending: true })
-      if (q) {
-        // Strip PostgREST structural metacharacters to prevent filter injection.
-        const safeQ = q.replace(/[,()]/g, ' ')
-        query = query.or(`name.ilike.%${safeQ}%,email.ilike.%${safeQ}%,company.ilike.%${safeQ}%`)
-      }
+        .range(rangeFrom, rangeTo)
+      if (qFilter) query = query.or(qFilter)
       return query
     })(),
     supabase
       .from('projects')
-      .select('id, status, created_at, client_id, budget'),
+      .select('client_id, status, budget, created_at'),
     supabase
       .from('leads')
       .select('converted_to_client_id')
       .not('converted_to_client_id', 'is', null),
+    // Head-only count of clients with at least one active project (for stats).
+    (() => {
+      let query = supabase
+        .from('clients')
+        .select('id, projects!inner(id)', { count: 'exact', head: true })
+        .in('projects.status', ACTIVE_STATUSES)
+      if (qFilter) query = query.or(qFilter)
+      return query
+    })(),
   ])
 
   const clients: Client[] = (clientsData ?? []) as unknown as Client[]
@@ -139,10 +159,20 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
     }
   })
 
-  // Stats
-  const totalClients = enrichedCards.length
-  const withActiveProjects = enrichedCards.filter((c) => c.active_count > 0).length
-  const withoutActiveProjects = totalClients - withActiveProjects
+  // Stats — totals come from exact counts so they stay accurate under pagination.
+  const totalClients = clientsCount ?? enrichedCards.length
+  const withActiveProjects =
+    activeClientsCount ?? enrichedCards.filter((c) => c.active_count > 0).length
+  const withoutActiveProjects = Math.max(0, totalClients - withActiveProjects)
+  const totalPages = Math.max(1, Math.ceil(totalClients / PAGE_SIZE))
+
+  const pageHref = (target: number) => {
+    const params = new URLSearchParams()
+    if (q) params.set('q', q)
+    if (target > 1) params.set('page', String(target))
+    const qs = params.toString()
+    return qs ? `/admin/clients?${qs}` : '/admin/clients'
+  }
 
   const stats = [
     { label: 'Total clientes', value: totalClients },
@@ -362,6 +392,95 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
               />
             )
           })}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '16px',
+            marginTop: '32px',
+          }}
+        >
+          {currentPage > 1 ? (
+            <Link
+              href={pageHref(currentPage - 1)}
+              style={{
+                fontSize: '13px',
+                fontWeight: 500,
+                padding: '8px 18px',
+                borderRadius: '10px',
+                border: '1px solid var(--dash-border)',
+                backgroundColor: 'var(--dash-surface-1)',
+                color: 'var(--dash-text-primary)',
+                textDecoration: 'none',
+                fontFamily: SF,
+              }}
+            >
+              Anterior
+            </Link>
+          ) : (
+            <span
+              style={{
+                fontSize: '13px',
+                fontWeight: 500,
+                padding: '8px 18px',
+                borderRadius: '10px',
+                border: '1px solid var(--dash-border)',
+                color: 'var(--dash-text-tertiary)',
+                fontFamily: SF,
+              }}
+            >
+              Anterior
+            </span>
+          )}
+
+          <span
+            style={{
+              fontSize: '12px',
+              color: 'var(--dash-text-tertiary)',
+              fontFamily: SF,
+            }}
+          >
+            Pagina {currentPage} de {totalPages}
+          </span>
+
+          {currentPage < totalPages ? (
+            <Link
+              href={pageHref(currentPage + 1)}
+              style={{
+                fontSize: '13px',
+                fontWeight: 500,
+                padding: '8px 18px',
+                borderRadius: '10px',
+                border: '1px solid var(--dash-border)',
+                backgroundColor: 'var(--dash-surface-1)',
+                color: 'var(--dash-text-primary)',
+                textDecoration: 'none',
+                fontFamily: SF,
+              }}
+            >
+              Siguiente
+            </Link>
+          ) : (
+            <span
+              style={{
+                fontSize: '13px',
+                fontWeight: 500,
+                padding: '8px 18px',
+                borderRadius: '10px',
+                border: '1px solid var(--dash-border)',
+                color: 'var(--dash-text-tertiary)',
+                fontFamily: SF,
+              }}
+            >
+              Siguiente
+            </span>
+          )}
         </div>
       )}
     </div>

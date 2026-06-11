@@ -15,7 +15,7 @@ export default async function AdminTeamPage() {
 
   const { data: members } = await supabase
     .from('profiles')
-    .select('id, full_name, email, avatar_url, role, is_admin_team, created_at')
+    .select('id, full_name, email, avatar_url, role, staff_role, is_admin_team, created_at')
     .order('full_name', { ascending: true })
 
   const team = (members ?? []) as {
@@ -25,8 +25,37 @@ export default async function AdminTeamPage() {
     avatar_url: string | null
     is_admin_team: boolean
     role: string | null
+    staff_role: import('@/lib/supabase/types').StaffRole | null
     created_at: string
   }[]
+
+  // El usuario actual: solo un owner puede asignar permisos (staff_role).
+  const canManageRoles =
+    team.find((m) => m.id === currentUserId)?.staff_role === 'owner'
+
+  // ── Carga de trabajo: proyectos activos + tareas asignadas por miembro ──
+  const [{ data: assignmentsRaw }, { data: tasksRaw }] = await Promise.all([
+    supabase.from('project_assignments').select('profile_id, projects(status)'),
+    supabase.from('tasks').select('assignee_id').not('assignee_id', 'is', null),
+  ])
+
+  const ACTIVE_PROJECT = new Set(['pre_production', 'production', 'post_production'])
+
+  const workload = new Map<string, { projects: number; tasks: number }>()
+  function bump(profileId: string | null, key: 'projects' | 'tasks') {
+    if (!profileId) return
+    const cur = workload.get(profileId) ?? { projects: 0, tasks: 0 }
+    cur[key] += 1
+    workload.set(profileId, cur)
+  }
+  for (const a of (assignmentsRaw ?? []) as { profile_id: string | null; projects: { status: string } | null }[]) {
+    if (a.projects && ACTIVE_PROJECT.has(a.projects.status)) bump(a.profile_id, 'projects')
+  }
+  for (const t of (tasksRaw ?? []) as { assignee_id: string | null }[]) {
+    bump(t.assignee_id, 'tasks')
+  }
+
+  const maxLoad = Math.max(1, ...[...workload.values()].map((w) => w.projects + w.tasks))
 
   // Split into admin group and support group
   const adminTeam = team.filter(
@@ -115,6 +144,49 @@ export default async function AdminTeamPage() {
         </div>
       </div>
 
+      {/* Carga de trabajo del equipo */}
+      {team.length > 0 && (
+        <section style={{ marginBottom: '40px' }}>
+          <p style={sectionHeadingStyle}>Carga de trabajo</p>
+          <div
+            style={{
+              backgroundColor: 'var(--dash-surface-2)',
+              border: '1px solid var(--dash-border)',
+              borderRadius: '16px',
+              padding: '8px 0',
+            }}
+          >
+            {[...team]
+              .map((m) => ({ m, w: workload.get(m.id) ?? { projects: 0, tasks: 0 } }))
+              .sort((a, b) => b.w.projects + b.w.tasks - (a.w.projects + a.w.tasks))
+              .map(({ m, w }) => {
+                const total = w.projects + w.tasks
+                return (
+                  <div
+                    key={m.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '16px',
+                      padding: '12px 20px',
+                    }}
+                  >
+                    <span style={{ flex: '0 0 180px', fontSize: '14px', color: 'var(--dash-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {m.full_name ?? m.email ?? 'Sin nombre'}
+                    </span>
+                    <div style={{ flex: 1, height: '8px', backgroundColor: 'var(--dash-surface-3)', borderRadius: '8px', overflow: 'hidden' }}>
+                      <div style={{ width: `${(total / maxLoad) * 100}%`, height: '100%', backgroundColor: total === 0 ? 'transparent' : '#0071E3', borderRadius: '8px' }} />
+                    </div>
+                    <span style={{ flex: '0 0 auto', fontSize: '12px', color: 'var(--dash-text-tertiary)', whiteSpace: 'nowrap' }}>
+                      {w.projects} proyecto{w.projects !== 1 ? 's' : ''} &middot; {w.tasks} tarea{w.tasks !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                )
+              })}
+          </div>
+        </section>
+      )}
+
       {team.length === 0 && (
         <div
           style={{
@@ -195,6 +267,7 @@ export default async function AdminTeamPage() {
                 key={member.id}
                 member={member}
                 currentUserId={currentUserId}
+                canManageRoles={canManageRoles}
               />
             ))}
           </div>
@@ -220,6 +293,7 @@ export default async function AdminTeamPage() {
                 key={member.id}
                 member={member}
                 currentUserId={currentUserId}
+                canManageRoles={canManageRoles}
               />
             ))}
           </div>

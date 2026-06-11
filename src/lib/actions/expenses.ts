@@ -21,7 +21,8 @@
 // ---------------------------------------------------------------------------
 
 import { revalidatePath } from 'next/cache'
-import { createServiceClient, requireAdmin } from '@/lib/supabase/server'
+import { createServiceClient, requireRole } from '@/lib/supabase/server'
+import { logAudit } from '@/lib/audit'
 import type { ProjectExpense } from '@/lib/supabase/types'
 
 export interface CreateExpenseInput {
@@ -34,7 +35,7 @@ export interface CreateExpenseInput {
 }
 
 export async function getExpenses(projectId: string): Promise<ProjectExpense[]> {
-  const auth = await requireAdmin()
+  const auth = await requireRole('expenses', 'view')
   if ('error' in auth) return []
   const db = createServiceClient()
   const { data } = await db
@@ -48,7 +49,7 @@ export async function getExpenses(projectId: string): Promise<ProjectExpense[]> 
 export async function createExpense(
   input: CreateExpenseInput,
 ): Promise<{ data?: ProjectExpense; error?: string }> {
-  const auth = await requireAdmin()
+  const auth = await requireRole('expenses', 'create')
   if ('error' in auth) return { error: auth.error }
   const db = createServiceClient()
   const { data, error } = await db
@@ -66,6 +67,15 @@ export async function createExpense(
 
   if (error || !data) return { error: error?.message ?? 'No se pudo registrar el gasto.' }
 
+  await logAudit({
+    action: 'expense.create',
+    actorId: auth.userId,
+    entityType: 'expense',
+    entityId: (data as ProjectExpense).id,
+    summary: `Gasto registrado: ${input.label}`,
+    metadata: { projectId: input.projectId },
+  })
+
   revalidatePath(`/admin/projects/${input.projectId}`)
   return { data: data as ProjectExpense }
 }
@@ -74,11 +84,19 @@ export async function deleteExpense(
   expenseId: string,
   projectId: string,
 ): Promise<{ error?: string }> {
-  const auth = await requireAdmin()
+  const auth = await requireRole('expenses', 'delete')
   if ('error' in auth) return { error: auth.error }
   const db = createServiceClient()
   const { error } = await db.from('project_expenses').delete().eq('id', expenseId)
   if (error) return { error: error.message }
+  await logAudit({
+    action: 'expense.delete',
+    actorId: auth.userId,
+    entityType: 'expense',
+    entityId: expenseId,
+    summary: 'Gasto eliminado',
+    metadata: { projectId },
+  })
   revalidatePath(`/admin/projects/${projectId}`)
   return {}
 }

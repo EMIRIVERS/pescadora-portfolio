@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { resolvePortalClient, portalLink } from '@/lib/portal/preview'
 import type { Profile, Client } from '@/lib/supabase/types'
 import ProfileEditForm from './profile-edit-form'
 
@@ -8,36 +8,38 @@ import ProfileEditForm from './profile-edit-form'
 // Page
 // ---------------------------------------------------------------------------
 
-export default async function ProfilePage() {
-  const supabase = await createClient()
+interface ProfilePageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+export default async function ProfilePage({ searchParams }: ProfilePageProps) {
+  const sp = await searchParams
+  const ctx = await resolvePortalClient(sp)
+  if (!ctx) redirect('/login')
+  const { supabase, clientId, isAdminPreview } = ctx
 
-  if (!user) redirect('/login')
-
-  // Fetch profile
-  const { data: profileRow } = await supabase
-    .from('profiles')
-    .select('id, full_name, email, is_admin_team, role')
-    .eq('id', user.id)
-    .single()
-
-  if (!profileRow || profileRow.is_admin_team) {
-    redirect('/login')
-  }
-
-  const profile = profileRow as Pick<Profile, 'id' | 'full_name' | 'email' | 'is_admin_team' | 'role'>
-
-  // Fetch client record (may not exist)
+  // Buscar el client row + el profile asociado. En preview admin, queremos
+  // mostrar la info del cliente target (no la del admin).
   const { data: clientRow } = await supabase
     .from('clients')
-    .select('id, name, company')
-    .eq('profile_id', user.id)
+    .select('id, name, company, profile_id')
+    .eq('id', clientId)
     .single()
 
-  const client = clientRow as Pick<Client, 'id' | 'name' | 'company'> | null
+  const client = clientRow as (Pick<Client, 'id' | 'name' | 'company'> & { profile_id: string | null }) | null
+
+  const profileLookupId = client?.profile_id ?? null
+  const { data: profileRow } = profileLookupId
+    ? await supabase
+        .from('profiles')
+        .select('id, full_name, email, is_admin_team, role')
+        .eq('id', profileLookupId)
+        .single()
+    : { data: null }
+
+  if (!profileRow) redirect('/login')
+
+  const profile = profileRow as Pick<Profile, 'id' | 'full_name' | 'email' | 'is_admin_team' | 'role'>
 
   // Count linked projects
   const { count: projectCount } = client
@@ -47,14 +49,14 @@ export default async function ProfilePage() {
         .eq('client_id', client.id)
     : { count: 0 }
 
-  const displayEmail = profile.email ?? user.email ?? null
+  const displayEmail = profile.email ?? null
 
   return (
     <main className="min-h-screen bg-zinc-950">
       <div className="mx-auto max-w-2xl px-4 sm:px-6 py-12">
         {/* Back link */}
         <Link
-          href="/portal"
+          href={portalLink('/portal', ctx)}
           className="inline-flex items-center gap-1.5 text-zinc-500 hover:text-white text-sm transition-colors mb-8"
         >
           <span>&larr;</span>
@@ -67,11 +69,19 @@ export default async function ProfilePage() {
           <h1 className="text-white text-2xl sm:text-3xl font-semibold">Mi perfil</h1>
         </div>
 
-        {/* Edit form */}
+        {/* Edit form (deshabilitado en modo preview admin) */}
         <section className="mb-8">
           <SectionLabel>Informacion personal</SectionLabel>
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-            <ProfileEditForm profileId={profile.id} initialFullName={profile.full_name} />
+            {isAdminPreview ? (
+              <div>
+                <p className="text-zinc-400 text-xs uppercase tracking-wider mb-2">Nombre completo</p>
+                <p className="text-zinc-200 text-sm">{profile.full_name ?? '—'}</p>
+                <p className="text-amber-500 text-xs mt-3">Edición deshabilitada en modo preview.</p>
+              </div>
+            ) : (
+              <ProfileEditForm profileId={profile.id} initialFullName={profile.full_name} />
+            )}
           </div>
         </section>
 

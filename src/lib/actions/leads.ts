@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient, createServiceClient, requireAdmin } from '@/lib/supabase/server'
+import { logAudit } from '@/lib/audit'
 import type { Lead, LeadStatus, LeadSource, LeadActivityType } from '@/lib/supabase/types'
 import { sendEmail, ADMIN_EMAIL } from '@/lib/email'
 import {
@@ -69,8 +70,8 @@ export async function createLead(
     return { error: error?.message ?? 'Failed to create lead.' }
   }
 
-  // Log initial status_change activity
-  await db.from('lead_activities').insert({
+  // Log initial status_change activity (secondary: no rompe la creación del lead)
+  const { error: activityError } = await db.from('lead_activities').insert({
     lead_id: lead.id,
     user_id: userId,
     type: 'status_change' as LeadActivityType,
@@ -78,6 +79,9 @@ export async function createLead(
     old_status: null,
     new_status: lead.status,
   })
+  if (activityError) {
+    console.error(`[createLead] Failed to log lead activity (lead: ${lead.id}):`, activityError.message)
+  }
 
   // Send emails — fire-and-forget, errors are swallowed inside sendEmail
   const emailTasks: Promise<void>[] = [
@@ -106,6 +110,14 @@ export async function createLead(
     )
   }
   await Promise.allSettled(emailTasks)
+
+  await logAudit({
+    action: 'lead.create',
+    actorId: auth.userId,
+    entityType: 'lead',
+    entityId: lead.id,
+    summary: `Lead creado: ${lead.name}`,
+  })
 
   revalidateLeads()
   return { lead }
@@ -178,7 +190,7 @@ export async function updateLead(
   // Log status change if it occurred
   const newStatus = updates.status as LeadStatus | undefined
   if (newStatus && newStatus !== existing.status) {
-    await db.from('lead_activities').insert({
+    const { error: activityError } = await db.from('lead_activities').insert({
       lead_id: id,
       user_id: userId,
       type: 'status_change' as LeadActivityType,
@@ -186,7 +198,18 @@ export async function updateLead(
       old_status: existing.status,
       new_status: newStatus,
     })
+    if (activityError) {
+      console.error(`[updateLead] Failed to log status change activity (lead: ${id}):`, activityError.message)
+    }
   }
+
+  await logAudit({
+    action: 'lead.update',
+    actorId: auth.userId,
+    entityType: 'lead',
+    entityId: id,
+    summary: `Lead actualizado: ${lead.name}`,
+  })
 
   revalidateLeads()
   return { lead }
@@ -206,6 +229,14 @@ export async function deleteLead(id: string): Promise<{ error?: string }> {
   if (error) {
     return { error: error.message }
   }
+
+  await logAudit({
+    action: 'lead.delete',
+    actorId: auth.userId,
+    entityType: 'lead',
+    entityId: id,
+    summary: 'Lead eliminado',
+  })
 
   revalidateLeads()
   return {}
@@ -244,7 +275,7 @@ export async function updateLeadStatus(
     return { error: error.message }
   }
 
-  await db.from('lead_activities').insert({
+  const { error: activityError } = await db.from('lead_activities').insert({
     lead_id: id,
     user_id: userId,
     type: 'status_change' as LeadActivityType,
@@ -252,6 +283,9 @@ export async function updateLeadStatus(
     old_status: existing.status,
     new_status: status,
   })
+  if (activityError) {
+    console.error(`[updateLeadStatus] Failed to log status change activity (lead: ${id}):`, activityError.message)
+  }
 
   // Notify lead by email when status reaches a significant milestone
   if ((status === 'qualified' || status === 'proposal') && existing.email) {
@@ -263,6 +297,14 @@ export async function updateLeadStatus(
       }),
     ])
   }
+
+  await logAudit({
+    action: 'lead.status',
+    actorId: auth.userId,
+    entityType: 'lead',
+    entityId: id,
+    summary: `Estado de lead cambiado a ${status}`,
+  })
 
   revalidateLeads()
   return {}
@@ -292,6 +334,14 @@ export async function addLeadActivity(
   if (error) {
     return { error: error.message }
   }
+
+  await logAudit({
+    action: 'lead.activity',
+    actorId: auth.userId,
+    entityType: 'lead',
+    entityId: leadId,
+    summary: `Actividad registrada en lead (${type})`,
+  })
 
   // Auto-update last_contacted_at for contact-type activities
   if (['whatsapp', 'call', 'email', 'meeting'].includes(type)) {
@@ -356,8 +406,17 @@ export async function convertLeadToClient(
     return { error: updateError.message }
   }
 
+  await logAudit({
+    action: 'lead.convert',
+    actorId: auth.userId,
+    entityType: 'lead',
+    entityId: leadId,
+    summary: `Lead convertido a cliente: ${lead.name}`,
+    metadata: { clientId: client.id },
+  })
+
   // Log the conversion as a status_change activity
-  await db.from('lead_activities').insert({
+  const { error: activityError } = await db.from('lead_activities').insert({
     lead_id: leadId,
     user_id: userId,
     type: 'status_change' as LeadActivityType,
@@ -365,6 +424,9 @@ export async function convertLeadToClient(
     old_status: lead.status,
     new_status: 'won',
   })
+  if (activityError) {
+    console.error(`[convertLeadToClient] Failed to log conversion activity (lead: ${leadId}):`, activityError.message)
+  }
 
   // Notify the new client that their project has started
   if (lead.email) {

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createServiceClient, requireAdmin } from '@/lib/supabase/server'
+import { logAudit } from '@/lib/audit'
 
 export async function createCategory(formData: FormData) {
   const auth = await requireAdmin()
@@ -11,19 +12,24 @@ export async function createCategory(formData: FormData) {
   if (!slug || !label) throw new Error('slug y label son obligatorios')
 
   const db = createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: max } = await (db as any)
+  const { data: max } = await db
     .from('portfolio_categories')
     .select('sort_order')
     .order('sort_order', { ascending: false })
     .limit(1)
     .single()
 
-  const sort_order = ((max as { sort_order: number } | null)?.sort_order ?? -1) + 1
+  const sort_order = (max?.sort_order ?? -1) + 1
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (db as any).from("portfolio_categories").insert({ slug, label, sort_order })
+  const { error } = await db.from('portfolio_categories').insert({ slug, label, sort_order })
   if (error) throw new Error(error.message)
+  await logAudit({
+    action: 'category.create',
+    actorId: auth.userId,
+    entityType: 'category',
+    entityId: null,
+    summary: `Categoría creada: ${label}`,
+  })
   revalidatePath('/admin/portfolio')
   revalidatePath('/')
 }
@@ -37,8 +43,7 @@ export async function updateCategory(
   if (data.label !== undefined && !data.label.trim()) return { error: 'label es obligatorio' }
   const db = createServiceClient()
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (db as any).from('portfolio_categories').update(data).eq('slug', oldSlug)
+  const { error } = await db.from('portfolio_categories').update(data).eq('slug', oldSlug)
   if (error) return { error: error.message }
 
   // If slug changed, cascade update to all videos in that category
@@ -50,6 +55,14 @@ export async function updateCategory(
     if (videoError) return { error: videoError.message }
   }
 
+  await logAudit({
+    action: 'category.update',
+    actorId: auth.userId,
+    entityType: 'category',
+    entityId: data.slug ?? oldSlug,
+    summary: `Categoría actualizada: ${oldSlug}`,
+  })
+
   revalidatePath('/admin/portfolio')
   revalidatePath('/')
   return {}
@@ -59,9 +72,15 @@ export async function deleteCategory(id: string) {
   const auth = await requireAdmin()
   if ('error' in auth) throw new Error(auth.error)
   const db = createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (db as any).from("portfolio_categories").delete().eq('id', id)
+  const { error } = await db.from('portfolio_categories').delete().eq('id', id)
   if (error) throw new Error(error.message)
+  await logAudit({
+    action: 'category.delete',
+    actorId: auth.userId,
+    entityType: 'category',
+    entityId: id,
+    summary: 'Categoría eliminada',
+  })
   revalidatePath('/admin/portfolio')
   revalidatePath('/')
 }
@@ -70,9 +89,15 @@ export async function toggleCategoryVisibility(id: string, is_visible: boolean) 
   const auth = await requireAdmin()
   if ('error' in auth) throw new Error(auth.error)
   const db = createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (db as any).from("portfolio_categories").update({ is_visible }).eq('id', id)
+  const { error } = await db.from('portfolio_categories').update({ is_visible }).eq('id', id)
   if (error) throw new Error(error.message)
+  await logAudit({
+    action: 'category.update',
+    actorId: auth.userId,
+    entityType: 'category',
+    entityId: id,
+    summary: is_visible ? 'Categoría mostrada' : 'Categoría ocultada',
+  })
   revalidatePath('/admin/portfolio')
   revalidatePath('/')
 }
@@ -81,12 +106,18 @@ export async function updateCategoryCover(slug: string, coverUrl: string | null)
   const auth = await requireAdmin()
   if ('error' in auth) throw new Error(auth.error)
   const db = createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (db as any)
+  const { error } = await db
     .from('portfolio_categories')
     .update({ cover_url: coverUrl })
     .eq('slug', slug)
   if (error) throw new Error(error.message)
+  await logAudit({
+    action: 'category.update',
+    actorId: auth.userId,
+    entityType: 'category',
+    entityId: slug,
+    summary: 'Portada de categoría actualizada',
+  })
   revalidatePath('/admin/portfolio')
   revalidatePath('/')
 }
@@ -96,11 +127,17 @@ export async function reorderCategories(id: string, adjacentId: string, myOrder:
   if ('error' in auth) throw new Error(auth.error)
   const db = createServiceClient()
   await Promise.all([
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (db as any).from('portfolio_categories').update({ sort_order: adjacentOrder }).eq('id', id),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (db as any).from('portfolio_categories').update({ sort_order: myOrder }).eq('id', adjacentId),
+    db.from('portfolio_categories').update({ sort_order: adjacentOrder }).eq('id', id),
+    db.from('portfolio_categories').update({ sort_order: myOrder }).eq('id', adjacentId),
   ])
+  await logAudit({
+    action: 'category.update',
+    actorId: auth.userId,
+    entityType: 'category',
+    entityId: id,
+    summary: 'Orden de categorías actualizado',
+    metadata: { adjacentId },
+  })
   revalidatePath('/admin/portfolio')
   revalidatePath('/')
 }

@@ -1,7 +1,6 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import * as XLSX from 'xlsx'
 import { createClient } from '@/lib/supabase/client'
 import type { LeadSource } from '@/lib/supabase/types'
 import { Upload, X, Check, AlertTriangle, FileSpreadsheet } from 'lucide-react'
@@ -62,8 +61,16 @@ export default function LeadsImporter({ onDone }: { onDone: () => void }) {
   const [dragOver, setDragOver] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  function parseFile(file: File) {
+  async function parseFile(file: File) {
     setError(null)
+    // xlsx (~600KB) se carga bajo demanda para no inflar el bundle inicial del admin.
+    let XLSX: typeof import('xlsx')
+    try {
+      XLSX = await import('xlsx')
+    } catch {
+      setError('No se pudo cargar el lector de Excel. Revisa tu conexión e intenta de nuevo.')
+      return
+    }
     const reader = new FileReader()
     reader.onload = (e) => {
       try {
@@ -119,7 +126,7 @@ export default function LeadsImporter({ onDone }: { onDone: () => void }) {
       setError('Solo se aceptan archivos .xlsx, .xls o .csv')
       return
     }
-    parseFile(file)
+    void parseFile(file)
   }
 
   async function runImport() {

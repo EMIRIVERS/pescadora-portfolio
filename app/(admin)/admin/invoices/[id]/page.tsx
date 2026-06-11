@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { createServiceClient } from '@/lib/supabase/server'
 import PrintButton from './PrintButton'
 import InvoiceActions from './InvoiceActions'
+import type { QuoteLine, FiscalData } from '@/lib/billing/catalog'
+import type { TaxBreakdown } from '@/lib/billing/tax'
 
 const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
 
@@ -18,6 +20,10 @@ interface InvoiceRow {
   client_id: string | null
   project_id: string | null
   created_at: string
+  items: QuoteLine[] | null
+  subtotal: number | null
+  tax: TaxBreakdown | null
+  fiscal_data: FiscalData | null
   clients: { name: string; email: string | null; company: string | null } | null
   projects: { title: string } | null
 }
@@ -77,6 +83,16 @@ export default async function InvoiceDetailPage({
   const inv = data as InvoiceRow
   const statusColor = STATUS_COLOR[inv.status] ?? 'var(--dash-text-secondary)'
   const statusLabel = STATUS_LABEL[inv.status] ?? inv.status
+
+  // Líneas de concepto (CFDI). Si la factura no las tiene, se cae al render legacy.
+  const lineRows: QuoteLine[] = Array.isArray(inv.items) ? inv.items : []
+  // Desglose fiscal: usa el TaxBreakdown guardado; si no existe (facturas legacy),
+  // trata el monto como total sin impuestos desglosados.
+  const totals = inv.tax ?? {
+    subtotal: Number(inv.amount),
+    iva: 0,
+    total: Number(inv.amount),
+  }
 
   return (
     <>
@@ -362,47 +378,39 @@ export default async function InvoiceDetailPage({
               </tr>
             </thead>
             <tbody>
-              <tr style={{ borderBottom: '1px solid #e5e5e5' }}>
-                <td style={{ padding: '16px', fontSize: 14, color: '#1a1a1a', fontFamily: FONT }}>
-                  {inv.projects
-                    ? `Servicios de produccion — ${inv.projects.title}`
-                    : 'Servicios de produccion audiovisual'}
-                </td>
-                <td
-                  style={{
-                    padding: '16px',
-                    fontSize: 14,
-                    color: '#1a1a1a',
-                    textAlign: 'right',
-                    fontFamily: FONT,
-                  }}
-                >
-                  1
-                </td>
-                <td
-                  style={{
-                    padding: '16px',
-                    fontSize: 14,
-                    color: '#1a1a1a',
-                    textAlign: 'right',
-                    fontFamily: FONT,
-                  }}
-                >
-                  {fmt(Number(inv.amount), inv.currency)}
-                </td>
-                <td
-                  style={{
-                    padding: '16px',
-                    fontSize: 14,
-                    fontWeight: 600,
-                    color: '#1a1a1a',
-                    textAlign: 'right',
-                    fontFamily: FONT,
-                  }}
-                >
-                  {fmt(Number(inv.amount), inv.currency)}
-                </td>
-              </tr>
+              {lineRows.length > 0 ? (
+                lineRows.map((line) => (
+                  <tr key={line.id} style={{ borderBottom: '1px solid #e5e5e5' }}>
+                    <td style={{ padding: '16px', fontSize: 14, color: '#1a1a1a', fontFamily: FONT }}>
+                      {line.name}
+                    </td>
+                    <td style={{ padding: '16px', fontSize: 14, color: '#1a1a1a', textAlign: 'right', fontFamily: FONT }}>
+                      {line.qty}
+                    </td>
+                    <td style={{ padding: '16px', fontSize: 14, color: '#1a1a1a', textAlign: 'right', fontFamily: FONT }}>
+                      {fmt(line.unitPrice, inv.currency)}
+                    </td>
+                    <td style={{ padding: '16px', fontSize: 14, fontWeight: 600, color: '#1a1a1a', textAlign: 'right', fontFamily: FONT }}>
+                      {fmt(line.unitPrice * line.qty, inv.currency)}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr style={{ borderBottom: '1px solid #e5e5e5' }}>
+                  <td style={{ padding: '16px', fontSize: 14, color: '#1a1a1a', fontFamily: FONT }}>
+                    {inv.projects
+                      ? `Servicios de produccion — ${inv.projects.title}`
+                      : 'Servicios de produccion audiovisual'}
+                  </td>
+                  <td style={{ padding: '16px', fontSize: 14, color: '#1a1a1a', textAlign: 'right', fontFamily: FONT }}>1</td>
+                  <td style={{ padding: '16px', fontSize: 14, color: '#1a1a1a', textAlign: 'right', fontFamily: FONT }}>
+                    {fmt(Number(inv.amount), inv.currency)}
+                  </td>
+                  <td style={{ padding: '16px', fontSize: 14, fontWeight: 600, color: '#1a1a1a', textAlign: 'right', fontFamily: FONT }}>
+                    {fmt(Number(inv.amount), inv.currency)}
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
 
@@ -417,46 +425,30 @@ export default async function InvoiceDetailPage({
             }}
           >
             <div style={{ minWidth: 280 }}>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  padding: '6px 16px',
-                  fontSize: 13,
-                  color: '#555',
-                  fontFamily: FONT,
-                }}
-              >
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 16px', fontSize: 13, color: '#555', fontFamily: FONT }}>
                 <span>Subtotal</span>
-                <span>{fmt(Number(inv.amount), inv.currency)}</span>
+                <span>{fmt(totals.subtotal, inv.currency)}</span>
               </div>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  padding: '6px 16px',
-                  fontSize: 13,
-                  color: '#555',
-                  fontFamily: FONT,
-                }}
-              >
-                <span>IVA (0%)</span>
-                <span>{fmt(0, inv.currency)}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 16px', fontSize: 13, color: '#555', fontFamily: FONT }}>
+                <span>IVA (16%)</span>
+                <span>{fmt(totals.iva, inv.currency)}</span>
               </div>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  padding: '12px 16px',
-                  backgroundColor: '#1a1a1a',
-                  color: '#ffffff',
-                  fontFamily: FONT,
-                  marginTop: 4,
-                }}
-              >
+              {totals.retIsr != null && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 16px', fontSize: 13, color: '#b91c1c', fontFamily: FONT }}>
+                  <span>Ret. ISR (10%)</span>
+                  <span>- {fmt(totals.retIsr, inv.currency)}</span>
+                </div>
+              )}
+              {totals.retIva != null && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 16px', fontSize: 13, color: '#b91c1c', fontFamily: FONT }}>
+                  <span>Ret. IVA (10.666%)</span>
+                  <span>- {fmt(totals.retIva, inv.currency)}</span>
+                </div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', backgroundColor: '#1a1a1a', color: '#ffffff', fontFamily: FONT, marginTop: 4 }}>
                 <span style={{ fontSize: 14, fontWeight: 700 }}>TOTAL</span>
                 <span style={{ fontSize: 16, fontWeight: 700 }}>
-                  {fmt(Number(inv.amount), inv.currency)} {inv.currency}
+                  {fmt(totals.total, inv.currency)} {inv.currency}
                 </span>
               </div>
             </div>

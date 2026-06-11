@@ -1,7 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
-import type { Database } from '@/lib/supabase/types'
+import type { Database, StaffRole } from '@/lib/supabase/types'
+import { can, type Resource, type Action } from '@/lib/auth/permissions'
 
 /**
  * Verifies the current request comes from an authenticated admin team member.
@@ -23,6 +24,33 @@ export async function requireAdmin(): Promise<{ userId: string } | { error: stri
 
   if (!profile?.is_admin_team) return { error: 'No autorizado.' }
   return { userId: user.id }
+}
+
+/**
+ * Verifica que el usuario sea staff Y que su rol (`staff_role`) tenga permiso
+ * para `action` sobre `resource`, según la matriz en `@/lib/auth/permissions`.
+ * Úsalo en server actions cuyo recurso restringe a algún rol. Para acciones que
+ * cualquier staff puede ejecutar, sigue valiendo `requireAdmin()`.
+ */
+export async function requireRole(
+  resource: Resource,
+  action: Action,
+): Promise<{ userId: string; role: StaffRole } | { error: string }> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return { error: 'No autenticado.' }
+
+  const service = createServiceClient()
+  const { data: profile } = await service
+    .from('profiles')
+    .select('is_admin_team, staff_role')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile?.is_admin_team) return { error: 'No autorizado.' }
+  const role = (profile.staff_role ?? null) as StaffRole | null
+  if (!can(role, resource, action)) return { error: 'Permiso insuficiente para esta acción.' }
+  return { userId: user.id, role: role as StaffRole }
 }
 
 /**

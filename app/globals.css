@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600&family=Space+Mono:wght@400;700&display=swap');
 
 /* ─── Keyframes ────────────────────────────────────────────────────────────── */
 
@@ -226,6 +227,9 @@ div:hover > .video-title {
   --dash-warning: #FF9F0A;
   --dash-danger: #FF453A;
   --dash-info: #64D2FF;
+  /* Tipografía cinematográfica del panel */
+  --dash-font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --dash-font-mono: 'Space Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
   /* Shadow system — dark mode (multi-layer for depth) */
   --dash-shadow-xs: 0 1px 2px rgba(0,0,0,0.45);

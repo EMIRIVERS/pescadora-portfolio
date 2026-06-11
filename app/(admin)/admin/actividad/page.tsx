@@ -1,6 +1,10 @@
+import Link from 'next/link'
 import { createServiceClient } from '@/lib/supabase/server'
 import ActivityFilter from './ActivityFilter'
 import type { ActivityItem } from './ActivityFilter'
+
+// Rows fetched per source per page; controlled via the ?page= search param.
+const PAGE_SIZE = 50
 
 // ─── Raw query shapes ─────────────────────────────────────────────────────────
 
@@ -62,8 +66,20 @@ function resolveJoined<T>(raw: T | T[] | null): T | null {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default async function ActividadPage() {
+interface PageProps {
+  searchParams: Promise<{ page?: string }>
+}
+
+export default async function ActividadPage({ searchParams }: PageProps) {
+  const { page } = await searchParams
+  const currentPage = Math.max(1, Number.parseInt(page ?? '1', 10) || 1)
+  const rangeFrom = (currentPage - 1) * PAGE_SIZE
+  const rangeTo = rangeFrom + PAGE_SIZE - 1
+
   const supabase = createServiceClient()
+
+  // If any source returns a full page, there is (probably) a next page.
+  let hasNextPage = false
 
   // ── Query 1: lead_activities joined with leads + profiles ─────────────────
   let leadActivities: ActivityItem[] = []
@@ -74,7 +90,9 @@ export default async function ActividadPage() {
         'id, lead_id, user_id, type, content, old_status, new_status, created_at, lead:leads(name, email, company), profile:profiles(full_name, email)'
       )
       .order('created_at', { ascending: false })
-      .limit(200)
+      .range(rangeFrom, rangeTo)
+
+    if ((data ?? []).length === PAGE_SIZE) hasNextPage = true
 
     for (const row of (data ?? []) as unknown as RawLeadActivity[]) {
       const lead = resolveJoined(row.lead)
@@ -109,7 +127,9 @@ export default async function ActividadPage() {
       .from('task_activity_log')
       .select('id, task_id, action, old_value, new_value, created_at, task:tasks(title, project_id, project:projects(title))')
       .order('created_at', { ascending: false })
-      .limit(100)
+      .range(rangeFrom, rangeTo)
+
+    if ((data ?? []).length === PAGE_SIZE) hasNextPage = true
 
     for (const row of (data ?? []) as unknown as RawTaskActivity[]) {
       const task = Array.isArray(row.task) ? row.task[0] : row.task
@@ -143,7 +163,9 @@ export default async function ActividadPage() {
       .from('leads')
       .select('id, name, email, company, created_at')
       .order('created_at', { ascending: false })
-      .limit(100)
+      .range(rangeFrom, rangeTo)
+
+    if ((data ?? []).length === PAGE_SIZE) hasNextPage = true
 
     for (const row of (data ?? []) as unknown as RawLead[]) {
       recentLeads.push({
@@ -173,7 +195,9 @@ export default async function ActividadPage() {
       .from('project_deliverables')
       .select('id, project_id, title, created_at, project:projects(title)')
       .order('created_at', { ascending: false })
-      .limit(100)
+      .range(rangeFrom, rangeTo)
+
+    if ((data ?? []).length === PAGE_SIZE) hasNextPage = true
 
     for (const row of (data ?? []) as unknown as RawDeliverable[]) {
       const project = resolveJoined(row.project)
@@ -206,7 +230,9 @@ export default async function ActividadPage() {
       .from('email_log')
       .select('id, sent_at, to_email, subject, template_name, status')
       .order('sent_at', { ascending: false })
-      .limit(100)
+      .range(rangeFrom, rangeTo)
+
+    if ((data ?? []).length === PAGE_SIZE) hasNextPage = true
 
     for (const row of (data ?? []) as unknown as RawEmailLog[]) {
       emailItems.push({
@@ -386,6 +412,86 @@ export default async function ActividadPage() {
 
         {/* ── Filters + Timeline (client-side) ── */}
         <ActivityFilter initialActivities={items} />
+
+        {/* ── Pagination ── */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '16px',
+            paddingTop: '8px',
+            paddingBottom: '2rem',
+          }}
+        >
+          {currentPage > 1 ? (
+            <Link
+              href={`/admin/actividad?page=${currentPage - 1}`}
+              style={{
+                fontSize: '13px',
+                fontWeight: 500,
+                padding: '8px 18px',
+                borderRadius: '10px',
+                border: '1px solid var(--dash-border)',
+                background: 'var(--dash-surface-1)',
+                color: 'var(--dash-text-primary)',
+                textDecoration: 'none',
+              }}
+            >
+              Anterior
+            </Link>
+          ) : (
+            <span
+              style={{
+                fontSize: '13px',
+                fontWeight: 500,
+                padding: '8px 18px',
+                borderRadius: '10px',
+                border: '1px solid var(--dash-border)',
+                color: 'var(--dash-text-tertiary)',
+                cursor: 'default',
+              }}
+            >
+              Anterior
+            </span>
+          )}
+
+          <span style={{ fontSize: '12px', color: 'var(--dash-text-tertiary)' }}>
+            Pagina {currentPage}
+          </span>
+
+          {hasNextPage ? (
+            <Link
+              href={`/admin/actividad?page=${currentPage + 1}`}
+              style={{
+                fontSize: '13px',
+                fontWeight: 500,
+                padding: '8px 18px',
+                borderRadius: '10px',
+                border: '1px solid var(--dash-border)',
+                background: 'var(--dash-surface-1)',
+                color: 'var(--dash-text-primary)',
+                textDecoration: 'none',
+              }}
+            >
+              Siguiente
+            </Link>
+          ) : (
+            <span
+              style={{
+                fontSize: '13px',
+                fontWeight: 500,
+                padding: '8px 18px',
+                borderRadius: '10px',
+                border: '1px solid var(--dash-border)',
+                color: 'var(--dash-text-tertiary)',
+                cursor: 'default',
+              }}
+            >
+              Siguiente
+            </span>
+          )}
+        </div>
 
       </div>
     </>

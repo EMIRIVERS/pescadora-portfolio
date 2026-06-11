@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { createServiceClient } from '@/lib/supabase/server'
+import { createServiceClient, requireAdmin } from '@/lib/supabase/server'
 import type { ProjectStatus, InvoiceStatus, LeadSource } from '@/lib/supabase/types'
 import ClientDetailClient from '@/components/admin/clients/ClientDetailClient'
 import type {
@@ -66,6 +66,8 @@ async function saveClientField(
   value: string
 ): Promise<{ error?: string }> {
   'use server'
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
   const supabase = createServiceClient()
   const update: Record<string, string | null> = { [field]: value || null }
   const { error } = await supabase

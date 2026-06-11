@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import Link from 'next/link'
-import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient, requireAdmin } from '@/lib/supabase/server'
 import type {
   ProjectWithClient,
   Deliverable,
@@ -133,9 +133,12 @@ export default async function ProjectDetailPage({ params }: PageProps) {
 
   async function createDeliverable(fd: FormData) {
     'use server'
+    const auth = await requireAdmin()
+    if ('error' in auth) return
     const sc = createServiceClient()
     const title = fd.get('title') as string
     const url = (fd.get('url') as string) || null
+    if (!title || !title.trim()) return
     await sc.from('project_deliverables').insert({
       project_id: id,
       title,

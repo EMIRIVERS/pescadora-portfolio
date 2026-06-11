@@ -2,6 +2,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { createServiceClient, requireAdmin, escapeHtml } from '@/lib/supabase/server'
+import { logAudit } from '@/lib/audit'
 import { sendEmail, ADMIN_EMAIL } from '@/lib/email'
 
 // ── Minimal DB type for email_log (not yet in generated types) ────────────────
@@ -82,6 +83,14 @@ export async function createClient(formData: FormData): Promise<{ error?: string
     // email_log may not exist yet — safe to ignore
   }
 
+  await logAudit({
+    action: 'client.create',
+    actorId: auth.userId,
+    entityType: 'client',
+    entityId: null,
+    summary: `Cliente creado: ${name}`,
+  })
+
   revalidatePath('/admin/clients')
   return {}
 }
@@ -157,6 +166,14 @@ export async function linkClientToUser(
 
   if (updateError) return { error: updateError.message }
 
+  await logAudit({
+    action: 'client.update',
+    actorId: auth.userId,
+    entityType: 'client',
+    entityId: clientId,
+    summary: 'Cliente vinculado a cuenta de usuario',
+  })
+
   revalidatePath('/admin/clients')
   revalidatePath(`/admin/clients/${clientId}`)
   return {}
@@ -178,6 +195,14 @@ export async function unlinkClientFromUser(
     .eq('id', clientId)
 
   if (error) return { error: error.message }
+
+  await logAudit({
+    action: 'client.update',
+    actorId: auth.userId,
+    entityType: 'client',
+    entityId: clientId,
+    summary: 'Cliente desvinculado de cuenta de usuario',
+  })
 
   revalidatePath('/admin/clients')
   revalidatePath(`/admin/clients/${clientId}`)
@@ -201,6 +226,13 @@ export async function updateClient(id: string, formData: FormData): Promise<{ er
   }).eq('id', id)
 
   if (error) return { error: error.message }
+  await logAudit({
+    action: 'client.update',
+    actorId: auth.userId,
+    entityType: 'client',
+    entityId: id,
+    summary: `Cliente actualizado: ${name}`,
+  })
   revalidatePath('/admin/clients')
   revalidatePath(`/admin/clients/${id}`)
   return {}
@@ -213,6 +245,13 @@ export async function deleteClient(id: string): Promise<{ error?: string }> {
   const db = createServiceClient()
   const { error } = await db.from('clients').delete().eq('id', id)
   if (error) return { error: error.message }
+  await logAudit({
+    action: 'client.delete',
+    actorId: auth.userId,
+    entityType: 'client',
+    entityId: id,
+    summary: 'Cliente eliminado',
+  })
   revalidatePath('/admin/clients')
   return {}
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import type { Database } from '@/lib/supabase/types'
 
@@ -27,6 +28,7 @@ interface ProfileEditFormProps {
 type SaveState = 'idle' | 'saving' | 'success' | 'error'
 
 export default function ProfileEditForm({ profileId, initialFullName }: ProfileEditFormProps) {
+  const router = useRouter()
   const [fullName, setFullName] = useState(initialFullName ?? '')
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -55,7 +57,8 @@ export default function ProfileEditForm({ profileId, initialFullName }: ProfileE
         setErrorMessage('No se pudo guardar. Intenta de nuevo.')
       } else {
         setSaveState('success')
-        // Reset dirty state by syncing initialFullName equivalent
+        // Refresca Server Components (header del layout muestra el nombre).
+        router.refresh()
         setTimeout(() => setSaveState('idle'), 3000)
       }
     })

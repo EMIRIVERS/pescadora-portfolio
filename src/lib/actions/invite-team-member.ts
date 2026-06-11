@@ -1,5 +1,6 @@
 'use server'
 import { createServiceClient, createClient, requireAdmin } from '@/lib/supabase/server'
+import type { UserRole } from '@/lib/supabase/types'
 import { revalidatePath } from 'next/cache'
 
 export async function removeTeamMember(profileId: string): Promise<{ error?: string }> {
@@ -30,7 +31,7 @@ export async function updateMyProfile(formData: FormData): Promise<{ error?: str
   const db = createServiceClient()
   const { error } = await db
     .from('profiles')
-    .update({ full_name, avatar_url } as unknown as Record<string, unknown>)
+    .update({ full_name, avatar_url })
     .eq('id', user.id)
 
   if (error) return { error: error.message }
@@ -85,10 +86,9 @@ export async function changeTeamMemberRole(
   if ('error' in auth) return { error: auth.error }
   if (!profileId) return { error: 'ID de perfil requerido' }
   const db = createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (db as any)
+  const { error } = await db
     .from('profiles')
-    .update({ role: newRole })
+    .update({ role: newRole as UserRole })
     .eq('id', profileId)
   if (error) return { error: error.message }
   revalidatePath('/admin/team')

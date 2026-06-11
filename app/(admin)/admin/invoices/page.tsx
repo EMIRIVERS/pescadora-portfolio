@@ -115,6 +115,7 @@ export default async function InvoicesPage() {
 export interface Invoice {
   id: string
   invoice_number: string
+  title: string | null
   amount: number
   currency: string
   status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled'
@@ -123,6 +124,10 @@ export interface Invoice {
   notes: string | null
   client_id: string | null
   project_id: string | null
+  client_type: 'DIRECTO' | 'EMPRESA' | null
+  items: import('@/lib/billing/catalog').QuoteLine[] | null
+  tax: import('@/lib/billing/tax').TaxBreakdown | null
+  fiscal_data: import('@/lib/billing/catalog').FiscalData | null
   created_at: string
   clients: { name: string } | null
   projects: { title: string } | null
