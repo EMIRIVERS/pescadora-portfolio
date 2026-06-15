@@ -1,6 +1,14 @@
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import { resolvePortalClient, portalLink } from '@/lib/portal/preview'
+import {
+  PortalShell,
+  BackLink,
+  Masthead,
+  SectionLabel,
+  StatusTag,
+  EmptyState,
+  PORTAL,
+} from '@/components/portal/ui'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -26,8 +34,6 @@ interface PortalInvoice {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
-
 type VisibleStatus = 'sent' | 'paid' | 'overdue'
 
 const STATUS_LABEL: Record<VisibleStatus, string> = {
@@ -36,22 +42,10 @@ const STATUS_LABEL: Record<VisibleStatus, string> = {
   overdue: 'Vencida',
 }
 
-const STATUS_STYLE: Record<VisibleStatus, { background: string; color: string; border: string }> = {
-  sent: {
-    background: 'var(--portal-badge-sent-bg)',
-    color: 'var(--portal-badge-sent-color)',
-    border: '1px solid var(--portal-badge-sent-border)',
-  },
-  paid: {
-    background: 'var(--portal-badge-paid-bg)',
-    color: 'var(--portal-badge-paid-color)',
-    border: '1px solid var(--portal-badge-paid-border)',
-  },
-  overdue: {
-    background: 'var(--portal-badge-overdue-bg)',
-    color: 'var(--portal-badge-overdue-color)',
-    border: '1px solid var(--portal-badge-overdue-border)',
-  },
+const STATUS_COLOR: Record<VisibleStatus, string> = {
+  sent: 'var(--portal-badge-sent-color)',
+  paid: 'var(--portal-badge-paid-color)',
+  overdue: 'var(--portal-badge-overdue-color)',
 }
 
 function isVisibleStatus(status: InvoiceStatus): status is VisibleStatus {
@@ -91,50 +85,17 @@ export default async function PortalInvoicesPage({ searchParams }: PortalInvoice
 
   if (!client) {
     return (
-      <main style={{ fontFamily: FONT, minHeight: '100vh', backgroundColor: 'var(--portal-bg)' }}>
-        <div style={{ maxWidth: 720, margin: '0 auto', padding: 'clamp(1.5rem, 5vw, 3rem) clamp(1rem, 4vw, 1.5rem)' }}>
-          <Link
-            href={portalLink('/portal', ctx)}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              fontSize: 13,
-              color: 'var(--portal-text-muted)',
-              textDecoration: 'none',
-              marginBottom: '2rem',
-            }}
-          >
-            <span>&larr;</span>
-            <span>Inicio</span>
-          </Link>
-          <h1
-            style={{
-              fontSize: 26,
-              fontWeight: 600,
-              color: 'var(--portal-text)',
-              margin: '0 0 8px 0',
-              letterSpacing: '-0.02em',
-            }}
-          >
-            Mis facturas
-          </h1>
-          <div
-            style={{
-              marginTop: '2.5rem',
-              backgroundColor: 'var(--portal-surface)',
-              border: '1px solid var(--portal-border)',
-              borderRadius: 16,
-              padding: '3rem 2rem',
-              textAlign: 'center',
-            }}
-          >
-            <p style={{ fontSize: 15, color: 'var(--portal-text-muted)', margin: 0 }}>
-              Sin facturas asignadas.
-            </p>
-          </div>
-        </div>
-      </main>
+      <PortalShell maxWidth={760}>
+        <BackLink href={portalLink('/portal', ctx)} />
+        <Masthead
+          title="Facturas"
+          lead="Aquí vivirá el detalle de cada factura emitida para tus producciones."
+        />
+        <EmptyState
+          title="Sin facturas asignadas."
+          body="Cuando emitamos una factura a tu nombre, aparecerá en este espacio con su importe y vencimiento."
+        />
+      </PortalShell>
     )
   }
 
@@ -152,71 +113,36 @@ export default async function PortalInvoicesPage({ searchParams }: PortalInvoice
   )
 
   return (
-    <main style={{ fontFamily: FONT, minHeight: '100vh', backgroundColor: 'var(--portal-bg)' }}>
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: 'clamp(1.5rem, 5vw, 3rem) clamp(1rem, 4vw, 1.5rem)' }}>
-        {/* Back link */}
-        <Link
-          href="/portal"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            fontSize: 13,
-            color: 'var(--portal-text-muted)',
-            textDecoration: 'none',
-            marginBottom: '2rem',
-          }}
-        >
-          <span>&larr;</span>
-          <span>Inicio</span>
-        </Link>
+    <PortalShell maxWidth={760}>
+      <BackLink href={portalLink('/portal', ctx)} />
 
-        {/* Header */}
-        <div style={{ marginBottom: '2rem' }}>
-          <h1
-            style={{
-              fontSize: 26,
-              fontWeight: 600,
-              color: 'var(--portal-text)',
-              margin: '0 0 6px 0',
-              letterSpacing: '-0.02em',
-            }}
-          >
-            Mis facturas
-          </h1>
-          <p style={{ fontSize: 13, color: 'var(--portal-text-muted)', margin: 0 }}>
-            {invoices.length === 0
-              ? 'No hay facturas disponibles por ahora.'
-              : `${invoices.length} factura${invoices.length !== 1 ? 's' : ''} encontrada${invoices.length !== 1 ? 's' : ''}.`}
-          </p>
-        </div>
+      <Masthead
+        title="Facturas"
+        lead={
+          invoices.length === 0
+            ? 'No hay facturas disponibles por ahora. Aquí encontrarás el importe y vencimiento de cada emisión.'
+            : `Tienes ${invoices.length} factura${invoices.length !== 1 ? 's' : ''} a tu nombre. Revisa importe, estado y fechas de vencimiento.`
+        }
+      />
 
-        {/* Empty state */}
-        {invoices.length === 0 && (
-          <div
-            style={{
-              backgroundColor: 'var(--portal-surface)',
-              border: '1px solid var(--portal-border)',
-              borderRadius: 16,
-              padding: '3rem 2rem',
-              textAlign: 'center',
-            }}
-          >
-            <p style={{ fontSize: 15, color: 'var(--portal-text-muted)', margin: '0 0 12px 0' }}>
-              Sin facturas asignadas.
-            </p>
-            <p style={{ fontSize: 13, color: 'var(--portal-text-dim)', margin: 0 }}>
-              Las facturas apareceran aqui cuando sean emitidas.
-            </p>
+      {/* Empty state */}
+      {invoices.length === 0 && (
+        <EmptyState
+          title="Sin facturas asignadas."
+          body="Las facturas aparecerán aquí en cuanto sean emitidas para tus producciones."
+        />
+      )}
+
+      {/* Invoice cards */}
+      {invoices.length > 0 && (
+        <section>
+          <div style={{ marginBottom: '1.6rem' }}>
+            <SectionLabel index="01">Tus facturas</SectionLabel>
           </div>
-        )}
 
-        {/* Invoice cards */}
-        {invoices.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {invoices.map((invoice) => {
               const visibleStatus = invoice.status as VisibleStatus
-              const statusStyle = STATUS_STYLE[visibleStatus]
               const projectTitle =
                 invoice.projects
                   ? (Array.isArray(invoice.projects)
@@ -225,90 +151,102 @@ export default async function PortalInvoicesPage({ searchParams }: PortalInvoice
                   : null
 
               return (
-                <div
+                <article
                   key={invoice.id}
-                  style={{
-                    backgroundColor: 'var(--portal-surface)',
-                    border: '1px solid var(--portal-border)',
-                    borderRadius: 14,
-                    padding: '20px 24px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 12,
-                  }}
+                  className="portal-card"
+                  style={{ borderRadius: '6px', padding: 'clamp(1.5rem, 3vw, 2rem)' }}
                 >
-                  {/* Top row: invoice number + status badge */}
+                  {/* Top row: invoice number + status tag */}
                   <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: 12,
-                      flexWrap: 'wrap',
-                    }}
+                    className="flex items-start justify-between gap-4"
+                    style={{ marginBottom: '1.4rem', flexWrap: 'wrap' }}
                   >
-                    <span
-                      style={{
-                        fontSize: 15,
-                        fontWeight: 600,
-                        color: 'var(--portal-text)',
-                        letterSpacing: '-0.01em',
-                      }}
-                    >
-                      {invoice.invoice_number}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 600,
-                        letterSpacing: '0.04em',
-                        textTransform: 'uppercase',
-                        padding: '3px 10px',
-                        borderRadius: 6,
-                        ...statusStyle,
-                      }}
-                    >
-                      {STATUS_LABEL[visibleStatus]}
+                    <div>
+                      <p
+                        style={{
+                          fontFamily: PORTAL.mono,
+                          fontSize: '0.6rem',
+                          letterSpacing: '0.2em',
+                          textTransform: 'uppercase',
+                          color: PORTAL.dim,
+                          margin: '0 0 0.55rem',
+                        }}
+                      >
+                        Factura
+                      </p>
+                      <h2
+                        style={{
+                          fontFamily: PORTAL.serif,
+                          fontWeight: 500,
+                          fontSize: 'clamp(1.35rem, 2.6vw, 1.75rem)',
+                          lineHeight: 1.1,
+                          letterSpacing: '-0.01em',
+                          color: PORTAL.cream,
+                          margin: 0,
+                        }}
+                      >
+                        {invoice.invoice_number}
+                      </h2>
+                    </div>
+                    <span style={{ paddingTop: '0.35rem' }}>
+                      <StatusTag color={STATUS_COLOR[visibleStatus]}>
+                        {STATUS_LABEL[visibleStatus]}
+                      </StatusTag>
                     </span>
                   </div>
 
                   {/* Project */}
                   {projectTitle && (
-                    <p style={{ margin: 0, fontSize: 13, color: 'var(--portal-text-muted)' }}>
-                      Proyecto:{' '}
-                      <span style={{ color: 'var(--portal-text-strong)', fontWeight: 500 }}>{projectTitle}</span>
+                    <p
+                      style={{
+                        margin: '0 0 1.4rem',
+                        fontFamily: PORTAL.mono,
+                        fontSize: '0.62rem',
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        color: PORTAL.muted,
+                      }}
+                    >
+                      Proyecto&nbsp;&middot;{' '}
+                      <span style={{ color: PORTAL.strong }}>{projectTitle}</span>
                     </p>
                   )}
 
                   {/* Amount + due date */}
                   <div
+                    className="flex items-baseline justify-between gap-4"
                     style={{
-                      display: 'flex',
-                      alignItems: 'baseline',
-                      justifyContent: 'space-between',
-                      gap: 12,
                       flexWrap: 'wrap',
-                      borderTop: '1px solid var(--portal-divider)',
-                      paddingTop: 12,
+                      borderTop: `1px solid ${PORTAL.border}`,
+                      paddingTop: '1.2rem',
                     }}
                   >
                     <span
                       style={{
-                        fontSize: 22,
-                        fontWeight: 700,
-                        color: 'var(--portal-text)',
-                        letterSpacing: '-0.02em',
+                        fontFamily: PORTAL.serif,
+                        fontWeight: 500,
+                        fontSize: 'clamp(1.8rem, 4vw, 2.4rem)',
+                        lineHeight: 1,
+                        letterSpacing: '-0.01em',
+                        color: PORTAL.cream,
                       }}
                     >
                       {formatCurrency(Number(invoice.amount), invoice.currency)}
                     </span>
                     {invoice.due_date && (
-                      <span style={{ fontSize: 12, color: 'var(--portal-text-dim)' }}>
-                        Vence:{' '}
+                      <span
+                        style={{
+                          fontFamily: PORTAL.mono,
+                          fontSize: '0.6rem',
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          color: PORTAL.dim,
+                        }}
+                      >
+                        Vence&nbsp;&middot;{' '}
                         <span
                           style={{
-                            color: visibleStatus === 'overdue' ? 'var(--portal-danger)' : 'var(--portal-text-muted)',
-                            fontWeight: visibleStatus === 'overdue' ? 600 : 400,
+                            color: visibleStatus === 'overdue' ? PORTAL.accent : PORTAL.muted,
                           }}
                         >
                           {formatDate(invoice.due_date)}
@@ -316,12 +254,12 @@ export default async function PortalInvoicesPage({ searchParams }: PortalInvoice
                       </span>
                     )}
                   </div>
-                </div>
+                </article>
               )
             })}
           </div>
-        )}
-      </div>
-    </main>
+        </section>
+      )}
+    </PortalShell>
   )
 }

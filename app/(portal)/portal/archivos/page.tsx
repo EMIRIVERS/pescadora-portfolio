@@ -1,13 +1,8 @@
 import { redirect } from 'next/navigation'
-import { resolvePortalClient } from '@/lib/portal/preview'
+import { resolvePortalClient, portalLink } from '@/lib/portal/preview'
 import type { ClientUpload } from '@/lib/supabase/types'
+import { PortalShell, BackLink, Masthead } from '@/components/portal/ui'
 import ArchivosGallery from './ArchivosGallery'
-
-const S = {
-  font:          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
-  textPrimary:   '#f4f4f5',
-  textTertiary:  '#71717a',
-} as const
 
 type UploadWithProject = ClientUpload & {
   project: { id: string; title: string } | null
@@ -43,24 +38,17 @@ export default async function ArchivosPage({ searchParams }: ArchivosPageProps) 
   const uploads: UploadWithProject[] = (uploadsData ?? []) as UploadWithProject[]
 
   return (
-    <main style={{ minHeight: '100vh', backgroundColor: '#09090b', padding: 'clamp(20px, 5vw, 40px) clamp(16px, 4vw, 24px) 80px', fontFamily: S.font }}>
-      <div style={{ maxWidth: 960, margin: '0 auto' }}>
-        {/* Header */}
-        <div style={{ marginBottom: 32 }}>
-          <h1 style={{ fontSize: 28, fontWeight: 700, color: S.textPrimary, margin: '0 0 6px' }}>
-            Mis archivos
-          </h1>
-          <p style={{ margin: 0, fontSize: 14, color: S.textTertiary }}>
-            Archivos de referencia y recursos que has subido a tus proyectos
-          </p>
-        </div>
-
-        <ArchivosGallery
-          initialUploads={uploads}
-          projects={projects}
-          clientId={clientRow.id}
-        />
-      </div>
-    </main>
+    <PortalShell maxWidth={1080}>
+      <BackLink href={portalLink('/portal', ctx)} />
+      <Masthead
+        title="Archivos"
+        lead="Tus referencias visuales y recursos de producción. Sube guiones, moodboards, imágenes y cualquier material que dé vida a cada proyecto."
+      />
+      <ArchivosGallery
+        initialUploads={uploads}
+        projects={projects}
+        clientId={clientRow.id}
+      />
+    </PortalShell>
   )
 }

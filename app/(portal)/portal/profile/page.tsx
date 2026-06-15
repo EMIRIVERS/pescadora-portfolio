@@ -1,7 +1,8 @@
+import type { ReactNode } from 'react'
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import { resolvePortalClient, portalLink } from '@/lib/portal/preview'
 import type { Profile, Client } from '@/lib/supabase/types'
+import { PortalShell, BackLink, Masthead, SectionLabel, PORTAL } from '@/components/portal/ui'
 import ProfileEditForm from './profile-edit-form'
 
 // ---------------------------------------------------------------------------
@@ -52,83 +53,86 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
   const displayEmail = profile.email ?? null
 
   return (
-    <main className="min-h-screen bg-zinc-950">
-      <div className="mx-auto max-w-2xl px-4 sm:px-6 py-12">
-        {/* Back link */}
-        <Link
-          href={portalLink('/portal', ctx)}
-          className="inline-flex items-center gap-1.5 text-zinc-500 hover:text-white text-sm transition-colors mb-8"
-        >
-          <span>&larr;</span>
-          <span>Mis proyectos</span>
-        </Link>
+    <PortalShell maxWidth={720}>
+      <BackLink href={portalLink('/portal', ctx)} label="Mis proyectos" />
 
-        {/* Page header */}
-        <div className="mb-10">
-          <p className="text-zinc-500 text-xs uppercase tracking-widest mb-1">Portal de cliente</p>
-          <h1 className="text-white text-2xl sm:text-3xl font-semibold">Mi perfil</h1>
-        </div>
+      <Masthead
+        title="Mi perfil"
+        lead="Tu información personal y los datos de tu cuenta en XICO Films. Mantén tu nombre al día; el resto lo gestionamos por ti."
+      />
 
-        {/* Edit form (deshabilitado en modo preview admin) */}
-        <section className="mb-8">
-          <SectionLabel>Informacion personal</SectionLabel>
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-            {isAdminPreview ? (
-              <div>
-                <p className="text-zinc-400 text-xs uppercase tracking-wider mb-2">Nombre completo</p>
-                <p className="text-zinc-200 text-sm">{profile.full_name ?? '—'}</p>
-                <p className="text-amber-500 text-xs mt-3">Edición deshabilitada en modo preview.</p>
-              </div>
-            ) : (
-              <ProfileEditForm profileId={profile.id} initialFullName={profile.full_name} />
-            )}
-          </div>
-        </section>
-
-        {/* Account info */}
-        <section className="mb-8">
-          <SectionLabel>Cuenta</SectionLabel>
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl divide-y divide-zinc-800">
-            <InfoRow label="Correo electronico" value={displayEmail ?? '—'} />
-            <div className="px-6 py-4">
-              <p className="text-zinc-600 text-xs">
-                Para cambiar tu email contacta al equipo en{' '}
-                <a
-                  href="mailto:hola@xicofilms.com"
-                  className="text-sky-500 hover:text-sky-400 transition-colors"
-                >
-                  hola@xicofilms.com
-                </a>
+      {/* ── 01 · Información personal ── */}
+      <section style={{ marginBottom: 'clamp(2.5rem, 5vw, 3.5rem)' }}>
+        <SectionLabel index="01" style={{ marginBottom: '1.4rem' }}>
+          Información personal
+        </SectionLabel>
+        <div className="portal-card" style={{ borderRadius: '6px', padding: 'clamp(1.6rem, 3.5vw, 2.2rem)' }}>
+          {isAdminPreview ? (
+            <div>
+              <p style={{ fontFamily: PORTAL.mono, fontSize: '0.62rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: PORTAL.muted, margin: '0 0 0.6rem' }}>
+                Nombre completo
+              </p>
+              <p style={{ fontFamily: PORTAL.sans, fontSize: '1rem', color: PORTAL.cream, margin: 0 }}>
+                {profile.full_name ?? '—'}
+              </p>
+              <p style={{ fontFamily: PORTAL.mono, fontSize: '0.62rem', letterSpacing: '0.08em', color: PORTAL.accent, margin: '1.1rem 0 0' }}>
+                Edición deshabilitada en modo preview.
               </p>
             </div>
+          ) : (
+            <ProfileEditForm profileId={profile.id} initialFullName={profile.full_name} />
+          )}
+        </div>
+      </section>
+
+      {/* ── 02 · Cuenta ── */}
+      <section style={{ marginBottom: 'clamp(2.5rem, 5vw, 3.5rem)' }}>
+        <SectionLabel index="02" style={{ marginBottom: '1.4rem' }}>
+          Cuenta
+        </SectionLabel>
+        <div className="portal-card" style={{ borderRadius: '6px', overflow: 'hidden' }}>
+          <InfoRow label="Correo electrónico" value={displayEmail ?? '—'} />
+          <div style={{ padding: '1.1rem clamp(1.6rem, 3.5vw, 2.2rem)', borderTop: `1px solid ${PORTAL.border}` }}>
+            <p style={{ fontFamily: PORTAL.sans, fontSize: '0.82rem', lineHeight: 1.6, color: PORTAL.dim, margin: 0 }}>
+              Para cambiar tu email escríbenos a{' '}
+              <a href="mailto:hola@xicofilms.com" className="portal-textlink" style={{ color: PORTAL.accent }}>
+                hola@xicofilms.com
+              </a>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 03 · Empresa ── */}
+      {client && (
+        <section style={{ marginBottom: 'clamp(2.5rem, 5vw, 3.5rem)' }}>
+          <SectionLabel index="03" style={{ marginBottom: '1.4rem' }}>
+            Empresa
+          </SectionLabel>
+          <div className="portal-card" style={{ borderRadius: '6px', overflow: 'hidden' }}>
+            <InfoRow label="Nombre del cliente" value={client.name} />
+            {client.company && <InfoRow label="Empresa" value={client.company} divided />}
           </div>
         </section>
+      )}
 
-        {/* Company info (read-only from clients table) */}
-        {client && (
-          <section className="mb-8">
-            <SectionLabel>Empresa</SectionLabel>
-            <div className="bg-zinc-900 border border-zinc-800 rounded-xl divide-y divide-zinc-800">
-              <InfoRow label="Nombre del cliente" value={client.name} />
-              {client.company && <InfoRow label="Empresa" value={client.company} />}
-            </div>
-          </section>
-        )}
-
-        {/* Stats */}
-        <section>
-          <SectionLabel>Estadisticas</SectionLabel>
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-            <div className="flex items-center justify-between">
-              <span className="text-zinc-400 text-sm">Proyectos vinculados</span>
-              <span className="text-white text-sm font-medium tabular-nums">
-                {projectCount ?? 0}
-              </span>
-            </div>
+      {/* ── 04 · Estadísticas ── */}
+      <section>
+        <SectionLabel index={client ? '04' : '03'} style={{ marginBottom: '1.4rem' }}>
+          Estadísticas
+        </SectionLabel>
+        <div className="portal-card" style={{ borderRadius: '6px', padding: 'clamp(1.6rem, 3.5vw, 2.2rem)' }}>
+          <div className="flex items-baseline justify-between gap-4">
+            <span style={{ fontFamily: PORTAL.mono, fontSize: '0.62rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: PORTAL.muted }}>
+              Proyectos vinculados
+            </span>
+            <span style={{ fontFamily: PORTAL.serif, fontWeight: 400, fontSize: 'clamp(1.8rem, 4vw, 2.4rem)', lineHeight: 1, color: PORTAL.cream }} className="tabular-nums">
+              {projectCount ?? 0}
+            </span>
           </div>
-        </section>
-      </div>
-    </main>
+        </div>
+      </section>
+    </PortalShell>
   )
 }
 
@@ -136,19 +140,18 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 // Sub-components (server-only, purely presentational)
 // ---------------------------------------------------------------------------
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
+function InfoRow({ label, value, divided = false }: { label: string; value: ReactNode; divided?: boolean }) {
   return (
-    <h2 className="text-zinc-500 text-xs font-medium uppercase tracking-widest mb-3">
-      {children}
-    </h2>
-  )
-}
-
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="px-6 py-4 flex items-center justify-between gap-4">
-      <span className="text-zinc-400 text-sm">{label}</span>
-      <span className="text-zinc-200 text-sm text-right truncate max-w-xs">{value}</span>
+    <div
+      className="flex items-center justify-between gap-4"
+      style={{ padding: '1.2rem clamp(1.6rem, 3.5vw, 2.2rem)', borderTop: divided ? `1px solid ${PORTAL.border}` : undefined }}
+    >
+      <span style={{ fontFamily: PORTAL.mono, fontSize: '0.62rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: PORTAL.muted }}>
+        {label}
+      </span>
+      <span className="truncate" style={{ fontFamily: PORTAL.sans, fontSize: '0.95rem', color: PORTAL.cream, textAlign: 'right', maxWidth: '20rem' }}>
+        {value}
+      </span>
     </div>
   )
 }

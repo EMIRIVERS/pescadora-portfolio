@@ -208,7 +208,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
         className="sticky top-0 z-10 backdrop-blur-md"
         style={{
           borderBottom: '1px solid var(--dash-border)',
-          backgroundColor: 'rgba(17,17,17,0.85)',
+          backgroundColor: 'var(--dash-surface-1)',
         }}
       >
         <div className="mx-auto max-w-5xl px-6 h-14 flex items-center justify-between">

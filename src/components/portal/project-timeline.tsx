@@ -16,20 +16,31 @@ interface PhaseDefinition {
 const PHASES: PhaseDefinition[] = [
   {
     key: 'pre_production',
-    label: 'Pre-produccion',
-    sublabel: 'Concepto, plan de rodaje y logistica',
+    label: 'Pre-producción',
+    sublabel: 'Concepto, plan de rodaje y logística',
   },
   {
     key: 'production',
-    label: 'Produccion',
+    label: 'Producción',
     sublabel: 'Rodaje y captura de material',
   },
   {
     key: 'post_production',
-    label: 'Post-produccion',
-    sublabel: 'Edicion, retoques y revision',
+    label: 'Post-producción',
+    sublabel: 'Edición, retoques y revisión',
   },
 ]
+
+// ── Cinematic brand tokens ──────────────────────────────────────────────────
+const CREAM = '#ede8e0'
+const MUTED = '#8a857d'
+const FAINT = '#6b6560'
+const ACCENT = '#e8341a'
+const ACCENT_DONE = 'rgba(232,52,26,0.45)'
+const TRACK = 'rgba(237,232,224,0.1)'
+const BORDER = 'rgba(237,232,224,0.10)'
+const SERIF = 'var(--font-cormorant), Georgia, serif'
+const MONO = 'var(--font-geist-mono), monospace'
 
 // "delivered" is the terminal state — all 3 phases are shown as completed
 const CURRENT_INDEX_BY_STATUS: Record<ProjectStatus, number> = {
@@ -78,17 +89,32 @@ export default function ProjectTimeline({ currentStatus }: ProjectTimelineProps)
   const isDelivered = currentStatus === 'delivered'
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 sm:p-8">
+    <div
+      className="portal-card"
+      style={{
+        border: `1px solid ${BORDER}`,
+        borderRadius: '6px',
+        padding: 'clamp(1.6rem, 4vw, 2.4rem)',
+      }}
+    >
       {/* Delivered banner */}
       {isDelivered && (
         <motion.div
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="flex items-center gap-2 mb-6 px-4 py-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20"
+          className="flex items-center gap-2.5"
+          style={{
+            marginBottom: '1.8rem',
+            padding: '0.7rem 1rem',
+            borderRadius: '4px',
+            background: 'rgba(232,52,26,0.08)',
+            border: `1px solid ${ACCENT_DONE}`,
+            color: ACCENT,
+          }}
         >
           <CheckIcon />
-          <span className="text-emerald-400 text-sm font-medium">
+          <span style={{ fontFamily: MONO, fontSize: '0.62rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: ACCENT }}>
             Proyecto entregado — todas las fases completadas
           </span>
         </motion.div>
@@ -98,6 +124,7 @@ export default function ProjectTimeline({ currentStatus }: ProjectTimelineProps)
         {PHASES.map((phase, index) => {
           const isDone = index < currentIndex
           const isCurrent = index === currentIndex
+          const isActive = isDone || isCurrent
           const isLast = index === PHASES.length - 1
 
           return (
@@ -115,37 +142,45 @@ export default function ProjectTimeline({ currentStatus }: ProjectTimelineProps)
                   className="shrink-0"
                 >
                   {isCurrent ? (
-                    <div className="relative flex items-center justify-center w-8 h-8">
+                    <div className="relative flex items-center justify-center" style={{ width: '2rem', height: '2rem' }}>
                       <motion.div
                         animate={{
                           scale: [1, 1.6, 1],
-                          opacity: [0.35, 0, 0.35],
+                          opacity: [0.4, 0, 0.4],
                         }}
                         transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-                        className="absolute inset-0 rounded-full bg-sky-500/30"
+                        className="absolute inset-0 rounded-full"
+                        style={{ background: ACCENT_DONE }}
                       />
-                      <div className="w-8 h-8 rounded-full bg-sky-500 flex items-center justify-center shadow-lg shadow-sky-500/25">
-                        <div className="w-2.5 h-2.5 rounded-full bg-white" />
+                      <div
+                        className="flex items-center justify-center"
+                        style={{ width: '2rem', height: '2rem', borderRadius: '50%', background: ACCENT, boxShadow: '0 0 18px rgba(232,52,26,0.35)' }}
+                      >
+                        <div style={{ width: '0.6rem', height: '0.6rem', borderRadius: '50%', background: '#fff' }} />
                       </div>
                     </div>
                   ) : isDone ? (
-                    <div className="w-8 h-8 rounded-full bg-sky-700 flex items-center justify-center text-sky-200">
+                    <div
+                      className="flex items-center justify-center"
+                      style={{ width: '2rem', height: '2rem', borderRadius: '50%', background: ACCENT_DONE, color: CREAM }}
+                    >
                       <CheckIcon />
                     </div>
                   ) : (
-                    <div className="w-8 h-8 rounded-full border-2 border-zinc-700 bg-zinc-900 flex items-center justify-center">
-                      <div className="w-2 h-2 rounded-full bg-zinc-700" />
+                    <div
+                      className="flex items-center justify-center"
+                      style={{ width: '2rem', height: '2rem', borderRadius: '50%', border: `1px solid ${TRACK}`, background: 'transparent' }}
+                    >
+                      <div style={{ width: '0.45rem', height: '0.45rem', borderRadius: '50%', background: FAINT }} />
                     </div>
                   )}
                 </motion.div>
 
                 {/* Connector */}
                 {!isLast && (
-                  <div className="sm:flex-1 sm:h-px sm:w-auto sm:min-w-[16px] h-6 w-px sm:mx-1 mx-auto">
+                  <div className="sm:flex-1 sm:h-px sm:w-auto sm:min-w-[16px] h-6 w-px sm:mx-2 mx-auto">
                     <div
-                      className={`h-full w-full ${
-                        isDone ? 'bg-sky-700' : 'bg-zinc-700'
-                      }`}
+                      style={{ height: '100%', width: '100%', background: isDone ? ACCENT_DONE : TRACK }}
                     />
                   </div>
                 )}
@@ -156,28 +191,47 @@ export default function ProjectTimeline({ currentStatus }: ProjectTimelineProps)
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.35, delay: index * 0.1 + 0.08 }}
-                className="sm:mt-3 ml-3 sm:ml-0 pb-6 sm:pb-0 sm:pr-4 min-w-0"
+                className="sm:mt-4 ml-3 sm:ml-0 pb-6 sm:pb-0 sm:pr-4 min-w-0"
               >
-                <p
-                  className={`text-sm font-medium leading-snug ${
-                    isCurrent
-                      ? 'text-sky-300'
-                      : isDone
-                      ? 'text-zinc-300'
-                      : 'text-zinc-600'
-                  }`}
-                >
-                  {phase.label}
+                <p className="flex items-center gap-2" style={{ margin: 0 }}>
+                  <span
+                    style={{
+                      fontFamily: MONO,
+                      fontSize: '0.64rem',
+                      letterSpacing: '0.18em',
+                      textTransform: 'uppercase',
+                      lineHeight: 1.3,
+                      color: isCurrent ? ACCENT : isDone ? CREAM : FAINT,
+                    }}
+                  >
+                    {phase.label}
+                  </span>
                   {isCurrent && (
-                    <span className="ml-2 inline-flex items-center text-xs font-medium bg-sky-500/15 text-sky-400 px-1.5 py-0.5 rounded-full border border-sky-500/20">
+                    <span
+                      style={{
+                        fontFamily: MONO,
+                        fontSize: '0.5rem',
+                        letterSpacing: '0.14em',
+                        textTransform: 'uppercase',
+                        color: ACCENT,
+                        border: `1px solid ${ACCENT_DONE}`,
+                        borderRadius: '2px',
+                        padding: '0.15rem 0.35rem',
+                      }}
+                    >
                       Actual
                     </span>
                   )}
                 </p>
                 <p
-                  className={`text-xs mt-0.5 leading-relaxed ${
-                    isCurrent ? 'text-zinc-400' : isDone ? 'text-zinc-500' : 'text-zinc-700'
-                  }`}
+                  style={{
+                    fontFamily: SERIF,
+                    fontStyle: 'italic',
+                    fontSize: '0.98rem',
+                    lineHeight: 1.4,
+                    margin: '0.55rem 0 0',
+                    color: isActive ? MUTED : FAINT,
+                  }}
                 >
                   {phase.sublabel}
                 </p>

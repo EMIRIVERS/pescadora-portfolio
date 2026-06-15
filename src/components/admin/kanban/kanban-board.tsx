@@ -136,12 +136,13 @@ export function KanbanBoard({ projectId, initialBoards, projects = [] }: KanbanB
           className="flex items-start overflow-x-auto pb-6"
           style={{ gap: '12px', minHeight: '60vh' }}
         >
-          {boards.map((board) => (
+          {boards.map((board, index) => (
             <KanbanColumn
               key={board.id}
               board={board}
               projectId={projectId}
               projects={projects}
+              isPrimary={index === 0}
               onOpenTaskDetail={(id) => setOpenTaskId(id)}
             />
           ))}
@@ -151,7 +152,7 @@ export function KanbanBoard({ projectId, initialBoards, projects = [] }: KanbanB
               className="flex items-center justify-center w-full py-24 text-sm"
               style={{ color: 'var(--dash-text-tertiary)' }}
             >
-              No boards found for this project.
+              No hay tableros para este proyecto.
             </div>
           )}
         </div>

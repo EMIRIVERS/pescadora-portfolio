@@ -1,13 +1,18 @@
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import { resolvePortalClient, portalLink } from '@/lib/portal/preview'
 import {
   EVENT_TYPE_LABELS,
   EVENT_TYPE_COLORS,
   type CalendarEventType,
 } from '@/lib/calendar/types'
-
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+import {
+  PortalShell,
+  BackLink,
+  Masthead,
+  SectionLabel,
+  EmptyState,
+  PORTAL,
+} from '@/components/portal/ui'
 
 interface PortalEvent {
   id: string
@@ -67,65 +72,149 @@ export default async function PortalCalendarPage({ searchParams }: PortalCalenda
   }
 
   return (
-    <main style={{ fontFamily: FONT, minHeight: '100vh', backgroundColor: 'var(--portal-bg)' }}>
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: 'clamp(1.5rem, 5vw, 3rem) clamp(1rem, 4vw, 1.5rem)' }}>
-        <Link
-          href={portalLink('/portal', ctx)}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--portal-text-muted)', textDecoration: 'none', marginBottom: '2rem' }}
-        >
-          <span>&larr;</span>
-          <span>Inicio</span>
-        </Link>
+    <PortalShell maxWidth={920}>
+      <BackLink href={portalLink('/portal', ctx)} />
 
-        <h1 style={{ fontSize: 26, fontWeight: 600, color: 'var(--portal-text)', margin: '0 0 8px 0', letterSpacing: '-0.02em' }}>
-          Calendario
-        </h1>
-        <p style={{ fontSize: 14, color: 'var(--portal-text-muted)', margin: '0 0 2rem' }}>
-          Fechas de grabación, entregas y cobros de tus proyectos.
-        </p>
+      <Masthead
+        title="Calendario"
+        lead="Fechas de grabación, entregas y cobros de tus proyectos, ordenadas mes a mes."
+      />
 
-        {events.length === 0 ? (
-          <div style={{ marginTop: '1rem', backgroundColor: 'var(--portal-surface)', border: '1px solid var(--portal-border)', borderRadius: 16, padding: '2.5rem 1.5rem', textAlign: 'center' }}>
-            <p style={{ margin: 0, fontSize: 14, color: 'var(--portal-text-muted)' }}>
-              Aún no hay fechas programadas. Te avisaremos en cuanto agendemos algo.
-            </p>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            {groups.map((group) => (
-              <section key={group.label}>
-                <h2 style={{ fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--portal-text-muted)', margin: '0 0 12px' }}>
-                  {group.label}
-                </h2>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {group.items.map((ev) => (
-                    <div key={ev.id} style={{ display: 'flex', gap: 14, alignItems: 'flex-start', backgroundColor: 'var(--portal-surface)', border: '1px solid var(--portal-border)', borderRadius: 14, padding: '14px 16px' }}>
-                      <span style={{ width: 10, height: 10, borderRadius: 10, background: EVENT_TYPE_COLORS[ev.type], marginTop: 5, flexShrink: 0 }} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
-                          <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.04em', color: EVENT_TYPE_COLORS[ev.type], textTransform: 'uppercase' }}>
-                            {EVENT_TYPE_LABELS[ev.type]}
-                          </span>
-                          <span style={{ fontSize: 13, color: 'var(--portal-text-muted)', textTransform: 'capitalize' }}>
-                            {fmtDay(ev.event_date)}{ev.event_time ? ` · ${ev.event_time.slice(0, 5)}` : ''}
-                          </span>
-                        </div>
-                        <p style={{ margin: 0, fontSize: 15, fontWeight: 500, color: 'var(--portal-text)' }}>{ev.title}</p>
-                        {ev.projects?.title && (
-                          <p style={{ margin: '2px 0 0', fontSize: 13, color: 'var(--portal-text-muted)' }}>{ev.projects.title}</p>
-                        )}
-                        {ev.notes && (
-                          <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--portal-text-muted)', lineHeight: 1.5 }}>{ev.notes}</p>
-                        )}
-                      </div>
+      {events.length === 0 ? (
+        <EmptyState
+          title="Aún no hay fechas en el horizonte."
+          body="Te avisaremos en cuanto agendemos grabaciones, entregas o cobros para tus producciones."
+        />
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(2.5rem, 5vw, 3.5rem)' }}>
+          {groups.map((group, gi) => (
+            <section key={group.label}>
+              <SectionLabel index={String(gi + 1).padStart(2, '0')} style={{ marginBottom: '1.4rem' }}>
+                {group.label}
+              </SectionLabel>
+
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {group.items.map((ev, ii) => (
+                  <article
+                    key={ev.id}
+                    style={{
+                      display: 'flex',
+                      gap: 'clamp(1rem, 3vw, 1.6rem)',
+                      alignItems: 'baseline',
+                      padding: 'clamp(1.1rem, 2.5vw, 1.5rem) 0',
+                      borderTop: ii === 0 ? `1px solid ${PORTAL.border}` : 'none',
+                      borderBottom: `1px solid ${PORTAL.border}`,
+                    }}
+                  >
+                    {/* Fecha en mono */}
+                    <div style={{ flexShrink: 0, width: 'clamp(5.5rem, 14vw, 7.5rem)' }}>
+                      <p
+                        style={{
+                          fontFamily: PORTAL.mono,
+                          fontSize: '0.6rem',
+                          letterSpacing: '0.14em',
+                          textTransform: 'uppercase',
+                          color: PORTAL.cream,
+                          margin: 0,
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {fmtDay(ev.event_date)}
+                      </p>
+                      {ev.event_time && (
+                        <p
+                          style={{
+                            fontFamily: PORTAL.mono,
+                            fontSize: '0.58rem',
+                            letterSpacing: '0.14em',
+                            color: PORTAL.dim,
+                            margin: '0.35rem 0 0',
+                          }}
+                        >
+                          {ev.event_time.slice(0, 5)}
+                        </p>
+                      )}
                     </div>
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
-        )}
-      </div>
-    </main>
+
+                    {/* Cuerpo */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div
+                        className="flex items-center gap-2"
+                        style={{ marginBottom: '0.55rem' }}
+                      >
+                        <span
+                          style={{
+                            width: '6px',
+                            height: '6px',
+                            borderRadius: '50%',
+                            background: EVENT_TYPE_COLORS[ev.type],
+                            flexShrink: 0,
+                          }}
+                        />
+                        <span
+                          style={{
+                            fontFamily: PORTAL.mono,
+                            fontSize: '0.58rem',
+                            letterSpacing: '0.18em',
+                            textTransform: 'uppercase',
+                            color: EVENT_TYPE_COLORS[ev.type],
+                          }}
+                        >
+                          {EVENT_TYPE_LABELS[ev.type]}
+                        </span>
+                      </div>
+
+                      <h3
+                        style={{
+                          fontFamily: PORTAL.serif,
+                          fontWeight: 500,
+                          fontSize: 'clamp(1.25rem, 2.6vw, 1.7rem)',
+                          lineHeight: 1.15,
+                          letterSpacing: '-0.01em',
+                          color: PORTAL.cream,
+                          margin: 0,
+                        }}
+                      >
+                        {ev.title}
+                      </h3>
+
+                      {ev.projects?.title && (
+                        <p
+                          style={{
+                            fontFamily: PORTAL.mono,
+                            fontSize: '0.6rem',
+                            letterSpacing: '0.12em',
+                            textTransform: 'uppercase',
+                            color: PORTAL.muted,
+                            margin: '0.6rem 0 0',
+                          }}
+                        >
+                          {ev.projects.title}
+                        </p>
+                      )}
+
+                      {ev.notes && (
+                        <p
+                          style={{
+                            fontFamily: PORTAL.sans,
+                            fontSize: '0.9rem',
+                            lineHeight: 1.6,
+                            color: PORTAL.muted,
+                            margin: '0.7rem 0 0',
+                            maxWidth: '40rem',
+                          }}
+                        >
+                          {ev.notes}
+                        </p>
+                      )}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
+    </PortalShell>
   )
 }

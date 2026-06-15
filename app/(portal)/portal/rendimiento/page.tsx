@@ -2,8 +2,14 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { resolvePortalClient, portalLink } from '@/lib/portal/preview'
 import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS, type CalendarEventType } from '@/lib/calendar/types'
-
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+import {
+  PortalShell,
+  BackLink,
+  Masthead,
+  SectionLabel,
+  EmptyState,
+  PORTAL,
+} from '@/components/portal/ui'
 
 const MONTHS = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -97,80 +103,136 @@ export default async function PortalPerformancePage({
   const prev = month === 0 ? { y: year - 1, m: 11 } : { y: year, m: month - 1 }
   const next = month === 11 ? { y: year + 1, m: 0 } : { y: year, m: month + 1 }
 
-  const card: React.CSSProperties = {
-    backgroundColor: 'var(--portal-surface)',
-    border: '1px solid var(--portal-border)',
-    borderRadius: 16,
-    padding: '20px 22px',
-  }
+  const monthLabel = `${MONTHS[month]} ${year}`
+
   const navLink: React.CSSProperties = {
-    fontSize: 13,
-    color: 'var(--portal-text-muted)',
-    textDecoration: 'none',
-    padding: '6px 12px',
-    border: '1px solid var(--portal-border)',
-    borderRadius: 8,
+    fontFamily: PORTAL.mono,
+    fontSize: '0.62rem',
+    letterSpacing: '0.15em',
+    textTransform: 'uppercase',
+  }
+
+  // ── Tarjeta de estadística (etiqueta mono + cifra serif grande) ──
+  function Stat({
+    label,
+    value,
+    valueColor = PORTAL.cream,
+    sub,
+  }: {
+    label: string
+    value: React.ReactNode
+    valueColor?: string
+    sub?: React.ReactNode
+  }) {
+    return (
+      <div className="portal-card" style={{ borderRadius: '6px', padding: 'clamp(1.4rem, 3vw, 1.8rem)' }}>
+        <p style={{ fontFamily: PORTAL.mono, fontSize: '0.6rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: PORTAL.dim, margin: 0 }}>
+          {label}
+        </p>
+        <p style={{ fontFamily: PORTAL.serif, fontWeight: 400, fontSize: 'clamp(2rem, 4.5vw, 3rem)', lineHeight: 1.05, letterSpacing: '-0.01em', color: valueColor, margin: '0.7rem 0 0', fontVariantNumeric: 'tabular-nums' }}>
+          {value}
+        </p>
+        {sub && (
+          <p style={{ fontFamily: PORTAL.mono, fontSize: '0.6rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: PORTAL.muted, margin: '0.6rem 0 0' }}>
+            {sub}
+          </p>
+        )}
+      </div>
+    )
   }
 
   return (
-    <main style={{ fontFamily: FONT, minHeight: '100vh', backgroundColor: 'var(--portal-bg)' }}>
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: 'clamp(1.5rem, 5vw, 3rem) clamp(1rem, 4vw, 1.5rem)' }}>
-        <Link href={portalLink('/portal', ctx)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--portal-text-muted)', textDecoration: 'none', marginBottom: '2rem' }}>
-          <span>&larr;</span>
-          <span>Inicio</span>
-        </Link>
+    <PortalShell maxWidth={1000}>
+      <BackLink href={portalLink('/portal', ctx)} />
 
-        <h1 style={{ fontSize: 26, fontWeight: 600, color: 'var(--portal-text)', margin: '0 0 8px 0', letterSpacing: '-0.02em' }}>
-          Rendimiento
-        </h1>
-        <p style={{ fontSize: 14, color: 'var(--portal-text-muted)', margin: '0 0 1.5rem' }}>
-          Resumen de tu mes con XICO Films.
+      <Masthead
+        title="Rendimiento"
+        lead="Resumen de tu mes con XICO Films: lo cobrado, lo pendiente y el avance de los hitos clave de tu producción."
+      />
+
+      {/* ── 01 · Periodo ── */}
+      <section style={{ marginBottom: 'clamp(2.5rem, 5vw, 3.5rem)' }}>
+        <div className="flex items-center justify-between" style={{ marginBottom: '1.4rem' }}>
+          <SectionLabel index="01">Periodo</SectionLabel>
+          <div className="flex items-center gap-5">
+            <Link href={`/portal/rendimiento?m=${monthParam(prev.y, prev.m)}`} className="portal-textlink" style={navLink}>
+              <span aria-hidden="true">&larr;</span> Anterior
+            </Link>
+            <Link href={`/portal/rendimiento?m=${monthParam(next.y, next.m)}`} className="portal-textlink" style={navLink}>
+              Siguiente <span aria-hidden="true">&rarr;</span>
+            </Link>
+          </div>
+        </div>
+        <p style={{ fontFamily: PORTAL.serif, fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(1.6rem, 4vw, 2.4rem)', lineHeight: 1.1, color: PORTAL.cream, margin: 0 }}>
+          {monthLabel}
         </p>
+      </section>
 
-        {/* Selector de mes */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-          <Link href={`/portal/rendimiento?m=${monthParam(prev.y, prev.m)}`} style={navLink}>&larr; Anterior</Link>
-          <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--portal-text)' }}>{MONTHS[month]} {year}</span>
-          <Link href={`/portal/rendimiento?m=${monthParam(next.y, next.m)}`} style={navLink}>Siguiente &rarr;</Link>
+      {/* ── 02 · Métricas ── */}
+      <section style={{ marginBottom: 'clamp(2.5rem, 5vw, 3.5rem)' }}>
+        <div style={{ marginBottom: '1.6rem' }}>
+          <SectionLabel index="02">Métricas del mes</SectionLabel>
         </div>
-
-        {/* KPIs */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: '1.5rem' }}>
-          <div style={card}>
-            <p style={{ margin: 0, fontSize: 12, color: 'var(--portal-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Cobrado este mes</p>
-            <p style={{ margin: '8px 0 0', fontSize: 26, fontWeight: 700, color: '#30D158', letterSpacing: '-0.02em' }}>{money(cobrado, currency)}</p>
-          </div>
-          <div style={card}>
-            <p style={{ margin: 0, fontSize: 12, color: 'var(--portal-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Por cobrar (total)</p>
-            <p style={{ margin: '8px 0 0', fontSize: 26, fontWeight: 700, color: '#FF9F0A', letterSpacing: '-0.02em' }}>{money(porCobrar, currency)}</p>
-          </div>
-          <div style={card}>
-            <p style={{ margin: 0, fontSize: 12, color: 'var(--portal-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Hitos cumplidos</p>
-            <p style={{ margin: '8px 0 0', fontSize: 26, fontWeight: 700, color: 'var(--portal-text)', letterSpacing: '-0.02em' }}>
-              {hitosHechos}<span style={{ fontSize: 16, color: 'var(--portal-text-muted)' }}> / {hitosTotal}</span>
-            </p>
-            <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--portal-text-muted)' }}>{cumplimiento}% de cumplimiento</p>
-          </div>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Stat label="Cobrado este mes" value={money(cobrado, currency)} />
+          <Stat label="Por cobrar (total)" value={money(porCobrar, currency)} valueColor={PORTAL.accent} />
+          <Stat
+            label="Hitos cumplidos"
+            value={
+              <>
+                {hitosHechos}
+                <span style={{ fontSize: '0.5em', color: PORTAL.muted }}> / {hitosTotal}</span>
+              </>
+            }
+            sub={`${cumplimiento}% de cumplimiento`}
+          />
         </div>
+        {hitosTotal > 0 && (
+          <div style={{ marginTop: '1rem', height: '2px', background: 'rgba(237,232,224,0.1)', overflow: 'hidden', borderRadius: '2px' }} aria-label={`Cumplimiento ${cumplimiento}%`}>
+            <div style={{ height: '100%', width: `${cumplimiento}%`, background: PORTAL.accent }} />
+          </div>
+        )}
+      </section>
 
-        {/* Desglose de hitos por tipo */}
-        <div style={card}>
-          <p style={{ margin: '0 0 14px', fontSize: 13, fontWeight: 600, color: 'var(--portal-text)' }}>Actividad del mes</p>
-          {monthEvents.length === 0 ? (
-            <p style={{ margin: 0, fontSize: 13, color: 'var(--portal-text-muted)' }}>Sin actividad registrada este mes.</p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {[...byType.entries()].map(([type, c]) => (
-                <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ width: 9, height: 9, borderRadius: 9, background: EVENT_TYPE_COLORS[type], flexShrink: 0 }} />
-                  <span style={{ flex: 1, fontSize: 13, color: 'var(--portal-text)' }}>{EVENT_TYPE_LABELS[type]}</span>
-                  <span style={{ fontSize: 13, color: 'var(--portal-text-muted)' }}>{c.done} / {c.total}</span>
-                </div>
-              ))}
+      {/* ── 03 · Actividad ── */}
+      <section>
+        <div style={{ marginBottom: '1.6rem' }}>
+          <SectionLabel index="03">Actividad del mes</SectionLabel>
+        </div>
+        {monthEvents.length === 0 ? (
+          <EmptyState
+            title="Sin actividad registrada este mes."
+            body="Cuando se programen hitos para este periodo, aparecerán aquí con su avance por tipo."
+            ctaLabel=""
+          />
+        ) : (
+          <div className="portal-card" style={{ borderRadius: '6px', padding: 'clamp(1.5rem, 3vw, 2rem)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+              {[...byType.entries()].map(([type, c]) => {
+                const pct = c.total > 0 ? Math.round((c.done / c.total) * 100) : 0
+                return (
+                  <div key={type}>
+                    <div className="flex items-center justify-between" style={{ marginBottom: '0.55rem' }}>
+                      <span className="flex items-center gap-2.5">
+                        <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: EVENT_TYPE_COLORS[type], flexShrink: 0 }} />
+                        <span style={{ fontFamily: PORTAL.mono, fontSize: '0.6rem', letterSpacing: '0.16em', textTransform: 'uppercase', color: PORTAL.cream }}>
+                          {EVENT_TYPE_LABELS[type]}
+                        </span>
+                      </span>
+                      <span style={{ fontFamily: PORTAL.mono, fontSize: '0.6rem', letterSpacing: '0.08em', color: PORTAL.muted, fontVariantNumeric: 'tabular-nums' }}>
+                        {c.done} / {c.total}
+                      </span>
+                    </div>
+                    <div style={{ height: '2px', background: 'rgba(237,232,224,0.1)', overflow: 'hidden', borderRadius: '2px' }}>
+                      <div style={{ height: '100%', width: `${pct}%`, background: PORTAL.accent }} />
+                    </div>
+                  </div>
+                )
+              })}
             </div>
-          )}
-        </div>
-      </div>
-    </main>
+          </div>
+        )}
+      </section>
+    </PortalShell>
   )
 }

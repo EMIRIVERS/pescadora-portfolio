@@ -5,20 +5,25 @@ import { createClient } from '@/lib/supabase/client'
 import type { ClientUpload } from '@/lib/supabase/types'
 
 // ---------------------------------------------------------------------------
-// Design tokens
+// Design tokens — XICO cinematic-editorial brand
 // ---------------------------------------------------------------------------
 const S = {
-  surface:       '#18181b',
-  surfaceHover:  '#27272a',
-  border:        'rgba(255,255,255,0.08)',
-  borderFocus:   '#0071E3',
-  textPrimary:   '#f4f4f5',
-  textSecondary: '#a1a1aa',
-  textTertiary:  '#71717a',
-  accent:        '#0071E3',
-  danger:        '#FF453A',
+  surface:       'rgba(237,232,224,0.022)',
+  surfaceHover:  'rgba(237,232,224,0.05)',
+  thumbBg:       '#0a0a0a',
+  border:        'rgba(237,232,224,0.10)',
+  borderHover:   'rgba(232,52,26,0.45)',
+  borderFocus:   '#e8341a',
+  textPrimary:   '#ede8e0',
+  textSecondary: '#8a857d',
+  textTertiary:  '#6b6560',
+  accent:        '#e8341a',
+  danger:        '#e8341a',
   success:       '#30D158',
-  font:          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+  font:          'var(--font-geist-sans), sans-serif',
+  sans:          'var(--font-geist-sans), sans-serif',
+  serif:         'var(--font-cormorant), Georgia, serif',
+  mono:          'var(--font-geist-mono), monospace',
 } as const
 
 // ---------------------------------------------------------------------------
@@ -99,7 +104,7 @@ function IconSearch({ size = 16 }: { size?: number }) {
 function IconFilePdf({ size = 28 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke="#FF6B6B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      stroke="#e8341a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
       <polyline points="14 2 14 8 20 8" />
       <line x1="8" y1="13" x2="16" y2="13" />
@@ -111,7 +116,7 @@ function IconFilePdf({ size = 28 }: { size?: number }) {
 function IconFileVideo({ size = 28 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke="#A78BFA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      stroke="#8a857d" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
       <polyline points="14 2 14 8 20 8" />
       <polygon points="10 11 16 14 10 17 10 11" />
@@ -122,7 +127,7 @@ function IconFileVideo({ size = 28 }: { size?: number }) {
 function IconFileGeneric({ size = 28 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke="#71717a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      stroke="#6b6560" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
       <polyline points="14 2 14 8 20 8" />
     </svg>
@@ -175,7 +180,7 @@ function FileIcon({ fileName, fileUrl }: { fileName: string; fileUrl: string }) 
           if (parent) {
             const fallback = document.createElement('div')
             fallback.style.cssText = 'width:100%;height:100%;display:flex;align-items:center;justify-content:center;'
-            fallback.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
+            fallback.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6b6560" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
             parent.appendChild(fallback)
           }
         }}
@@ -213,11 +218,11 @@ function FileCard({
       onMouseLeave={() => setHovered(false)}
       style={{
         background:    hovered ? S.surfaceHover : S.surface,
-        border:        `1px solid ${S.border}`,
-        borderRadius:  12,
+        border:        `1px solid ${hovered ? S.borderHover : S.border}`,
+        borderRadius:  6,
         overflow:      'hidden',
         opacity:       deleting ? 0.4 : 1,
-        transition:    'background 0.15s ease, opacity 0.2s ease',
+        transition:    'background 0.35s ease, border-color 0.35s ease, opacity 0.2s ease',
         display:       'flex',
         flexDirection: 'column',
       }}
@@ -225,8 +230,8 @@ function FileCard({
       {/* Thumbnail area */}
       <div style={{
         width:           '100%',
-        height:          140,
-        background:      '#09090b',
+        height:          150,
+        background:      S.thumbBg,
         overflow:        'hidden',
         flexShrink:      0,
         borderBottom:    `1px solid ${S.border}`,
@@ -235,34 +240,36 @@ function FileCard({
       </div>
 
       {/* Info */}
-      <div style={{ padding: '10px 12px 12px', flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div style={{ padding: '0.85rem 0.95rem 0.95rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
         <p style={{
-          margin:       0,
-          fontSize:     13,
-          fontWeight:   600,
-          color:        S.textPrimary,
-          overflow:     'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace:   'nowrap',
-          fontFamily:   S.font,
-        }}>
+          margin:        0,
+          fontFamily:    S.mono,
+          fontSize:      '0.7rem',
+          letterSpacing: '0.02em',
+          color:         S.textPrimary,
+          overflow:      'hidden',
+          textOverflow:  'ellipsis',
+          whiteSpace:    'nowrap',
+        }}
+        title={upload.file_name}
+        >
           {upload.file_name}
         </p>
 
         {upload.project && (
-          <p style={{ margin: 0, fontSize: 11, color: S.accent, fontFamily: S.font, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <p style={{ margin: 0, fontFamily: S.mono, fontSize: '0.56rem', letterSpacing: '0.16em', textTransform: 'uppercase', color: S.accent, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {upload.project.title}
           </p>
         )}
 
-        <p style={{ margin: 0, fontSize: 11, color: S.textTertiary, fontFamily: S.font }}>
+        <p style={{ margin: 0, fontFamily: S.mono, fontSize: '0.58rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: S.textTertiary }}>
           {formatBytes(upload.file_size)}
           {upload.file_size ? ' · ' : ''}
           {formatDate(upload.uploaded_at)}
         </p>
 
         {/* Actions */}
-        <div style={{ marginTop: 8, display: 'flex', gap: 6 }}>
+        <div style={{ marginTop: '0.6rem', display: 'flex', gap: '0.45rem' }}>
           <a
             href={upload.file_url}
             download={upload.file_name}
@@ -274,18 +281,22 @@ function FileCard({
               display:        'flex',
               alignItems:     'center',
               justifyContent: 'center',
-              gap:            6,
+              gap:            '0.5rem',
               minHeight:      44,
-              borderRadius:   6,
-              background:     'rgba(0,113,227,0.12)',
-              border:         '1px solid rgba(0,113,227,0.25)',
-              color:          S.accent,
-              fontSize:       12,
-              fontWeight:     500,
+              borderRadius:   4,
+              background:     'transparent',
+              border:         `1px solid ${S.border}`,
+              color:          S.textSecondary,
+              fontFamily:     S.mono,
+              fontSize:       '0.58rem',
+              letterSpacing:  '0.16em',
+              textTransform:  'uppercase',
               textDecoration: 'none',
-              fontFamily:     S.font,
               cursor:         'pointer',
+              transition:     'border-color 0.25s ease, color 0.25s ease',
             }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = S.accent; e.currentTarget.style.color = S.accent }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = S.border; e.currentTarget.style.color = S.textSecondary }}
           >
             <IconDownload size={13} />
             Descargar
@@ -298,16 +309,19 @@ function FileCard({
             style={{
               width:          44,
               height:         44,
-              borderRadius:   6,
-              background:     'rgba(255,69,58,0.10)',
-              border:         '1px solid rgba(255,69,58,0.20)',
-              color:          S.danger,
+              borderRadius:   4,
+              background:     'transparent',
+              border:         `1px solid ${S.border}`,
+              color:          S.textTertiary,
               display:        'flex',
               alignItems:     'center',
               justifyContent: 'center',
               cursor:         deleting ? 'not-allowed' : 'pointer',
               flexShrink:     0,
+              transition:     'border-color 0.25s ease, color 0.25s ease',
             }}
+            onMouseEnter={(e) => { if (!deleting) { e.currentTarget.style.borderColor = S.danger; e.currentTarget.style.color = S.danger } }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = S.border; e.currentTarget.style.color = S.textTertiary }}
           >
             <IconTrash size={13} />
           </button>
@@ -413,17 +427,17 @@ function GalleryUploader({
     <div style={{ fontFamily: S.font }}>
       {/* Project selector */}
       {projects.length > 1 && (
-        <div style={{ marginBottom: 10 }}>
-          <label style={{ display: 'block', fontSize: 12, color: S.textSecondary, marginBottom: 6 }}>
-            Subir a proyecto:
+        <div style={{ marginBottom: '0.85rem' }}>
+          <label style={{ display: 'block', fontFamily: S.mono, fontSize: '0.58rem', letterSpacing: '0.16em', textTransform: 'uppercase', color: S.textSecondary, marginBottom: '0.55rem' }}>
+            Subir a proyecto
           </label>
           <select
             value={projectId}
             onChange={(e) => setProjectId(e.target.value)}
             style={{
-              background: S.surface, border: `1px solid ${S.border}`, borderRadius: 8,
-              color: S.textPrimary, fontSize: 13, padding: '7px 12px', width: '100%',
-              fontFamily: S.font, outline: 'none',
+              background: 'transparent', border: `1px solid ${S.border}`, borderRadius: 4,
+              color: S.textPrimary, fontFamily: S.mono, fontSize: '0.72rem', letterSpacing: '0.04em',
+              padding: '0.6rem 0.8rem', width: '100%', outline: 'none',
             }}
           >
             {projects.map((p) => (
@@ -448,13 +462,13 @@ function GalleryUploader({
           flexDirection:  'column',
           alignItems:     'center',
           justifyContent: 'center',
-          gap:            8,
-          padding:        '28px 24px',
-          borderRadius:   12,
-          border:         `2px dashed ${dragging ? S.borderFocus : S.border}`,
-          background:     dragging ? 'rgba(0,113,227,0.06)' : S.surface,
+          gap:            '0.7rem',
+          padding:        'clamp(2rem, 5vw, 2.75rem) 1.5rem',
+          borderRadius:   6,
+          border:         `1px dashed ${dragging ? S.borderFocus : S.border}`,
+          background:     dragging ? 'rgba(232,52,26,0.05)' : 'transparent',
           cursor:         uploading ? 'not-allowed' : 'pointer',
-          transition:     'border-color 0.15s, background 0.15s',
+          transition:     'border-color 0.25s, background 0.25s',
           userSelect:     'none',
           outline:        'none',
         }}
@@ -466,16 +480,16 @@ function GalleryUploader({
               border: `2px solid ${S.accent}`, borderTopColor: 'transparent',
               borderRadius: '50%', animation: 'archivos-spin 0.7s linear infinite',
             }} />
-            <p style={{ margin: 0, fontSize: 13, color: S.textSecondary }}>{progress}</p>
+            <p style={{ margin: 0, fontFamily: S.mono, fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: S.textSecondary }}>{progress}</p>
           </>
         ) : (
           <>
-            <IconUpload size={26} color={dragging ? S.accent : S.textTertiary} />
-            <p style={{ margin: 0, fontSize: 13, color: S.textSecondary, textAlign: 'center' }}>
+            <IconUpload size={28} color={dragging ? S.accent : S.textTertiary} />
+            <p style={{ margin: 0, fontFamily: S.sans, fontSize: '0.9rem', color: S.textSecondary, textAlign: 'center' }}>
               Arrastra un archivo o{' '}
-              <span style={{ color: S.accent, fontWeight: 600 }}>haz clic para seleccionar</span>
+              <span style={{ color: S.accent }}>haz clic para seleccionar</span>
             </p>
-            <p style={{ margin: 0, fontSize: 12, color: S.textTertiary }}>Cualquier tipo — max 200 MB</p>
+            <p style={{ margin: 0, fontFamily: S.mono, fontSize: '0.56rem', letterSpacing: '0.16em', textTransform: 'uppercase', color: S.textTertiary }}>Cualquier tipo — máx. 200 MB</p>
           </>
         )}
       </div>
@@ -489,9 +503,9 @@ function GalleryUploader({
 
       {error && (
         <div style={{
-          marginTop: 10, padding: '9px 12px', borderRadius: 8,
-          background: 'rgba(255,69,58,0.10)', border: '1px solid rgba(255,69,58,0.25)',
-          fontSize: 13, color: S.danger,
+          marginTop: '0.8rem', padding: '0.7rem 0.9rem', borderRadius: 4,
+          background: 'rgba(232,52,26,0.08)', border: '1px solid rgba(232,52,26,0.30)',
+          fontFamily: S.sans, fontSize: '0.82rem', color: S.danger,
         }}>
           {error}
         </div>
@@ -563,13 +577,16 @@ export default function ArchivosGallery({ initialUploads, projects, clientId }: 
       {/* Upload section */}
       <section style={{
         background: S.surface, border: `1px solid ${S.border}`,
-        borderRadius: 16, padding: '20px 24px', marginBottom: 32,
+        borderRadius: 6, padding: 'clamp(1.4rem, 3vw, 1.9rem)', marginBottom: 'clamp(2.5rem, 5vw, 3.5rem)',
       }}>
-        <h2 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 600, color: S.textPrimary }}>
-          Subir archivo
-        </h2>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.7rem', marginBottom: '1.3rem' }}>
+          <span style={{ fontFamily: S.mono, fontSize: '0.62rem', letterSpacing: '0.2em', color: S.accent }}>01</span>
+          <span style={{ fontFamily: S.mono, fontSize: '0.62rem', letterSpacing: '0.22em', textTransform: 'uppercase', color: S.textSecondary }}>
+            Subir archivo
+          </span>
+        </div>
         {projects.length === 0 ? (
-          <p style={{ margin: 0, fontSize: 13, color: S.textTertiary }}>
+          <p style={{ margin: 0, fontFamily: S.sans, fontSize: '0.9rem', color: S.textTertiary }}>
             No tienes proyectos activos para subir archivos.
           </p>
         ) : (
@@ -583,11 +600,11 @@ export default function ArchivosGallery({ initialUploads, projects, clientId }: 
 
       {/* Search + filter bar */}
       {!isEmpty && (
-        <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.6rem', marginBottom: '1.4rem', flexWrap: 'wrap' }}>
           {/* Search */}
           <div style={{ flex: 1, minWidth: 200, position: 'relative' }}>
             <span style={{
-              position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)',
+              position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
               color: S.textTertiary, display: 'flex', alignItems: 'center', pointerEvents: 'none',
             }}>
               <IconSearch size={15} />
@@ -599,9 +616,10 @@ export default function ArchivosGallery({ initialUploads, projects, clientId }: 
               onChange={(e) => setSearch(e.target.value)}
               style={{
                 width: '100%', boxSizing: 'border-box',
-                background: S.surface, border: `1px solid ${S.border}`,
-                borderRadius: 8, color: S.textPrimary, fontSize: 13,
-                padding: '8px 12px 8px 32px', fontFamily: S.font, outline: 'none',
+                background: 'transparent', border: `1px solid ${S.border}`,
+                borderRadius: 4, color: S.textPrimary, fontFamily: S.mono,
+                fontSize: '0.72rem', letterSpacing: '0.04em',
+                padding: '0.7rem 0.85rem 0.7rem 2.2rem', outline: 'none',
               }}
             />
           </div>
@@ -612,9 +630,9 @@ export default function ArchivosGallery({ initialUploads, projects, clientId }: 
               value={projectFilter}
               onChange={(e) => setProject(e.target.value)}
               style={{
-                background: S.surface, border: `1px solid ${S.border}`, borderRadius: 8,
-                color: S.textPrimary, fontSize: 13, padding: '8px 12px',
-                fontFamily: S.font, outline: 'none', minWidth: 160,
+                background: 'transparent', border: `1px solid ${S.border}`, borderRadius: 4,
+                color: S.textPrimary, fontFamily: S.mono, fontSize: '0.72rem', letterSpacing: '0.04em',
+                padding: '0.7rem 0.85rem', outline: 'none', minWidth: 170,
               }}
             >
               <option value="all">Todos los proyectos</option>
@@ -630,27 +648,24 @@ export default function ArchivosGallery({ initialUploads, projects, clientId }: 
       {isEmpty ? (
         /* Empty state */
         <div style={{
-          background: S.surface, border: `1px solid ${S.border}`,
-          borderRadius: 16, padding: '56px 24px', textAlign: 'center',
+          border: `1px solid ${S.border}`, borderRadius: 6,
+          padding: 'clamp(3rem, 8vw, 5rem) 2rem', textAlign: 'center',
         }}>
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16, color: S.textTertiary }}>
-            <IconUpload size={40} color={S.textTertiary} />
-          </div>
-          <p style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 500, color: S.textSecondary }}>
-            Sube tus archivos de referencia aqui
+          <p style={{ fontFamily: S.serif, fontStyle: 'italic', fontSize: 'clamp(1.3rem, 3vw, 1.8rem)', color: S.textPrimary, margin: 0 }}>
+            Aún no has subido archivos.
           </p>
-          <p style={{ margin: 0, fontSize: 13, color: S.textTertiary }}>
-            Imagenes, videos, PDFs y cualquier otro archivo para tus proyectos
+          <p style={{ fontFamily: S.sans, fontSize: '0.9rem', color: S.textSecondary, margin: '0.9rem auto 0', maxWidth: '28rem', lineHeight: 1.6 }}>
+            Imágenes, videos, PDFs y cualquier otra referencia para tus proyectos vivirán aquí.
           </p>
         </div>
       ) : filtered.length === 0 ? (
         /* No results after filter */
         <div style={{
-          background: S.surface, border: `1px solid ${S.border}`,
-          borderRadius: 16, padding: '40px 24px', textAlign: 'center',
+          border: `1px solid ${S.border}`, borderRadius: 6,
+          padding: 'clamp(2.5rem, 6vw, 3.5rem) 2rem', textAlign: 'center',
         }}>
-          <p style={{ margin: 0, fontSize: 14, color: S.textSecondary }}>
-            Ningun archivo coincide con tu busqueda.
+          <p style={{ fontFamily: S.serif, fontStyle: 'italic', fontSize: 'clamp(1.2rem, 2.6vw, 1.5rem)', color: S.textPrimary, margin: 0 }}>
+            Ningún archivo coincide con tu búsqueda.
           </p>
         </div>
       ) : (
@@ -658,8 +673,8 @@ export default function ArchivosGallery({ initialUploads, projects, clientId }: 
           {/* Responsive grid */}
           <div style={{
             display:               'grid',
-            gridTemplateColumns:   'repeat(auto-fill, minmax(150px, 1fr))',
-            gap:                   14,
+            gridTemplateColumns:   'repeat(auto-fill, minmax(160px, 1fr))',
+            gap:                   '0.9rem',
           }}>
             {filtered.map((upload) => (
               <FileCard
@@ -671,7 +686,7 @@ export default function ArchivosGallery({ initialUploads, projects, clientId }: 
             ))}
           </div>
 
-          <p style={{ marginTop: 16, fontSize: 12, color: S.textTertiary, textAlign: 'right', fontFamily: S.font }}>
+          <p style={{ marginTop: '1.3rem', fontFamily: S.mono, fontSize: '0.58rem', letterSpacing: '0.16em', textTransform: 'uppercase', color: S.textTertiary, textAlign: 'right' }}>
             {filtered.length} {filtered.length === 1 ? 'archivo' : 'archivos'}
             {filtered.length !== uploads.length && ` de ${uploads.length}`}
           </p>

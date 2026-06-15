@@ -1,10 +1,10 @@
 import { notFound, redirect } from 'next/navigation'
-import Link from 'next/link'
 import { resolvePortalClient, portalLink } from '@/lib/portal/preview'
 import type { Deliverable, Project, ProjectStatus } from '@/lib/supabase/types'
 import ProjectTimeline from '@/components/portal/project-timeline'
 import DeliverableCard from '@/components/portal/deliverable-card'
 import ClientUploader from '@/components/portal/ClientUploader'
+import { PortalShell, BackLink, SectionLabel, StatusTag, EmptyState, PORTAL } from '@/components/portal/ui'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -12,28 +12,12 @@ import ClientUploader from '@/components/portal/ClientUploader'
 
 const STATUS_CONFIG: Record<
   ProjectStatus,
-  { border: string; text: string; label: string }
+  { color: string; label: string }
 > = {
-  pre_production: {
-    border: 'border-amber-800/50',
-    text: 'text-amber-400',
-    label: 'Pre-produccion',
-  },
-  production: {
-    border: 'border-sky-800/50',
-    text: 'text-sky-400',
-    label: 'En produccion',
-  },
-  post_production: {
-    border: 'border-violet-800/50',
-    text: 'text-violet-400',
-    label: 'Post-produccion',
-  },
-  delivered: {
-    border: 'border-emerald-800/50',
-    text: 'text-emerald-400',
-    label: 'Entregado',
-  },
+  pre_production: { color: '#f5a623', label: 'Pre-producción' },
+  production: { color: '#5ac8fa', label: 'Producción' },
+  post_production: { color: '#bf5af2', label: 'Post-producción' },
+  delivered: { color: '#30d158', label: 'Entregado' },
 }
 
 function formatDate(dateStr: string | null): string {
@@ -103,112 +87,140 @@ export default async function ProjectPage({ params, searchParams }: PageProps) {
   }
 
   const statusCfg = STATUS_CONFIG[project.status]
+  const hasDates = Boolean(project.start_date || project.end_date)
 
   return (
-    <main className="min-h-screen bg-zinc-950">
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 py-12">
-        {/* Back link */}
-        <Link
-          href={portalLink('/portal', ctx)}
-          className="inline-flex items-center gap-1.5 text-zinc-500 hover:text-white text-sm transition-colors mb-8"
-        >
-          <span>&larr;</span>
-          <span>Mis proyectos</span>
-        </Link>
+    <PortalShell maxWidth={1000}>
+      <BackLink href={portalLink('/portal', ctx)} label="Mis proyectos" />
 
-        {/* Project header */}
-        <div className="mb-10">
-          <div className="flex flex-wrap items-start gap-3 mb-3">
-            <h1 className="text-white text-2xl sm:text-3xl font-semibold leading-snug flex-1">
-              {project.title}
-            </h1>
-            <span
-              className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border bg-zinc-950 ${statusCfg.border} ${statusCfg.text} shrink-0 mt-1`}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-current" />
-              {statusCfg.label}
-            </span>
+      {/* ── Masthead ── */}
+      <header style={{ marginBottom: 'clamp(2.5rem, 5vw, 3.5rem)' }}>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <h1
+            style={{
+              fontFamily: PORTAL.serif,
+              fontWeight: 400,
+              fontSize: 'clamp(2.5rem, 6vw, 3.5rem)',
+              lineHeight: 1.04,
+              letterSpacing: '-0.01em',
+              color: PORTAL.cream,
+              margin: 0,
+              flex: '1 1 18rem',
+            }}
+          >
+            {project.title}
+          </h1>
+          <div style={{ paddingTop: '0.7rem' }}>
+            <StatusTag color={statusCfg.color}>{statusCfg.label}</StatusTag>
           </div>
+        </div>
 
-          {project.description && (
-            <p className="text-zinc-400 text-sm leading-relaxed max-w-2xl">
-              {project.description}
-            </p>
-          )}
+        {project.description && (
+          <p
+            style={{
+              fontFamily: PORTAL.sans,
+              fontSize: '0.95rem',
+              lineHeight: 1.6,
+              color: PORTAL.muted,
+              margin: '1.4rem 0 0',
+              maxWidth: '42rem',
+            }}
+          >
+            {project.description}
+          </p>
+        )}
 
-          {/* Dates row */}
-          {(project.start_date || project.end_date) && (
-            <div className="flex flex-wrap gap-4 mt-4 text-xs text-zinc-500">
-              {project.start_date && (
-                <span>
-                  Inicio:{' '}
-                  <span className="text-zinc-300">{formatDate(project.start_date)}</span>
-                </span>
-              )}
-              {project.end_date && (
-                <span>
-                  Entrega estimada:{' '}
-                  <span className="text-zinc-300">{formatDate(project.end_date)}</span>
-                </span>
-              )}
-            </div>
+        {/* Dates row */}
+        {hasDates && (
+          <div
+            className="flex flex-wrap"
+            style={{ gap: '2.5rem', marginTop: '1.8rem' }}
+          >
+            {project.start_date && (
+              <div>
+                <p style={{ fontFamily: PORTAL.mono, fontSize: '0.58rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: PORTAL.dim, margin: 0 }}>
+                  Inicio
+                </p>
+                <p style={{ fontFamily: PORTAL.serif, fontStyle: 'italic', fontSize: '1.15rem', color: PORTAL.cream, margin: '0.4rem 0 0' }}>
+                  {formatDate(project.start_date)}
+                </p>
+              </div>
+            )}
+            {project.end_date && (
+              <div>
+                <p style={{ fontFamily: PORTAL.mono, fontSize: '0.58rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: PORTAL.dim, margin: 0 }}>
+                  Entrega estimada
+                </p>
+                <p style={{ fontFamily: PORTAL.serif, fontStyle: 'italic', fontSize: '1.15rem', color: PORTAL.cream, margin: '0.4rem 0 0' }}>
+                  {formatDate(project.end_date)}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </header>
+
+      {/* ── 01 · Timeline de producción ── */}
+      <section style={{ marginBottom: 'clamp(3rem, 6vw, 4rem)' }}>
+        <SectionLabel index="01" style={{ marginBottom: '1.4rem' }}>
+          Timeline de producción
+        </SectionLabel>
+        <ProjectTimeline currentStatus={project.status} />
+      </section>
+
+      {/* ── 02 · Entregables ── */}
+      <section style={{ marginBottom: 'clamp(3rem, 6vw, 4rem)' }}>
+        <div className="flex items-center justify-between" style={{ marginBottom: '1.4rem' }}>
+          <SectionLabel index="02">Entregables</SectionLabel>
+          {deliverables.length > 0 && (
+            <span style={{ fontFamily: PORTAL.mono, fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: PORTAL.dim }}>
+              {approvedCount} / {deliverables.length} aprobado{approvedCount !== 1 ? 's' : ''}
+            </span>
           )}
         </div>
 
-        {/* Production timeline */}
-        <section className="mb-12">
-          <h2 className="text-zinc-300 text-xs font-medium uppercase tracking-widest mb-5">
-            Timeline de produccion
-          </h2>
-          <ProjectTimeline currentStatus={project.status} />
-        </section>
-
-        {/* Deliverables */}
-        <section className="mb-12">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-zinc-300 text-xs font-medium uppercase tracking-widest">
-              Entregables
-            </h2>
-            {deliverables.length > 0 && (
-              <span className="text-zinc-500 text-xs">
-                {approvedCount} / {deliverables.length} aprobados
-              </span>
-            )}
+        {deliverables.length === 0 ? (
+          <EmptyState
+            title="Aún no hay entregables."
+            body="Los entregables aparecerán aquí en cuanto estén listos para tu revisión."
+            ctaLabel=""
+          />
+        ) : (
+          <div className="space-y-3">
+            {deliverables.map((deliverable) => (
+              <DeliverableCard
+                key={deliverable.id}
+                deliverable={deliverable}
+                revisionCount={revisionCountMap[deliverable.id] ?? 0}
+              />
+            ))}
           </div>
+        )}
+      </section>
 
-          {deliverables.length === 0 ? (
-            <div className="border border-zinc-800 rounded-xl p-8 text-center">
-              <p className="text-zinc-500 text-sm">
-                Los entregables apareceran aqui cuando esten listos.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {deliverables.map((deliverable) => (
-                <DeliverableCard
-                  key={deliverable.id}
-                  deliverable={deliverable}
-                  revisionCount={revisionCountMap[deliverable.id] ?? 0}
-                />
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* Client uploads */}
-        <section>
-          <h2 className="text-zinc-300 text-xs font-medium uppercase tracking-widest mb-5">
-            Tus archivos
-          </h2>
-          {isAdminPreview ? (
-            <div className="border border-amber-900/40 bg-amber-950/20 rounded-xl p-6 text-amber-300 text-sm">
-              Subida de archivos deshabilitada en modo preview.
-            </div>
-          ) : (
-            <ClientUploader projectId={project.id} clientId={client.id} />
-          )}
-        </section>
-      </div>
-    </main>
+      {/* ── 03 · Tus archivos ── */}
+      <section>
+        <SectionLabel index="03" style={{ marginBottom: '1.4rem' }}>
+          Tus archivos
+        </SectionLabel>
+        {isAdminPreview ? (
+          <div
+            style={{
+              border: `1px solid rgba(245,166,35,0.3)`,
+              borderRadius: '6px',
+              padding: '1.4rem 1.5rem',
+              fontFamily: PORTAL.sans,
+              fontSize: '0.88rem',
+              lineHeight: 1.6,
+              color: '#f5a623',
+            }}
+          >
+            Subida de archivos deshabilitada en modo preview.
+          </div>
+        ) : (
+          <ClientUploader projectId={project.id} clientId={client.id} />
+        )}
+      </section>
+    </PortalShell>
   )
 }

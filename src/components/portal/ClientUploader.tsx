@@ -5,21 +5,21 @@ import { createClient } from '@/lib/supabase/client'
 import type { ClientUpload } from '@/lib/supabase/types'
 
 // ---------------------------------------------------------------------------
-// Design tokens — portal uses a lighter palette on dark zinc background
+// Cinematic brand tokens — black #050505 / cream #ede8e0 / red #e8341a
 // ---------------------------------------------------------------------------
 const S = {
-  surface:       '#18181b',   // zinc-900
-  surfaceHover:  '#27272a',   // zinc-800
-  border:        'rgba(255,255,255,0.08)',
-  borderActive:  '#0071E3',
-  textPrimary:   '#f4f4f5',   // zinc-100
-  textSecondary: '#a1a1aa',   // zinc-400
-  textTertiary:  '#71717a',   // zinc-500
-  accent:        '#0071E3',
-  accentHover:   '#0077ED',
-  danger:        '#FF453A',
-  success:       '#30D158',
-  font:          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+  surface:    'var(--portal-surface)',
+  surface2:   'var(--portal-surface-2)',
+  border:     'var(--portal-border)',
+  accent:     'var(--portal-accent)',
+  cream:      'var(--portal-text)',
+  strong:     'var(--portal-text-strong)',
+  muted:      'var(--portal-text-muted)',
+  dim:        'var(--portal-text-dim)',
+  danger:     'var(--portal-danger)',
+  serif:      'var(--portal-serif)',
+  mono:       'var(--portal-mono)',
+  sans:       'var(--portal-sans)',
 } as const
 
 // ---------------------------------------------------------------------------
@@ -102,7 +102,7 @@ export default function ClientUploader({ projectId, clientId }: Props) {
 
     const MAX_SIZE = 200 * 1024 * 1024 // 200 MB
     if (file.size > MAX_SIZE) {
-      setError('El archivo excede el limite de 200 MB.')
+      setError('El archivo excede el límite de 200 MB.')
       return
     }
 
@@ -113,7 +113,7 @@ export default function ClientUploader({ projectId, clientId }: Props) {
     }
 
     setUploading(true)
-    setProgress(`Subiendo ${file.name}...`)
+    setProgress(`Subiendo ${file.name}…`)
 
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
     const storagePath = `client-uploads/${projectId}/${Date.now()}_${safeName}`
@@ -191,7 +191,7 @@ export default function ClientUploader({ projectId, clientId }: Props) {
   // ---------------------------------------------------------------------------
 
   return (
-    <div style={{ fontFamily: S.font }}>
+    <div style={{ fontFamily: S.sans }}>
 
       {/* Drop zone */}
       <div
@@ -203,18 +203,20 @@ export default function ClientUploader({ projectId, clientId }: Props) {
         onClick={() => inputRef.current?.click()}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') inputRef.current?.click() }}
         aria-label="Subir archivo"
+        className="cu-dropzone"
+        data-dragging={dragging ? 'true' : 'false'}
         style={{
           display:        'flex',
           flexDirection:  'column',
           alignItems:     'center',
           justifyContent: 'center',
-          gap:            8,
-          padding:        '32px 24px',
-          borderRadius:   12,
-          border:         `2px dashed ${dragging ? S.borderActive : S.border}`,
-          background:     dragging ? 'rgba(0,113,227,0.06)' : S.surface,
+          gap:            '0.9rem',
+          padding:        'clamp(2.4rem, 6vw, 3.4rem) 1.5rem',
+          borderRadius:   '6px',
+          border:         `1px dashed ${dragging ? S.accent : S.border}`,
+          background:     dragging ? 'rgba(232,52,26,0.05)' : S.surface,
           cursor:         uploading ? 'not-allowed' : 'pointer',
-          transition:     'border-color 0.15s ease, background 0.15s ease',
+          transition:     'border-color 0.3s ease, background 0.3s ease',
           userSelect:     'none',
           outline:        'none',
         }}
@@ -228,34 +230,68 @@ export default function ClientUploader({ projectId, clientId }: Props) {
                 border:       `2px solid ${S.accent}`,
                 borderTopColor: 'transparent',
                 borderRadius: '50%',
-                animation:    'spin 0.7s linear infinite',
+                animation:    'cu-spin 0.7s linear infinite',
               }}
             />
-            <p style={{ margin: 0, fontSize: 14, color: S.textSecondary }}>{progress}</p>
+            <p
+              style={{
+                margin: 0,
+                fontFamily: S.mono,
+                fontSize: '0.64rem',
+                letterSpacing: '0.16em',
+                textTransform: 'uppercase',
+                color: S.muted,
+              }}
+            >
+              {progress}
+            </p>
+            {/* Indeterminate progress bar — red accent */}
+            <div style={{ width: '100%', maxWidth: 260, height: 2, background: S.surface2, overflow: 'hidden' }}>
+              <div className="cu-progress" style={{ height: '100%', background: S.accent }} />
+            </div>
           </>
         ) : (
           <>
             <svg
-              width="28"
-              height="28"
+              width="30"
+              height="30"
               viewBox="0 0 24 24"
               fill="none"
-              stroke={dragging ? S.accent : S.textTertiary}
-              strokeWidth="1.5"
+              stroke={dragging ? S.accent : S.dim}
+              strokeWidth="1.25"
               strokeLinecap="round"
               strokeLinejoin="round"
               aria-hidden="true"
+              style={{ transition: 'stroke 0.3s ease' }}
             >
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
               <polyline points="17 8 12 3 7 8" />
               <line x1="12" y1="3" x2="12" y2="15" />
             </svg>
-            <p style={{ margin: 0, fontSize: 14, color: S.textSecondary, textAlign: 'center' }}>
-              Arrastra un archivo aqui o{' '}
-              <span style={{ color: S.accent, fontWeight: 600 }}>haz clic para seleccionar</span>
+            <p
+              style={{
+                margin: 0,
+                fontFamily: S.sans,
+                fontSize: '0.92rem',
+                color: S.cream,
+                textAlign: 'center',
+                lineHeight: 1.5,
+              }}
+            >
+              Arrastra un archivo aquí o{' '}
+              <span style={{ color: S.accent, fontWeight: 500 }}>haz clic para seleccionar</span>
             </p>
-            <p style={{ margin: 0, fontSize: 12, color: S.textTertiary }}>
-              Cualquier tipo de archivo — maximo 200 MB
+            <p
+              style={{
+                margin: 0,
+                fontFamily: S.mono,
+                fontSize: '0.58rem',
+                letterSpacing: '0.16em',
+                textTransform: 'uppercase',
+                color: S.dim,
+              }}
+            >
+              Cualquier formato · máximo 200 MB
             </p>
           </>
         )}
@@ -271,24 +307,32 @@ export default function ClientUploader({ projectId, clientId }: Props) {
         disabled={uploading}
       />
 
-      {/* Spinner keyframes */}
+      {/* Keyframes + hover styles */}
       <style>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
+        @keyframes cu-spin { to { transform: rotate(360deg); } }
+        @keyframes cu-indeterminate {
+          0%   { transform: translateX(-100%); }
+          100% { transform: translateX(400%); }
         }
+        .cu-progress { width: 30%; animation: cu-indeterminate 1.1s ease-in-out infinite; }
+        .cu-dropzone[data-dragging="false"]:hover { border-color: ${S.accent}; background: var(--portal-surface-2); }
+        .cu-row { transition: border-color 0.25s ease, background 0.25s ease; }
+        .cu-row:hover { border-color: rgba(237,232,224,0.28); background: var(--portal-surface-2); }
+        .cu-download:hover { color: ${S.accent}; }
       `}</style>
 
       {/* Error message */}
       {error && (
         <div
           style={{
-            marginTop:  12,
-            padding:    '10px 14px',
-            borderRadius: 8,
-            background: 'rgba(255,69,58,0.10)',
-            border:     `1px solid rgba(255,69,58,0.25)`,
-            fontSize:   13,
-            color:      S.danger,
+            marginTop:    '0.9rem',
+            padding:      '0.7rem 1rem',
+            borderRadius: '4px',
+            background:   'rgba(232,52,26,0.08)',
+            border:       `1px solid rgba(232,52,26,0.30)`,
+            fontFamily:   S.sans,
+            fontSize:     '0.85rem',
+            color:        S.danger,
           }}
         >
           {error}
@@ -296,15 +340,34 @@ export default function ClientUploader({ projectId, clientId }: Props) {
       )}
 
       {/* File list */}
-      <div style={{ marginTop: 20 }}>
+      <div style={{ marginTop: '1.6rem' }}>
         {loading ? (
-          <p style={{ fontSize: 13, color: S.textTertiary, margin: 0 }}>Cargando archivos...</p>
+          <p
+            style={{
+              fontFamily: S.mono,
+              fontSize: '0.6rem',
+              letterSpacing: '0.16em',
+              textTransform: 'uppercase',
+              color: S.dim,
+              margin: 0,
+            }}
+          >
+            Cargando archivos…
+          </p>
         ) : uploads.length === 0 ? (
-          <p style={{ fontSize: 13, color: S.textTertiary, margin: 0 }}>
-            Aun no has subido ningun archivo para este proyecto.
+          <p
+            style={{
+              fontFamily: S.serif,
+              fontStyle: 'italic',
+              fontSize: '1.05rem',
+              color: S.muted,
+              margin: 0,
+            }}
+          >
+            Aún no has subido ningún archivo para este proyecto.
           </p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
             {uploads.map((upload) => (
               <FileRow key={upload.id} upload={upload} />
             ))}
@@ -320,22 +383,18 @@ export default function ClientUploader({ projectId, clientId }: Props) {
 // ---------------------------------------------------------------------------
 
 function FileRow({ upload }: { upload: ClientUpload }) {
-  const [hovered, setHovered] = useState(false)
-
   return (
     <div
+      className="cu-row"
       style={{
         display:      'flex',
         alignItems:   'center',
-        gap:          12,
-        padding:      '12px 14px',
-        borderRadius: 10,
-        background:   hovered ? S.surfaceHover : S.surface,
+        gap:          '0.9rem',
+        padding:      '0.85rem 1rem',
+        borderRadius: '4px',
+        background:   S.surface,
         border:       `1px solid ${S.border}`,
-        transition:   'background 0.15s ease',
       }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
     >
       {/* File icon */}
       <svg
@@ -343,8 +402,8 @@ function FileRow({ upload }: { upload: ClientUpload }) {
         height="20"
         viewBox="0 0 24 24"
         fill="none"
-        stroke={S.textTertiary}
-        strokeWidth="1.5"
+        stroke={S.dim}
+        strokeWidth="1.25"
         strokeLinecap="round"
         strokeLinejoin="round"
         aria-hidden="true"
@@ -359,26 +418,28 @@ function FileRow({ upload }: { upload: ClientUpload }) {
         <p
           style={{
             margin:       0,
-            fontSize:     14,
+            fontFamily:   S.sans,
+            fontSize:     '0.92rem',
             fontWeight:   500,
-            color:        S.textPrimary,
+            color:        S.cream,
             overflow:     'hidden',
             textOverflow: 'ellipsis',
             whiteSpace:   'nowrap',
-            fontFamily:   S.font,
           }}
         >
           {upload.file_name}
         </p>
         <p
           style={{
-            margin:    '2px 0 0',
-            fontSize:  12,
-            color:     S.textTertiary,
-            fontFamily: S.font,
+            margin:        '0.3rem 0 0',
+            fontFamily:    S.mono,
+            fontSize:      '0.58rem',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color:         S.dim,
           }}
         >
-          {upload.file_size != null ? formatBytes(upload.file_size) + ' — ' : ''}
+          {upload.file_size != null ? formatBytes(upload.file_size) + ' · ' : ''}
           {formatDate(upload.uploaded_at)}
         </p>
       </div>
@@ -390,27 +451,28 @@ function FileRow({ upload }: { upload: ClientUpload }) {
         target="_blank"
         rel="noopener noreferrer"
         title="Descargar"
+        aria-label={`Descargar ${upload.file_name}`}
+        className="cu-download"
         style={{
           display:        'flex',
           alignItems:     'center',
           justifyContent: 'center',
           flexShrink:     0,
-          width:          32,
-          height:         32,
-          borderRadius:   8,
-          background:     hovered ? 'rgba(0,113,227,0.15)' : 'transparent',
-          color:          S.accent,
+          width:          34,
+          height:         34,
+          borderRadius:   '4px',
+          color:          S.muted,
           textDecoration: 'none',
-          transition:     'background 0.15s ease',
+          transition:     'color 0.25s ease',
         }}
       >
         <svg
-          width="15"
-          height="15"
+          width="16"
+          height="16"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
-          strokeWidth="2"
+          strokeWidth="1.75"
           strokeLinecap="round"
           strokeLinejoin="round"
           aria-hidden="true"

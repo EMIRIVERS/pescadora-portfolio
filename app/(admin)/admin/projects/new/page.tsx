@@ -28,8 +28,8 @@ export default async function NewProjectPage() {
       <div
         className="sticky top-0 z-10 backdrop-blur-md"
         style={{
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
-          backgroundColor: 'rgba(17,17,17,0.85)',
+          borderBottom: '1px solid var(--dash-border)',
+          backgroundColor: 'var(--dash-surface-1)',
         }}
       >
         <div className="mx-auto max-w-2xl px-6 h-14 flex items-center">

@@ -1,12 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { KanbanBoard } from '@/components/admin/kanban/kanban-board'
 import { ProjectFilterSelect } from '@/components/admin/kanban/project-filter-select'
+import { NewTaskButton } from '@/components/admin/kanban/new-task-button'
 import type {
   KanbanBoardWithTasks,
   KanbanTaskWithAssignee,
   Project,
 } from '@/lib/supabase/types'
-import { Plus } from 'lucide-react'
 
 interface PageProps {
   searchParams: Promise<{ project?: string }>
@@ -89,8 +89,8 @@ export default async function KanbanPage({ searchParams }: PageProps) {
       <div
         className="sticky top-0 z-10"
         style={{
-          backgroundColor: 'rgba(17,17,17,0.85)',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          backgroundColor: 'var(--dash-surface-1)',
+          borderBottom: '1px solid var(--dash-border)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
         }}
@@ -111,23 +111,7 @@ export default async function KanbanPage({ searchParams }: PageProps) {
             />
           </div>
 
-          <button
-            type="button"
-            className="flex items-center gap-1.5 transition-opacity hover:opacity-80 active:opacity-60"
-            style={{
-              backgroundColor: '#0071E3',
-              color: '#fff',
-              fontSize: '13px',
-              fontWeight: 500,
-              borderRadius: '8px',
-              padding: '6px 14px',
-              border: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            <Plus size={14} aria-hidden="true" />
-            New task
-          </button>
+          <NewTaskButton />
         </div>
       </div>
 

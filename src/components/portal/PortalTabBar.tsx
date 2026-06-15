@@ -21,8 +21,8 @@ export default function PortalTabBar() {
 
   return (
     <nav
-      className="sm:hidden fixed bottom-0 inset-x-0 z-50 flex border-t border-zinc-800 bg-zinc-950/95 backdrop-blur-md"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      className="sm:hidden fixed bottom-0 inset-x-0 z-50 flex border-t backdrop-blur-md"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)', borderColor: 'rgba(237,232,224,0.1)', background: 'rgba(5,5,5,0.95)' }}
     >
       {TABS.map(({ href, label, Icon, exact }) => {
         const active = exact ? pathname === href : pathname.startsWith(href)
@@ -31,9 +31,8 @@ export default function PortalTabBar() {
             key={href}
             href={href}
             aria-current={active ? 'page' : undefined}
-            className={`flex-1 flex flex-col items-center justify-center gap-1 min-h-[60px] transition-colors ${
-              active ? 'text-sky-400' : 'text-zinc-300 active:bg-zinc-800/60'
-            }`}
+            className="flex-1 flex flex-col items-center justify-center gap-1 min-h-[60px] transition-colors"
+            style={{ color: active ? '#e8341a' : '#8a857d' }}
           >
             <Icon className="w-5 h-5" aria-hidden="true" />
             <span className="text-[11px] font-medium">{label}</span>

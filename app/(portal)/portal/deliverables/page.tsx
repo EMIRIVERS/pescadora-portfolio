@@ -4,6 +4,7 @@ import { resolvePortalClient, portalLink } from '@/lib/portal/preview'
 import type { Deliverable, DeliverableStatus, DeliverableType, Project } from '@/lib/supabase/types'
 // Note: deliverables are fetched flat and joined to projects in memory.
 import DeliverableCard from '@/components/portal/deliverable-card'
+import { PortalShell, BackLink, Masthead, EmptyState, PORTAL } from '@/components/portal/ui'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -91,119 +92,93 @@ export default async function DeliverablesPage({ searchParams }: PageProps) {
   const totalFiltered = filtered.length
 
   return (
-    <main className="min-h-screen bg-zinc-950">
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 py-12">
-        <PageHeader />
+    <PortalShell maxWidth={920}>
+      <BackLink href={portalLink('/portal', ctx)} label="Mis proyectos" />
 
-        {/* Filter tabs */}
-        <div className="flex items-center gap-1.5 mb-8 flex-wrap">
-          {FILTER_TABS.map(({ key, label }) => {
-            const isActive = key === activeFilter
-            const baseHref = key === 'todos' ? '/portal/deliverables' : `/portal/deliverables?filter=${key}`
-            const href = portalLink(baseHref, ctx)
-            return (
-              <Link
-                key={key}
-                href={href}
-                className={`text-xs font-medium px-3.5 py-1.5 rounded-full border transition-all duration-150 ${
-                  isActive
-                    ? 'bg-white text-zinc-950 border-white'
-                    : 'bg-transparent text-zinc-400 border-zinc-700 hover:border-zinc-500 hover:text-zinc-200'
-                }`}
-              >
-                {label}
-              </Link>
-            )
-          })}
+      <Masthead
+        title="Entregables"
+        lead="Todos los archivos y materiales de tus proyectos, organizados por producción."
+      />
 
-          {totalFiltered > 0 && (
-            <span className="ml-auto text-zinc-600 text-xs">
-              {totalFiltered} entregable{totalFiltered !== 1 ? 's' : ''}
-            </span>
-          )}
-        </div>
+      {/* Filter tabs */}
+      <div className="flex items-center gap-2 flex-wrap" style={{ marginBottom: 'clamp(2rem, 4vw, 2.75rem)' }}>
+        {FILTER_TABS.map(({ key, label }) => {
+          const isActive = key === activeFilter
+          const baseHref = key === 'todos' ? '/portal/deliverables' : `/portal/deliverables?filter=${key}`
+          const href = portalLink(baseHref, ctx)
+          return (
+            <Link
+              key={key}
+              href={href}
+              className={`portal-tab${isActive ? ' portal-tab--active' : ''}`}
+            >
+              {label}
+            </Link>
+          )
+        })}
 
-        {/* Content */}
-        {groups.length === 0 ? (
-          <EmptyState
-            message={
-              activeFilter === 'todos'
-                ? 'Los entregables apareceran aqui cuando esten listos.'
-                : 'No hay entregables que coincidan con este filtro.'
-            }
-          />
-        ) : (
-          <div className="space-y-10">
-            {groups.map(({ project, deliverables }) => (
-              <section key={project.id}>
-                {/* Project section header */}
-                <div className="flex items-center gap-3 mb-4">
-                  <Link
-                    href={`/portal/projects/${project.id}`}
-                    className="text-zinc-300 text-sm font-medium hover:text-white transition-colors"
-                  >
-                    {project.title}
-                  </Link>
-                  <span className="text-zinc-700 text-xs">
-                    {deliverables.length} entregable{deliverables.length !== 1 ? 's' : ''}
-                  </span>
-                  <div className="flex-1 h-px bg-zinc-800" />
-                  <Link
-                    href={`/portal/projects/${project.id}`}
-                    className="text-zinc-600 hover:text-zinc-400 text-xs transition-colors"
-                  >
-                    Ver proyecto &rarr;
-                  </Link>
-                </div>
-
-                <div className="space-y-3">
-                  {deliverables.map((deliverable) => (
-                    <DeliverableCard key={deliverable.id} deliverable={deliverable} />
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
+        {totalFiltered > 0 && (
+          <span
+            className="ml-auto"
+            style={{ fontFamily: PORTAL.mono, fontSize: '0.6rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: PORTAL.dim }}
+          >
+            {totalFiltered} entregable{totalFiltered !== 1 ? 's' : ''}
+          </span>
         )}
       </div>
-    </main>
+
+      {/* Content */}
+      {groups.length === 0 ? (
+        <EmptyState
+          title={
+            activeFilter === 'todos'
+              ? 'Aún no hay entregables.'
+              : 'Sin coincidencias.'
+          }
+          body={
+            activeFilter === 'todos'
+              ? 'Los entregables aparecerán aquí cuando estén listos para tu revisión.'
+              : 'No hay entregables que coincidan con este filtro.'
+          }
+        />
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(2.5rem, 5vw, 3.5rem)' }}>
+          {groups.map(({ project, deliverables }) => (
+            <section key={project.id}>
+              {/* Project section header */}
+              <div className="flex items-center gap-4" style={{ marginBottom: '1.4rem' }}>
+                <Link
+                  href={portalLink(`/portal/projects/${project.id}`, ctx)}
+                  className="portal-textlink"
+                  style={{ fontFamily: PORTAL.serif, fontWeight: 500, fontSize: 'clamp(1.25rem, 2.4vw, 1.6rem)', lineHeight: 1.1, letterSpacing: '-0.01em', color: PORTAL.cream }}
+                >
+                  {project.title}
+                </Link>
+                <span
+                  className="shrink-0"
+                  style={{ fontFamily: PORTAL.mono, fontSize: '0.58rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: PORTAL.dim }}
+                >
+                  {deliverables.length} entregable{deliverables.length !== 1 ? 's' : ''}
+                </span>
+                <div className="flex-1" style={{ height: '1px', background: PORTAL.border }} />
+                <Link
+                  href={portalLink(`/portal/projects/${project.id}`, ctx)}
+                  className="portal-textlink shrink-0"
+                  style={{ fontFamily: PORTAL.mono, fontSize: '0.58rem', letterSpacing: '0.14em', textTransform: 'uppercase' }}
+                >
+                  Ver proyecto &rarr;
+                </Link>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                {deliverables.map((deliverable) => (
+                  <DeliverableCard key={deliverable.id} deliverable={deliverable} />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
+    </PortalShell>
   )
 }
-
-// ---------------------------------------------------------------------------
-// Sub-components
-// ---------------------------------------------------------------------------
-
-function PageHeader() {
-  return (
-    <div className="mb-8">
-      <Link
-        href="/portal"
-        className="inline-flex items-center gap-1.5 text-zinc-500 hover:text-white text-sm transition-colors mb-6"
-      >
-        <span>&larr;</span>
-        <span>Mis proyectos</span>
-      </Link>
-      <p className="text-zinc-500 text-xs uppercase tracking-widest mb-1">Portal de cliente</p>
-      <h1 className="text-white text-2xl sm:text-3xl font-semibold">Entregables</h1>
-      <p className="text-zinc-400 mt-2 text-sm">
-        Todos los archivos y materiales de tus proyectos.
-      </p>
-    </div>
-  )
-}
-
-function EmptyState({ message }: { message: string }) {
-  return (
-    <div className="border border-zinc-800 rounded-xl p-12 text-center">
-      <p className="text-zinc-500 text-sm">{message}</p>
-      <a
-        href="mailto:hola@xicofilms.com"
-        className="inline-block mt-4 text-sky-400 hover:text-sky-300 text-sm transition-colors"
-      >
-        Contactar a XICO Films
-      </a>
-    </div>
-  )
-}
-

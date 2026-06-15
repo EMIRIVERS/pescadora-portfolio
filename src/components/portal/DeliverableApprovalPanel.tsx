@@ -5,6 +5,23 @@ import type { DeliverableStatus } from '@/lib/supabase/types'
 import { approveDeliverable, rejectDeliverable } from '@/lib/actions/portal'
 
 // ---------------------------------------------------------------------------
+// Cinematic brand tokens
+// ---------------------------------------------------------------------------
+
+const CREAM = 'var(--portal-text)'
+const MUTED = 'var(--portal-text-muted)'
+const FAINT = 'var(--portal-text-dim)'
+const ACCENT = 'var(--portal-accent)'
+const BORDER = 'var(--portal-border)'
+const SURFACE2 = 'var(--portal-surface-2)'
+const SERIF = 'var(--portal-serif)'
+const MONO = 'var(--portal-mono)'
+const SANS = 'var(--portal-sans)'
+const GREEN = 'var(--portal-badge-paid-color)'
+const GREEN_BG = 'var(--portal-badge-paid-bg)'
+const GREEN_BORDER = 'var(--portal-badge-paid-border)'
+
+// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
@@ -81,50 +98,45 @@ export default function DeliverableApprovalPanel({
 
   // Shared container style
   const containerStyle: React.CSSProperties = {
-    marginTop: 16,
-    paddingTop: 16,
-    borderTop: '1px solid rgba(255,255,255,0.06)',
+    marginTop: '1.4rem',
+    paddingTop: '1.4rem',
+    borderTop: `1px solid ${BORDER}`,
+    fontFamily: SANS,
   }
 
   // ── Approved state ────────────────────────────────────────────────────────
   if (currentStatus === 'approved') {
     return (
       <div style={containerStyle}>
-        <div
+        <StyleBlock />
+
+        <span
+          className="flex items-center gap-2"
           style={{
             display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '4px 10px',
-            borderRadius: 999,
-            background: 'rgba(52,199,89,0.12)',
-            border: '1px solid rgba(52,199,89,0.25)',
-            marginBottom: currentFeedback || clientApprovedAt ? 8 : 0,
+            fontFamily: MONO,
+            fontSize: '0.58rem',
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            color: GREEN,
+            marginBottom: currentFeedback || clientApprovedAt ? '0.7rem' : 0,
           }}
         >
-          <span
-            style={{
-              width: 6,
-              height: 6,
-              borderRadius: '50%',
-              background: '#34C759',
-              flexShrink: 0,
-            }}
-          />
-          <span
-            style={{
-              fontSize: 12,
-              fontWeight: 600,
-              color: '#34C759',
-              letterSpacing: '0.01em',
-            }}
-          >
-            Aprobado
-          </span>
-        </div>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: GREEN, flexShrink: 0 }} />
+          Aprobado
+        </span>
 
         {clientApprovedAt && (
-          <p style={{ fontSize: 11, color: '#86868B', margin: '4px 0 0' }}>
+          <p
+            style={{
+              fontFamily: MONO,
+              fontSize: '0.58rem',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              color: FAINT,
+              margin: '0.3rem 0 0',
+            }}
+          >
             {formatDate(clientApprovedAt)}
           </p>
         )}
@@ -132,13 +144,15 @@ export default function DeliverableApprovalPanel({
         {currentFeedback && (
           <p
             style={{
-              fontSize: 12,
-              color: '#AEAEB2',
-              marginTop: 6,
-              padding: '8px 10px',
-              background: 'rgba(255,255,255,0.04)',
-              borderRadius: 8,
-              lineHeight: 1.5,
+              fontFamily: SANS,
+              fontSize: '0.85rem',
+              color: CREAM,
+              marginTop: '0.7rem',
+              padding: '0.7rem 0.85rem',
+              background: SURFACE2,
+              border: `1px solid ${BORDER}`,
+              borderRadius: '4px',
+              lineHeight: 1.55,
             }}
           >
             {currentFeedback}
@@ -150,15 +164,20 @@ export default function DeliverableApprovalPanel({
           type="button"
           onClick={() => { setMode('rejecting'); setErrorMsg(null) }}
           disabled={isPending}
+          className="portal-textlink"
           style={{
-            marginTop: 10,
-            fontSize: 11,
-            color: '#86868B',
+            display: 'block',
+            marginTop: '1rem',
+            fontFamily: MONO,
+            fontSize: '0.6rem',
+            letterSpacing: '0.16em',
+            textTransform: 'uppercase',
+            color: MUTED,
             background: 'none',
             border: 'none',
             padding: 0,
-            cursor: 'pointer',
-            textDecoration: 'underline',
+            cursor: isPending ? 'not-allowed' : 'pointer',
+            opacity: isPending ? 0.6 : 1,
           }}
         >
           Solicitar cambios
@@ -186,12 +205,14 @@ export default function DeliverableApprovalPanel({
       <div style={containerStyle}>
         <p
           style={{
-            fontSize: 12,
-            color: '#636366',
+            fontFamily: SERIF,
             fontStyle: 'italic',
+            fontSize: '1.05rem',
+            color: MUTED,
+            margin: 0,
           }}
         >
-          Pendiente de revision — el equipo lo subira pronto.
+          Pendiente de revisión — el equipo lo subirá pronto.
         </p>
       </div>
     )
@@ -200,68 +221,83 @@ export default function DeliverableApprovalPanel({
   // ── Review state (default — shows action buttons) ─────────────────────────
   return (
     <div style={containerStyle}>
+      <StyleBlock />
+
       {/* Previously rejected feedback */}
       {currentFeedback && clientRejectedAt && (
         <div
           style={{
-            padding: '8px 10px',
-            background: 'rgba(255,69,58,0.07)',
-            border: '1px solid rgba(255,69,58,0.18)',
-            borderRadius: 8,
-            marginBottom: 10,
+            padding: '0.85rem 1rem',
+            background: 'rgba(232,52,26,0.07)',
+            border: '1px solid rgba(232,52,26,0.22)',
+            borderRadius: '4px',
+            marginBottom: '1rem',
           }}
         >
-          <p style={{ fontSize: 11, color: '#FF6961', margin: '0 0 4px', fontWeight: 600 }}>
+          <p
+            style={{
+              fontFamily: MONO,
+              fontSize: '0.58rem',
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              color: ACCENT,
+              margin: '0 0 0.5rem',
+            }}
+          >
             Cambios solicitados el {formatDate(clientRejectedAt)}
           </p>
-          <p style={{ fontSize: 12, color: '#AEAEB2', margin: 0, lineHeight: 1.5 }}>
+          <p style={{ fontFamily: SANS, fontSize: '0.85rem', color: CREAM, margin: 0, lineHeight: 1.55 }}>
             {currentFeedback}
           </p>
         </div>
       )}
 
       {mode === 'idle' && (
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
           <button
             type="button"
             onClick={handleApprove}
             disabled={isPending}
+            className="dap-btn dap-btn-approve"
             style={{
               minHeight: 44,
-              padding: '7px 16px',
-              borderRadius: 8,
-              border: '1px solid rgba(52,199,89,0.35)',
-              background: isPending ? 'rgba(52,199,89,0.06)' : 'rgba(52,199,89,0.10)',
-              color: '#34C759',
-              fontSize: 13,
-              fontWeight: 600,
+              padding: '0.7rem 1.4rem',
+              borderRadius: '4px',
+              border: `1px solid ${GREEN_BORDER}`,
+              background: isPending ? 'transparent' : GREEN_BG,
+              color: GREEN,
+              fontFamily: MONO,
+              fontSize: '0.62rem',
+              letterSpacing: '0.2em',
+              textTransform: 'uppercase',
               cursor: isPending ? 'not-allowed' : 'pointer',
-              transition: 'background 0.15s',
               opacity: isPending ? 0.6 : 1,
             }}
           >
-            {isPending ? 'Procesando...' : 'Aprobar'}
+            {isPending ? 'Procesando…' : 'Aprobar'}
           </button>
 
           <button
             type="button"
             onClick={() => { setMode('rejecting'); setErrorMsg(null) }}
             disabled={isPending}
+            className="dap-btn dap-btn-reject"
             style={{
               minHeight: 44,
-              padding: '7px 16px',
-              borderRadius: 8,
-              border: '1px solid rgba(255,255,255,0.10)',
-              background: 'rgba(255,255,255,0.04)',
-              color: '#AEAEB2',
-              fontSize: 13,
-              fontWeight: 500,
+              padding: '0.7rem 1.4rem',
+              borderRadius: '4px',
+              border: `1px solid ${BORDER}`,
+              background: 'transparent',
+              color: MUTED,
+              fontFamily: MONO,
+              fontSize: '0.62rem',
+              letterSpacing: '0.2em',
+              textTransform: 'uppercase',
               cursor: isPending ? 'not-allowed' : 'pointer',
-              transition: 'background 0.15s',
               opacity: isPending ? 0.6 : 1,
             }}
           >
-            Solicitar cambios
+            Pedir cambios
           </button>
         </div>
       )}
@@ -281,14 +317,17 @@ export default function DeliverableApprovalPanel({
               type="button"
               onClick={handleApprove}
               disabled={isPending}
+              className="dap-btn dap-btn-approve"
               style={{
-                padding: '7px 16px',
-                borderRadius: 8,
-                border: '1px solid rgba(52,199,89,0.35)',
-                background: 'rgba(52,199,89,0.10)',
-                color: '#34C759',
-                fontSize: 13,
-                fontWeight: 600,
+                padding: '0.7rem 1.4rem',
+                borderRadius: '4px',
+                border: `1px solid ${GREEN_BORDER}`,
+                background: GREEN_BG,
+                color: GREEN,
+                fontFamily: MONO,
+                fontSize: '0.62rem',
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
                 cursor: isPending ? 'not-allowed' : 'pointer',
                 opacity: isPending ? 0.6 : 1,
               }}
@@ -300,9 +339,26 @@ export default function DeliverableApprovalPanel({
       )}
 
       {mode === 'idle' && errorMsg && (
-        <p style={{ fontSize: 12, color: '#FF453A', marginTop: 8 }}>{errorMsg}</p>
+        <p style={{ fontFamily: SANS, fontSize: '0.82rem', color: ACCENT, marginTop: '0.7rem' }}>{errorMsg}</p>
       )}
     </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Shared hover styles
+// ---------------------------------------------------------------------------
+
+function StyleBlock() {
+  return (
+    <style>{`
+      .dap-btn { transition: border-color 0.25s ease, background 0.25s ease, color 0.25s ease; }
+      .dap-btn-approve:hover:not(:disabled) { background: rgba(48,209,88,0.20); color: #fff; }
+      .dap-btn-reject:hover:not(:disabled) { border-color: ${ACCENT}; color: ${ACCENT}; }
+      .dap-submit { transition: border-color 0.25s ease, background 0.25s ease, color 0.25s ease; }
+      .dap-submit:hover:not(:disabled) { background: rgba(232,52,26,0.18); color: #fff; }
+      .dap-textarea:focus { border-color: ${ACCENT}; }
+    `}</style>
   )
 }
 
@@ -334,56 +390,61 @@ function FeedbackForm({
   extraAction,
 }: FeedbackFormProps) {
   return (
-    <div style={{ marginTop: 10 }}>
+    <div style={{ marginTop: '1rem' }}>
       <textarea
         value={feedback}
         onChange={(e) => onChange(e.target.value)}
         placeholder={
           required
-            ? 'Describe los cambios que necesitas... (obligatorio)'
-            : 'Comentario opcional...'
+            ? 'Describe los cambios que necesitas… (obligatorio)'
+            : 'Comentario opcional…'
         }
         rows={3}
         disabled={isPending}
+        className="dap-textarea"
         style={{
           width: '100%',
-          padding: '8px 10px',
-          borderRadius: 8,
-          border: '1px solid rgba(255,255,255,0.12)',
-          background: 'rgba(255,255,255,0.04)',
-          color: '#F5F5F7',
-          fontSize: 13,
+          padding: '0.7rem 0.85rem',
+          borderRadius: '4px',
+          border: `1px solid ${BORDER}`,
+          background: SURFACE2,
+          color: CREAM,
+          fontFamily: SANS,
+          fontSize: '0.88rem',
           resize: 'vertical',
           outline: 'none',
-          fontFamily: 'inherit',
-          lineHeight: 1.5,
+          lineHeight: 1.55,
           boxSizing: 'border-box',
+          transition: 'border-color 0.25s ease',
           opacity: isPending ? 0.6 : 1,
         }}
       />
 
       {errorMsg && (
-        <p style={{ fontSize: 12, color: '#FF453A', margin: '4px 0 0' }}>{errorMsg}</p>
+        <p style={{ fontFamily: SANS, fontSize: '0.82rem', color: ACCENT, margin: '0.4rem 0 0' }}>{errorMsg}</p>
       )}
 
-      <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.7rem', flexWrap: 'wrap' }}>
         <button
           type="button"
           onClick={onSubmit}
           disabled={isPending}
+          className="dap-submit"
           style={{
-            padding: '7px 16px',
-            borderRadius: 8,
-            border: '1px solid rgba(255,69,58,0.35)',
-            background: 'rgba(255,69,58,0.10)',
-            color: '#FF453A',
-            fontSize: 13,
-            fontWeight: 600,
+            padding: '0.7rem 1.4rem',
+            borderRadius: '4px',
+            border: `1px solid rgba(232,52,26,0.38)`,
+            background: 'rgba(232,52,26,0.12)',
+            color: ACCENT,
+            fontFamily: MONO,
+            fontSize: '0.62rem',
+            letterSpacing: '0.2em',
+            textTransform: 'uppercase',
             cursor: isPending ? 'not-allowed' : 'pointer',
             opacity: isPending ? 0.6 : 1,
           }}
         >
-          {isPending ? 'Enviando...' : submitLabel}
+          {isPending ? 'Enviando…' : submitLabel}
         </button>
 
         {extraAction}
@@ -392,13 +453,17 @@ function FeedbackForm({
           type="button"
           onClick={onCancel}
           disabled={isPending}
+          className="portal-textlink"
           style={{
-            padding: '7px 16px',
-            borderRadius: 8,
-            border: '1px solid rgba(255,255,255,0.08)',
+            padding: '0.7rem 1rem',
+            borderRadius: '4px',
+            border: 'none',
             background: 'none',
-            color: '#86868B',
-            fontSize: 13,
+            color: MUTED,
+            fontFamily: MONO,
+            fontSize: '0.62rem',
+            letterSpacing: '0.2em',
+            textTransform: 'uppercase',
             cursor: isPending ? 'not-allowed' : 'pointer',
             opacity: isPending ? 0.6 : 1,
           }}

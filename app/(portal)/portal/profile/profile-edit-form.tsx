@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import type { Database } from '@/lib/supabase/types'
+import { PORTAL } from '@/components/portal/ui'
 
 // ---------------------------------------------------------------------------
 // Supabase browser client (singleton for this component)
@@ -66,12 +67,48 @@ export default function ProfileEditForm({ profileId, initialFullName }: ProfileE
 
   return (
     <form onSubmit={handleSubmit} noValidate>
+      <style>{`
+        .portal-input {
+          width: 100%;
+          background: var(--portal-surface-2);
+          border: 1px solid var(--portal-border);
+          color: var(--portal-text);
+          font-family: var(--portal-sans);
+          font-size: 0.95rem;
+          border-radius: 4px;
+          padding: 0.8rem 1rem;
+          outline: none;
+          transition: border-color 0.25s ease, background 0.25s ease;
+        }
+        .portal-input::placeholder { color: var(--portal-text-dim); }
+        .portal-input:focus {
+          border-color: var(--portal-accent);
+          background: rgba(232,52,26,0.04);
+        }
+        .portal-submit {
+          font-family: var(--portal-mono);
+          font-size: 0.65rem;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          color: #faf7f2;
+          background: var(--portal-accent);
+          border: 1px solid var(--portal-accent);
+          border-radius: 4px;
+          padding: 0.8rem 1.6rem;
+          cursor: pointer;
+          transition: opacity 0.2s ease, background 0.2s ease;
+        }
+        .portal-submit:hover:not(:disabled) { background: #ff3a1f; }
+        .portal-submit:disabled { opacity: 0.35; cursor: not-allowed; }
+      `}</style>
+
       <div className="space-y-5">
         {/* Full name field */}
         <div>
           <label
             htmlFor="full-name"
-            className="block text-zinc-400 text-xs font-medium uppercase tracking-wider mb-2"
+            className="block"
+            style={{ fontFamily: PORTAL.mono, fontSize: '0.62rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: PORTAL.muted, marginBottom: '0.7rem' }}
           >
             Nombre completo
           </label>
@@ -85,25 +122,25 @@ export default function ProfileEditForm({ profileId, initialFullName }: ProfileE
             }}
             placeholder="Tu nombre"
             maxLength={120}
-            className="w-full bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-600 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500/40 transition-all"
+            className="portal-input"
           />
         </div>
 
         {/* Save button + status */}
         <div className="flex items-center gap-4">
-          <button
-            type="submit"
-            disabled={!isDirty || isPending}
-            className="text-sm font-medium px-5 py-2 rounded-lg transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed bg-white text-zinc-950 hover:bg-zinc-100 active:bg-zinc-200"
-          >
-            {isPending ? 'Guardando...' : 'Guardar cambios'}
+          <button type="submit" disabled={!isDirty || isPending} className="portal-submit">
+            {isPending ? 'Guardando…' : 'Guardar cambios'}
           </button>
 
           {saveState === 'success' && (
-            <span className="text-emerald-400 text-xs">Guardado correctamente.</span>
+            <span style={{ fontFamily: PORTAL.mono, fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#30d158' }}>
+              Guardado correctamente.
+            </span>
           )}
           {saveState === 'error' && errorMessage && (
-            <span className="text-red-400 text-xs">{errorMessage}</span>
+            <span style={{ fontFamily: PORTAL.mono, fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: PORTAL.accent }}>
+              {errorMessage}
+            </span>
           )}
         </div>
       </div>

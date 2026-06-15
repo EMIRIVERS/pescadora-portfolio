@@ -5,35 +5,21 @@ import { ExternalLink, MessageSquare, ChevronDown } from 'lucide-react'
 import type { Deliverable, DeliverableType, DeliverableStatus } from '@/lib/supabase/types'
 import DeliverableComments from '@/components/shared/deliverable-comments'
 import DeliverableApprovalPanel from '@/components/portal/DeliverableApprovalPanel'
+import { PORTAL } from '@/components/portal/ui'
 
 // ---------------------------------------------------------------------------
 // Badge configs
 // ---------------------------------------------------------------------------
 
-const TYPE_BADGE: Record<DeliverableType, { label: string; className: string }> = {
-  wip: {
-    label: 'WIP',
-    className: 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
-  },
-  final: {
-    label: 'Final',
-    className: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
-  },
+const TYPE_BADGE: Record<DeliverableType, { label: string; color: string }> = {
+  wip: { label: 'WIP', color: '#f5b942' },
+  final: { label: 'Final', color: '#4cd97a' },
 }
 
-const STATUS_BADGE: Record<DeliverableStatus, { label: string; className: string }> = {
-  pending: {
-    label: 'Pendiente',
-    className: 'bg-zinc-800 text-zinc-400 border border-zinc-700',
-  },
-  review: {
-    label: 'En revision',
-    className: 'bg-sky-500/10 text-sky-400 border border-sky-500/20',
-  },
-  approved: {
-    label: 'Aprobado',
-    className: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
-  },
+const STATUS_BADGE: Record<DeliverableStatus, { label: string; color: string }> = {
+  pending: { label: 'Pendiente', color: PORTAL.muted },
+  review: { label: 'En revisión', color: '#5ac8fa' },
+  approved: { label: 'Aprobado', color: '#4cd97a' },
 }
 
 // ---------------------------------------------------------------------------
@@ -52,39 +38,77 @@ export default function DeliverableCard({ deliverable, revisionCount }: Delivera
   const [commentsOpen, setCommentsOpen] = useState(false)
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 hover:border-zinc-700 transition-colors duration-200">
-      <div className="flex flex-wrap items-start gap-3">
+    <div className="portal-card" style={{ borderRadius: '6px', padding: 'clamp(1.25rem, 3vw, 1.6rem)' }}>
+      <div className="flex flex-wrap items-start gap-4">
         {/* Left — title + description */}
         <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-2 mb-1.5">
-            <h3 className="text-white text-sm font-medium leading-snug">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2" style={{ marginBottom: '0.6rem' }}>
+            <h3
+              style={{
+                fontFamily: PORTAL.serif,
+                fontWeight: 500,
+                fontSize: 'clamp(1.15rem, 2.2vw, 1.45rem)',
+                lineHeight: 1.15,
+                letterSpacing: '-0.01em',
+                color: PORTAL.cream,
+                margin: 0,
+              }}
+            >
               {deliverable.title}
             </h3>
             <span
-              className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full ${typeBadge.className}`}
+              style={{
+                fontFamily: PORTAL.mono,
+                fontSize: '0.56rem',
+                letterSpacing: '0.18em',
+                textTransform: 'uppercase',
+                color: typeBadge.color,
+                border: `1px solid ${typeBadge.color}`,
+                borderRadius: '2px',
+                padding: '0.15rem 0.45rem',
+                opacity: 0.92,
+              }}
             >
               {typeBadge.label}
             </span>
             {/* Revision badge — only shown when there is at least one revision */}
             {typeof revisionCount === 'number' && revisionCount > 0 && (
-              <span className="inline-flex items-center text-xs font-medium px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700 font-mono tracking-tight">
+              <span
+                style={{
+                  fontFamily: PORTAL.mono,
+                  fontSize: '0.56rem',
+                  letterSpacing: '0.1em',
+                  color: PORTAL.muted,
+                  border: `1px solid ${PORTAL.border}`,
+                  borderRadius: '2px',
+                  padding: '0.15rem 0.4rem',
+                }}
+              >
                 v{revisionCount}
               </span>
             )}
           </div>
 
           {deliverable.description && (
-            <p className="text-zinc-500 text-xs leading-relaxed">
+            <p style={{ fontFamily: PORTAL.sans, fontSize: '0.85rem', lineHeight: 1.6, color: PORTAL.muted, margin: 0 }}>
               {deliverable.description}
             </p>
           )}
         </div>
 
         {/* Right — status badge + view button */}
-        <div className="flex items-center gap-2.5 shrink-0 mt-0.5">
+        <div className="flex items-center gap-4 shrink-0" style={{ marginTop: '0.2rem' }}>
           <span
-            className={`inline-flex items-center text-xs font-medium px-2.5 py-1 rounded-full ${statusBadge.className}`}
+            className="flex items-center gap-2"
+            style={{
+              fontFamily: PORTAL.mono,
+              fontSize: '0.58rem',
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: statusBadge.color,
+            }}
           >
+            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: statusBadge.color }} />
             {statusBadge.label}
           </span>
 
@@ -93,14 +117,30 @@ export default function DeliverableCard({ deliverable, revisionCount }: Delivera
               href={deliverable.url as string}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-sky-400 hover:text-sky-300 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/20 hover:border-sky-500/30 px-3 py-1.5 rounded-lg transition-all duration-150"
+              className="portal-textlink inline-flex items-center gap-1.5"
+              style={{
+                fontFamily: PORTAL.mono,
+                fontSize: '0.6rem',
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                color: PORTAL.accent,
+              }}
             >
-              <ExternalLink className="w-3 h-3" strokeWidth={2} />
+              <ExternalLink className="w-3 h-3" strokeWidth={1.75} />
               Ver
             </a>
           ) : (
-            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-zinc-600 bg-zinc-800/50 border border-zinc-800 px-3 py-1.5 rounded-lg cursor-not-allowed select-none">
-              <ExternalLink className="w-3 h-3" strokeWidth={2} />
+            <span
+              className="inline-flex items-center gap-1.5 select-none cursor-not-allowed"
+              style={{
+                fontFamily: PORTAL.mono,
+                fontSize: '0.6rem',
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                color: PORTAL.dim,
+              }}
+            >
+              <ExternalLink className="w-3 h-3" strokeWidth={1.75} />
               Ver
             </span>
           )}
@@ -117,11 +157,21 @@ export default function DeliverableCard({ deliverable, revisionCount }: Delivera
       />
 
       {/* Comments section */}
-      <div className="mt-4 pt-4 border-t border-zinc-800/60">
+      <div style={{ marginTop: '1.1rem', paddingTop: '1.1rem', borderTop: `1px solid ${PORTAL.border}` }}>
         <button
           type="button"
           onClick={() => setCommentsOpen((prev) => !prev)}
-          className="inline-flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors duration-150"
+          className="portal-textlink inline-flex items-center gap-1.5"
+          style={{
+            fontFamily: PORTAL.mono,
+            fontSize: '0.6rem',
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            background: 'transparent',
+            border: 'none',
+            padding: 0,
+            cursor: 'pointer',
+          }}
         >
           <MessageSquare className="w-3.5 h-3.5" strokeWidth={1.5} />
           Comentarios

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { resolvePortalClient, portalLink } from '@/lib/portal/preview'
@@ -21,12 +22,33 @@ function fmtShortDate(iso: string): string {
 
 const STATUS_CONFIG: Record<
   ProjectStatus,
-  { dot: string; text: string; label: string }
+  { color: string; label: string }
 > = {
-  pre_production: { dot: 'bg-amber-500', text: 'text-amber-400', label: 'Pre-produccion' },
-  production: { dot: 'bg-sky-500', text: 'text-sky-400', label: 'Produccion' },
-  post_production: { dot: 'bg-violet-500', text: 'text-violet-400', label: 'Post-produccion' },
-  delivered: { dot: 'bg-emerald-500', text: 'text-emerald-400', label: 'Entregado' },
+  pre_production: { color: '#f5a623', label: 'Pre-producción' },
+  production: { color: '#5ac8fa', label: 'Producción' },
+  post_production: { color: '#bf5af2', label: 'Post-producción' },
+  delivered: { color: '#30d158', label: 'Entregado' },
+}
+
+// ── Cinematic brand tokens ──────────────────────────────────────────────────
+const CREAM = '#ede8e0'
+const MUTED = '#8a857d'
+const FAINT = '#6b6560'
+const ACCENT = '#e8341a'
+const BORDER = 'rgba(237,232,224,0.10)'
+const SERIF = 'var(--font-cormorant), Georgia, serif'
+const MONO = 'var(--font-geist-mono), monospace'
+const SANS = 'var(--font-geist-sans), sans-serif'
+
+function SectionLabel({ index, children }: { index: string; children: ReactNode }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.7rem' }}>
+      <span style={{ fontFamily: MONO, fontSize: '0.62rem', letterSpacing: '0.2em', color: ACCENT }}>{index}</span>
+      <span style={{ fontFamily: MONO, fontSize: '0.62rem', letterSpacing: '0.22em', textTransform: 'uppercase', color: MUTED }}>
+        {children}
+      </span>
+    </div>
+  )
 }
 
 const PHASE_ORDER: ProjectStatus[] = [
@@ -95,35 +117,56 @@ export default async function PortalDashboard({ searchParams }: PortalDashboardP
   const displayName = clientName ?? 'Cliente'
   const firstName = displayName.split(/\s/)[0]
 
+  const projectsSectionIndex = upcoming.length > 0 ? '02' : '01'
+
   return (
-    <main className="min-h-screen bg-zinc-950">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-12">
-        {/* Greeting */}
-        <div className="mb-10">
-          <p className="text-zinc-500 text-xs uppercase tracking-widest mb-1">
+    <main style={{ background: '#050505', minHeight: '100vh' }}>
+      <style>{`
+        .portal-card {
+          background: rgba(237,232,224,0.022);
+          border: 1px solid ${BORDER};
+          transition: border-color 0.35s ease, background 0.35s ease, transform 0.35s ease;
+        }
+        .portal-card:hover {
+          border-color: rgba(232,52,26,0.45);
+          background: rgba(237,232,224,0.04);
+        }
+        .portal-card:hover .portal-detail { color: ${ACCENT}; }
+        .portal-card:hover .portal-title { color: #fff; }
+        .portal-event:hover { border-color: rgba(237,232,224,0.28); }
+        .portal-textlink { color: ${MUTED}; transition: color 0.25s ease; }
+        .portal-textlink:hover { color: ${ACCENT}; }
+      `}</style>
+
+      <div className="mx-auto max-w-6xl px-5 sm:px-6" style={{ paddingTop: 'clamp(3rem, 6vw, 5.5rem)', paddingBottom: '6rem' }}>
+
+        {/* ── Masthead ── */}
+        <header style={{ marginBottom: 'clamp(3rem, 6vw, 4.5rem)' }}>
+          <p style={{ fontFamily: MONO, fontSize: '0.62rem', letterSpacing: '0.3em', textTransform: 'uppercase', color: FAINT, margin: '0 0 1.3rem' }}>
+            <span style={{ color: ACCENT, marginRight: '0.6rem' }}>──</span>
             Portal de cliente
           </p>
-          <h1 className="text-white text-3xl font-semibold">
-            Hola, {firstName}
+          <h1 style={{ fontFamily: SERIF, fontWeight: 400, fontSize: 'clamp(2.6rem, 7vw, 4.6rem)', lineHeight: 1.02, letterSpacing: '-0.01em', color: CREAM, margin: 0 }}>
+            Hola, <span style={{ fontStyle: 'italic', color: ACCENT }}>{firstName}</span>
           </h1>
-          <p className="text-zinc-400 mt-2 text-sm">
+          <p style={{ fontFamily: SANS, fontSize: '0.95rem', lineHeight: 1.6, color: MUTED, margin: '1.4rem 0 0', maxWidth: '42rem' }}>
             {projects.length === 0
-              ? 'No tienes proyectos activos todavia.'
-              : `Tienes ${projects.length} proyecto${projects.length !== 1 ? 's' : ''}.`}
+              ? 'Aún no tienes producciones activas. En cuanto arranquemos, el detalle de cada proyecto vivirá aquí.'
+              : `Tienes ${projects.length} producci${projects.length !== 1 ? 'ones' : 'ón'} en curso. Sigue cada fase, aprueba entregables y revisa fechas clave.`}
           </p>
-        </div>
+        </header>
 
-        {/* Próximas fechas + acceso a rendimiento */}
+        {/* ── 01 · Próximas fechas ── */}
         {upcoming.length > 0 && (
-          <div className="mb-10">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-zinc-300 text-sm font-medium">Próximas fechas</h2>
-              <div className="flex items-center gap-3">
-                <Link href={portalLink('/portal/calendario', ctx)} className="text-sky-400 hover:text-sky-300 text-xs">
-                  Ver calendario
+          <section style={{ marginBottom: 'clamp(3rem, 6vw, 4.5rem)' }}>
+            <div className="flex items-center justify-between" style={{ marginBottom: '1.4rem' }}>
+              <SectionLabel index="01">Próximas fechas</SectionLabel>
+              <div className="flex items-center gap-5">
+                <Link href={portalLink('/portal/calendario', ctx)} className="portal-textlink" style={{ fontFamily: MONO, fontSize: '0.62rem', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+                  Calendario
                 </Link>
-                <Link href={portalLink('/portal/rendimiento', ctx)} className="text-sky-400 hover:text-sky-300 text-xs">
-                  Mi rendimiento
+                <Link href={portalLink('/portal/rendimiento', ctx)} className="portal-textlink" style={{ fontFamily: MONO, fontSize: '0.62rem', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+                  Rendimiento
                 </Link>
               </div>
             </div>
@@ -132,111 +175,107 @@ export default async function PortalDashboard({ searchParams }: PortalDashboardP
                 <Link
                   key={ev.id}
                   href={portalLink('/portal/calendario', ctx)}
-                  className="border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition-colors"
+                  className="portal-event"
+                  style={{ border: `1px solid ${BORDER}`, borderRadius: '4px', padding: '1.1rem 1.2rem', transition: 'border-color 0.3s ease', display: 'block' }}
                 >
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="w-2 h-2 rounded-full" style={{ background: EVENT_TYPE_COLORS[ev.type] }} />
-                    <span className="text-xs uppercase tracking-wide" style={{ color: EVENT_TYPE_COLORS[ev.type] }}>
+                  <div className="flex items-center gap-2" style={{ marginBottom: '0.7rem' }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: EVENT_TYPE_COLORS[ev.type] }} />
+                    <span style={{ fontFamily: MONO, fontSize: '0.56rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: EVENT_TYPE_COLORS[ev.type] }}>
                       {EVENT_TYPE_LABELS[ev.type]}
                     </span>
                   </div>
-                  <p className="text-white text-sm font-medium truncate">{ev.title}</p>
-                  <p className="text-zinc-500 text-xs mt-1 capitalize">{fmtShortDate(ev.event_date)}</p>
+                  <p style={{ fontFamily: SANS, fontSize: '0.9rem', fontWeight: 500, color: CREAM, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ev.title}</p>
+                  <p style={{ fontFamily: MONO, fontSize: '0.62rem', color: FAINT, margin: '0.5rem 0 0', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{fmtShortDate(ev.event_date)}</p>
                 </Link>
               ))}
             </div>
-          </div>
+          </section>
         )}
 
-        {/* Project cards */}
+        {/* ── Producciones ── */}
         {projects.length > 0 && (
-          <div className="grid gap-5 sm:grid-cols-2">
-            {projects.map((project) => {
-              const cfg = STATUS_CONFIG[project.status]
-              const phaseIndex = PHASE_ORDER.indexOf(project.status)
-              const { done, total } = deliverableProgress(project.id)
-              const progressPct = total > 0 ? Math.round((done / total) * 100) : 0
+          <section>
+            <div style={{ marginBottom: '1.6rem' }}>
+              <SectionLabel index={projectsSectionIndex}>Tus producciones</SectionLabel>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {projects.map((project) => {
+                const cfg = STATUS_CONFIG[project.status]
+                const phaseIndex = PHASE_ORDER.indexOf(project.status)
+                const { done, total } = deliverableProgress(project.id)
+                const progressPct = total > 0 ? Math.round((done / total) * 100) : 0
 
-              return (
-                <Link
-                  key={project.id}
-                  href={portalLink(`/portal/projects/${project.id}`, ctx)}
-                  className="group block bg-zinc-900 border border-zinc-800 rounded-xl p-6 hover:border-zinc-700 transition-all duration-200"
-                >
-                  {/* Header */}
-                  <div className="flex items-start justify-between gap-4 mb-5">
-                    <h2 className="text-white font-medium text-lg leading-snug group-hover:text-sky-100 transition-colors">
-                      {project.title}
-                    </h2>
-                    <span
-                      className={`flex items-center gap-1.5 shrink-0 text-xs font-medium ${cfg.text}`}
-                    >
-                      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-                      {cfg.label}
-                    </span>
-                  </div>
-
-                  {/* Phase mini-timeline */}
-                  <div className="flex items-center gap-1 mb-4" aria-label="Fases del proyecto">
-                    {PHASE_ORDER.map((phase, i) => {
-                      const isDone = i < phaseIndex
-                      const isCurrent = i === phaseIndex
-                      return (
-                        <div key={phase} className="flex-1 h-1.5 rounded-full overflow-hidden bg-zinc-800">
-                          <div
-                            className={`h-full rounded-full transition-all ${
-                              isDone
-                                ? 'bg-sky-700 w-full'
-                                : isCurrent
-                                ? 'bg-sky-400 w-full'
-                                : 'w-0'
-                            }`}
-                          />
-                        </div>
-                      )
-                    })}
-                  </div>
-
-                  {/* Footer */}
-                  <div className="flex items-center justify-between text-xs text-zinc-500 mt-3">
-                    {total > 0 ? (
-                      <span>
-                        {done} / {total} entregable{total !== 1 ? 's' : ''} aprobado{done !== 1 ? 's' : ''}
+                return (
+                  <Link
+                    key={project.id}
+                    href={portalLink(`/portal/projects/${project.id}`, ctx)}
+                    className="portal-card"
+                    style={{ borderRadius: '6px', padding: 'clamp(1.5rem, 3vw, 2rem)', display: 'block' }}
+                  >
+                    {/* Header */}
+                    <div className="flex items-start justify-between gap-4" style={{ marginBottom: '1.6rem' }}>
+                      <h2 className="portal-title" style={{ fontFamily: SERIF, fontWeight: 500, fontSize: 'clamp(1.4rem, 2.6vw, 1.85rem)', lineHeight: 1.12, letterSpacing: '-0.01em', color: CREAM, margin: 0, transition: 'color 0.3s ease' }}>
+                        {project.title}
+                      </h2>
+                      <span className="flex items-center gap-2 shrink-0" style={{ fontFamily: MONO, fontSize: '0.58rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: cfg.color, paddingTop: '0.5rem' }}>
+                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: cfg.color }} />
+                        {cfg.label}
                       </span>
-                    ) : (
-                      <span>Sin entregables aun</span>
-                    )}
-                    <span className="text-zinc-400 group-hover:text-white transition-colors font-medium">
-                      Ver detalle &rarr;
-                    </span>
-                  </div>
-
-                  {/* Progress bar */}
-                  {total > 0 && (
-                    <div className="mt-2 h-1 bg-zinc-800 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-sky-600 rounded-full transition-all duration-500"
-                        style={{ width: `${progressPct}%` }}
-                      />
                     </div>
-                  )}
-                </Link>
-              )
-            })}
-          </div>
+
+                    {/* Phase mini-timeline */}
+                    <div className="flex items-center gap-1.5" style={{ marginBottom: '1.5rem' }} aria-label="Fases del proyecto">
+                      {PHASE_ORDER.map((phase, i) => {
+                        const isDone = i < phaseIndex
+                        const isCurrent = i === phaseIndex
+                        return (
+                          <div key={phase} style={{ flex: 1, height: '2px', background: 'rgba(237,232,224,0.1)', overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: isDone || isCurrent ? '100%' : '0%', background: isCurrent ? ACCENT : isDone ? 'rgba(232,52,26,0.45)' : 'transparent' }} />
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    {/* Footer */}
+                    <div className="flex items-center justify-between" style={{ fontFamily: MONO, fontSize: '0.6rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: FAINT }}>
+                      {total > 0 ? (
+                        <span>{done} / {total} entregable{total !== 1 ? 's' : ''} aprobado{done !== 1 ? 's' : ''}</span>
+                      ) : (
+                        <span>Sin entregables aún</span>
+                      )}
+                      <span className="portal-detail" style={{ color: MUTED, transition: 'color 0.3s ease' }}>
+                        Ver detalle &nbsp;&rarr;
+                      </span>
+                    </div>
+
+                    {/* Progress bar */}
+                    {total > 0 && (
+                      <div style={{ marginTop: '0.9rem', height: '1px', background: 'rgba(237,232,224,0.1)', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${progressPct}%`, background: ACCENT }} />
+                      </div>
+                    )}
+                  </Link>
+                )
+              })}
+            </div>
+          </section>
         )}
 
-        {/* Empty state */}
+        {/* ── Empty state ── */}
         {projects.length === 0 && (
-          <div className="border border-zinc-800 rounded-xl p-12 text-center">
-            <p className="text-zinc-500 text-sm">
-              Cuando tu proyecto este en marcha aparecera aqui.
+          <div style={{ border: `1px solid ${BORDER}`, borderRadius: '6px', padding: 'clamp(3rem, 8vw, 5rem) 2rem', textAlign: 'center' }}>
+            <p style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 'clamp(1.3rem, 3vw, 1.8rem)', color: CREAM, margin: 0 }}>
+              Tu próxima producción empieza aquí.
+            </p>
+            <p style={{ fontFamily: SANS, fontSize: '0.9rem', color: MUTED, margin: '0.9rem auto 0', maxWidth: '28rem', lineHeight: 1.6 }}>
+              Cuando tu proyecto esté en marcha, aparecerá en este espacio con todas sus fases y entregables.
             </p>
             <a
               href="mailto:hola@xicofilms.com"
-              className="inline-block mt-4 text-sky-400 hover:text-sky-300 text-sm transition-colors"
+              className="portal-textlink"
+              style={{ display: 'inline-block', marginTop: '1.6rem', fontFamily: MONO, fontSize: '0.65rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: ACCENT }}
             >
-              Contactar a XICO Films
+              Contactar a XICO Films &rarr;
             </a>
           </div>
         )}

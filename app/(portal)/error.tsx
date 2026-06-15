@@ -2,6 +2,16 @@
 
 import { useEffect } from 'react'
 
+// ── Cinematic brand tokens ──────────────────────────────────────────────────
+const CREAM = 'var(--portal-text)'
+const MUTED = 'var(--portal-text-muted)'
+const FAINT = 'var(--portal-text-dim)'
+const ACCENT = 'var(--portal-accent)'
+const BORDER = 'var(--portal-border)'
+const SERIF = 'var(--portal-serif)'
+const MONO = 'var(--portal-mono)'
+const SANS = 'var(--portal-sans)'
+
 export default function PortalError({
   error,
   reset,
@@ -14,58 +24,120 @@ export default function PortalError({
   }, [error])
 
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: '60vh',
-      padding: '2rem',
-      fontFamily: "-apple-system, BlinkMacSystemFont, system-ui, sans-serif",
-      textAlign: 'center',
-    }}>
-      <p style={{
-        fontSize: 11,
-        fontWeight: 600,
-        letterSpacing: '0.08em',
-        textTransform: 'uppercase',
-        color: 'var(--portal-text-muted)',
-        marginBottom: '1rem',
-      }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '70vh',
+        background: 'var(--portal-bg)',
+        padding: 'clamp(2.5rem, 6vw, 4rem) 1.5rem',
+        textAlign: 'center',
+      }}
+    >
+      <style>{`
+        .portal-error-retry {
+          transition: border-color 0.3s ease, color 0.3s ease, background 0.3s ease;
+        }
+        .portal-error-retry:hover:not(:disabled) {
+          border-color: ${ACCENT};
+          color: #fff;
+          background: rgba(232,52,26,0.10);
+        }
+      `}</style>
+
+      {/* Eyebrow */}
+      <p
+        style={{
+          fontFamily: MONO,
+          fontSize: '0.62rem',
+          letterSpacing: '0.3em',
+          textTransform: 'uppercase',
+          color: FAINT,
+          margin: '0 0 1.3rem',
+        }}
+      >
+        <span style={{ color: ACCENT, marginRight: '0.6rem' }}>&mdash;&mdash;</span>
         Error
       </p>
-      <h2 style={{
-        fontSize: 'clamp(1.5rem, 4vw, 2rem)',
-        fontWeight: 700,
-        letterSpacing: '-0.02em',
-        color: 'var(--portal-text)',
-        margin: '0 0 0.75rem',
-      }}>
-        Algo salió mal
-      </h2>
-      <p style={{
-        fontSize: 14,
-        color: 'var(--portal-text-muted)',
-        lineHeight: 1.6,
-        maxWidth: 400,
-        margin: '0 0 2rem',
-      }}>
-        Ocurrió un error al cargar esta sección. Por favor intenta de nuevo.
-      </p>
-      <button
-        onClick={reset}
+
+      {/* Title — serif italic */}
+      <h2
         style={{
-          padding: '10px 24px',
-          background: '#0071e3',
-          border: 'none',
-          borderRadius: 10,
-          color: '#fff',
-          fontSize: 13,
-          fontWeight: 600,
+          fontFamily: SERIF,
+          fontWeight: 400,
+          fontStyle: 'italic',
+          fontSize: 'clamp(2rem, 6vw, 3.4rem)',
+          lineHeight: 1.04,
+          letterSpacing: '-0.01em',
+          color: CREAM,
+          margin: 0,
+        }}
+      >
+        Algo salió mal.
+      </h2>
+
+      {/* Message */}
+      <p
+        style={{
+          fontFamily: SANS,
+          fontSize: '0.95rem',
+          lineHeight: 1.6,
+          color: MUTED,
+          maxWidth: '32rem',
+          margin: '1.4rem 0 0',
+        }}
+      >
+        Ocurrió un error al cargar esta sección del portal. Vuelve a intentarlo;
+        si el problema persiste, escríbenos a{' '}
+        <a
+          href="mailto:hola@xicofilms.com"
+          className="portal-textlink"
+          style={{ color: CREAM }}
+        >
+          hola@xicofilms.com
+        </a>
+        .
+      </p>
+
+      {/* Optional digest for debugging */}
+      {error.digest && (
+        <p
+          style={{
+            fontFamily: MONO,
+            fontSize: '0.58rem',
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            color: FAINT,
+            margin: '1.1rem 0 0',
+          }}
+        >
+          Ref. {error.digest}
+        </p>
+      )}
+
+      {/* Retry button — mono outline */}
+      <button
+        type="button"
+        onClick={reset}
+        className="portal-error-retry"
+        style={{
+          marginTop: '2.4rem',
+          padding: '0.85rem 2rem',
+          minHeight: 44,
+          borderRadius: '4px',
+          border: `1px solid ${BORDER}`,
+          background: 'transparent',
+          color: CREAM,
+          fontFamily: MONO,
+          fontSize: '0.65rem',
+          letterSpacing: '0.22em',
+          textTransform: 'uppercase',
           cursor: 'pointer',
         }}
       >
-        Intentar de nuevo
+        Reintentar
       </button>
     </div>
   )

@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
-import Image from 'next/image'
 import Link from 'next/link'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import PortalLogoutButton from '@/components/portal/logout-button'
@@ -65,104 +64,153 @@ export default async function PortalLayout({
   // Helper para preservar ?as_client en links del nav cuando estamos en preview.
   const previewQS = previewClientId ? `?as_client=${previewClientId}` : ''
 
+  const navLinks = [
+    { href: `/portal${previewQS}`, label: 'Proyectos' },
+    { href: `/portal/calendario${previewQS}`, label: 'Calendario' },
+    { href: `/portal/invoices${previewQS}`, label: 'Facturas' },
+    { href: `/portal/archivos${previewQS}`, label: 'Archivos' },
+    { href: `/portal/rendimiento${previewQS}`, label: 'Rendimiento' },
+  ]
+
   return (
     <>
-      {/* Banner de modo preview admin */}
-      {previewClientId && (
-        <div
-          className="fixed top-0 inset-x-0 z-[60] h-9 flex items-center justify-center gap-3 bg-amber-500/95 text-amber-950 text-xs font-medium px-4"
-          role="status"
-        >
-          <span>
-            Modo preview — viendo el portal de <strong>{previewClientName}</strong>
-          </span>
-          <Link
-            href={`/admin/clients/${previewClientId}`}
-            className="underline hover:no-underline font-semibold"
+      <style>{`
+        .portal-shell { background: #050505; min-height: 100vh; }
+        .portal-nav-link {
+          position: relative;
+          font-family: var(--font-geist-mono), monospace;
+          font-size: 0.68rem;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          color: #8a857d;
+          padding: 0.35rem 0;
+          transition: color 0.25s ease;
+        }
+        .portal-nav-link::after {
+          content: '';
+          position: absolute;
+          left: 0; bottom: -2px;
+          width: 0; height: 1px;
+          background: #e8341a;
+          transition: width 0.3s cubic-bezier(0.25,0.46,0.45,0.94);
+        }
+        .portal-nav-link:hover { color: #ede8e0; }
+        .portal-nav-link:hover::after { width: 100%; }
+        .portal-brand-mark {
+          font-family: var(--font-geist-sans), sans-serif;
+          font-weight: 900; letter-spacing: -0.04em;
+          color: #ede8e0;
+        }
+      `}</style>
+
+      <div className="portal-shell">
+        {/* Banner de modo preview admin */}
+        {previewClientId && (
+          <div
+            className="fixed top-0 inset-x-0 z-[60] h-9 flex items-center justify-center gap-3 px-4"
+            role="status"
+            style={{
+              background: 'rgba(232,52,26,0.12)',
+              borderBottom: '1px solid rgba(232,52,26,0.3)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              color: '#f0a99c',
+              fontFamily: 'var(--font-geist-mono), monospace',
+              fontSize: '0.62rem',
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+            }}
           >
-            Salir
-          </Link>
-        </div>
-      )}
-
-      {/* Top navigation */}
-      <header
-        className="fixed inset-x-0 z-50 h-14 border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-md"
-        style={{ top: previewClientId ? '36px' : '0' }}
-      >
-        <div className="mx-auto max-w-6xl h-full px-4 sm:px-6 flex items-center justify-between">
-          {/* Logo */}
-          <a href={`/portal${previewQS}`} className="flex items-center gap-2.5 group">
-            <div className="w-5 h-5 relative opacity-80 group-hover:opacity-100 transition-opacity">
-              <Image
-                src="/favicon.ico"
-                alt="XICO Films"
-                fill
-                className="object-contain"
-                sizes="20px"
-              />
-            </div>
-            <span className="text-white/70 group-hover:text-white text-xs font-medium tracking-widest uppercase transition-colors">
-              XICO Films
+            <span>
+              Modo preview — portal de <strong style={{ color: '#ede8e0' }}>{previewClientName}</strong>
             </span>
-          </a>
-
-          {/* Right side */}
-          <div className="flex items-center gap-4">
-            <nav className="hidden sm:flex items-center gap-1">
-              <a
-                href={`/portal${previewQS}`}
-                className="text-zinc-400 hover:text-white text-sm px-3 py-1.5 rounded-lg hover:bg-zinc-800/60 transition-colors"
-              >
-                Proyectos
-              </a>
-              <a
-                href={`/portal/calendario${previewQS}`}
-                className="text-zinc-400 hover:text-white text-sm px-3 py-1.5 rounded-lg hover:bg-zinc-800/60 transition-colors"
-              >
-                Calendario
-              </a>
-              <a
-                href={`/portal/invoices${previewQS}`}
-                className="text-zinc-400 hover:text-white text-sm px-3 py-1.5 rounded-lg hover:bg-zinc-800/60 transition-colors"
-              >
-                Facturas
-              </a>
-              <a
-                href={`/portal/archivos${previewQS}`}
-                className="text-zinc-400 hover:text-white text-sm px-3 py-1.5 rounded-lg hover:bg-zinc-800/60 transition-colors"
-              >
-                Archivos
-              </a>
-              <a
-                href={`/portal/rendimiento${previewQS}`}
-                className="text-zinc-400 hover:text-white text-sm px-3 py-1.5 rounded-lg hover:bg-zinc-800/60 transition-colors"
-              >
-                Rendimiento
-              </a>
-            </nav>
-            <div className="hidden sm:flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-sky-500" />
-              <span className="text-zinc-300 text-sm">
-                {profile.full_name ?? profile.email ?? 'Cliente'}
-              </span>
-            </div>
-            <PortalLogoutButton />
+            <Link
+              href={`/admin/clients/${previewClientId}`}
+              className="underline hover:no-underline"
+              style={{ color: '#e8341a', fontWeight: 700 }}
+            >
+              Salir
+            </Link>
           </div>
+        )}
+
+        {/* Top navigation */}
+        <header
+          className="fixed inset-x-0 z-50"
+          style={{
+            top: previewClientId ? '36px' : '0',
+            height: '60px',
+            background: 'rgba(5,5,5,0.82)',
+            borderBottom: '1px solid rgba(237,232,224,0.08)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+          }}
+        >
+          <div className="mx-auto max-w-6xl h-full px-4 sm:px-6 flex items-center justify-between">
+            {/* Logo */}
+            <a href={`/portal${previewQS}`} className="flex items-center gap-3 group">
+              <span
+                className="flex items-center justify-center"
+                style={{
+                  width: '26px', height: '26px',
+                  border: '1px solid rgba(237,232,224,0.25)',
+                  borderRadius: '6px',
+                  fontSize: '15px',
+                }}
+              >
+                <span className="portal-brand-mark">X</span>
+              </span>
+              <span
+                style={{
+                  fontFamily: 'var(--font-geist-mono), monospace',
+                  fontSize: '0.7rem',
+                  letterSpacing: '0.28em',
+                  textTransform: 'uppercase',
+                  color: '#ede8e0',
+                }}
+              >
+                XICO Films
+              </span>
+            </a>
+
+            {/* Right side */}
+            <div className="flex items-center gap-6">
+              <nav className="hidden sm:flex items-center gap-7">
+                {navLinks.map((l) => (
+                  <a key={l.label} href={l.href} className="portal-nav-link">
+                    {l.label}
+                  </a>
+                ))}
+              </nav>
+              <div className="hidden sm:flex items-center gap-2.5">
+                <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#e8341a', boxShadow: '0 0 6px rgba(232,52,26,0.7)' }} />
+                <span
+                  style={{
+                    fontFamily: 'var(--font-geist-sans), sans-serif',
+                    fontSize: '0.8rem',
+                    color: '#b3ada3',
+                  }}
+                >
+                  {profile.full_name ?? profile.email ?? 'Cliente'}
+                </span>
+              </div>
+              <PortalLogoutButton />
+            </div>
+          </div>
+        </header>
+
+        {/* Page content — offset for fixed nav; extra bottom space on mobile
+            so the fixed tab bar never covers content. */}
+        <div
+          className="pb-24 sm:pb-0"
+          style={{ paddingTop: previewClientId ? '96px' : '60px' }}
+        >
+          {children}
         </div>
-      </header>
 
-      {/* Page content — offset for fixed nav; extra bottom space on mobile
-          so the fixed tab bar never covers content. */}
-      <div
-        className="pb-24 sm:pb-0"
-        style={{ paddingTop: previewClientId ? '92px' : '56px' }}
-      >
-        {children}
+        {/* Mobile bottom tab bar — desktop nav is hidden under `sm`. */}
+        <PortalTabBar />
       </div>
-
-      {/* Mobile bottom tab bar — desktop nav is hidden under `sm`. */}
-      <PortalTabBar />
     </>
   )
 }

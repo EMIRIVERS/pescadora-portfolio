@@ -3,10 +3,11 @@
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Plus, Check, X } from 'lucide-react'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { KanbanBoardWithTasks, TaskPriority } from '@/lib/supabase/types'
 import { TaskCard } from './task-card'
+import { NEW_TASK_EVENT } from './new-task-button'
 import { useCreateTask, useTaskCategories, useCreateCategory } from '@/lib/queries/tasks'
 
 // ── Shared field style ─────────────────────────────────────────────────────────
@@ -31,12 +32,14 @@ interface KanbanColumnProps {
   board: KanbanBoardWithTasks
   projectId?: string
   projects?: { id: string; title: string }[]
+  /** La primera columna ("Por hacer") responde al botón global "Nueva tarea". */
+  isPrimary?: boolean
   onOpenTaskDetail?: (taskId: string) => void
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function KanbanColumn({ board, projectId, projects = [], onOpenTaskDetail }: KanbanColumnProps) {
+export function KanbanColumn({ board, projectId, projects = [], isPrimary = false, onOpenTaskDetail }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: board.id })
 
   const [isAdding, setIsAdding] = useState(false)
@@ -113,6 +116,14 @@ export function KanbanColumn({ board, projectId, projects = [], onOpenTaskDetail
     // focus textarea on next frame
     requestAnimationFrame(() => titleRef.current?.focus())
   }
+
+  // El botón global "Nueva tarea" (barra superior) abre el formulario aquí.
+  useEffect(() => {
+    if (!isPrimary) return
+    const handler = () => openAdding()
+    window.addEventListener(NEW_TASK_EVENT, handler)
+    return () => window.removeEventListener(NEW_TASK_EVENT, handler)
+  }, [isPrimary])
 
   return (
     <div

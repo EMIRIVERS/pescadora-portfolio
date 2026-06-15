@@ -295,7 +295,7 @@ function EditableField({ label, value, placeholder, fieldName, onSave, hrefPrefi
                 backgroundColor: 'transparent', border: 'none',
                 borderRadius: '4px', cursor: 'pointer',
                 color: 'var(--dash-text-tertiary)',
-                opacity: 0,
+                opacity: 0.5,
                 transition: 'opacity 0.1s',
               }}
             >
@@ -397,7 +397,7 @@ export default function ClientDetailClient({ client, projects, invoices, leads, 
           className="sticky top-0 z-10 backdrop-blur-md"
           style={{
             borderBottom: '1px solid var(--dash-border)',
-            backgroundColor: 'rgba(0,0,0,0.85)',
+            backgroundColor: 'var(--dash-surface-1)',
           }}
         >
           <div
@@ -435,7 +435,7 @@ export default function ClientDetailClient({ client, projects, invoices, leads, 
               }}
               title="Abrir el portal de este cliente en una pestaña nueva (modo preview, solo lectura)"
             >
-              Ver portal del cliente &nearr;
+              Ver portal del cliente {'↗'}
             </Link>
           </div>
         </div>
