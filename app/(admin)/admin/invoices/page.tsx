@@ -1,7 +1,7 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import InvoicesClient from './InvoicesClient'
 
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+const FONT = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
 
 export default async function InvoicesPage() {
   const db = createServiceClient()
@@ -55,14 +55,14 @@ export default async function InvoicesPage() {
   }
 
   const stats: { label: string; value: string; sub?: string; color: string }[] = [
-    { label: 'Por cobrar', value: fmt(totalPending), color: '#FF9F0A' },
-    { label: 'Cobrado', value: fmt(totalPaid), color: '#30D158' },
-    { label: 'Este mes', value: fmt(thisMonth), color: '#0071E3' },
+    { label: 'Por cobrar', value: fmt(totalPending), color: 'var(--dash-warning)' },
+    { label: 'Cobrado', value: fmt(totalPaid), color: 'var(--dash-success)' },
+    { label: 'Este mes', value: fmt(thisMonth), color: 'var(--dash-accent)' },
     {
       label: 'Vencidas',
       value: fmt(totalOverdue),
       sub: `${overdueInvoices.length} factura${overdueInvoices.length !== 1 ? 's' : ''}`,
-      color: '#FF453A',
+      color: 'var(--dash-danger)',
     },
     { label: 'Total facturas', value: invoices.length.toString(), color: 'var(--dash-text-secondary)' },
   ]
@@ -75,7 +75,7 @@ export default async function InvoicesPage() {
           Facturas
         </h1>
         <p style={{ margin: '6px 0 0', fontSize: 14, color: 'var(--dash-text-secondary)' }}>
-          Gestion de facturacion y pagos
+          Gestión de facturación y pagos
         </p>
       </div>
 
@@ -87,7 +87,7 @@ export default async function InvoicesPage() {
             style={{
               flex: '1 1 140px',
               backgroundColor: 'var(--dash-surface-2)',
-              border: `1px solid rgba(255,255,255,0.06)`,
+              border: `1px solid var(--dash-border)`,
               borderTop: `2px solid ${s.color}`,
               borderRadius: 12,
               padding: '16px 20px',

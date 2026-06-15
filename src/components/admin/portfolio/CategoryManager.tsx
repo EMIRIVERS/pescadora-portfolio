@@ -41,7 +41,7 @@ interface Props {
   photoAlbums?: Album[]
 }
 
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+const FONT = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
 
 const INPUT: React.CSSProperties = {
   backgroundColor: 'var(--dash-surface-2)',
@@ -169,7 +169,7 @@ export default function CategoryManager({ initialCategories, videoCounts = {}, p
     setEditLabel(val)
     const newSlugVal = generateSlug(val.trim())
     if (newSlugVal && newSlugVal !== cat.slug) {
-      setEditSlugWarning(`El slug cambiara de '${cat.slug}' a '${newSlugVal}'. Los videos se actualizaran automaticamente.`)
+      setEditSlugWarning(`El slug cambiará de '${cat.slug}' a '${newSlugVal}'. Los videos se actualizarán automáticamente.`)
     } else {
       setEditSlugWarning(null)
     }
@@ -256,7 +256,7 @@ export default function CategoryManager({ initialCategories, videoCounts = {}, p
     <div style={{ fontFamily: FONT }}>
       <style>{`
         .cm-row { transition: background 0.12s; }
-        .cm-row:hover { background: rgba(255,255,255,0.03) !important; }
+        .cm-row:hover { background: var(--dash-surface-2) !important; }
         .cm-btn { transition: background 0.12s, color 0.12s; }
         .cm-btn:hover { background: var(--dash-surface-3) !important; color: var(--dash-text-primary) !important; }
         .cm-del:hover { background: rgba(255,69,58,0.15) !important; color: #FF453A !important; }
@@ -283,7 +283,7 @@ export default function CategoryManager({ initialCategories, videoCounts = {}, p
       </div>
 
       {error && (
-        <p style={{ fontSize: 12, color: '#FF453A', marginBottom: 12 }}>{error}</p>
+        <p style={{ fontSize: 12, color: 'var(--dash-danger)', marginBottom: 12 }}>{error}</p>
       )}
 
       {/* New category form */}
@@ -308,7 +308,7 @@ export default function CategoryManager({ initialCategories, videoCounts = {}, p
           <button
             type="submit"
             disabled={isPending || !newLabel.trim()}
-            style={{ padding: '8px 16px', background: '#0071E3', border: 'none', borderRadius: 8, fontSize: 13, color: '#fff', cursor: 'pointer', opacity: isPending ? 0.5 : 1, fontFamily: FONT }}
+            style={{ padding: '8px 16px', background: 'var(--dash-accent)', border: 'none', borderRadius: 8, fontSize: 13, color: '#fff', cursor: 'pointer', opacity: isPending ? 0.5 : 1, fontFamily: FONT }}
           >
             {isPending ? '...' : 'Crear'}
           </button>
@@ -365,7 +365,7 @@ export default function CategoryManager({ initialCategories, videoCounts = {}, p
                   overflow: 'hidden',
                   flexShrink: 0,
                   background: 'var(--dash-surface-2)',
-                  border: '1px solid rgba(255,255,255,0.07)',
+                  border: '1px solid var(--dash-border)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -379,7 +379,7 @@ export default function CategoryManager({ initialCategories, videoCounts = {}, p
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                 ) : (
-                  <ImageIcon size={14} strokeWidth={1.5} color="#3A3A3C" />
+                  <ImageIcon size={14} strokeWidth={1.5} color="var(--dash-text-tertiary)" />
                 )}
               </div>
 
@@ -410,8 +410,8 @@ export default function CategoryManager({ initialCategories, videoCounts = {}, p
                         fontWeight: 600,
                         letterSpacing: '0.06em',
                         textTransform: 'uppercase',
-                        color: cat.type === 'photo' ? '#BF5AF2' : '#0071E3',
-                        backgroundColor: cat.type === 'photo' ? 'rgba(191,90,242,0.12)' : 'rgba(0,113,227,0.12)',
+                        color: cat.type === 'photo' ? '#BF5AF2' : 'var(--dash-accent)',
+                        backgroundColor: cat.type === 'photo' ? 'rgba(191,90,242,0.12)' : 'rgba(var(--dash-accent-rgb),0.12)',
                         borderRadius: 20,
                         padding: '1px 8px',
                         lineHeight: '18px',
@@ -480,7 +480,7 @@ export default function CategoryManager({ initialCategories, videoCounts = {}, p
                       onClick={() => handleToggle(cat)}
                       disabled={isPending}
                       title={cat.is_visible ? 'Ocultar' : 'Mostrar'}
-                      style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: cat.is_visible ? 'var(--dash-text-secondary)' : '#3A3A3C', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: cat.is_visible ? 'var(--dash-text-secondary)' : 'var(--dash-text-tertiary)', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                     >
                       {cat.is_visible ? <Eye size={13} strokeWidth={1.5} /> : <EyeOff size={13} strokeWidth={1.5} />}
                     </button>
@@ -544,7 +544,7 @@ export default function CategoryManager({ initialCategories, videoCounts = {}, p
               <div
                 style={{
                   padding: '14px 16px 18px',
-                  background: '#161616',
+                  background: 'var(--dash-surface-1)',
                   borderBottom: idx < sorted.length - 1 ? '1px solid var(--dash-surface-2)' : undefined,
                   borderTop: '1px solid var(--dash-border)',
                 }}
@@ -634,7 +634,7 @@ export default function CategoryManager({ initialCategories, videoCounts = {}, p
                         disabled={isPending || coverUploading}
                         style={{
                           display: 'inline-flex', alignItems: 'center', gap: 5,
-                          padding: '6px 14px', background: '#0071E3', border: 'none',
+                          padding: '6px 14px', background: 'var(--dash-accent)', border: 'none',
                           borderRadius: 7, fontSize: 12, color: '#fff', cursor: 'pointer',
                           opacity: isPending || coverUploading ? 0.5 : 1, fontFamily: FONT,
                         }}

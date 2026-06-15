@@ -7,12 +7,12 @@ import { useRouter } from 'next/navigation'
 
 const T = {
   surface1:      'var(--dash-surface-1)',
-  border:        'rgba(255,255,255,0.10)',
-  borderFocus:   'rgba(0,113,227,0.60)',
+  border:        'var(--dash-border)',
+  borderFocus:   'rgba(var(--dash-accent-rgb),0.60)',
   textPrimary:   'var(--dash-text-primary)',
   textTertiary:  'var(--dash-text-tertiary)',
-  accent:        '#0071E3',
-  font:          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+  accent:        'var(--dash-accent)',
+  font:          "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
 } as const
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -99,7 +99,7 @@ export default function SearchInput({ defaultValue }: SearchInputProps) {
         }
         .buscar-input:focus {
           border-color: ${T.borderFocus};
-          box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+          box-shadow: 0 0 0 3px rgba(var(--dash-accent-rgb), 0.15);
         }
         .buscar-shortcut-badge {
           position: absolute;

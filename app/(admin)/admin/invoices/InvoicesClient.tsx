@@ -7,11 +7,11 @@ import { updateInvoiceStatus, deleteInvoice } from '@/lib/actions/invoices'
 import type { Invoice } from './page'
 import InvoiceBuilder, { type EditingInvoice } from '@/components/admin/billing/InvoiceBuilder'
 
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+const FONT = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
 
 const STATUS_STYLES: Record<string, { color: string; bg: string; label: string }> = {
   draft:     { color: 'var(--dash-text-secondary)', bg: 'rgba(134,134,139,0.12)', label: 'Borrador' },
-  sent:      { color: '#0071E3', bg: 'rgba(0,113,227,0.12)',   label: 'Enviada' },
+  sent:      { color: 'var(--dash-accent)', bg: 'rgba(var(--dash-accent-rgb),0.12)',   label: 'Enviada' },
   paid:      { color: 'var(--dash-success)', bg: 'rgba(48,209,88,0.12)',   label: 'Pagada' },
   overdue:   { color: 'var(--dash-danger)', bg: 'rgba(255,69,58,0.12)',   label: 'Vencida' },
   cancelled: { color: 'var(--dash-text-tertiary)', bg: 'rgba(72,72,74,0.12)',    label: 'Cancelada' },
@@ -74,6 +74,7 @@ function NotesCell({ notes }: { notes: string }) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         title="Ver notas"
+        aria-label="Ver notas"
         style={{
           border: 'none',
           background: 'transparent',
@@ -100,7 +101,7 @@ function NotesCell({ notes }: { notes: string }) {
             border: '1px solid var(--dash-border-strong)',
             borderRadius: 10,
             padding: '10px 14px',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+            boxShadow: 'var(--dash-shadow-lg)',
           }}
         >
           <p
@@ -191,7 +192,7 @@ export default function InvoicesClient({ initialInvoices, clients, projects }: P
   }
 
   function handleDelete(id: string, num: string) {
-    if (!window.confirm(`Eliminar factura ${num}? Esta accion no se puede deshacer.`)) return
+    if (!window.confirm(`¿Eliminar factura ${num}? Esta acción no se puede deshacer.`)) return
     startTransition(async () => {
       await deleteInvoice(id)
       setInvoices((prev) => prev.filter((i) => i.id !== id))
@@ -208,7 +209,7 @@ export default function InvoicesClient({ initialInvoices, clients, projects }: P
           onClick={openNew}
           style={{
             display: 'flex', alignItems: 'center', gap: 6,
-            padding: '8px 16px', backgroundColor: '#0071E3', border: 'none',
+            padding: '8px 16px', backgroundColor: 'var(--dash-accent)', border: 'none',
             borderRadius: 8, fontSize: 13, fontWeight: 500, color: '#fff',
             cursor: 'pointer', fontFamily: FONT,
           }}
@@ -220,14 +221,14 @@ export default function InvoicesClient({ initialInvoices, clients, projects }: P
       {/* Table */}
       {invoices.length === 0 ? (
         <div style={{ border: '1px solid var(--dash-border)', borderRadius: 16, padding: '48px 24px', textAlign: 'center' }}>
-          <p style={{ margin: 0, fontSize: 14, color: 'var(--dash-text-tertiary)', fontFamily: FONT }}>Sin facturas todavia.</p>
+          <p style={{ margin: 0, fontSize: 14, color: 'var(--dash-text-tertiary)', fontFamily: FONT }}>Sin facturas todavía.</p>
         </div>
       ) : (
         <div style={{ backgroundColor: 'var(--dash-surface-1)', border: '1px solid var(--dash-border)', borderRadius: 16, overflowX: 'auto' }}>
           <table style={{ width: '100%', minWidth: 720, borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--dash-border)' }}>
-                {['Factura', 'Cliente', 'Proyecto', 'Monto', 'Estado', 'Emision', 'Vence', ''].map((h) => (
+                {['Factura', 'Cliente', 'Proyecto', 'Monto', 'Estado', 'Emisión', 'Vence', ''].map((h) => (
                   <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 500, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--dash-text-tertiary)', fontFamily: FONT, whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
@@ -275,6 +276,7 @@ export default function InvoicesClient({ initialInvoices, clients, projects }: P
                       <select
                         value={inv.status}
                         onChange={(e) => handleStatusChange(inv.id, e.target.value as Invoice['status'])}
+                        aria-label={`Cambiar estado de la factura ${inv.invoice_number}`}
                         style={{
                           padding: '3px 8px',
                           borderRadius: 20,
@@ -285,7 +287,6 @@ export default function InvoicesClient({ initialInvoices, clients, projects }: P
                           fontWeight: 500,
                           cursor: 'pointer',
                           fontFamily: FONT,
-                          outline: 'none',
                           appearance: 'none',
                         }}
                       >
@@ -356,6 +357,7 @@ export default function InvoicesClient({ initialInvoices, clients, projects }: P
                           onClick={() => openEdit(inv)}
                           style={{ border: 'none', background: 'transparent', color: 'var(--dash-text-secondary)', cursor: 'pointer', padding: 4, borderRadius: 6 }}
                           title="Editar factura"
+                          aria-label={`Editar factura ${inv.invoice_number}`}
                         >
                           <Pencil size={14} strokeWidth={1.5} />
                         </button>
@@ -364,6 +366,7 @@ export default function InvoicesClient({ initialInvoices, clients, projects }: P
                           onClick={() => router.push(`/admin/invoices/${inv.id}`)}
                           style={{ border: 'none', background: 'transparent', color: 'var(--dash-text-secondary)', cursor: 'pointer', padding: 4, borderRadius: 6 }}
                           title="Ver / Imprimir factura"
+                          aria-label={`Ver o imprimir factura ${inv.invoice_number}`}
                         >
                           <Printer size={14} strokeWidth={1.5} />
                         </button>
@@ -372,6 +375,7 @@ export default function InvoicesClient({ initialInvoices, clients, projects }: P
                           onClick={() => handleDelete(inv.id, inv.invoice_number)}
                           style={{ border: 'none', background: 'transparent', color: 'var(--dash-text-tertiary)', cursor: 'pointer', padding: 4, borderRadius: 6 }}
                           title="Eliminar factura"
+                          aria-label={`Eliminar factura ${inv.invoice_number}`}
                         >
                           <Trash2 size={14} strokeWidth={1.5} />
                         </button>

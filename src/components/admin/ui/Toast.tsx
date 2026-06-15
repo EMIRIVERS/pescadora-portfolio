@@ -35,10 +35,10 @@ type ToastAction =
 const MAX_TOASTS = 5
 
 const COLORS: Record<ToastType, string> = {
-  success: '#30D158',
-  error:   '#FF453A',
-  info:    '#0071E3',
-  warning: '#FF9F0A',
+  success: 'var(--dash-success)',
+  error:   'var(--dash-danger)',
+  info:    'var(--dash-accent)',
+  warning: 'var(--dash-warning)',
 }
 
 const DEFAULT_DURATION: Record<ToastType, number> = {
@@ -110,7 +110,7 @@ function ToastItem({ toast, onRemove }: ToastItemProps) {
         alignItems: 'flex-start',
         gap: '10px',
         background: 'var(--dash-surface-2)',
-        border: `1px solid ${color}33`,
+        border: `1px solid color-mix(in srgb, ${color} 20%, transparent)`,
         borderLeft: `3px solid ${color}`,
         borderRadius: '12px',
         padding: '13px 14px',
@@ -135,14 +135,14 @@ function ToastItem({ toast, onRemove }: ToastItemProps) {
           lineHeight: '1.45',
           color: 'var(--dash-text-primary)',
           fontFamily:
-            "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif",
+            "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
         }}
       >
         {toast.message}
       </span>
       <button
         onClick={dismiss}
-        aria-label="Cerrar notificacion"
+        aria-label="Cerrar notificación"
         style={{
           background: 'none',
           border: 'none',

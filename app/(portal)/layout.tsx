@@ -97,8 +97,8 @@ export default async function PortalLayout({
         .portal-nav-link:hover { color: #ede8e0; }
         .portal-nav-link:hover::after { width: 100%; }
         .portal-brand-mark {
-          font-family: var(--font-geist-sans), sans-serif;
-          font-weight: 900; letter-spacing: -0.04em;
+          font-family: var(--font-cormorant), Georgia, serif;
+          font-weight: 600; letter-spacing: -0.02em;
           color: #ede8e0;
         }
       `}</style>
@@ -114,7 +114,7 @@ export default async function PortalLayout({
               borderBottom: '1px solid rgba(232,52,26,0.3)',
               backdropFilter: 'blur(12px)',
               WebkitBackdropFilter: 'blur(12px)',
-              color: '#f0a99c',
+              color: 'var(--portal-danger)',
               fontFamily: 'var(--font-geist-mono), monospace',
               fontSize: '0.62rem',
               letterSpacing: '0.12em',
@@ -148,7 +148,7 @@ export default async function PortalLayout({
         >
           <div className="mx-auto max-w-6xl h-full px-4 sm:px-6 flex items-center justify-between">
             {/* Logo */}
-            <a href={`/portal${previewQS}`} className="flex items-center gap-3 group">
+            <Link href={`/portal${previewQS}`} className="flex items-center gap-3 group">
               <span
                 className="flex items-center justify-center"
                 style={{
@@ -171,15 +171,15 @@ export default async function PortalLayout({
               >
                 XICO Films
               </span>
-            </a>
+            </Link>
 
             {/* Right side */}
             <div className="flex items-center gap-6">
               <nav className="hidden sm:flex items-center gap-7">
                 {navLinks.map((l) => (
-                  <a key={l.label} href={l.href} className="portal-nav-link">
+                  <Link key={l.label} href={l.href} className="portal-nav-link">
                     {l.label}
-                  </a>
+                  </Link>
                 ))}
               </nav>
               <div className="hidden sm:flex items-center gap-2.5">
@@ -188,7 +188,7 @@ export default async function PortalLayout({
                   style={{
                     fontFamily: 'var(--font-geist-sans), sans-serif',
                     fontSize: '0.8rem',
-                    color: '#b3ada3',
+                    color: 'var(--portal-text-muted)',
                   }}
                 >
                   {profile.full_name ?? profile.email ?? 'Cliente'}

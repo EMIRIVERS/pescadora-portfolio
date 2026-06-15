@@ -50,7 +50,7 @@ const SOURCE_LABELS: Record<LeadSource | 'all', string> = {
 const SOURCE_OPTIONS = ['all', 'manual', 'referral', 'instagram', 'web', 'whatsapp', 'other'] as const
 type SourceOption = (typeof SOURCE_OPTIONS)[number]
 
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+const FONT = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
 
 export default function LeadsFilterBar({ leads, onFiltered }: Props) {
   const [search, setSearch]               = useState('')
@@ -121,7 +121,7 @@ export default function LeadsFilterBar({ leads, onFiltered }: Props) {
         onChange={(e) => setSearch(e.target.value)}
         style={{
           background: 'var(--dash-surface-2)',
-          border: '1px solid rgba(255,255,255,0.08)',
+          border: '1px solid var(--dash-border)',
           borderRadius: 12,
           padding: '7px 14px',
           color: 'var(--dash-text-primary)',
@@ -153,7 +153,7 @@ export default function LeadsFilterBar({ leads, onFiltered }: Props) {
                 cursor: 'pointer',
                 border: 'none',
                 background: active
-                  ? '#0071E3'
+                  ? 'var(--dash-accent)'
                   : hovered
                   ? 'var(--dash-surface-3)'
                   : 'transparent',
@@ -173,7 +173,7 @@ export default function LeadsFilterBar({ leads, onFiltered }: Props) {
         onChange={(e) => setSource(e.target.value as SourceOption)}
         style={{
           background: 'var(--dash-surface-2)',
-          border: '1px solid rgba(255,255,255,0.08)',
+          border: '1px solid var(--dash-border)',
           borderRadius: 20,
           padding: '6px 14px',
           color: source === 'all' ? 'var(--dash-text-secondary)' : 'var(--dash-text-primary)',
@@ -205,7 +205,7 @@ export default function LeadsFilterBar({ leads, onFiltered }: Props) {
             fontSize: 12,
             fontFamily: FONT,
             cursor: 'pointer',
-            border: '1px solid rgba(255,255,255,0.08)',
+            border: '1px solid var(--dash-border)',
             background: hoveredClear ? 'var(--dash-surface-3)' : 'transparent',
             color: 'var(--dash-text-secondary)',
             transition: 'background 0.15s',

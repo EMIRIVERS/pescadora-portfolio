@@ -7,8 +7,8 @@ export type Period = 'month' | '3months' | 'year' | 'all' | 'custom'
 
 const BUTTONS: { label: string; value: Period }[] = [
   { label: 'Este mes', value: 'month' },
-  { label: 'Ultimos 3 meses', value: '3months' },
-  { label: 'Este ano', value: 'year' },
+  { label: 'Últimos 3 meses', value: '3months' },
+  { label: 'Este año', value: 'year' },
   { label: 'Todo', value: 'all' },
   { label: 'Personalizado', value: 'custom' },
 ]
@@ -74,7 +74,7 @@ function PeriodSelectorInner({ currentPeriod, currentFrom, currentTo }: PeriodSe
           background: 'var(--dash-surface-2)',
           borderRadius: '10px',
           padding: '3px',
-          border: '1px solid rgba(255,255,255,0.08)',
+          border: '1px solid var(--dash-border)',
           flexWrap: 'wrap',
         }}
       >
@@ -91,13 +91,13 @@ function PeriodSelectorInner({ currentPeriod, currentFrom, currentTo }: PeriodSe
                 cursor: 'pointer',
                 fontSize: '12px',
                 fontWeight: isActive ? 600 : 400,
-                background: isActive ? '#0071E3' : 'transparent',
+                background: isActive ? 'var(--dash-accent)' : 'transparent',
                 color: isActive ? '#FFFFFF' : 'var(--dash-text-secondary)',
                 transition: 'background 0.15s, color 0.15s',
                 letterSpacing: '-0.01em',
                 lineHeight: 1,
                 whiteSpace: 'nowrap',
-                fontFamily: '-apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+                fontFamily: 'var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
               }}
               aria-pressed={isActive}
             >
@@ -114,12 +114,12 @@ function PeriodSelectorInner({ currentPeriod, currentFrom, currentTo }: PeriodSe
             gap: '8px',
             alignItems: 'center',
             background: 'var(--dash-surface-2)',
-            border: '1px solid rgba(255,255,255,0.08)',
+            border: '1px solid var(--dash-border)',
             borderRadius: '10px',
             padding: '6px 10px',
           }}
         >
-          <label style={{ fontSize: '11px', color: 'var(--dash-text-tertiary)', whiteSpace: 'nowrap', fontFamily: '-apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}>
+          <label style={{ fontSize: '11px', color: 'var(--dash-text-tertiary)', whiteSpace: 'nowrap', fontFamily: 'var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}>
             Desde
           </label>
           <input
@@ -134,12 +134,12 @@ function PeriodSelectorInner({ currentPeriod, currentFrom, currentTo }: PeriodSe
               color: 'var(--dash-text-primary)',
               fontSize: '12px',
               padding: '4px 8px',
-              fontFamily: '-apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+              fontFamily: 'var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
               cursor: 'pointer',
               outline: 'none',
             }}
           />
-          <label style={{ fontSize: '11px', color: 'var(--dash-text-tertiary)', whiteSpace: 'nowrap', fontFamily: '-apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}>
+          <label style={{ fontSize: '11px', color: 'var(--dash-text-tertiary)', whiteSpace: 'nowrap', fontFamily: 'var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}>
             Hasta
           </label>
           <input
@@ -154,7 +154,7 @@ function PeriodSelectorInner({ currentPeriod, currentFrom, currentTo }: PeriodSe
               color: 'var(--dash-text-primary)',
               fontSize: '12px',
               padding: '4px 8px',
-              fontFamily: '-apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+              fontFamily: 'var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
               cursor: 'pointer',
               outline: 'none',
             }}
@@ -169,11 +169,11 @@ function PeriodSelectorInner({ currentPeriod, currentFrom, currentTo }: PeriodSe
               cursor: fromDate && toDate ? 'pointer' : 'not-allowed',
               fontSize: '12px',
               fontWeight: 600,
-              background: fromDate && toDate ? '#0071E3' : 'var(--dash-border)',
+              background: fromDate && toDate ? 'var(--dash-accent)' : 'var(--dash-border)',
               color: fromDate && toDate ? '#FFFFFF' : 'var(--dash-text-tertiary)',
               transition: 'background 0.15s, color 0.15s',
               lineHeight: 1,
-              fontFamily: '-apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+              fontFamily: 'var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
               whiteSpace: 'nowrap',
             }}
           >

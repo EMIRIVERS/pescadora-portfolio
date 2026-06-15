@@ -1,6 +1,7 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
+import Link from 'next/link'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { FolderKanban, FileText, FolderOpen, CalendarDays, TrendingUp } from 'lucide-react'
 
 const TABS = [
@@ -18,6 +19,10 @@ const TABS = [
  */
 export default function PortalTabBar() {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
+  // Preserve the admin ?as_client preview context across tab navigation.
+  const asClient = searchParams.get('as_client')
+  const previewQS = asClient ? `?as_client=${asClient}` : ''
 
   return (
     <nav
@@ -27,16 +32,16 @@ export default function PortalTabBar() {
       {TABS.map(({ href, label, Icon, exact }) => {
         const active = exact ? pathname === href : pathname.startsWith(href)
         return (
-          <a
+          <Link
             key={href}
-            href={href}
+            href={`${href}${previewQS}`}
             aria-current={active ? 'page' : undefined}
             className="flex-1 flex flex-col items-center justify-center gap-1 min-h-[60px] transition-colors"
             style={{ color: active ? '#e8341a' : '#8a857d' }}
           >
             <Icon className="w-5 h-5" aria-hidden="true" />
             <span className="text-[11px] font-medium">{label}</span>
-          </a>
+          </Link>
         )
       })}
     </nav>

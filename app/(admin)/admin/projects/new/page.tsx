@@ -21,7 +21,7 @@ export default async function NewProjectPage() {
       style={{
         backgroundColor: 'var(--dash-surface-1)',
         color: 'var(--dash-text-primary)',
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+        fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
       }}
     >
       {/* Top bar */}
@@ -61,7 +61,7 @@ export default async function NewProjectPage() {
         <div
           style={{
             backgroundColor: 'var(--dash-surface-1)',
-            border: '1px solid rgba(255,255,255,0.08)',
+            border: '1px solid var(--dash-border)',
             borderRadius: '16px',
             padding: '32px',
           }}

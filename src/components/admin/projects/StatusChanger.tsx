@@ -6,9 +6,9 @@ import { updateProjectStatus } from '@/lib/actions/projects'
 import type { ProjectStatus } from '@/lib/supabase/types'
 
 const STATUS_CONFIG: Record<ProjectStatus, { label: string; color: string }> = {
-  pre_production:  { label: 'Pre-produccion',  color: '#FF9F0A' },
-  production:      { label: 'Produccion',       color: '#0071E3' },
-  post_production: { label: 'Post-produccion',  color: '#BF5AF2' },
+  pre_production:  { label: 'Pre-producción',  color: '#FF9F0A' },
+  production:      { label: 'Producción',       color: 'var(--dash-accent)' },
+  post_production: { label: 'Post-producción',  color: '#BF5AF2' },
   delivered:       { label: 'Entregado',        color: '#30D158' },
 }
 
@@ -65,13 +65,13 @@ export function StatusChanger({ projectId, currentStatus }: Props) {
           borderRadius: '20px',
           fontSize: '12px',
           fontWeight: 600,
-          background: `${color}26`,
+          background: `color-mix(in srgb, ${color} 15%, transparent)`,
           color,
           border: '1px solid transparent',
           cursor: pending ? 'wait' : 'pointer',
           opacity: pending ? 0.5 : 1,
           outline: 'none',
-          fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+          fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
           whiteSpace: 'nowrap',
           transition: 'opacity 0.15s ease',
         }}
@@ -97,8 +97,8 @@ export function StatusChanger({ projectId, currentStatus }: Props) {
         <span
           style={{
             fontSize: '11px',
-            color: '#FF453A',
-            fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+            color: 'var(--dash-danger)',
+            fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
           }}
         >
           {errorMsg}

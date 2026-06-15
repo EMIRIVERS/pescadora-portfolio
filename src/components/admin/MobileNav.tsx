@@ -39,7 +39,7 @@ export default function MobileNav({ profile }: MobileNavProps) {
       <div className="mobile-nav-trigger">
         <button
           type="button"
-          aria-label={open ? 'Cerrar menu' : 'Abrir menu'}
+          aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
           style={{
@@ -49,7 +49,7 @@ export default function MobileNav({ profile }: MobileNavProps) {
             width: '40px',
             height: '40px',
             borderRadius: '8px',
-            border: '1px solid rgba(255,255,255,0.1)',
+            border: '1px solid var(--dash-border)',
             background: 'var(--dash-border)',
             color: 'var(--dash-text-primary)',
             cursor: 'pointer',
@@ -61,7 +61,7 @@ export default function MobileNav({ profile }: MobileNavProps) {
 
         <div
           style={{
-            fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+            fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
             fontWeight: 700,
             fontSize: '16px',
             color: 'var(--dash-text-primary)',
@@ -107,7 +107,7 @@ export default function MobileNav({ profile }: MobileNavProps) {
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Menu de navegacion"
+        aria-label="Menú de navegación"
         style={{
           position: 'fixed',
           top: 0,

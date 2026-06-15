@@ -36,7 +36,7 @@ export function TestEmailForm({ disabled = false }: Props) {
             flex: 1,
             minWidth: '200px',
             backgroundColor: 'var(--dash-surface-2)',
-            border: '1px solid rgba(255,255,255,0.08)',
+            border: '1px solid var(--dash-border)',
             borderRadius: '8px',
             padding: '9px 14px',
             fontSize: '14px',
@@ -49,7 +49,7 @@ export function TestEmailForm({ disabled = false }: Props) {
           type="submit"
           disabled={disabled || isPending}
           style={{
-            backgroundColor: disabled || isPending ? 'var(--dash-surface-2)' : '#0071E3',
+            backgroundColor: disabled || isPending ? 'var(--dash-surface-2)' : 'var(--dash-accent)',
             color: disabled || isPending ? 'var(--dash-text-tertiary)' : '#ffffff',
             border: 'none',
             borderRadius: '8px',
@@ -66,12 +66,12 @@ export function TestEmailForm({ disabled = false }: Props) {
       </form>
 
       {result?.success && (
-        <p style={{ fontSize: '13px', color: '#30D158', margin: '10px 0 0' }}>
+        <p style={{ fontSize: '13px', color: 'var(--dash-success)', margin: '10px 0 0' }}>
           Email enviado correctamente.
         </p>
       )}
       {result?.error && (
-        <p style={{ fontSize: '13px', color: '#FF453A', margin: '10px 0 0' }}>
+        <p style={{ fontSize: '13px', color: 'var(--dash-danger)', margin: '10px 0 0' }}>
           Error: {result.error}
         </p>
       )}

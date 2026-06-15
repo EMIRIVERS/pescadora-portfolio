@@ -2,7 +2,7 @@
 
 import { Printer } from 'lucide-react'
 
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+const FONT = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
 
 export default function PrintButton() {
   return (
@@ -14,7 +14,7 @@ export default function PrintButton() {
         alignItems: 'center',
         gap: 6,
         padding: '8px 20px',
-        backgroundColor: '#0071E3',
+        backgroundColor: 'var(--dash-accent)',
         border: 'none',
         borderRadius: 8,
         fontSize: 13,

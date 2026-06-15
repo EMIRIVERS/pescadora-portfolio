@@ -15,7 +15,7 @@ const PROJECT_TYPES = [
   'Corporativo',
   'Restaurante / Bar',
   'Comercial',
-  'Fotografia',
+  'Fotografía',
   'Otro',
 ] as const
 
@@ -61,8 +61,8 @@ export default function CotizaPage() {
         .cq-body {
           min-height: 100dvh;
           background: #050505;
-          color: #F5F5F7;
-          font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+          color: #ede8e0;
+          font-family: var(--font-geist-sans), -apple-system, system-ui, sans-serif;
           -webkit-font-smoothing: antialiased;
           padding: 3rem 1.25rem 5rem;
         }
@@ -90,13 +90,13 @@ export default function CotizaPage() {
           font-size: 11px;
           letter-spacing: 0.36em;
           text-transform: uppercase;
-          color: #555;
+          color: #6b6560;
           text-decoration: none;
           margin-bottom: 3.5rem;
-          font-family: "SF Mono", "Geist Mono", monospace;
+          font-family: var(--font-geist-mono), ui-monospace, monospace;
           transition: color 0.2s;
         }
-        .cq-wordmark:hover { color: #888; }
+        .cq-wordmark:hover { color: #8a857d; }
 
         /* heading */
         .cq-heading {
@@ -105,14 +105,14 @@ export default function CotizaPage() {
           font-weight: 300;
           font-style: italic;
           line-height: 1.05;
-          color: #F5F5F7;
+          color: #ede8e0;
           margin: 0 0 0.85rem;
           letter-spacing: -0.01em;
         }
 
         .cq-sub {
           font-size: 0.9375rem;
-          color: #86868B;
+          color: #8a857d;
           line-height: 1.5;
           margin: 0 0 3rem;
         }
@@ -120,12 +120,12 @@ export default function CotizaPage() {
         /* label */
         .cq-label {
           display: block;
-          font-size: 11px;
+          font-size: 12px;
           letter-spacing: 0.06em;
           text-transform: uppercase;
-          color: #86868B;
+          color: #8a857d;
           margin-bottom: 0.6rem;
-          font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+          font-family: var(--font-geist-sans), -apple-system, system-ui, sans-serif;
         }
 
         /* input / textarea */
@@ -133,19 +133,24 @@ export default function CotizaPage() {
           width: 100%;
           background: #111111;
           border: 1px solid rgba(255,255,255,0.10);
-          border-radius: 10px;
+          border-radius: 6px;
           padding: 0.75rem 1rem;
           font-size: 0.9375rem;
-          color: #F5F5F7;
+          color: #ede8e0;
           font-family: inherit;
           outline: none;
           transition: border-color 0.2s, box-shadow 0.2s;
           -webkit-appearance: none;
+          caret-color: #e8341a;
         }
-        .cq-input::placeholder { color: #3a3a3c; }
+        .cq-input::placeholder { color: #4a4640; }
         .cq-input:focus {
-          border-color: #0071E3;
-          box-shadow: 0 0 0 3px rgba(0,113,227,0.18);
+          border-color: #e8341a;
+          box-shadow: 0 0 0 3px rgba(232,52,26,0.18);
+        }
+        .cq-input:focus-visible {
+          outline: 2px solid #e8341a;
+          outline-offset: 1px;
         }
         .cq-input:disabled { opacity: 0.45; cursor: not-allowed; }
 
@@ -186,25 +191,26 @@ export default function CotizaPage() {
           display: inline-flex;
           align-items: center;
           padding: 0.45rem 0.9rem;
-          border: 1px solid #2C2C2E;
-          border-radius: 999px;
+          border: 1px solid rgba(255,255,255,0.14);
+          border-radius: 3px;
           font-size: 0.8125rem;
-          color: #98989D;
+          color: #8a857d;
           cursor: pointer;
           transition: border-color 0.18s, background 0.18s, color 0.18s;
           user-select: none;
         }
         .cq-pill-label:hover {
-          border-color: #48484A;
-          color: #F5F5F7;
+          border-color: rgba(255,255,255,0.32);
+          color: #ede8e0;
         }
         .cq-pill input[type="radio"]:checked + .cq-pill-label {
-          border-color: #0071E3;
-          background: rgba(0,113,227,0.12);
-          color: #F5F5F7;
+          border-color: #e8341a;
+          background: rgba(232,52,26,0.12);
+          color: #ede8e0;
         }
         .cq-pill input[type="radio"]:focus-visible + .cq-pill-label {
-          box-shadow: 0 0 0 3px rgba(0,113,227,0.28);
+          outline: 2px solid #e8341a;
+          outline-offset: 1px;
         }
 
         /* section divider */
@@ -218,10 +224,10 @@ export default function CotizaPage() {
         .cq-submit {
           width: 100%;
           padding: 0.85rem 1.5rem;
-          background: #0071E3;
+          background: #e8341a;
           color: #fff;
           border: none;
-          border-radius: 980px;
+          border-radius: 2px;
           font-size: 0.9375rem;
           font-family: inherit;
           font-weight: 500;
@@ -230,8 +236,12 @@ export default function CotizaPage() {
           margin-top: 0.5rem;
           letter-spacing: 0.01em;
         }
-        .cq-submit:hover:not(:disabled) { background: #0077ED; }
-        .cq-submit:active:not(:disabled) { background: #006AC1; }
+        .cq-submit:hover:not(:disabled) { background: #ff3d1f; }
+        .cq-submit:active:not(:disabled) { background: #c92a13; }
+        .cq-submit:focus-visible {
+          outline: 2px solid #e8341a;
+          outline-offset: 2px;
+        }
         .cq-submit:disabled { opacity: 0.45; cursor: not-allowed; }
 
         /* feedback */
@@ -240,19 +250,19 @@ export default function CotizaPage() {
           align-items: center;
           gap: 0.6rem;
           padding: 0.9rem 1.1rem;
-          border-radius: 10px;
-          background: rgba(52,199,89,0.10);
-          border: 1px solid rgba(52,199,89,0.28);
-          color: #34C759;
+          border-radius: 6px;
+          background: rgba(48,209,88,0.10);
+          border: 1px solid rgba(48,209,88,0.28);
+          color: #30d158;
           font-size: 0.875rem;
           margin-top: 1.25rem;
         }
         .cq-error {
           padding: 0.9rem 1.1rem;
-          border-radius: 10px;
-          background: rgba(255,59,48,0.08);
-          border: 1px solid rgba(255,59,48,0.25);
-          color: #FF6961;
+          border-radius: 6px;
+          background: rgba(232,52,26,0.08);
+          border: 1px solid rgba(232,52,26,0.25);
+          color: #e8341a;
           font-size: 0.875rem;
           margin-top: 1.25rem;
         }
@@ -269,7 +279,7 @@ export default function CotizaPage() {
           {/* Header */}
           <h1 className="cq-heading">Cotiza tu proyecto.</h1>
           <p className="cq-sub">
-            Cuentanos que quieres crear.&nbsp; Te contactamos en menos de 24 horas.
+            Cuéntanos qué quieres crear.&nbsp; Te contactamos en menos de 24 horas.
           </p>
 
           <form ref={formRef} action={action} noValidate>
@@ -294,8 +304,8 @@ export default function CotizaPage() {
 
             {/* ── Tipo de produccion ─────────────────────────────────────────── */}
             <div className="cq-field">
-              <span className="cq-label">Tipo de produccion</span>
-              <div className="cq-pills" role="group" aria-label="Tipo de produccion">
+              <span className="cq-label">Tipo de producción</span>
+              <div className="cq-pills" role="group" aria-label="Tipo de producción">
                 {PROJECT_TYPES.map((type) => (
                   <label key={type} className="cq-pill">
                     <input
@@ -343,7 +353,7 @@ export default function CotizaPage() {
               </div>
 
               <div className="cq-field">
-                <label htmlFor="phone" className="cq-label">Telefono / WhatsApp</label>
+                <label htmlFor="phone" className="cq-label">Teléfono / WhatsApp</label>
                 <input
                   id="phone"
                   name="phone"
@@ -393,11 +403,11 @@ export default function CotizaPage() {
 
             {/* ── Mensaje ───────────────────────────────────────────────────── */}
             <div className="cq-field">
-              <label htmlFor="message" className="cq-label">Cuentanos mas</label>
+              <label htmlFor="message" className="cq-label">Cuéntanos más</label>
               <textarea
                 id="message"
                 name="message"
-                placeholder="Cuentanos mas sobre tu proyecto, fechas, referencias..."
+                placeholder="Cuéntanos más sobre tu proyecto, fechas, referencias..."
                 disabled={pending}
                 className="cq-input"
               />
@@ -405,7 +415,7 @@ export default function CotizaPage() {
 
             {/* ── Submit ────────────────────────────────────────────────────── */}
             <button type="submit" disabled={pending} className="cq-submit">
-              {pending ? 'Enviando...' : 'Enviar cotizacion \u2192'}
+              {pending ? 'Enviando...' : 'Enviar cotizaci\u00f3n \u2192'}
             </button>
 
             {/* ── Feedback ──────────────────────────────────────────────────── */}

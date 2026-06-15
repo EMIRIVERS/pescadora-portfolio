@@ -2,7 +2,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import ProposalsClient from './ProposalsClient'
 import type { Proposal } from '@/lib/actions/proposals'
 
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+const FONT = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
 
 function fmtCurrency(amount: number, currency = 'MXN') {
   return new Intl.NumberFormat('es-MX', {
@@ -53,7 +53,7 @@ export default async function ProposalsPage() {
     {
       label: 'Enviadas',
       value: String(proposals.filter((p) => p.status === 'sent').length),
-      color: '#0071E3',
+      color: 'var(--dash-accent)',
     },
     {
       label: 'Aceptadas',

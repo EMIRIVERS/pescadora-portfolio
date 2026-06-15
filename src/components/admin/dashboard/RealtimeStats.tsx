@@ -39,16 +39,16 @@ export default function RealtimeStats({ initialLeadsCount, initialProjectsCount 
   return (
     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
       <span style={{
-        fontFamily: '-apple-system, BlinkMacSystemFont, system-ui, sans-serif',
-        fontSize: '12px', color: '#86868B'
+        fontFamily: 'var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+        fontSize: '12px', color: 'var(--dash-text-secondary)'
       }}>
         {leadsCount} leads · {projectsCount} proyectos
       </span>
       <span style={{
         width: '6px', height: '6px', borderRadius: '50%',
-        background: '#30D158', display: 'inline-block',
-        boxShadow: '0 0 6px #30D158'
-      }} title="Actualizacion en tiempo real activa" />
+        background: 'var(--dash-success)', display: 'inline-block',
+        boxShadow: '0 0 6px var(--dash-success)'
+      }} title="Actualización en tiempo real activa" />
     </div>
   )
 }

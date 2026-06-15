@@ -28,9 +28,9 @@ interface FormErrors {
 }
 
 const STATUS_OPTIONS: { value: ProjectStatus; label: string }[] = [
-  { value: 'pre_production', label: 'Pre-produccion' },
-  { value: 'production', label: 'Produccion' },
-  { value: 'post_production', label: 'Post-produccion' },
+  { value: 'pre_production', label: 'Pre-producción' },
+  { value: 'production', label: 'Producción' },
+  { value: 'post_production', label: 'Post-producción' },
   { value: 'delivered', label: 'Entregado' },
 ]
 
@@ -49,7 +49,7 @@ function validate(values: FormValues): FormErrors {
   const errors: FormErrors = {}
 
   if (!values.title.trim()) {
-    errors.title = 'El titulo es obligatorio.'
+    errors.title = 'El título es obligatorio.'
   }
 
   if (values.start_date && values.end_date) {
@@ -77,7 +77,7 @@ const fieldLabel: React.CSSProperties = {
 const inputBase: React.CSSProperties = {
   width: '100%',
   backgroundColor: 'var(--dash-surface-2)',
-  border: '1px solid rgba(255,255,255,0.1)',
+  border: '1px solid var(--dash-border-strong)',
   borderRadius: '8px',
   padding: '10px 14px',
   color: 'var(--dash-text-primary)',
@@ -148,7 +148,7 @@ export function NewProjectForm({ clients }: Props) {
     return {
       ...inputBase,
       ...(isPending ? inputDisabled : {}),
-      ...(focusedField === fieldName ? { border: '1px solid #0071E3', boxShadow: '0 0 0 3px rgba(0,113,227,0.15)' } : {}),
+      ...(focusedField === fieldName ? { border: '1px solid var(--dash-accent)', boxShadow: '0 0 0 3px rgba(var(--dash-accent-rgb),0.15)' } : {}),
       ...extra,
     }
   }
@@ -163,7 +163,7 @@ export function NewProjectForm({ clients }: Props) {
             borderRadius: '8px',
             padding: '12px 14px',
             fontSize: '13px',
-            color: '#FF453A',
+            color: 'var(--dash-danger)',
           }}
         >
           {errors.general}
@@ -173,7 +173,7 @@ export function NewProjectForm({ clients }: Props) {
       {/* Title */}
       <div>
         <label htmlFor="title" style={fieldLabel}>
-          Titulo <span style={{ color: '#FF453A' }}>*</span>
+          Título <span style={{ color: 'var(--dash-danger)' }}>*</span>
         </label>
         <input
           id="title"
@@ -182,20 +182,20 @@ export function NewProjectForm({ clients }: Props) {
           value={values.title}
           onChange={handleChange}
           disabled={isPending}
-          placeholder="Titulo del proyecto"
+          placeholder="Título del proyecto"
           onFocus={() => setFocusedField('title')}
           onBlur={() => setFocusedField(null)}
           style={getInputStyle('title')}
         />
         {errors.title && (
-          <p style={{ fontSize: '12px', color: '#FF453A', marginTop: '5px' }}>{errors.title}</p>
+          <p style={{ fontSize: '12px', color: 'var(--dash-danger)', marginTop: '5px' }}>{errors.title}</p>
         )}
       </div>
 
       {/* Description */}
       <div>
         <label htmlFor="description" style={fieldLabel}>
-          Descripcion
+          Descripción
         </label>
         <textarea
           id="description"
@@ -204,7 +204,7 @@ export function NewProjectForm({ clients }: Props) {
           value={values.description}
           onChange={handleChange}
           disabled={isPending}
-          placeholder="Breve descripcion del proyecto..."
+          placeholder="Breve descripción del proyecto..."
           onFocus={() => setFocusedField('description')}
           onBlur={() => setFocusedField(null)}
           style={{
@@ -298,7 +298,7 @@ export function NewProjectForm({ clients }: Props) {
             style={{ ...getInputStyle('end_date'), colorScheme: 'dark' }}
           />
           {errors.end_date && (
-            <p style={{ fontSize: '12px', color: '#FF453A', marginTop: '5px' }}>{errors.end_date}</p>
+            <p style={{ fontSize: '12px', color: 'var(--dash-danger)', marginTop: '5px' }}>{errors.end_date}</p>
           )}
         </div>
       </div>
@@ -339,7 +339,7 @@ export function NewProjectForm({ clients }: Props) {
             style={getInputStyle('currency')}
           >
             <option value="MXN">MXN — Peso mexicano</option>
-            <option value="USD">USD — Dolar</option>
+            <option value="USD">USD — Dólar</option>
           </select>
         </div>
       </div>
@@ -356,7 +356,7 @@ export function NewProjectForm({ clients }: Props) {
             fontWeight: 500,
             borderRadius: '8px',
             backgroundColor: 'transparent',
-            border: '1px solid rgba(255,255,255,0.12)',
+            border: '1px solid var(--dash-border-strong)',
             color: 'var(--dash-text-secondary)',
             cursor: isPending ? 'not-allowed' : 'pointer',
             opacity: isPending ? 0.45 : 1,
@@ -374,7 +374,7 @@ export function NewProjectForm({ clients }: Props) {
             fontSize: '14px',
             fontWeight: 500,
             borderRadius: '8px',
-            backgroundColor: '#0071E3',
+            backgroundColor: 'var(--dash-accent)',
             border: 'none',
             color: '#FFFFFF',
             cursor: isPending ? 'not-allowed' : 'pointer',

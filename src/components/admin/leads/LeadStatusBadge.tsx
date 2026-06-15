@@ -20,7 +20,7 @@ export default function LeadStatusBadge({ status, size = 'md' }: Props) {
         display: 'inline-block',
         fontSize: 11,
         fontWeight: 600,
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+        fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
         letterSpacing: '0.02em',
         padding: size === 'sm' ? '2px 8px' : '3px 10px',
         borderRadius: 20,

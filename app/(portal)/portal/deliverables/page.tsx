@@ -93,7 +93,7 @@ export default async function DeliverablesPage({ searchParams }: PageProps) {
 
   return (
     <PortalShell maxWidth={920}>
-      <BackLink href={portalLink('/portal', ctx)} label="Mis proyectos" />
+      <BackLink href={portalLink('/portal', ctx)} />
 
       <Masthead
         title="Entregables"

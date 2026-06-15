@@ -24,8 +24,8 @@ import {
   type CalendarEventStatus,
 } from '@/lib/calendar/types'
 
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
-const BLUE = '#0071E3'
+const FONT = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
+const BLUE = 'var(--dash-accent)'
 const TYPES = EVENT_TYPES
 
 const INPUT: React.CSSProperties = {

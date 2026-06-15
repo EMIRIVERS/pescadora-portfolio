@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
-import { Cormorant_Garamond } from 'next/font/google'
+import { Cormorant_Garamond, Fraunces, Space_Mono } from 'next/font/google'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { Analytics } from '@vercel/analytics/next'
 import Providers from './providers'
@@ -20,6 +20,22 @@ const cormorant = Cormorant_Garamond({
   weight: ['300', '400', '600'],
   style: ['normal', 'italic'],
   variable: '--font-cormorant',
+  display: 'swap',
+})
+
+// Dashboard display serif + mono (antes cargadas por @import render-blocking).
+const fraunces = Fraunces({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  style: ['normal', 'italic'],
+  variable: '--font-fraunces',
+  display: 'swap',
+})
+
+const spaceMono = Space_Mono({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-space-mono',
   display: 'swap',
 })
 
@@ -84,7 +100,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es-MX">
-      <body className={`${GeistSans.variable} ${GeistMono.variable} ${cormorant.variable}`}>
+      <body className={`${GeistSans.variable} ${GeistMono.variable} ${cormorant.variable} ${fraunces.variable} ${spaceMono.variable}`}>
         {supabaseOrigin && (
           <>
             <link rel="preconnect" href={supabaseOrigin} crossOrigin="anonymous" />

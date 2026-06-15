@@ -54,7 +54,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 
   return (
     <PortalShell maxWidth={720}>
-      <BackLink href={portalLink('/portal', ctx)} label="Mis proyectos" />
+      <BackLink href={portalLink('/portal', ctx)} />
 
       <Masthead
         title="Mi perfil"

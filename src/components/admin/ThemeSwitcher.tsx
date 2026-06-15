@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from 'react'
 export const THEMES = [
   {
     id: 'obsidian', name: 'Obsidian',
-    accent: '#0071E3', accentHover: '#0077ED',
+    accent: '#e8341a', accentHover: '#ff3a1f',
     bg: '#000000', surface1: '#111111', surface2: '#1C1C1E', surface3: '#2C2C2E',
     text: '#F5F5F7', textSecondary: '#86868B', textTertiary: '#48484A',
     border: 'rgba(255,255,255,0.08)', borderStrong: 'rgba(255,255,255,0.14)',
@@ -280,7 +280,7 @@ export default function ThemeSwitcher() {
 
   const activeTheme = getThemeById(activeId)
 
-  const font = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+  const font = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
 
   return (
     <div style={{ position: 'relative' }}>

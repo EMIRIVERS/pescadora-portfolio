@@ -5,14 +5,14 @@ import { Plus, Trash2, X, Check } from 'lucide-react'
 import { createExpense, deleteExpense } from '@/lib/actions/expenses'
 import type { ProjectExpense } from '@/lib/supabase/types'
 
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+const FONT = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
 
 const CATEGORIES = [
   'Equipamiento',
-  'Locacion',
+  'Locación',
   'Talent',
   'Transporte',
-  'Post-produccion',
+  'Post-producción',
   'Licencias',
   'Otro',
 ]
@@ -44,7 +44,7 @@ interface Props {
 const INPUT: React.CSSProperties = {
   width: '100%',
   backgroundColor: 'var(--dash-surface-3)',
-  border: '1px solid rgba(255,255,255,0.08)',
+  border: '1px solid var(--dash-border)',
   borderRadius: 8,
   padding: '7px 10px',
   fontSize: 13,
@@ -82,7 +82,7 @@ export function BudgetTracker({ projectId, budget, currency, initialExpenses }: 
   const pct = budget != null && budget > 0 ? Math.min(100, (totalSpent / budget) * 100) : null
 
   const barColor =
-    pct == null ? '#0071E3' : pct >= 100 ? '#FF453A' : pct >= 80 ? '#FF9F0A' : '#30D158'
+    pct == null ? 'var(--dash-accent)' : pct >= 100 ? '#FF453A' : pct >= 80 ? '#FF9F0A' : '#30D158'
 
   function resetForm() {
     setLabel(''); setAmount(''); setCategory(CATEGORIES[CATEGORIES.length - 1])
@@ -94,7 +94,7 @@ export function BudgetTracker({ projectId, budget, currency, initialExpenses }: 
     e.preventDefault()
     const parsed = parseFloat(amount)
     if (!label.trim() || isNaN(parsed) || parsed <= 0) {
-      setError('Ingresa un concepto y monto valido.')
+      setError('Ingresa un concepto y monto válido.')
       return
     }
     setError(null)
@@ -110,7 +110,7 @@ export function BudgetTracker({ projectId, budget, currency, initialExpenses }: 
   }
 
   function handleDelete(id: string) {
-    if (!window.confirm('Eliminar este gasto?')) return
+    if (!window.confirm('¿Eliminar este gasto?')) return
     setExpenses((prev) => prev.filter((e) => e.id !== id))
     startTransition(async () => { await deleteExpense(id, projectId) })
   }
@@ -127,7 +127,7 @@ export function BudgetTracker({ projectId, budget, currency, initialExpenses }: 
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 5,
               padding: '5px 12px', background: 'var(--dash-surface-2)',
-              border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8,
+              border: '1px solid var(--dash-border)', borderRadius: 8,
               fontSize: 12, color: 'var(--dash-text-secondary)', cursor: 'pointer', fontFamily: FONT,
             }}
           >
@@ -138,7 +138,7 @@ export function BudgetTracker({ projectId, budget, currency, initialExpenses }: 
 
       {/* Summary */}
       <div style={{
-        backgroundColor: 'var(--dash-surface-2)', border: '1px solid rgba(255,255,255,0.08)',
+        backgroundColor: 'var(--dash-surface-2)', border: '1px solid var(--dash-border)',
         borderRadius: 16, padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16,
       }}>
         <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
@@ -156,7 +156,7 @@ export function BudgetTracker({ projectId, budget, currency, initialExpenses }: 
             <p style={{ margin: 0, fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--dash-text-tertiary)' }}>
               Gastado
             </p>
-            <p style={{ margin: '4px 0 0', fontSize: 20, fontWeight: 700, color: totalSpent > 0 ? '#FF9F0A' : 'var(--dash-text-tertiary)' }}>
+            <p style={{ margin: '4px 0 0', fontSize: 20, fontWeight: 700, color: totalSpent > 0 ? 'var(--dash-warning)' : 'var(--dash-text-tertiary)' }}>
               {fmt(totalSpent, cur)}
             </p>
           </div>
@@ -165,7 +165,7 @@ export function BudgetTracker({ projectId, budget, currency, initialExpenses }: 
               <p style={{ margin: 0, fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--dash-text-tertiary)' }}>
                 Disponible
               </p>
-              <p style={{ margin: '4px 0 0', fontSize: 20, fontWeight: 700, color: remaining < 0 ? '#FF453A' : '#30D158' }}>
+              <p style={{ margin: '4px 0 0', fontSize: 20, fontWeight: 700, color: remaining < 0 ? 'var(--dash-danger)' : 'var(--dash-success)' }}>
                 {fmt(remaining, cur)}
               </p>
             </div>
@@ -190,18 +190,18 @@ export function BudgetTracker({ projectId, budget, currency, initialExpenses }: 
       {/* Add form */}
       {showForm && (
         <div style={{
-          backgroundColor: 'var(--dash-surface-2)', border: '1px solid rgba(0,113,227,0.35)',
+          backgroundColor: 'var(--dash-surface-2)', border: '1px solid rgba(var(--dash-accent-rgb),0.35)',
           borderRadius: 16,
         }}>
           <form onSubmit={handleAdd} style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '18px 20px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               <div><label style={LABEL}>Concepto *</label>
-                <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Ej. Renta de camara" style={INPUT} /></div>
+                <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Ej. Renta de cámara" style={INPUT} /></div>
               <div><label style={LABEL}>Monto ({cur}) *</label>
                 <input type="number" min="0" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0" style={INPUT} /></div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <div><label style={LABEL}>Categoria</label>
+              <div><label style={LABEL}>Categoría</label>
                 <select value={category} onChange={(e) => setCategory(e.target.value)} style={{ ...INPUT, appearance: 'none' }}>
                   {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select></div>
@@ -210,11 +210,11 @@ export function BudgetTracker({ projectId, budget, currency, initialExpenses }: 
             </div>
             <div><label style={LABEL}>Notas</label>
               <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Opcional" style={INPUT} /></div>
-            {error && <p style={{ margin: 0, fontSize: 12, color: '#FF453A' }}>{error}</p>}
+            {error && <p style={{ margin: 0, fontSize: 12, color: 'var(--dash-danger)' }}>{error}</p>}
             <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
               <button type="submit" disabled={isPending} style={{
                 display: 'inline-flex', alignItems: 'center', gap: 5,
-                padding: '7px 16px', background: '#0071E3', border: 'none',
+                padding: '7px 16px', background: 'var(--dash-accent)', border: 'none',
                 borderRadius: 8, fontSize: 12, color: '#fff',
                 cursor: isPending ? 'not-allowed' : 'pointer',
                 opacity: isPending ? 0.5 : 1, fontFamily: FONT,
@@ -237,13 +237,13 @@ export function BudgetTracker({ projectId, budget, currency, initialExpenses }: 
       {/* Expense list */}
       {expenses.length > 0 && (
         <div style={{
-          backgroundColor: 'var(--dash-surface-2)', border: '1px solid rgba(255,255,255,0.08)',
+          backgroundColor: 'var(--dash-surface-2)', border: '1px solid var(--dash-border)',
           borderRadius: 16, overflow: 'hidden',
         }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                {['Concepto', 'Categoria', 'Fecha', 'Monto', ''].map((h) => (
+              <tr style={{ borderBottom: '1px solid var(--dash-border)' }}>
+                {['Concepto', 'Categoría', 'Fecha', 'Monto', ''].map((h) => (
                   <th key={h} style={{
                     padding: '10px 16px', fontSize: 11, fontWeight: 600,
                     letterSpacing: '0.05em', textTransform: 'uppercase',
@@ -254,19 +254,19 @@ export function BudgetTracker({ projectId, budget, currency, initialExpenses }: 
             </thead>
             <tbody>
               {expenses.map((expense, idx) => (
-                <tr key={expense.id} style={{ borderBottom: idx < expenses.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                <tr key={expense.id} style={{ borderBottom: idx < expenses.length - 1 ? '1px solid var(--dash-border)' : 'none' }}>
                   <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--dash-text-primary)', fontFamily: FONT }}>
                     {expense.label}
                     {expense.notes && <span style={{ display: 'block', fontSize: 11, color: 'var(--dash-text-tertiary)', marginTop: 2 }}>{expense.notes}</span>}
                   </td>
                   <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--dash-text-secondary)', fontFamily: FONT }}>{expense.category ?? '—'}</td>
                   <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--dash-text-secondary)', fontFamily: FONT, whiteSpace: 'nowrap' }}>{fmtDate(expense.date)}</td>
-                  <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: '#FF9F0A', fontFamily: FONT, textAlign: 'right', whiteSpace: 'nowrap' }}>
+                  <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: 'var(--dash-warning)', fontFamily: FONT, textAlign: 'right', whiteSpace: 'nowrap' }}>
                     {fmt(expense.amount, cur)}
                   </td>
                   <td style={{ padding: '12px 12px 12px 4px', textAlign: 'right' }}>
-                    <button onClick={() => handleDelete(expense.id)} title="Eliminar gasto"
-                      style={{ border: 'none', background: 'transparent', color: '#3A3A3C', cursor: 'pointer', padding: 4, borderRadius: 6, display: 'inline-flex', alignItems: 'center' }}>
+                    <button onClick={() => handleDelete(expense.id)} title="Eliminar gasto" aria-label="Eliminar gasto"
+                      style={{ border: 'none', background: 'transparent', color: 'var(--dash-text-tertiary)', cursor: 'pointer', padding: 4, borderRadius: 6, display: 'inline-flex', alignItems: 'center' }}>
                       <Trash2 size={13} strokeWidth={1.5} />
                     </button>
                   </td>
@@ -278,7 +278,7 @@ export function BudgetTracker({ projectId, budget, currency, initialExpenses }: 
       )}
 
       {expenses.length === 0 && !showForm && (
-        <p style={{ margin: 0, fontSize: 13, color: '#3A3A3C', fontFamily: FONT }}>Sin gastos registrados.</p>
+        <p style={{ margin: 0, fontSize: 13, color: 'var(--dash-text-tertiary)', fontFamily: FONT }}>Sin gastos registrados.</p>
       )}
     </section>
   )

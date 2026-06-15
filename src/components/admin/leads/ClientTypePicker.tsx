@@ -10,7 +10,7 @@ import {
   type ClientType,
 } from '@/lib/actions/client-types'
 
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+const FONT = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
 
 const COLOR_PALETTE = [
   '#FF453A', // red
@@ -251,7 +251,7 @@ export default function ClientTypePicker({ leadId, initialSelected, allTypes: in
                         width: 16,
                         height: 16,
                         borderRadius: 4,
-                        border: `2px solid ${sel ? type.color : 'rgba(255,255,255,0.15)'}`,
+                        border: `2px solid ${sel ? type.color : 'var(--dash-border-strong)'}`,
                         background: sel ? type.color : 'transparent',
                         display: 'flex',
                         alignItems: 'center',
@@ -298,7 +298,7 @@ export default function ClientTypePicker({ leadId, initialSelected, allTypes: in
                       className="ctp-del-btn"
                       onMouseEnter={(e) => {
                         const el = e.currentTarget as HTMLButtonElement
-                        el.style.color = '#FF453A'
+                        el.style.color = 'var(--dash-danger)'
                         el.style.opacity = '1'
                       }}
                       onMouseLeave={(e) => {
@@ -373,7 +373,7 @@ export default function ClientTypePicker({ leadId, initialSelected, allTypes: in
                           height: 20,
                           borderRadius: '50%',
                           background: c,
-                          border: newColor === c ? '2px solid white' : '2px solid transparent',
+                          border: newColor === c ? '2px solid var(--dash-text-primary)' : '2px solid transparent',
                           cursor: 'pointer',
                           padding: 0,
                           outline: 'none',
@@ -405,7 +405,7 @@ export default function ClientTypePicker({ leadId, initialSelected, allTypes: in
                       style={{
                         marginLeft: 'auto',
                         padding: '5px 12px',
-                        background: '#0071E3',
+                        background: 'var(--dash-accent)',
                         border: 'none',
                         borderRadius: 8,
                         fontSize: 12,

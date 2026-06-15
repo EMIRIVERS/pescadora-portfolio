@@ -15,9 +15,9 @@ import { X, Trash2, AlertCircle } from 'lucide-react'
 // ── Priority config ────────────────────────────────────────────────────────────
 
 const PRIORITY_OPTIONS: { value: TaskPriority; label: string; color: string }[] = [
-  { value: 'low',    label: 'Low',    color: '#3A3A3C' },
-  { value: 'medium', label: 'Medium', color: '#FF9F0A' },
-  { value: 'high',   label: 'High',   color: '#FF453A' },
+  { value: 'low',    label: 'Low',    color: 'var(--dash-text-tertiary)' },
+  { value: 'medium', label: 'Medium', color: 'var(--dash-warning)' },
+  { value: 'high',   label: 'High',   color: 'var(--dash-danger)' },
 ]
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -57,7 +57,7 @@ function findTaskInBoards(
 const inputStyle: React.CSSProperties = {
   width: '100%',
   backgroundColor: 'var(--dash-surface-3)',
-  border: '1px solid rgba(255,255,255,0.08)',
+  border: '1px solid var(--dash-border)',
   borderRadius: '10px',
   padding: '9px 12px',
   fontSize: '14px',
@@ -292,11 +292,11 @@ export function TaskDetailModal({ taskId, projectId, projects = [], onClose }: T
           maxWidth: '100vw',
           height: '100%',
           backgroundColor: 'var(--dash-surface-1)',
-          borderLeft: '1px solid rgba(255,255,255,0.08)',
+          borderLeft: '1px solid var(--dash-border)',
           transform: panelVisible ? 'translateX(0)' : 'translateX(100%)',
           transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
           boxShadow: '-24px 0 80px rgba(0,0,0,0.7)',
-          fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+          fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
           overflowY: 'auto',
         }}
       >
@@ -305,7 +305,7 @@ export function TaskDetailModal({ taskId, projectId, projects = [], onClose }: T
           className="flex items-start justify-between flex-shrink-0"
           style={{
             padding: '24px 24px 20px',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
+            borderBottom: '1px solid var(--dash-border)',
             position: 'sticky',
             top: 0,
             backgroundColor: 'var(--dash-surface-1)',
@@ -361,7 +361,7 @@ export function TaskDetailModal({ taskId, projectId, projects = [], onClose }: T
               cursor: 'pointer',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)'
+              e.currentTarget.style.backgroundColor = 'var(--dash-border-strong)'
               e.currentTarget.style.color = 'var(--dash-text-primary)'
             }}
             onMouseLeave={(e) => {
@@ -381,7 +381,7 @@ export function TaskDetailModal({ taskId, projectId, projects = [], onClose }: T
           {/* Title field */}
           <div>
             <label htmlFor={titleId} style={labelStyle}>
-              Title <span style={{ color: '#FF453A' }}>*</span>
+              Title <span style={{ color: 'var(--dash-danger)' }}>*</span>
             </label>
             <input
               id={titleId}
@@ -393,7 +393,7 @@ export function TaskDetailModal({ taskId, projectId, projects = [], onClose }: T
               disabled={isPending}
               autoComplete="off"
               onFocus={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(0,113,227,0.6)'
+                e.currentTarget.style.borderColor = 'rgba(var(--dash-accent-rgb),0.6)'
               }}
               onBlur={(e) => {
                 e.currentTarget.style.borderColor = 'var(--dash-border)'
@@ -419,7 +419,7 @@ export function TaskDetailModal({ taskId, projectId, projects = [], onClose }: T
                 minHeight: '90px',
               }}
               onFocus={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(0,113,227,0.6)'
+                e.currentTarget.style.borderColor = 'rgba(var(--dash-accent-rgb),0.6)'
               }}
               onBlur={(e) => {
                 e.currentTarget.style.borderColor = 'var(--dash-border)'
@@ -447,9 +447,9 @@ export function TaskDetailModal({ taskId, projectId, projects = [], onClose }: T
                       fontSize: '13px',
                       fontWeight: 500,
                       border: isActive
-                        ? `1px solid ${color}60`
-                        : '1px solid rgba(255,255,255,0.06)',
-                      backgroundColor: isActive ? `${color}18` : 'var(--dash-surface-3)',
+                        ? `1px solid color-mix(in srgb, ${color} 38%, transparent)`
+                        : '1px solid var(--dash-border)',
+                      backgroundColor: isActive ? `color-mix(in srgb, ${color} 9%, transparent)` : 'var(--dash-surface-3)',
                       color: isActive ? color : 'var(--dash-text-tertiary)',
                       cursor: 'pointer',
                       fontFamily: 'inherit',
@@ -482,7 +482,7 @@ export function TaskDetailModal({ taskId, projectId, projects = [], onClose }: T
                   backgroundColor: 'var(--dash-surface-3)',
                   borderRadius: '10px',
                   padding: '9px 12px',
-                  border: '1px solid rgba(255,255,255,0.06)',
+                  border: '1px solid var(--dash-border)',
                 }}
               >
                 <span
@@ -490,7 +490,7 @@ export function TaskDetailModal({ taskId, projectId, projects = [], onClose }: T
                   style={{
                     width: '6px',
                     height: '6px',
-                    backgroundColor: activePriority?.color ?? '#3A3A3C',
+                    backgroundColor: activePriority?.color ?? 'var(--dash-text-tertiary)',
                   }}
                   aria-hidden="true"
                 />
@@ -516,7 +516,7 @@ export function TaskDetailModal({ taskId, projectId, projects = [], onClose }: T
                 colorScheme: 'dark',
               }}
               onFocus={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(0,113,227,0.6)'
+                e.currentTarget.style.borderColor = 'rgba(var(--dash-accent-rgb),0.6)'
               }}
               onBlur={(e) => {
                 e.currentTarget.style.borderColor = 'var(--dash-border)'
@@ -542,7 +542,7 @@ export function TaskDetailModal({ taskId, projectId, projects = [], onClose }: T
                   paddingRight: '32px',
                 }}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(0,113,227,0.6)'
+                  e.currentTarget.style.borderColor = 'rgba(var(--dash-accent-rgb),0.6)'
                 }}
                 onBlur={(e) => {
                   e.currentTarget.style.borderColor = 'var(--dash-border)'
@@ -592,7 +592,7 @@ export function TaskDetailModal({ taskId, projectId, projects = [], onClose }: T
                     cursor: 'pointer',
                     paddingRight: '32px',
                   }}
-                  onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(0,113,227,0.6)' }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(var(--dash-accent-rgb),0.6)' }}
                   onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--dash-border)' }}
                 >
                   <option value="">Sin proyecto</option>
@@ -637,7 +637,7 @@ export function TaskDetailModal({ taskId, projectId, projects = [], onClose }: T
                   }}
                   placeholder="Nombre de la categoría..."
                   style={{ ...inputStyle, flex: 1 }}
-                  onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(0,113,227,0.6)' }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(var(--dash-accent-rgb),0.6)' }}
                   onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--dash-border)' }}
                 />
                 <button
@@ -665,7 +665,7 @@ export function TaskDetailModal({ taskId, projectId, projects = [], onClose }: T
                   style={{
                     backgroundColor: 'var(--dash-surface-3)',
                     color: 'var(--dash-text-secondary)',
-                    border: '1px solid rgba(255,255,255,0.08)',
+                    border: '1px solid var(--dash-border)',
                     borderRadius: '10px',
                     padding: '9px 12px',
                     fontSize: '13px',
@@ -692,7 +692,7 @@ export function TaskDetailModal({ taskId, projectId, projects = [], onClose }: T
                     cursor: 'pointer',
                     paddingRight: '32px',
                   }}
-                  onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(0,113,227,0.6)' }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(var(--dash-accent-rgb),0.6)' }}
                   onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--dash-border)' }}
                 >
                   <option value="">Sin categoría</option>
@@ -731,8 +731,8 @@ export function TaskDetailModal({ taskId, projectId, projects = [], onClose }: T
                 padding: '10px 12px',
               }}
             >
-              <AlertCircle size={14} style={{ color: '#FF453A', flexShrink: 0, marginTop: '1px' }} aria-hidden="true" />
-              <p style={{ color: '#FF453A', fontSize: '13px' }}>{saveError}</p>
+              <AlertCircle size={14} style={{ color: 'var(--dash-danger)', flexShrink: 0, marginTop: '1px' }} aria-hidden="true" />
+              <p style={{ color: 'var(--dash-danger)', fontSize: '13px' }}>{saveError}</p>
             </div>
           )}
 
@@ -747,8 +747,8 @@ export function TaskDetailModal({ taskId, projectId, projects = [], onClose }: T
                 padding: '10px 12px',
               }}
             >
-              <AlertCircle size={14} style={{ color: '#FF453A', flexShrink: 0, marginTop: '1px' }} aria-hidden="true" />
-              <p style={{ color: '#FF453A', fontSize: '13px' }}>{deleteError}</p>
+              <AlertCircle size={14} style={{ color: 'var(--dash-danger)', flexShrink: 0, marginTop: '1px' }} aria-hidden="true" />
+              <p style={{ color: 'var(--dash-danger)', fontSize: '13px' }}>{deleteError}</p>
             </div>
           )}
 
@@ -797,7 +797,7 @@ export function TaskDetailModal({ taskId, projectId, projects = [], onClose }: T
                     flex: 1,
                     backgroundColor: 'var(--dash-surface-3)',
                     color: 'var(--dash-text-primary)',
-                    border: '1px solid rgba(255,255,255,0.08)',
+                    border: '1px solid var(--dash-border)',
                     borderRadius: '8px',
                     padding: '9px 12px',
                     fontSize: '13px',
@@ -819,7 +819,7 @@ export function TaskDetailModal({ taskId, projectId, projects = [], onClose }: T
           className="flex items-center justify-between flex-shrink-0"
           style={{
             padding: '16px 24px',
-            borderTop: '1px solid rgba(255,255,255,0.06)',
+            borderTop: '1px solid var(--dash-border)',
             backgroundColor: 'var(--dash-surface-1)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
@@ -846,7 +846,7 @@ export function TaskDetailModal({ taskId, projectId, projects = [], onClose }: T
                 opacity: isPending ? 0.4 : 1,
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.color = '#FF453A'
+                e.currentTarget.style.color = 'var(--dash-danger)'
                 e.currentTarget.style.backgroundColor = 'rgba(255,69,58,0.08)'
               }}
               onMouseLeave={(e) => {
@@ -869,7 +869,7 @@ export function TaskDetailModal({ taskId, projectId, projects = [], onClose }: T
               disabled={isPending}
               style={{
                 backgroundColor: 'var(--dash-surface-3)',
-                border: '1px solid rgba(255,255,255,0.08)',
+                border: '1px solid var(--dash-border)',
                 color: 'var(--dash-text-secondary)',
                 borderRadius: '8px',
                 padding: '8px 16px',
@@ -894,7 +894,7 @@ export function TaskDetailModal({ taskId, projectId, projects = [], onClose }: T
               onClick={handleSave}
               disabled={isPending || !form.title.trim()}
               style={{
-                backgroundColor: '#0071E3',
+                backgroundColor: 'var(--dash-accent)',
                 border: 'none',
                 color: '#fff',
                 borderRadius: '8px',
@@ -908,11 +908,11 @@ export function TaskDetailModal({ taskId, projectId, projects = [], onClose }: T
               }}
               onMouseEnter={(e) => {
                 if (!isPending && form.title.trim()) {
-                  e.currentTarget.style.backgroundColor = '#0077ED'
+                  e.currentTarget.style.backgroundColor = 'var(--dash-accent-hover)'
                 }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#0071E3'
+                e.currentTarget.style.backgroundColor = 'var(--dash-accent)'
               }}
             >
               {isPending ? 'Saving...' : 'Save changes'}

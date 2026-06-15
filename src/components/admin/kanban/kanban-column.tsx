@@ -15,7 +15,7 @@ import { useCreateTask, useTaskCategories, useCreateCategory } from '@/lib/queri
 const fieldStyle: React.CSSProperties = {
   width: '100%',
   backgroundColor: 'var(--dash-surface-2)',
-  border: '1px solid rgba(255,255,255,0.1)',
+  border: '1px solid var(--dash-border-strong)',
   borderRadius: '8px',
   padding: '7px 10px',
   fontSize: '12px',
@@ -134,14 +134,14 @@ export function KanbanColumn({ board, projectId, projects = [], isPrimary = fals
       <motion.div
         animate={{
           boxShadow: isOver
-            ? '0 0 0 2px var(--dash-accent), 0 0 20px rgba(0,113,227,0.2), 0 8px 32px rgba(0,0,0,0.5)'
+            ? '0 0 0 2px var(--dash-accent), 0 0 20px rgba(var(--dash-accent-rgb),0.2), 0 8px 32px rgba(0,0,0,0.5)'
             : '0 2px 12px rgba(0,0,0,0.4)',
         }}
         transition={{ duration: 0.2, ease: 'easeInOut' }}
         style={{
           backgroundColor: 'var(--dash-surface-1)',
           borderRadius: '16px',
-          border: '1px solid rgba(255,255,255,0.08)',
+          border: '1px solid var(--dash-border)',
           overflow: 'hidden',
         }}
       >
@@ -150,8 +150,8 @@ export function KanbanColumn({ board, projectId, projects = [], isPrimary = fals
           className="flex items-center justify-between"
           style={{
             padding: '11px 14px',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
-            backgroundColor: 'rgba(255,255,255,0.025)',
+            borderBottom: '1px solid var(--dash-border)',
+            backgroundColor: 'var(--dash-surface-2)',
           }}
         >
           <div className="flex items-center gap-2 min-w-0">
@@ -213,7 +213,7 @@ export function KanbanColumn({ board, projectId, projects = [], isPrimary = fals
           ref={setNodeRef}
           className="flex flex-col"
           animate={{
-            backgroundColor: isOver ? 'rgba(0,113,227,0.04)' : 'rgba(0,0,0,0)',
+            backgroundColor: isOver ? 'rgba(var(--dash-accent-rgb),0.04)' : 'rgba(0,0,0,0)',
           }}
           transition={{ duration: 0.15 }}
           style={{
@@ -256,7 +256,7 @@ export function KanbanColumn({ board, projectId, projects = [], isPrimary = fals
                 <div
                   style={{
                     backgroundColor: 'var(--dash-surface-2)',
-                    border: '1px solid rgba(255,255,255,0.1)',
+                    border: '1px solid var(--dash-border-strong)',
                     borderRadius: '12px',
                     padding: '10px',
                     display: 'flex',
@@ -371,7 +371,7 @@ export function KanbanColumn({ board, projectId, projects = [], isPrimary = fals
                       onClick={handleAddTask}
                       className="flex items-center justify-center gap-1 flex-1 transition-opacity hover:opacity-80"
                       style={{
-                        backgroundColor: '#0071E3',
+                        backgroundColor: 'var(--dash-accent)',
                         color: '#fff',
                         border: 'none',
                         borderRadius: '7px',
@@ -393,7 +393,7 @@ export function KanbanColumn({ board, projectId, projects = [], isPrimary = fals
                       style={{
                         backgroundColor: 'var(--dash-border)',
                         color: 'var(--dash-text-secondary)',
-                        border: '1px solid rgba(255,255,255,0.08)',
+                        border: '1px solid var(--dash-border)',
                         borderRadius: '7px',
                         padding: '6px 10px',
                         fontSize: '12px',
@@ -431,7 +431,7 @@ export function KanbanColumn({ board, projectId, projects = [], isPrimary = fals
                     fontFamily: 'inherit',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'
+                    e.currentTarget.style.backgroundColor = 'var(--dash-surface-2)'
                     e.currentTarget.style.color = 'var(--dash-text-secondary)'
                   }}
                   onMouseLeave={(e) => {

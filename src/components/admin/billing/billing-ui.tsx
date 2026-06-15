@@ -21,9 +21,9 @@ import {
 import { formatMoney } from '@/lib/billing/format'
 import type { TaxBreakdown } from '@/lib/billing/tax'
 
-export const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
-export const BLUE = '#0071E3'
-export const AMBER = '#FF9F0A'
+export const FONT = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
+export const BLUE = 'var(--dash-accent)'
+export const AMBER = 'var(--dash-warning)'
 
 export const INPUT: React.CSSProperties = {
   width: '100%',
@@ -140,7 +140,7 @@ export function LineItemsEditor({ lines, setLines, currency, tax }: LineItemsEdi
                         fontFamily: FONT,
                         cursor: active ? 'default' : 'pointer',
                         border: active ? `1px solid ${BLUE}` : suggested ? `1px solid ${AMBER}` : '1px solid var(--dash-border)',
-                        background: active ? 'rgba(0,113,227,0.16)' : suggested ? 'rgba(255,159,10,0.10)' : 'var(--dash-surface-3)',
+                        background: active ? 'rgba(var(--dash-accent-rgb),0.16)' : suggested ? 'rgba(255,159,10,0.10)' : 'var(--dash-surface-3)',
                         color: active ? BLUE : suggested ? AMBER : 'var(--dash-text-secondary)',
                       }}
                     >
@@ -157,7 +157,7 @@ export function LineItemsEditor({ lines, setLines, currency, tax }: LineItemsEdi
       </div>
 
       {suggestions.length > 0 && (
-        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', padding: '10px 12px', borderRadius: 10, border: `1px solid ${AMBER}33`, background: 'rgba(255,159,10,0.06)', marginBottom: 20 }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', padding: '10px 12px', borderRadius: 10, border: `1px solid color-mix(in srgb, ${AMBER} 20%, transparent)`, background: 'rgba(255,159,10,0.06)', marginBottom: 20 }}>
           <Lightbulb size={14} color={AMBER} style={{ marginTop: 1, flexShrink: 0 }} />
           <p style={{ margin: 0, fontSize: 12, color: AMBER }}>
             Sugerencia: considera agregar{' '}

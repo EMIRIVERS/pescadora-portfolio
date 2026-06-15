@@ -16,26 +16,26 @@ const T = {
   textPrimary:   'var(--dash-text-primary)',
   textSecondary: 'var(--dash-text-secondary)',
   textTertiary:  'var(--dash-text-tertiary)',
-  accent:        '#0071E3',
-  font:          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+  accent:        'var(--dash-accent)',
+  font:          "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
 } as const
 
 // ── Status configs ─────────────────────────────────────────────────────────────
 
 const PROJECT_STATUS_CONFIG: Record<ProjectStatus, { label: string; color: string }> = {
-  pre_production:  { label: 'Pre-produccion',  color: '#FF9F0A' },
-  production:      { label: 'Produccion',       color: '#0071E3' },
-  post_production: { label: 'Post-produccion',  color: '#BF5AF2' },
-  delivered:       { label: 'Entregado',        color: '#30D158' },
+  pre_production:  { label: 'Pre-producción',  color: 'var(--dash-warning)' },
+  production:      { label: 'Producción',       color: 'var(--dash-accent)' },
+  post_production: { label: 'Post-producción',  color: '#BF5AF2' },
+  delivered:       { label: 'Entregado',        color: 'var(--dash-success)' },
 }
 
 const LEAD_STATUS_CONFIG: Record<LeadStatus, { label: string; color: string }> = {
-  new:       { label: 'Nuevo',      color: '#0071E3' },
-  contacted: { label: 'Contactado', color: '#FF9F0A' },
+  new:       { label: 'Nuevo',      color: 'var(--dash-accent)' },
+  contacted: { label: 'Contactado', color: 'var(--dash-warning)' },
   qualified: { label: 'Calificado', color: '#BF5AF2' },
-  proposal:  { label: 'Propuesta',  color: '#30D158' },
-  won:       { label: 'Ganado',     color: '#30D158' },
-  lost:      { label: 'Perdido',    color: '#FF453A' },
+  proposal:  { label: 'Propuesta',  color: 'var(--dash-success)' },
+  won:       { label: 'Ganado',     color: 'var(--dash-success)' },
+  lost:      { label: 'Perdido',    color: 'var(--dash-danger)' },
 }
 
 // ── Result row shapes ──────────────────────────────────────────────────────────
@@ -73,7 +73,7 @@ function StatusPill({ label, color }: { label: string; color: string }) {
         borderRadius: '20px',
         fontSize: '12px',
         fontWeight: 600,
-        background: `${color}26`,
+        background: `color-mix(in srgb, ${color} 15%, transparent)`,
         color,
         fontFamily: T.font,
         whiteSpace: 'nowrap',
@@ -208,6 +208,7 @@ export default async function AdminBuscarPage({ searchParams }: PageProps) {
         .result-row { transition: background 0.1s ease; }
         .result-row:hover { background: var(--dash-surface-2) !important; }
         .result-link { color: var(--dash-text-primary); text-decoration: none; display: flex; align-items: center; gap: 12px; padding: 14px 20px; width: 100%; }
+        .result-link:focus-visible { outline: 2px solid var(--dash-accent); outline-offset: -2px; border-radius: 8px; }
         .result-arrow { color: var(--dash-text-tertiary); transition: color 0.15s; flex-shrink: 0; }
         .result-row:hover .result-arrow { color: var(--dash-text-primary) !important; }
       `}</style>
@@ -364,7 +365,7 @@ export default async function AdminBuscarPage({ searchParams }: PageProps) {
                   lineHeight: 1.5,
                 }}
               >
-                Revisa la ortografia o prueba con un termino mas corto.
+                Revisa la ortografía o prueba con un término más corto.
               </p>
 
               {/* Hint pills */}
@@ -590,7 +591,7 @@ export default async function AdminBuscarPage({ searchParams }: PageProps) {
                         }}
                       >
                         <Link
-                          href="/admin/leads"
+                          href={`/admin/leads?lead=${lead.id}`}
                           className="result-link"
                         >
                           {/* Icon */}

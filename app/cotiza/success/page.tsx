@@ -18,8 +18,8 @@ export default function CotizaSuccessPage() {
         .cs-body {
           min-height: 100dvh;
           background: #050505;
-          color: #F5F5F7;
-          font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+          color: #ede8e0;
+          font-family: var(--font-geist-sans), -apple-system, system-ui, sans-serif;
           -webkit-font-smoothing: antialiased;
           display: flex;
           align-items: center;
@@ -45,12 +45,12 @@ export default function CotizaSuccessPage() {
           width: 56px;
           height: 56px;
           border-radius: 50%;
-          background: rgba(52,199,89,0.12);
-          border: 1px solid rgba(52,199,89,0.28);
+          background: rgba(48,209,88,0.12);
+          border: 1px solid rgba(48,209,88,0.28);
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          color: #34C759;
+          color: #30d158;
           margin-bottom: 1.75rem;
         }
         .cs-heading {
@@ -59,12 +59,12 @@ export default function CotizaSuccessPage() {
           font-weight: 300;
           font-style: italic;
           line-height: 1.1;
-          color: #F5F5F7;
+          color: #ede8e0;
           margin: 0 0 0.75rem;
         }
         .cs-sub {
           font-size: 0.9375rem;
-          color: #86868B;
+          color: #8a857d;
           line-height: 1.5;
           margin: 0 0 2.5rem;
         }
@@ -73,20 +73,25 @@ export default function CotizaSuccessPage() {
           align-items: center;
           gap: 0.35rem;
           font-size: 0.875rem;
-          color: #0071E3;
+          color: #e8341a;
           text-decoration: none;
           letter-spacing: 0.01em;
           transition: opacity 0.18s;
+          border-radius: 2px;
         }
         .cs-link:hover { opacity: 0.75; }
+        .cs-link:focus-visible {
+          outline: 2px solid #e8341a;
+          outline-offset: 3px;
+        }
         .cs-wordmark {
           display: block;
           margin-top: 3rem;
           font-size: 11px;
           letter-spacing: 0.36em;
           text-transform: uppercase;
-          color: #3a3a3c;
-          font-family: "SF Mono", "Geist Mono", monospace;
+          color: #4a4640;
+          font-family: var(--font-geist-mono), ui-monospace, monospace;
         }
       `}</style>
 

@@ -32,15 +32,15 @@ const PHASES: PhaseDefinition[] = [
 ]
 
 // ── Cinematic brand tokens ──────────────────────────────────────────────────
-const CREAM = '#ede8e0'
-const MUTED = '#8a857d'
-const FAINT = '#6b6560'
-const ACCENT = '#e8341a'
+const CREAM = 'var(--portal-text)'
+const MUTED = 'var(--portal-text-muted)'
+const FAINT = 'var(--portal-text-dim)'
+const ACCENT = 'var(--portal-accent)'
 const ACCENT_DONE = 'rgba(232,52,26,0.45)'
 const TRACK = 'rgba(237,232,224,0.1)'
-const BORDER = 'rgba(237,232,224,0.10)'
-const SERIF = 'var(--font-cormorant), Georgia, serif'
-const MONO = 'var(--font-geist-mono), monospace'
+const BORDER = 'var(--portal-border)'
+const SERIF = 'var(--portal-serif)'
+const MONO = 'var(--portal-mono)'
 
 // "delivered" is the terminal state — all 3 phases are shown as completed
 const CURRENT_INDEX_BY_STATUS: Record<ProjectStatus, number> = {

@@ -5,7 +5,7 @@ import { Send, Trash2 } from 'lucide-react'
 import { createProjectComment, deleteProjectComment } from '@/lib/actions/projects'
 import type { ProjectComment } from '@/lib/actions/projects'
 
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+const FONT = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
 
 interface Props {
   projectId: string
@@ -69,7 +69,7 @@ export function ProjectComments({ projectId, initialComments, currentUserId }: P
   }
 
   function handleDelete(commentId: string) {
-    if (!window.confirm('Eliminar comentario?')) return
+    if (!window.confirm('¿Eliminar comentario?')) return
     setComments((prev) => prev.filter((c) => c.id !== commentId))
     startTransition(async () => {
       await deleteProjectComment(commentId, projectId)
@@ -86,7 +86,7 @@ export function ProjectComments({ projectId, initialComments, currentUserId }: P
       <div
         style={{
           backgroundColor: 'var(--dash-surface-2)',
-          border: '1px solid rgba(255,255,255,0.08)',
+          border: '1px solid var(--dash-border)',
           borderRadius: 16,
           overflow: 'hidden',
         }}
@@ -102,8 +102,8 @@ export function ProjectComments({ projectId, initialComments, currentUserId }: P
           }}
         >
           {comments.length === 0 && (
-            <p style={{ margin: 0, padding: '20px 20px', fontSize: 13, color: '#3A3A3C', fontFamily: FONT }}>
-              Sin comentarios. Se el primero en escribir.
+            <p style={{ margin: 0, padding: '20px 20px', fontSize: 13, color: 'var(--dash-text-tertiary)', fontFamily: FONT }}>
+              Sin comentarios. Sé el primero en escribir.
             </p>
           )}
           {comments.map((c) => (
@@ -112,7 +112,7 @@ export function ProjectComments({ projectId, initialComments, currentUserId }: P
               <div
                 style={{
                   width: 28, height: 28, borderRadius: '50%',
-                  background: 'var(--dash-surface-3)', border: '1px solid rgba(255,255,255,0.08)',
+                  background: 'var(--dash-surface-3)', border: '1px solid var(--dash-border)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   flexShrink: 0, fontSize: 10, fontWeight: 600, color: 'var(--dash-text-secondary)', fontFamily: FONT,
                 }}
@@ -135,7 +135,7 @@ export function ProjectComments({ projectId, initialComments, currentUserId }: P
                   <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--dash-text-primary)', fontFamily: FONT }}>
                     {c.author?.full_name ?? 'Tú'}
                   </span>
-                  <span style={{ fontSize: 11, color: '#3A3A3C', fontFamily: FONT }}>
+                  <span style={{ fontSize: 11, color: 'var(--dash-text-tertiary)', fontFamily: FONT }}>
                     {timeAgo(c.created_at)}
                   </span>
                 </div>
@@ -154,10 +154,11 @@ export function ProjectComments({ projectId, initialComments, currentUserId }: P
                 <button
                   onClick={() => handleDelete(c.id)}
                   style={{
-                    border: 'none', background: 'transparent', color: '#3A3A3C',
+                    border: 'none', background: 'transparent', color: 'var(--dash-text-tertiary)',
                     cursor: 'pointer', padding: 4, borderRadius: 6, flexShrink: 0,
                   }}
                   title="Eliminar"
+                  aria-label="Eliminar comentario"
                 >
                   <Trash2 size={12} strokeWidth={1.5} />
                 </button>
@@ -173,8 +174,8 @@ export function ProjectComments({ projectId, initialComments, currentUserId }: P
           style={{
             display: 'flex', gap: 8, alignItems: 'flex-end',
             padding: '10px 16px',
-            borderTop: '1px solid rgba(255,255,255,0.06)',
-            background: 'rgba(255,255,255,0.02)',
+            borderTop: '1px solid var(--dash-border)',
+            background: 'var(--dash-surface-2)',
           }}
         >
           <textarea
@@ -189,7 +190,7 @@ export function ProjectComments({ projectId, initialComments, currentUserId }: P
             placeholder="Escribe un comentario... (Enter para enviar)"
             rows={1}
             style={{
-              flex: 1, background: 'var(--dash-surface-3)', border: '1px solid rgba(255,255,255,0.08)',
+              flex: 1, background: 'var(--dash-surface-3)', border: '1px solid var(--dash-border)',
               borderRadius: 8, padding: '7px 10px', fontSize: 13, color: 'var(--dash-text-primary)',
               fontFamily: FONT, outline: 'none', resize: 'none', lineHeight: 1.5,
               boxSizing: 'border-box',
@@ -200,17 +201,18 @@ export function ProjectComments({ projectId, initialComments, currentUserId }: P
             disabled={isPending || !draft.trim()}
             style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              width: 32, height: 32, background: draft.trim() ? '#0071E3' : 'var(--dash-surface-3)',
+              width: 32, height: 32, background: draft.trim() ? 'var(--dash-accent)' : 'var(--dash-surface-3)',
               border: 'none', borderRadius: 8, cursor: draft.trim() ? 'pointer' : 'not-allowed',
               color: '#fff', flexShrink: 0, transition: 'background 0.15s',
             }}
             title="Enviar (Enter)"
+            aria-label="Enviar comentario"
           >
             <Send size={13} strokeWidth={1.8} />
           </button>
         </form>
       </div>
-      {error && <p style={{ margin: 0, fontSize: 12, color: '#FF453A', fontFamily: FONT }}>{error}</p>}
+      {error && <p style={{ margin: 0, fontSize: 12, color: 'var(--dash-danger)', fontFamily: FONT }}>{error}</p>}
     </section>
   )
 }

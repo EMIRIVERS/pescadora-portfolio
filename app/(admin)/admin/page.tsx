@@ -115,8 +115,8 @@ function timeAgo(iso: string): string {
   const diffHours = Math.floor(diffMins / 60)
   if (diffHours < 24) return `hace ${diffHours} h`
   const diffDays = Math.floor(diffHours / 24)
-  if (diffDays === 1) return 'hace 1 dia'
-  return `hace ${diffDays} dias`
+  if (diffDays === 1) return 'hace 1 día'
+  return `hace ${diffDays} días`
 }
 
 function daysUntil(isoDate: string): number {
@@ -129,7 +129,7 @@ function daysUntil(isoDate: string): number {
 
 function greetingLabel(): string {
   const hour = new Date().getHours()
-  if (hour >= 5 && hour < 12) return 'Buenos dias'
+  if (hour >= 5 && hour < 12) return 'Buenos días'
   if (hour >= 12 && hour < 20) return 'Buenas tardes'
   return 'Buenas noches'
 }
@@ -235,7 +235,7 @@ function SparklineSVG({ values, color }: { values: number[]; color: string }) {
 
 const PROJECT_STATUS_LABEL: Record<ProjectStatus, string> = {
   pre_production: 'Pre-prod',
-  production: 'Produccion',
+  production: 'Producción',
   post_production: 'Post-prod',
   delivered: 'Entregado',
 }
@@ -244,18 +244,18 @@ const PROJECT_STATUS_COLOR: Record<ProjectStatus, string> = {
   pre_production: 'var(--dash-text-tertiary)',
   production: 'var(--dash-success)',
   post_production: 'var(--dash-warning)',
-  delivered: '#0071E3',
+  delivered: 'var(--dash-accent)',
 }
 
 const PROJECT_STATUS_BG: Record<ProjectStatus, string> = {
   pre_production: 'rgba(72,72,74,0.18)',
   production: 'rgba(48,209,88,0.13)',
   post_production: 'rgba(255,159,10,0.13)',
-  delivered: 'rgba(0,113,227,0.13)',
+  delivered: 'rgba(var(--dash-accent-rgb),0.13)',
 }
 
 const LEAD_STATUS_COLOR: Record<LeadStatus, string> = {
-  new: '#0071E3',
+  new: 'var(--dash-accent)',
   contacted: '#BF5AF2',
   qualified: 'var(--dash-warning)',
   proposal: '#FF6961',
@@ -264,7 +264,7 @@ const LEAD_STATUS_COLOR: Record<LeadStatus, string> = {
 }
 
 const LEAD_STATUS_BG: Record<LeadStatus, string> = {
-  new: 'rgba(0,113,227,0.13)',
+  new: 'rgba(var(--dash-accent-rgb),0.13)',
   contacted: 'rgba(191,90,242,0.13)',
   qualified: 'rgba(255,159,10,0.13)',
   proposal: 'rgba(255,105,97,0.13)',
@@ -295,13 +295,13 @@ const DELIVERABLE_STATUS_BG: Record<DeliverableStatus, string> = {
 
 const DELIVERABLE_STATUS_LABEL: Record<DeliverableStatus, string> = {
   pending: 'Pendiente',
-  review: 'En revision',
+  review: 'En revisión',
   approved: 'Aprobado',
 }
 
 // ─── Stat card accent colours (icon + number tint) ───────────────────────────
 
-const STAT_ACCENT = ['#0071E3', '#30D158', '#FF9F0A', '#BF5AF2', '#FF453A'] as const
+const STAT_ACCENT = ['var(--dash-accent)', '#30D158', '#FF9F0A', '#BF5AF2', '#FF453A'] as const
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -678,7 +678,7 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
           background-color: var(--dash-bg);
           min-height: 100vh;
           padding: clamp(1.25rem, 4vw, 2.5rem) clamp(1rem, 4vw, 2rem);
-          font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+          font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
           color: var(--dash-text-primary);
           box-sizing: border-box;
         }
@@ -994,7 +994,7 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
                 background: 'var(--dash-surface-2)',
                 borderRadius: '10px',
                 padding: '3px',
-                border: '1px solid rgba(255,255,255,0.08)',
+                border: '1px solid var(--dash-border)',
                 flexShrink: 0,
               }}
             >
@@ -1002,7 +1002,7 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
                 [
                   { label: 'Mes', value: 'this_month' },
                   { label: '3M', value: '3months' },
-                  { label: 'Ano', value: 'this_year' },
+                  { label: 'Año', value: 'this_year' },
                   { label: 'Todo', value: 'all_time' },
                 ] as { label: string; value: SparklinePeriod }[]
               ).map((btn) => {
@@ -1017,7 +1017,7 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
                       borderRadius: '7px',
                       fontSize: '11px',
                       fontWeight: isActive ? 600 : 400,
-                      background: isActive ? '#0071E3' : 'transparent',
+                      background: isActive ? 'var(--dash-accent)' : 'transparent',
                       color: isActive ? '#FFFFFF' : 'var(--dash-text-secondary)',
                       textDecoration: 'none',
                       whiteSpace: 'nowrap',
@@ -1084,7 +1084,7 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
                 const days = daysUntil(proj.end_date)
                 const overdue = days < 0
                 const daysColor = overdue ? 'var(--dash-danger)' : 'var(--dash-warning)'
-                const daysLabel = overdue ? `${Math.abs(days)} dias vencido` : `${days} dias`
+                const daysLabel = overdue ? `${Math.abs(days)} días vencido` : `${days} días`
                 return (
                   <HoverLiftLink
                     key={proj.id}
@@ -1159,7 +1159,7 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
           <div
             style={{
               background: 'var(--dash-surface-1)',
-              border: '1px solid rgba(0,113,227,0.25)',
+              border: '1px solid rgba(var(--dash-accent-rgb),0.25)',
               borderRadius: '12px',
               padding: '16px 20px',
               marginBottom: '16px',
@@ -1169,7 +1169,7 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
               style={{
                 fontSize: '13px',
                 fontWeight: 600,
-                color: '#0071E3',
+                color: 'var(--dash-accent)',
                 margin: '0 0 10px 0',
               }}
             >
@@ -1378,8 +1378,8 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
                     style={{
                       fontSize: '12px',
                       fontWeight: 600,
-                      color: '#0071E3',
-                      background: 'rgba(0,113,227,0.13)',
+                      color: 'var(--dash-accent)',
+                      background: 'rgba(var(--dash-accent-rgb),0.13)',
                       borderRadius: '6px',
                       padding: '2px 7px',
                     }}
@@ -1397,7 +1397,7 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
                     margin: 0,
                   }}
                 >
-                  {staleLeads} {staleLeads === 1 ? 'lead' : 'leads'} sin contactar por +3 dias
+                  {staleLeads} {staleLeads === 1 ? 'lead' : 'leads'} sin contactar por +3 días
                 </p>
               )}
             </div>
@@ -1469,7 +1469,7 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
           </FadeIn>
         </div>
 
-        {/* ── Acciones rapidas ── */}
+        {/* ── Acciones rápidas ── */}
         <div
           style={{
             background: 'var(--dash-surface-1)',
@@ -1489,7 +1489,7 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
               margin: '0 0 14px 0',
             }}
           >
-            Acciones rapidas
+            Acciones rápidas
           </p>
           <div className="apd-actions-grid">
             {quickActions.map(({ label, href, icon: ActionIcon, variant }) => (
@@ -1579,7 +1579,7 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
           </FadeIn>
         </div>
 
-        {/* ── Accesos rapidos ── */}
+        {/* ── Accesos rápidos ── */}
         <div>
           <p
             style={{
@@ -1591,7 +1591,7 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
               margin: '0 0 12px 0',
             }}
           >
-            Accesos rapidos
+            Accesos rápidos
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
             {quickLinks.map((link) => (

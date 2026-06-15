@@ -17,7 +17,7 @@ export function NewTaskButton() {
       onClick={() => window.dispatchEvent(new CustomEvent(NEW_TASK_EVENT))}
       className="flex items-center gap-1.5 transition-opacity hover:opacity-80 active:opacity-60"
       style={{
-        backgroundColor: '#0071E3',
+        backgroundColor: 'var(--dash-accent)',
         color: '#fff',
         fontSize: '13px',
         fontWeight: 500,

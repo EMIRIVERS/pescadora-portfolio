@@ -9,7 +9,7 @@ interface Props {
   onClose: () => void
 }
 
-const SF = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+const SF = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
 
 type Tab = 'invite' | 'manual'
 
@@ -56,17 +56,17 @@ function Field({ id, label, required, name, type = 'text', value, placeholder, d
           color: 'var(--dash-text-primary)',
           backgroundColor: 'var(--dash-surface-3)',
           border: focused
-            ? '1px solid rgba(0,113,227,0.7)'
+            ? '1px solid rgba(var(--dash-accent-rgb),0.7)'
             : error
             ? '1px solid rgba(255,69,58,0.6)'
-            : '1px solid rgba(255,255,255,0.08)',
+            : '1px solid var(--dash-border)',
           borderRadius: '10px',
           padding: '10px 14px',
           outline: 'none',
           width: '100%',
           transition: 'border-color 0.15s ease',
           opacity: disabled ? 0.5 : 1,
-          boxShadow: focused ? '0 0 0 3px rgba(0,113,227,0.12)' : 'none',
+          boxShadow: focused ? '0 0 0 3px rgba(var(--dash-accent-rgb),0.12)' : 'none',
           boxSizing: 'border-box',
         }}
       />
@@ -98,7 +98,7 @@ function TabBtn({ active, onClick, children }: TabBtnProps) {
         color: active ? 'var(--dash-text-primary)' : 'var(--dash-text-secondary)',
         backgroundColor: active ? 'var(--dash-surface-2)' : 'transparent',
         border: 'none',
-        borderBottom: active ? '2px solid #0071E3' : '2px solid transparent',
+        borderBottom: active ? '2px solid var(--dash-accent)' : '2px solid transparent',
         padding: '10px 0',
         cursor: 'pointer',
         transition: 'color 0.15s ease, border-color 0.15s ease',
@@ -122,7 +122,7 @@ function InviteTab({ onClose }: { onClose: () => void }) {
     e.preventDefault()
     const trimmed = email.trim().toLowerCase()
     if (!trimmed) { setError('El email es obligatorio.'); return }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) { setError('Introduce una direccion de email valida.'); return }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) { setError('Introduce una dirección de email válida.'); return }
     setError(null)
 
     startTransition(async () => {
@@ -150,11 +150,11 @@ function InviteTab({ onClose }: { onClose: () => void }) {
           <CheckCircle2 style={{ color: '#34C759', width: '32px', height: '32px' }} strokeWidth={1.5} />
           <div>
             <p style={{ fontFamily: SF, fontSize: '15px', fontWeight: 600, color: 'var(--dash-text-primary)', marginBottom: '4px' }}>
-              Invitacion enviada
+              Invitación enviada
             </p>
             <p style={{ fontFamily: SF, fontSize: '13px', color: 'var(--dash-text-secondary)' }}>{email.trim()}</p>
             <p style={{ fontFamily: SF, fontSize: '13px', color: 'var(--dash-text-tertiary)', marginTop: '6px' }}>
-              El cliente recibira un enlace para acceder al portal.
+              El cliente recibirá un enlace para acceder al portal.
             </p>
           </div>
         </div>
@@ -162,7 +162,7 @@ function InviteTab({ onClose }: { onClose: () => void }) {
           <button
             type="button"
             onClick={onClose}
-            style={{ fontFamily: SF, fontSize: '15px', fontWeight: 500, color: '#0071E3', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', padding: '8px 16px' }}
+            style={{ fontFamily: SF, fontSize: '15px', fontWeight: 500, color: 'var(--dash-accent)', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', padding: '8px 16px' }}
           >
             Cerrar
           </button>
@@ -174,7 +174,7 @@ function InviteTab({ onClose }: { onClose: () => void }) {
   return (
     <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <p style={{ fontFamily: SF, fontSize: '13px', color: 'var(--dash-text-secondary)', margin: 0 }}>
-        Se enviara un email de invitacion de Supabase Auth. El cliente podra crear su cuenta y acceder al portal.
+        Se enviará un email de invitación de Supabase Auth. El cliente podrá crear su cuenta y acceder al portal.
       </p>
       <Field
         id="inv-email"
@@ -208,16 +208,16 @@ function InviteTab({ onClose }: { onClose: () => void }) {
           style={{
             display: 'inline-flex', alignItems: 'center', gap: '8px',
             fontFamily: SF, fontSize: '15px', fontWeight: 500, color: '#ffffff',
-            backgroundColor: isPending ? '#0058b3' : '#0071E3',
+            backgroundColor: isPending ? '#0058b3' : 'var(--dash-accent)',
             border: 'none', borderRadius: '8px', padding: '9px 20px',
             cursor: isPending ? 'not-allowed' : 'pointer',
             opacity: isPending ? 0.8 : 1, transition: 'background-color 0.15s ease',
           }}
-          onMouseEnter={(e) => { if (!isPending) e.currentTarget.style.backgroundColor = '#0077ED' }}
-          onMouseLeave={(e) => { if (!isPending) e.currentTarget.style.backgroundColor = '#0071E3' }}
+          onMouseEnter={(e) => { if (!isPending) e.currentTarget.style.backgroundColor = 'var(--dash-accent-hover)' }}
+          onMouseLeave={(e) => { if (!isPending) e.currentTarget.style.backgroundColor = 'var(--dash-accent)' }}
         >
           {isPending && <Loader2 style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />}
-          {isPending ? 'Enviando...' : 'Enviar invitacion'}
+          {isPending ? 'Enviando...' : 'Enviar invitación'}
         </button>
       </div>
     </form>
@@ -285,7 +285,7 @@ function ManualTab({ onClose }: { onClose: () => void }) {
   return (
     <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <p style={{ fontFamily: SF, fontSize: '13px', color: 'var(--dash-text-secondary)', margin: 0 }}>
-        Crea el registro del cliente directamente. El campo <code style={{ color: 'var(--dash-text-tertiary)' }}>profile_id</code> quedara vacio hasta que el cliente acepte una invitacion.
+        Crea el registro del cliente directamente. El campo <code style={{ color: 'var(--dash-text-tertiary)' }}>profile_id</code> quedará vacío hasta que el cliente acepte una invitación.
       </p>
 
       {errors.general && (
@@ -294,10 +294,10 @@ function ManualTab({ onClose }: { onClose: () => void }) {
         </div>
       )}
 
-      <Field id="mn-name" label="Nombre" required name="name" value={values.name} placeholder="Ana Garcia" disabled={isPending} error={errors.name} onChange={handleChange} />
+      <Field id="mn-name" label="Nombre" required name="name" value={values.name} placeholder="Ana García" disabled={isPending} error={errors.name} onChange={handleChange} />
       <Field id="mn-email" label="Email" name="email" type="email" value={values.email} placeholder="Opcional" disabled={isPending} error={errors.email} onChange={handleChange} />
       <Field id="mn-company" label="Empresa" name="company" value={values.company} placeholder="Opcional" disabled={isPending} onChange={handleChange} />
-      <Field id="mn-phone" label="Telefono" name="phone" value={values.phone} placeholder="Opcional" disabled={isPending} onChange={handleChange} />
+      <Field id="mn-phone" label="Teléfono" name="phone" value={values.phone} placeholder="Opcional" disabled={isPending} onChange={handleChange} />
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', paddingTop: '4px' }}>
         <button
@@ -314,13 +314,13 @@ function ManualTab({ onClose }: { onClose: () => void }) {
           style={{
             display: 'inline-flex', alignItems: 'center', gap: '8px',
             fontFamily: SF, fontSize: '15px', fontWeight: 500, color: '#ffffff',
-            backgroundColor: isPending ? '#0058b3' : '#0071E3',
+            backgroundColor: isPending ? '#0058b3' : 'var(--dash-accent)',
             border: 'none', borderRadius: '8px', padding: '9px 20px',
             cursor: isPending ? 'not-allowed' : 'pointer',
             opacity: isPending ? 0.8 : 1, transition: 'background-color 0.15s ease',
           }}
-          onMouseEnter={(e) => { if (!isPending) e.currentTarget.style.backgroundColor = '#0077ED' }}
-          onMouseLeave={(e) => { if (!isPending) e.currentTarget.style.backgroundColor = '#0071E3' }}
+          onMouseEnter={(e) => { if (!isPending) e.currentTarget.style.backgroundColor = 'var(--dash-accent-hover)' }}
+          onMouseLeave={(e) => { if (!isPending) e.currentTarget.style.backgroundColor = 'var(--dash-accent)' }}
         >
           {isPending && <Loader2 style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />}
           {isPending ? 'Guardando...' : 'Guardar cliente'}
@@ -388,7 +388,7 @@ export function InviteClientModal({ onClose }: Props) {
         style={{
           position: 'relative', width: '100%', maxWidth: '460px',
           backgroundColor: 'var(--dash-surface-2)',
-          border: '1px solid rgba(255,255,255,0.08)',
+          border: '1px solid var(--dash-border)',
           borderRadius: '20px',
           boxShadow: '0 32px 80px rgba(0,0,0,0.6), 0 8px 24px rgba(0,0,0,0.4)',
           overflow: 'hidden',
@@ -399,7 +399,7 @@ export function InviteClientModal({ onClose }: Props) {
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             padding: '20px 24px',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
+            borderBottom: '1px solid var(--dash-border)',
           }}
         >
           <h2 style={{ fontFamily: SF, fontSize: '17px', fontWeight: 600, color: 'var(--dash-text-primary)', margin: 0, letterSpacing: '-0.01em' }}>
@@ -427,7 +427,7 @@ export function InviteClientModal({ onClose }: Props) {
         <div
           style={{
             display: 'flex',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
+            borderBottom: '1px solid var(--dash-border)',
             backgroundColor: 'var(--dash-surface-1)',
           }}
         >

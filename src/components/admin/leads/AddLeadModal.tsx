@@ -50,7 +50,7 @@ const fieldLabel: React.CSSProperties = {
   textTransform: 'uppercase',
   color: 'var(--dash-text-secondary)',
   marginBottom: '6px',
-  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+  fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
 }
 
 const inputStyle: React.CSSProperties = {
@@ -61,7 +61,7 @@ const inputStyle: React.CSSProperties = {
   padding: '10px 14px',
   color: 'var(--dash-text-primary)',
   fontSize: '14px',
-  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+  fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
   outline: 'none',
   boxSizing: 'border-box',
   transition: 'border-color 0.15s ease',
@@ -105,7 +105,7 @@ export default function AddLeadModal({ onClose, onCreated, defaultStatus = 'new'
         setError(result.error as string)
       }
     } catch {
-      setError('Ocurrio un error inesperado.')
+      setError('Ocurrió un error inesperado.')
     } finally {
       setSubmitting(false)
     }
@@ -113,13 +113,13 @@ export default function AddLeadModal({ onClose, onCreated, defaultStatus = 'new'
 
   function getFocusStyle(fieldId: string): React.CSSProperties {
     return focusedField === fieldId
-      ? { ...inputStyle, borderColor: '#0071E3' }
+      ? { ...inputStyle, borderColor: 'var(--dash-accent)' }
       : inputStyle
   }
 
   function getFocusStyleSelect(fieldId: string): React.CSSProperties {
     return focusedField === fieldId
-      ? { ...selectStyle, borderColor: '#0071E3' }
+      ? { ...selectStyle, borderColor: 'var(--dash-accent)' }
       : selectStyle
   }
 
@@ -158,7 +158,7 @@ export default function AddLeadModal({ onClose, onCreated, defaultStatus = 'new'
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+          fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -238,7 +238,7 @@ export default function AddLeadModal({ onClose, onCreated, defaultStatus = 'new'
                 name="name"
                 type="text"
                 required
-                placeholder="Juan Garcia"
+                placeholder="Juan García"
                 style={getFocusStyle('add-name')}
                 onFocus={() => setFocusedField('add-name')}
                 onBlur={() => setFocusedField(null)}
@@ -278,7 +278,7 @@ export default function AddLeadModal({ onClose, onCreated, defaultStatus = 'new'
             </div>
             <div>
               <label htmlFor="add-phone" style={fieldLabel}>
-                Telefono
+                Teléfono
               </label>
               <input
                 id="add-phone"
@@ -402,7 +402,7 @@ export default function AddLeadModal({ onClose, onCreated, defaultStatus = 'new'
                 fontSize: '13px',
                 color: 'var(--dash-danger)',
                 margin: 0,
-                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+                fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
               }}
             >
               {error}
@@ -434,11 +434,11 @@ export default function AddLeadModal({ onClose, onCreated, defaultStatus = 'new'
               fontSize: '14px',
               fontWeight: 500,
               cursor: 'pointer',
-              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+              fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
               transition: 'border-color 0.15s ease, color 0.15s ease',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'
+              e.currentTarget.style.borderColor = 'var(--dash-border-strong)'
               e.currentTarget.style.color = 'var(--dash-text-primary)'
             }}
             onMouseLeave={(e) => {
@@ -455,22 +455,22 @@ export default function AddLeadModal({ onClose, onCreated, defaultStatus = 'new'
             onClick={() => formRef.current?.requestSubmit()}
             style={{
               padding: '9px 20px',
-              background: submitting ? 'rgba(0,113,227,0.5)' : '#0071E3',
+              background: submitting ? 'rgba(var(--dash-accent-rgb),0.5)' : 'var(--dash-accent)',
               border: 'none',
               borderRadius: '8px',
               color: '#ffffff',
               fontSize: '14px',
               fontWeight: 600,
               cursor: submitting ? 'not-allowed' : 'pointer',
-              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+              fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
               transition: 'background 0.15s ease',
               letterSpacing: '-0.01em',
             }}
             onMouseEnter={(e) => {
-              if (!submitting) e.currentTarget.style.background = '#0077ED'
+              if (!submitting) e.currentTarget.style.background = 'var(--dash-accent-hover)'
             }}
             onMouseLeave={(e) => {
-              if (!submitting) e.currentTarget.style.background = '#0071E3'
+              if (!submitting) e.currentTarget.style.background = 'var(--dash-accent)'
             }}
           >
             {submitting ? 'Creando...' : 'Crear Lead'}

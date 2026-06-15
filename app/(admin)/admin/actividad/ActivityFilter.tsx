@@ -65,27 +65,27 @@ const PILL_LABEL: Record<ActivityItem['type'], string> = {
 }
 
 const PILL_COLOR: Record<ActivityItem['type'], string> = {
-  lead_action:     '#0071E3',
+  lead_action:     'var(--dash-accent)',
   project_action:  '#BF5AF2',
-  lead_new:        '#30D158',
-  deliverable_new: '#FF9F0A',
-  email_sent:      '#64D2FF',
+  lead_new:        'var(--dash-success)',
+  deliverable_new: 'var(--dash-warning)',
+  email_sent:      'var(--dash-accent)',
 }
 
 const PILL_BG: Record<ActivityItem['type'], string> = {
-  lead_action:     'rgba(0,113,227,0.13)',
+  lead_action:     'rgba(var(--dash-accent-rgb),0.13)',
   project_action:  'rgba(191,90,242,0.13)',
   lead_new:        'rgba(48,209,88,0.13)',
   deliverable_new: 'rgba(255,159,10,0.13)',
-  email_sent:      'rgba(100,210,255,0.13)',
+  email_sent:      'rgba(var(--dash-accent-rgb),0.13)',
 }
 
 const DOT_COLOR: Record<ActivityItem['type'], string> = {
-  lead_action:     '#0071E3',
+  lead_action:     'var(--dash-accent)',
   project_action:  '#BF5AF2',
-  lead_new:        '#30D158',
-  deliverable_new: '#FF9F0A',
-  email_sent:      '#64D2FF',
+  lead_new:        'var(--dash-success)',
+  deliverable_new: 'var(--dash-warning)',
+  email_sent:      'var(--dash-accent)',
 }
 
 // ---------------------------------------------------------------------------
@@ -149,7 +149,7 @@ function dayLabel(isoDate: string): string {
 
   if (diffDays === 0) return 'Hoy'
   if (diffDays === 1) return 'Ayer'
-  if (diffDays < 7) return `Hace ${diffDays} dias`
+  if (diffDays < 7) return `Hace ${diffDays} días`
 
   return item.toLocaleDateString('es-AR', {
     day: 'numeric',
@@ -202,7 +202,7 @@ function IconDot({ color }: { color: string }) {
         borderRadius: '50%',
         background: color,
         flexShrink: 0,
-        boxShadow: `0 0 6px ${color}80`,
+        boxShadow: `0 0 6px color-mix(in srgb, ${color} 50%, transparent)`,
       }}
     />
   )
@@ -461,7 +461,7 @@ export default function ActivityFilter({ initialActivities }: ActivityFilterProp
                 fontWeight: isActive ? 600 : 400,
                 padding: '5px 14px',
                 borderRadius: 20,
-                border: isActive ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.08)',
+                border: isActive ? '1px solid var(--dash-border-strong)' : '1px solid var(--dash-border)',
                 backgroundColor: isActive ? 'var(--dash-surface-3)' : 'transparent',
                 color: isActive ? 'var(--dash-text-primary)' : 'var(--dash-text-secondary)',
                 cursor: 'pointer',
@@ -489,14 +489,14 @@ export default function ActivityFilter({ initialActivities }: ActivityFilterProp
             justifyContent: 'center',
             gap: 8,
             backgroundColor: 'var(--dash-surface-1)',
-            border: '1px solid rgba(255,255,255,0.08)',
+            border: '1px solid var(--dash-border)',
             borderRadius: 16,
             padding: '48px 32px',
             textAlign: 'center',
           }}
         >
           <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--dash-text-primary)', margin: 0 }}>
-            Sin actividad en esta categoria
+            Sin actividad en esta categoría
           </p>
           <p style={{ fontSize: 13, color: 'var(--dash-text-secondary)', margin: 0 }}>
             No hay eventos registrados para el filtro seleccionado.
@@ -531,7 +531,7 @@ export default function ActivityFilter({ initialActivities }: ActivityFilterProp
                 top: '20px',
                 bottom: '20px',
                 width: '1px',
-                background: 'rgba(255,255,255,0.07)',
+                background: 'var(--dash-border)',
                 pointerEvents: 'none',
               }}
             />
@@ -671,7 +671,7 @@ export default function ActivityFilter({ initialActivities }: ActivityFilterProp
               transition: 'background 0.15s',
             }}
           >
-            Cargar mas ({filtered.length - visibleCount} restantes)
+            Cargar más ({filtered.length - visibleCount} restantes)
           </button>
         </div>
       )}

@@ -155,10 +155,10 @@ export default async function PortalPerformancePage({
         <div className="flex items-center justify-between" style={{ marginBottom: '1.4rem' }}>
           <SectionLabel index="01">Periodo</SectionLabel>
           <div className="flex items-center gap-5">
-            <Link href={`/portal/rendimiento?m=${monthParam(prev.y, prev.m)}`} className="portal-textlink" style={navLink}>
+            <Link href={portalLink(`/portal/rendimiento?m=${monthParam(prev.y, prev.m)}`, ctx)} className="portal-textlink" style={navLink}>
               <span aria-hidden="true">&larr;</span> Anterior
             </Link>
-            <Link href={`/portal/rendimiento?m=${monthParam(next.y, next.m)}`} className="portal-textlink" style={navLink}>
+            <Link href={portalLink(`/portal/rendimiento?m=${monthParam(next.y, next.m)}`, ctx)} className="portal-textlink" style={navLink}>
               Siguiente <span aria-hidden="true">&rarr;</span>
             </Link>
           </div>

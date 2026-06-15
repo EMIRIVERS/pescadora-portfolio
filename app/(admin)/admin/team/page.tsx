@@ -91,7 +91,7 @@ export default async function AdminTeamPage() {
         backgroundColor: 'var(--dash-surface-1)',
         padding: 'clamp(20px, 5vw, 40px) clamp(16px, 4vw, 32px)',
         fontFamily:
-          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+          "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
       }}
     >
       {/* Header */}
@@ -175,7 +175,7 @@ export default async function AdminTeamPage() {
                       {m.full_name ?? m.email ?? 'Sin nombre'}
                     </span>
                     <div style={{ flex: 1, height: '8px', backgroundColor: 'var(--dash-surface-3)', borderRadius: '8px', overflow: 'hidden' }}>
-                      <div style={{ width: `${(total / maxLoad) * 100}%`, height: '100%', backgroundColor: total === 0 ? 'transparent' : '#0071E3', borderRadius: '8px' }} />
+                      <div style={{ width: `${(total / maxLoad) * 100}%`, height: '100%', backgroundColor: total === 0 ? 'transparent' : 'var(--dash-accent)', borderRadius: '8px' }} />
                     </div>
                     <span style={{ flex: '0 0 auto', fontSize: '12px', color: 'var(--dash-text-tertiary)', whiteSpace: 'nowrap' }}>
                       {w.projects} proyecto{w.projects !== 1 ? 's' : ''} &middot; {w.tasks} tarea{w.tasks !== 1 ? 's' : ''}
@@ -193,7 +193,7 @@ export default async function AdminTeamPage() {
             padding: '80px 20px',
             textAlign: 'center',
             backgroundColor: 'var(--dash-surface-2)',
-            border: '1px solid rgba(255,255,255,0.06)',
+            border: '1px solid var(--dash-border)',
             borderRadius: '16px',
             marginBottom: '32px',
           }}
@@ -208,25 +208,25 @@ export default async function AdminTeamPage() {
             style={{ display: 'block', margin: '0 auto 20px' }}
           >
             {/* Left person */}
-            <circle cx="26" cy="28" r="9" fill="var(--dash-surface-3)" stroke="#3A3A3C" strokeWidth="1.5" />
+            <circle cx="26" cy="28" r="9" fill="var(--dash-surface-3)" stroke="var(--dash-text-tertiary)" strokeWidth="1.5" />
             <path
               d="M8 60c0-9.94 8.06-18 18-18s18 8.06 18 18"
-              stroke="#3A3A3C"
+              stroke="var(--dash-text-tertiary)"
               strokeWidth="1.5"
               strokeLinecap="round"
               fill="none"
             />
             {/* Right person (offset) */}
-            <circle cx="54" cy="28" r="9" fill="var(--dash-surface-3)" stroke="#3A3A3C" strokeWidth="1.5" />
+            <circle cx="54" cy="28" r="9" fill="var(--dash-surface-3)" stroke="var(--dash-text-tertiary)" strokeWidth="1.5" />
             <path
               d="M36 60c0-9.94 8.06-18 18-18s18 8.06 18 18"
-              stroke="#3A3A3C"
+              stroke="var(--dash-text-tertiary)"
               strokeWidth="1.5"
               strokeLinecap="round"
               fill="none"
             />
             {/* Plus badge */}
-            <circle cx="64" cy="18" r="9" fill="var(--dash-surface-2)" stroke="#3A3A3C" strokeWidth="1.5" />
+            <circle cx="64" cy="18" r="9" fill="var(--dash-surface-2)" stroke="var(--dash-text-tertiary)" strokeWidth="1.5" />
             <line x1="64" y1="13" x2="64" y2="23" stroke="var(--dash-text-tertiary)" strokeWidth="1.5" strokeLinecap="round" />
             <line x1="59" y1="18" x2="69" y2="18" stroke="var(--dash-text-tertiary)" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
@@ -237,7 +237,7 @@ export default async function AdminTeamPage() {
               color: 'var(--dash-text-primary)',
               margin: '0 0 8px',
               letterSpacing: '-0.02em',
-              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+              fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
             }}
           >
             Sin miembros en el equipo
@@ -248,10 +248,10 @@ export default async function AdminTeamPage() {
               color: 'var(--dash-text-secondary)',
               margin: '0 0 24px',
               lineHeight: 1.5,
-              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+              fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
             }}
           >
-            Invita al primer miembro para construir tu equipo de produccion.
+            Invita al primer miembro para construir tu equipo de producción.
           </p>
           <InviteMemberForm />
         </div>

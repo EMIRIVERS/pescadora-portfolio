@@ -22,7 +22,7 @@ export default function LeadSourceBadge({ source }: Props) {
         display: 'inline-block',
         fontSize: 11,
         fontWeight: 500,
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+        fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
         letterSpacing: '0.02em',
         padding: '3px 10px',
         borderRadius: 20,

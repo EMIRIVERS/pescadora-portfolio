@@ -83,6 +83,7 @@ function FilmBg() {
       ctx.fillRect(0, lineY - 60, w, 120)
 
       t++
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
       animId = requestAnimationFrame(draw)
     }
 
@@ -113,7 +114,7 @@ function LoginPageInner() {
   const timecode                = useTimecode()
 
   useEffect(() => {
-    const t = setTimeout(() => setMounted(true), 80)
+    const t = setTimeout(() => setMounted(true), 0)
     return () => clearTimeout(t)
   }, [])
 
@@ -184,8 +185,9 @@ function LoginPageInner() {
           box-sizing: border-box;
           caret-color: #e8341a;
         }
-        .lp-input::placeholder { color: rgba(255,255,255,0.18); }
+        .lp-input::placeholder { color: rgba(255,255,255,0.3); }
         .lp-input:focus { border-bottom-color: rgba(232,52,26,0.6); }
+        .lp-input:focus-visible { outline: 2px solid #e8341a; outline-offset: 2px; }
         .lp-input:disabled { opacity: 0.4; cursor: not-allowed; }
 
         .lp-btn {
@@ -204,6 +206,7 @@ function LoginPageInner() {
           transition: background 0.2s, opacity 0.2s;
         }
         .lp-btn:hover:not(:disabled) { background: #ff3d1f; }
+        .lp-btn:focus-visible { outline: 2px solid #e8341a; outline-offset: 3px; }
         .lp-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
         .lp-grain {
@@ -222,6 +225,11 @@ function LoginPageInner() {
           40%{background-position:15px -20px}
           60%{background-position:-20px 10px}
           80%{background-position:10px -15px}
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .lp-grain { animation: none; }
+          .lp-rec-dot { animation: none; }
         }
 
         /* Letterbox bars */
@@ -327,7 +335,7 @@ function LoginPageInner() {
           paddingRight: 20, zIndex: 20,
         }}>
           <span style={{ fontFamily: GM, fontSize: 10, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.2)' }}>
-            XICO FILMS © 2025
+            XICO FILMS © 2026
           </span>
         </div>
       )}
@@ -392,7 +400,7 @@ function LoginPageInner() {
                 <label htmlFor="email" style={{
                   display: 'block', fontFamily: GM, fontSize: 9,
                   letterSpacing: '0.18em', textTransform: 'uppercase',
-                  color: 'rgba(255,255,255,0.3)', marginBottom: 8,
+                  color: 'rgba(255,255,255,0.55)', marginBottom: 8,
                 }}>
                   Email
                 </label>
@@ -408,7 +416,7 @@ function LoginPageInner() {
                 <label htmlFor="password" style={{
                   display: 'block', fontFamily: GM, fontSize: 9,
                   letterSpacing: '0.18em', textTransform: 'uppercase',
-                  color: 'rgba(255,255,255,0.3)', marginBottom: 8,
+                  color: 'rgba(255,255,255,0.55)', marginBottom: 8,
                 }}>
                   Contraseña
                 </label>
@@ -440,7 +448,7 @@ function LoginPageInner() {
             <p style={{
               marginTop: 28, fontFamily: GM, fontSize: 9,
               letterSpacing: '0.14em', textTransform: 'uppercase',
-              color: 'rgba(255,255,255,0.1)',
+              color: 'rgba(255,255,255,0.35)',
             }}>
               Acceso privado &mdash; Solo equipo
             </p>

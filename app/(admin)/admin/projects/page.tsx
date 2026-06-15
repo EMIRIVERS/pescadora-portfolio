@@ -20,16 +20,16 @@ const T = {
   textPrimary:   'var(--dash-text-primary)',
   textSecondary: 'var(--dash-text-secondary)',
   textTertiary:  'var(--dash-text-tertiary)',
-  accent:        '#0071E3',
-  font:          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+  accent:        'var(--dash-accent)',
+  font:          "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
 } as const
 
 // ── Stats row config ──────────────────────────────────────────────────────────
 
 const STAT_CARDS: { key: ProjectStatus; label: string }[] = [
-  { key: 'pre_production',  label: 'Pre-produccion'  },
-  { key: 'production',      label: 'En produccion'   },
-  { key: 'post_production', label: 'Post-produccion' },
+  { key: 'pre_production',  label: 'Pre-producción'  },
+  { key: 'production',      label: 'En producción'   },
+  { key: 'post_production', label: 'Post-producción' },
   { key: 'delivered',       label: 'Entregados'      },
 ]
 
@@ -132,7 +132,7 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
       .proj-row { transition: background 0.1s ease; }
       .proj-row:hover { background: var(--dash-surface-2) !important; }
       .proj-title-link { color: var(--dash-text-primary); text-decoration: none; transition: color 0.15s; }
-      .proj-title-link:hover { color: #0071E3 !important; }
+      .proj-title-link:hover { color: var(--dash-accent) !important; }
       .proj-arrow-btn { color: var(--dash-text-tertiary); background: transparent; transition: color 0.15s, background 0.15s; }
       .proj-arrow-btn:hover { color: var(--dash-text-primary) !important; background: var(--dash-surface-3) !important; }
       .proj-new-btn { opacity: 1; transition: opacity 0.15s ease; }
@@ -277,7 +277,7 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
             style={{
               fontSize: '15px',
               fontWeight: 700,
-              color: '#30D158',
+              color: 'var(--dash-success)',
               margin: '4px 0 0',
               letterSpacing: '-0.01em',
               whiteSpace: 'nowrap',
@@ -312,7 +312,7 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
             borderRadius: '12px',
           }}
         >
-          <p style={{ fontSize: '13px', color: '#FF453A', margin: 0 }}>
+          <p style={{ fontSize: '13px', color: 'var(--dash-danger)', margin: 0 }}>
             Error al cargar proyectos: {error.message}
           </p>
         </div>
@@ -339,11 +339,11 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
               aria-hidden="true"
               style={{ display: 'block', margin: '0 auto 20px' }}
             >
-              <rect x="16" y="12" width="48" height="56" rx="6" fill="var(--dash-surface-3)" stroke="#3A3A3C" strokeWidth="1.5" />
-              <line x1="26" y1="26" x2="54" y2="26" stroke="#3A3A3C" strokeWidth="1.5" strokeLinecap="round" />
-              <line x1="26" y1="34" x2="46" y2="34" stroke="#3A3A3C" strokeWidth="1.5" strokeLinecap="round" />
-              <line x1="26" y1="42" x2="50" y2="42" stroke="#3A3A3C" strokeWidth="1.5" strokeLinecap="round" />
-              <circle cx="57" cy="57" r="13" fill="var(--dash-surface-2)" stroke="#3A3A3C" strokeWidth="1.5" />
+              <rect x="16" y="12" width="48" height="56" rx="6" fill="var(--dash-surface-3)" stroke="var(--dash-text-tertiary)" strokeWidth="1.5" />
+              <line x1="26" y1="26" x2="54" y2="26" stroke="var(--dash-text-tertiary)" strokeWidth="1.5" strokeLinecap="round" />
+              <line x1="26" y1="34" x2="46" y2="34" stroke="var(--dash-text-tertiary)" strokeWidth="1.5" strokeLinecap="round" />
+              <line x1="26" y1="42" x2="50" y2="42" stroke="var(--dash-text-tertiary)" strokeWidth="1.5" strokeLinecap="round" />
+              <circle cx="57" cy="57" r="13" fill="var(--dash-surface-2)" stroke="var(--dash-text-tertiary)" strokeWidth="1.5" />
               <line x1="52" y1="57" x2="62" y2="57" stroke="var(--dash-text-tertiary)" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
             <h3
@@ -382,15 +382,15 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
               style={{ display: 'block', margin: '0 auto 20px' }}
             >
               {/* Clapperboard icon */}
-              <rect x="12" y="28" width="56" height="40" rx="6" fill="var(--dash-surface-3)" stroke="#3A3A3C" strokeWidth="1.5" />
-              <rect x="12" y="14" width="56" height="16" rx="4" fill="var(--dash-surface-3)" stroke="#3A3A3C" strokeWidth="1.5" />
+              <rect x="12" y="28" width="56" height="40" rx="6" fill="var(--dash-surface-3)" stroke="var(--dash-text-tertiary)" strokeWidth="1.5" />
+              <rect x="12" y="14" width="56" height="16" rx="4" fill="var(--dash-surface-3)" stroke="var(--dash-text-tertiary)" strokeWidth="1.5" />
               {/* Clap stripes */}
-              <line x1="24" y1="14" x2="20" y2="30" stroke="#3A3A3C" strokeWidth="1.5" strokeLinecap="round" />
-              <line x1="34" y1="14" x2="30" y2="30" stroke="#3A3A3C" strokeWidth="1.5" strokeLinecap="round" />
-              <line x1="44" y1="14" x2="40" y2="30" stroke="#3A3A3C" strokeWidth="1.5" strokeLinecap="round" />
-              <line x1="54" y1="14" x2="50" y2="30" stroke="#3A3A3C" strokeWidth="1.5" strokeLinecap="round" />
+              <line x1="24" y1="14" x2="20" y2="30" stroke="var(--dash-text-tertiary)" strokeWidth="1.5" strokeLinecap="round" />
+              <line x1="34" y1="14" x2="30" y2="30" stroke="var(--dash-text-tertiary)" strokeWidth="1.5" strokeLinecap="round" />
+              <line x1="44" y1="14" x2="40" y2="30" stroke="var(--dash-text-tertiary)" strokeWidth="1.5" strokeLinecap="round" />
+              <line x1="54" y1="14" x2="50" y2="30" stroke="var(--dash-text-tertiary)" strokeWidth="1.5" strokeLinecap="round" />
               {/* Play triangle */}
-              <path d="M35 44l14 8-14 8V44z" fill="#3A3A3C" />
+              <path d="M35 44l14 8-14 8V44z" fill="var(--dash-text-tertiary)" />
             </svg>
             <h3
               style={{
@@ -401,7 +401,7 @@ export default async function AdminProjectsPage({ searchParams }: PageProps) {
                 letterSpacing: '-0.02em',
               }}
             >
-              Sin proyectos todavia
+              Sin proyectos todavía
             </h3>
             <p
               style={{

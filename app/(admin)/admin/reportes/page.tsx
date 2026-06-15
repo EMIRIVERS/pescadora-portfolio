@@ -148,7 +148,7 @@ const LEAD_STATUS_LABEL: Record<LeadStatus, string> = {
 }
 
 const LEAD_STATUS_COLOR: Record<LeadStatus, string> = {
-  new: '#0071E3',
+  new: 'var(--dash-accent)',
   contacted: '#BF5AF2',
   qualified: '#FF9F0A',
   proposal: '#FF6961',
@@ -167,7 +167,7 @@ const LEAD_SOURCE_LABEL: Record<LeadSource, string> = {
 
 const LEAD_SOURCE_COLOR: Record<LeadSource, string> = {
   instagram: '#BF5AF2',
-  web: '#0071E3',
+  web: 'var(--dash-accent)',
   whatsapp: '#30D158',
   referral: '#FF9F0A',
   manual: '#FF6961',
@@ -182,9 +182,9 @@ const PROJECT_STATUS_ORDER: ProjectStatus[] = [
 ]
 
 const PROJECT_STATUS_LABEL: Record<ProjectStatus, string> = {
-  pre_production: 'Pre-produccion',
-  production: 'Produccion',
-  post_production: 'Post-produccion',
+  pre_production: 'Pre-producción',
+  production: 'Producción',
+  post_production: 'Post-producción',
   delivered: 'Entregado',
 }
 
@@ -192,14 +192,14 @@ const PROJECT_STATUS_COLOR: Record<ProjectStatus, string> = {
   pre_production: '#BF5AF2',
   production: '#30D158',
   post_production: '#FF9F0A',
-  delivered: '#0071E3',
+  delivered: 'var(--dash-accent)',
 }
 
 const PROJECT_STATUS_BG: Record<ProjectStatus, string> = {
   pre_production: 'rgba(191,90,242,0.12)',
   production: 'rgba(48,209,88,0.12)',
   post_production: 'rgba(255,159,10,0.12)',
-  delivered: 'rgba(0,113,227,0.12)',
+  delivered: 'rgba(var(--dash-accent-rgb),0.12)',
 }
 
 const LEAD_SOURCES: LeadSource[] = [
@@ -460,8 +460,8 @@ export default async function ReportesPage({ searchParams }: PageProps) {
 
   const PERIOD_LABEL: Record<Period, string> = {
     month: 'Este mes',
-    '3months': 'Ultimos 3 meses',
-    year: 'Este ano',
+    '3months': 'Últimos 3 meses',
+    year: 'Este año',
     all: 'Todo el tiempo',
     custom:
       fromParam && toParam ? `${fromParam} — ${toParam}` : 'Rango personalizado',
@@ -474,7 +474,7 @@ export default async function ReportesPage({ searchParams }: PageProps) {
           background-color: var(--dash-bg);
           min-height: 100vh;
           padding: clamp(1.25rem, 4vw, 2.5rem) clamp(1rem, 4vw, 2rem);
-          font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+          font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
           color: var(--dash-text-primary);
           box-sizing: border-box;
         }
@@ -509,7 +509,7 @@ export default async function ReportesPage({ searchParams }: PageProps) {
         }
         .rpt-kpi-card:hover { border-color: var(--dash-border-strong); }
         .rpt-table-row { transition: background 0.15s; }
-        .rpt-table-row:hover { background: rgba(255,255,255,0.03); }
+        .rpt-table-row:hover { background: var(--dash-surface-2); }
         .rpt-bar-track {
           width: 100%;
           height: 5px;
@@ -525,14 +525,14 @@ export default async function ReportesPage({ searchParams }: PageProps) {
         }
         .rpt-col-bar {
           width: 100%;
-          background: linear-gradient(180deg, #0A84FF 0%, #0071E3 100%);
+          background: linear-gradient(180deg, var(--dash-accent-hover) 0%, var(--dash-accent) 100%);
           border-radius: 4px 4px 0 0;
           min-height: 3px;
           transition: height 0.4s ease;
           position: relative;
           cursor: default;
         }
-        .rpt-col-bar:hover { background: linear-gradient(180deg, #40A8FF 0%, #0A84FF 100%); }
+        .rpt-col-bar:hover { background: linear-gradient(180deg, var(--dash-accent) 0%, var(--dash-accent-hover) 100%); }
         .rpt-col-label {
           font-size: 11px;
           color: var(--dash-text-tertiary);
@@ -563,7 +563,7 @@ export default async function ReportesPage({ searchParams }: PageProps) {
           border-bottom: 1px solid var(--dash-surface-2);
           transition: background 0.15s;
         }
-        .rpt-clients-row:hover { background: rgba(255,255,255,0.03); }
+        .rpt-clients-row:hover { background: var(--dash-surface-2); }
         .rpt-clients-row:last-child { border-bottom: none; }
       `}</style>
 
@@ -590,10 +590,10 @@ export default async function ReportesPage({ searchParams }: PageProps) {
 
           {/* Revenue total */}
           <div className="rpt-kpi-card" style={{ borderColor: 'rgba(48,209,88,0.2)' }}>
-            <p style={{ fontSize: '11px', fontWeight: 600, color: '#30D158', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 12px 0' }}>
+            <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--dash-success)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 12px 0' }}>
               Revenue Total
             </p>
-            <p style={{ fontSize: totalRevenue >= 1_000_000 ? '26px' : '34px', fontWeight: 700, color: '#30D158', margin: '0 0 4px 0', letterSpacing: '-0.03em', lineHeight: 1 }}>
+            <p style={{ fontSize: totalRevenue >= 1_000_000 ? '26px' : '34px', fontWeight: 700, color: 'var(--dash-success)', margin: '0 0 4px 0', letterSpacing: '-0.03em', lineHeight: 1 }}>
               {formatMXNFull(totalRevenue)}
             </p>
             <p style={{ fontSize: '12px', color: 'var(--dash-text-tertiary)', margin: 0 }}>
@@ -602,11 +602,11 @@ export default async function ReportesPage({ searchParams }: PageProps) {
           </div>
 
           {/* Proyectos completados */}
-          <div className="rpt-kpi-card" style={{ borderColor: 'rgba(0,113,227,0.2)' }}>
-            <p style={{ fontSize: '11px', fontWeight: 600, color: '#0071E3', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 12px 0' }}>
+          <div className="rpt-kpi-card" style={{ borderColor: 'rgba(var(--dash-accent-rgb),0.2)' }}>
+            <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--dash-accent)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 12px 0' }}>
               Proyectos Completados
             </p>
-            <p style={{ fontSize: '40px', fontWeight: 700, color: '#0071E3', margin: '0 0 4px 0', letterSpacing: '-0.03em', lineHeight: 1 }}>
+            <p style={{ fontSize: '40px', fontWeight: 700, color: 'var(--dash-accent)', margin: '0 0 4px 0', letterSpacing: '-0.03em', lineHeight: 1 }}>
               {completedCount}
             </p>
             <p style={{ fontSize: '12px', color: 'var(--dash-text-tertiary)', margin: 0 }}>
@@ -617,9 +617,9 @@ export default async function ReportesPage({ searchParams }: PageProps) {
           {/* Tasa de conversion */}
           <div className="rpt-kpi-card" style={{ borderColor: 'rgba(255,159,10,0.2)' }}>
             <p style={{ fontSize: '11px', fontWeight: 600, color: '#FF9F0A', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 12px 0' }}>
-              Tasa de Conversion
+              Tasa de Conversión
             </p>
-            <p style={{ fontSize: '40px', fontWeight: 700, color: conversionRate > 0 ? '#30D158' : 'var(--dash-text-primary)', margin: '0 0 4px 0', letterSpacing: '-0.03em', lineHeight: 1 }}>
+            <p style={{ fontSize: '40px', fontWeight: 700, color: conversionRate > 0 ? 'var(--dash-success)' : 'var(--dash-text-primary)', margin: '0 0 4px 0', letterSpacing: '-0.03em', lineHeight: 1 }}>
               {conversionRate.toFixed(1)}%
             </p>
             <p style={{ fontSize: '12px', color: 'var(--dash-text-tertiary)', margin: 0 }}>
@@ -650,7 +650,7 @@ export default async function ReportesPage({ searchParams }: PageProps) {
             </p>
             <p style={{ fontSize: '12px', color: 'var(--dash-text-tertiary)', margin: 0 }}>
               {avgDaysToClose !== null
-                ? `dias · ${wonLeadRows.length} leads ganados`
+                ? `días · ${wonLeadRows.length} leads ganados`
                 : 'sin leads ganados'}
             </p>
           </div>
@@ -661,7 +661,7 @@ export default async function ReportesPage({ searchParams }: PageProps) {
           <div className="rpt-card-header">
             <h2 className="rpt-card-title">Revenue por Mes</h2>
             <p className="rpt-card-subtitle">
-              {period === 'all' ? 'Ultimos 6 meses' : PERIOD_LABEL[period]} — proyectos entregados
+              {period === 'all' ? 'Últimos 6 meses' : PERIOD_LABEL[period]} — proyectos entregados
             </p>
           </div>
 
@@ -700,7 +700,7 @@ export default async function ReportesPage({ searchParams }: PageProps) {
                   return (
                     <div key={m.label} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0, height: '100%', justifyContent: 'flex-end' }}>
                       {m.revenue > 0 && (
-                        <span style={{ fontSize: '9px', color: '#0071E3', fontWeight: 600, marginBottom: '3px', letterSpacing: '-0.01em' }}>
+                        <span style={{ fontSize: '9px', color: 'var(--dash-accent)', fontWeight: 600, marginBottom: '3px', letterSpacing: '-0.01em' }}>
                           {formatMXN(m.revenue)}
                         </span>
                       )}
@@ -733,7 +733,7 @@ export default async function ReportesPage({ searchParams }: PageProps) {
             <div className="rpt-card-header">
               <h2 className="rpt-card-title">Pipeline Funnel</h2>
               <p className="rpt-card-subtitle">
-                Conversion entre etapas · {totalLeads} leads totales
+                Conversión entre etapas · {totalLeads} leads totales
               </p>
             </div>
             <div style={{ padding: '20px' }}>
@@ -788,7 +788,7 @@ export default async function ReportesPage({ searchParams }: PageProps) {
                         <span style={{
                           fontSize: '10px',
                           fontWeight: 600,
-                          color: convPct >= 60 ? '#30D158' : convPct >= 30 ? '#FF9F0A' : '#FF6961',
+                          color: convPct >= 60 ? 'var(--dash-success)' : convPct >= 30 ? 'var(--dash-warning)' : '#FF6961',
                         }}>
                           {convPct}% pasan
                         </span>
@@ -818,7 +818,7 @@ export default async function ReportesPage({ searchParams }: PageProps) {
           <div className="rpt-card">
             <div className="rpt-card-header">
               <h2 className="rpt-card-title">Fuentes de Leads</h2>
-              <p className="rpt-card-subtitle">Distribucion por canal de origen</p>
+              <p className="rpt-card-subtitle">Distribución por canal de origen</p>
             </div>
             <div style={{ padding: '20px', display: 'flex', gap: '20px', alignItems: 'center' }}>
               {/* Donut */}
@@ -910,7 +910,7 @@ export default async function ReportesPage({ searchParams }: PageProps) {
                       <div className="rpt-bar-track" style={{ marginTop: '5px' }}>
                         <div
                           className="rpt-bar-fill"
-                          style={{ width: `${barPct}%`, background: idx === 0 ? '#30D158' : '#0071E3' }}
+                          style={{ width: `${barPct}%`, background: idx === 0 ? 'var(--dash-success)' : 'var(--dash-accent)' }}
                         />
                       </div>
                     </div>
@@ -920,7 +920,7 @@ export default async function ReportesPage({ searchParams }: PageProps) {
                     <span style={{ fontSize: '12px', color: 'var(--dash-text-tertiary)' }}>
                       {barPct}% del top
                     </span>
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: idx === 0 ? '#30D158' : 'var(--dash-text-primary)', textAlign: 'right' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: idx === 0 ? 'var(--dash-success)' : 'var(--dash-text-primary)', textAlign: 'right' }}>
                       {formatMXNFull(client.totalBudget)}
                     </span>
                   </div>
@@ -962,7 +962,7 @@ export default async function ReportesPage({ searchParams }: PageProps) {
                           {project.title}
                         </span>
                         <div className="rpt-bar-track" style={{ marginTop: '6px' }}>
-                          <div className="rpt-bar-fill" style={{ width: `${barPct}%`, background: '#0071E3' }} />
+                          <div className="rpt-bar-fill" style={{ width: `${barPct}%`, background: 'var(--dash-accent)' }} />
                         </div>
                       </div>
                       <span style={{ fontSize: '12px', color: 'var(--dash-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: '8px' }}>
@@ -976,7 +976,7 @@ export default async function ReportesPage({ searchParams }: PageProps) {
                           {PROJECT_STATUS_LABEL[project.status]}
                         </span>
                       </div>
-                      <span style={{ fontSize: '13px', fontWeight: 700, color: '#30D158', textAlign: 'right' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--dash-success)', textAlign: 'right' }}>
                         {formatMXNFull(project.budget ?? 0)}
                       </span>
                     </div>
@@ -990,7 +990,7 @@ export default async function ReportesPage({ searchParams }: PageProps) {
         {/* ── Distribucion de proyectos por estado ─────────────────────────── */}
         <div className="rpt-card" style={{ marginBottom: '0' }}>
           <div className="rpt-card-header">
-            <h2 className="rpt-card-title">Distribucion por Estado</h2>
+            <h2 className="rpt-card-title">Distribución por Estado</h2>
             <p className="rpt-card-subtitle">Todos los proyectos del periodo</p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', padding: '16px' }}>

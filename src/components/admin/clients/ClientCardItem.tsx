@@ -25,7 +25,7 @@ interface ClientCardItemProps {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const SF = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+const SF = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
 
 function initials(name: string): string {
   return name

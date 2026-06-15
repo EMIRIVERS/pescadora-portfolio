@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useRef } from 'react'
+import { useState, useTransition, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   DndContext,
@@ -34,7 +34,7 @@ import {
   reorderPhotos,
 } from '@/lib/actions/photos'
 
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+const FONT = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
 const BUCKET = 'media'
 
 function resolvePhotoUrl(photo: Photo) {
@@ -186,7 +186,7 @@ function SortableAlbumCard({
           </p>
           <p style={{ margin: '1px 0 0', fontSize: 10, color: 'var(--dash-text-tertiary)', fontFamily: FONT }}>
             {album.portfolio_photos.length} foto{album.portfolio_photos.length !== 1 ? 's' : ''}
-            {!album.is_visible && <span style={{ marginLeft: 5, color: '#FF453A' }}>oculto</span>}
+            {!album.is_visible && <span style={{ marginLeft: 5, color: 'var(--dash-danger)' }}>oculto</span>}
           </p>
         </div>
 
@@ -195,6 +195,7 @@ function SortableAlbumCard({
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => { e.stopPropagation(); onToggleVisibility(album) }}
             title={album.is_visible ? 'Ocultar' : 'Mostrar'}
+            aria-label={album.is_visible ? `Ocultar ${album.label}` : `Mostrar ${album.label}`}
             className="pm-icon-btn"
             style={{ width: 24, height: 24, borderRadius: 5, background: 'transparent', border: 'none', color: 'var(--dash-text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
@@ -204,6 +205,7 @@ function SortableAlbumCard({
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => { e.stopPropagation(); onRename(album) }}
             title="Renombrar"
+            aria-label={`Renombrar ${album.label}`}
             className="pm-icon-btn"
             style={{ width: 24, height: 24, borderRadius: 5, background: 'transparent', border: 'none', color: 'var(--dash-text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
@@ -213,6 +215,7 @@ function SortableAlbumCard({
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => { e.stopPropagation(); onDelete(album) }}
             title="Eliminar"
+            aria-label={`Eliminar ${album.label}`}
             className="pm-icon-btn pm-icon-del"
             style={{ width: 24, height: 24, borderRadius: 5, background: 'transparent', border: 'none', color: 'var(--dash-text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
@@ -285,6 +288,7 @@ function SortablePhoto({
           onClick={(e) => { e.stopPropagation(); onDelete(photo) }}
           disabled={deletingId === photo.id}
           title="Eliminar"
+          aria-label="Eliminar foto"
           style={{
             width: 24, height: 24, borderRadius: '50%',
             background: 'rgba(0,0,0,0.75)', border: 'none', color: '#fff',
@@ -341,6 +345,16 @@ function AlbumDetail({
   const [dropOver, setDropOver] = useState(false)
   const [preview, setPreview] = useState<Photo | null>(null)
   const [, startTransition] = useTransition()
+
+  // Cierra el lightbox con la tecla Escape
+  useEffect(() => {
+    if (!preview) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setPreview(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [preview])
 
   // Sub-album creation
   const [showNewSub, setShowNewSub] = useState(false)
@@ -564,13 +578,15 @@ function AlbumDetail({
         <button
           onClick={() => onToggleVisibility(album)}
           title={album.is_visible ? 'Ocultar' : 'Mostrar'}
-          style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--dash-surface-2)', border: '1px solid var(--dash-border)', color: album.is_visible ? 'var(--dash-text-secondary)' : '#FF453A', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+          aria-label={album.is_visible ? 'Ocultar álbum' : 'Mostrar álbum'}
+          style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--dash-surface-2)', border: '1px solid var(--dash-border)', color: album.is_visible ? 'var(--dash-text-secondary)' : 'var(--dash-danger)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
         >
           {album.is_visible ? <Eye size={14} strokeWidth={1.5} /> : <EyeOff size={14} strokeWidth={1.5} />}
         </button>
         <button
           onClick={() => onDelete(album)}
           title="Eliminar álbum"
+          aria-label="Eliminar álbum"
           style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--dash-surface-2)', border: '1px solid var(--dash-border)', color: 'var(--dash-text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
         >
           <Trash2 size={14} strokeWidth={1.5} />
@@ -601,7 +617,7 @@ function AlbumDetail({
         </p>
         {uploading && (
           <div style={{ width: '100%', maxWidth: 240, height: 3, background: 'var(--dash-surface-3)', borderRadius: 2, overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${(uploadProgress / Math.max(uploadTotal, 1)) * 100}%`, background: '#0071E3', borderRadius: 2, transition: 'width 0.2s' }} />
+            <div style={{ height: '100%', width: `${(uploadProgress / Math.max(uploadTotal, 1)) * 100}%`, background: 'var(--dash-accent)', borderRadius: 2, transition: 'width 0.2s' }} />
           </div>
         )}
       </div>
@@ -613,10 +629,10 @@ function AlbumDetail({
         <div style={{ marginBottom: 12, padding: '10px 14px', background: 'rgba(255,69,58,0.08)', border: '1px solid rgba(255,69,58,0.25)', borderRadius: 8 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
             <div>
-              <p style={{ margin: '0 0 4px', fontSize: 12, fontWeight: 600, color: '#FF453A', fontFamily: FONT }}>{uploadErrors.length === 1 ? '1 error' : `${uploadErrors.length} errores`}</p>
+              <p style={{ margin: '0 0 4px', fontSize: 12, fontWeight: 600, color: 'var(--dash-danger)', fontFamily: FONT }}>{uploadErrors.length === 1 ? '1 error' : `${uploadErrors.length} errores`}</p>
               {uploadErrors.map((e, i) => <p key={i} style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,100,80,0.9)', fontFamily: FONT }}>{e}</p>)}
             </div>
-            <button onClick={() => setUploadErrors([])} style={{ flexShrink: 0, width: 20, height: 20, background: 'transparent', border: 'none', color: '#FF453A', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>
+            <button onClick={() => setUploadErrors([])} style={{ flexShrink: 0, width: 20, height: 20, background: 'transparent', border: 'none', color: 'var(--dash-danger)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>
               <X size={12} strokeWidth={2} />
             </button>
           </div>
@@ -661,7 +677,7 @@ function AlbumDetail({
           </button>
         </div>
 
-        {subError && <p style={{ fontSize: 12, color: '#FF453A', marginBottom: 10 }}>{subError}</p>}
+        {subError && <p style={{ fontSize: 12, color: 'var(--dash-danger)', marginBottom: 10 }}>{subError}</p>}
 
         {/* New sub-album form */}
         {showNewSub && (
@@ -677,7 +693,7 @@ function AlbumDetail({
               autoFocus
               style={{ ...INPUT, flex: 1 }}
             />
-            <button type="submit" disabled={subPending || !newSubLabel.trim()} style={{ padding: '7px 14px', background: '#0071E3', border: 'none', borderRadius: 7, fontSize: 12, color: '#fff', cursor: 'pointer', opacity: subPending ? 0.5 : 1, fontFamily: FONT }}>
+            <button type="submit" disabled={subPending || !newSubLabel.trim()} style={{ padding: '7px 14px', background: 'var(--dash-accent)', border: 'none', borderRadius: 7, fontSize: 12, color: '#fff', cursor: 'pointer', opacity: subPending ? 0.5 : 1, fontFamily: FONT }}>
               {subPending ? '...' : 'Crear'}
             </button>
             <button type="button" onClick={() => { setShowNewSub(false); setNewSubLabel('') }} style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: 'var(--dash-text-tertiary)', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -694,7 +710,7 @@ function AlbumDetail({
             <div style={{ marginBottom: 14, padding: 10, background: 'var(--dash-surface-2)', borderRadius: 9, border: '1px solid var(--dash-border)', display: 'flex', gap: 8, alignItems: 'center' }}>
               <span style={{ fontSize: 11, color: 'var(--dash-text-tertiary)', flexShrink: 0 }}>Renombrar:</span>
               <input value={renameSubLabel} onChange={(e) => setRenameSubLabel(e.target.value)} autoFocus onKeyDown={(e) => { if (e.key === 'Enter') handleSaveRenameSub(sub); if (e.key === 'Escape') setRenamingSubId(null) }} style={{ ...INPUT, flex: 1, padding: '5px 9px', fontSize: 12 }} />
-              <button onClick={() => handleSaveRenameSub(sub)} style={{ width: 26, height: 26, background: 'transparent', border: 'none', color: '#30D158', cursor: 'pointer', borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Check size={13} strokeWidth={2.5} /></button>
+              <button onClick={() => handleSaveRenameSub(sub)} style={{ width: 26, height: 26, background: 'transparent', border: 'none', color: 'var(--dash-success)', cursor: 'pointer', borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Check size={13} strokeWidth={2.5} /></button>
               <button onClick={() => setRenamingSubId(null)} style={{ width: 26, height: 26, background: 'transparent', border: 'none', color: 'var(--dash-text-tertiary)', cursor: 'pointer', borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={12} /></button>
             </div>
           )
@@ -730,12 +746,15 @@ function AlbumDetail({
       {/* Lightbox */}
       {preview && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Vista previa: ${preview.alt_text || 'foto'}`}
           onClick={() => setPreview(null)}
           style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={resolvePhotoUrl(preview)} alt={preview.alt_text} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '90vw', maxHeight: '85vh', objectFit: 'contain', borderRadius: 8 }} />
-          <button onClick={() => setPreview(null)} style={{ position: 'fixed', top: 20, right: 20, width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <img src={resolvePhotoUrl(preview)} alt={preview.alt_text || 'Vista previa de foto'} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '90vw', maxHeight: '85vh', objectFit: 'contain', borderRadius: 8 }} />
+          <button onClick={() => setPreview(null)} aria-label="Cerrar vista previa" style={{ position: 'fixed', top: 20, right: 20, width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <X size={16} strokeWidth={2} />
           </button>
         </div>
@@ -1002,7 +1021,7 @@ export default function PhotoManager({ initialAlbums, compact = false }: { initi
               <button onClick={() => setCoverAlbumId(null)} style={{ padding: '7px 14px', background: 'var(--dash-surface-3)', border: '1px solid var(--dash-border)', borderRadius: 7, fontSize: 12, color: 'var(--dash-text-secondary)', cursor: 'pointer', fontFamily: FONT }}>
                 Cancelar
               </button>
-              <button onClick={handleSaveCover} disabled={coverPending} style={{ padding: '7px 14px', background: '#0071E3', border: 'none', borderRadius: 7, fontSize: 12, color: '#fff', cursor: 'pointer', opacity: coverPending ? 0.5 : 1, fontFamily: FONT }}>
+              <button onClick={handleSaveCover} disabled={coverPending} style={{ padding: '7px 14px', background: 'var(--dash-accent)', border: 'none', borderRadius: 7, fontSize: 12, color: '#fff', cursor: 'pointer', opacity: coverPending ? 0.5 : 1, fontFamily: FONT }}>
                 {coverPending ? '...' : 'Guardar'}
               </button>
             </div>
@@ -1048,13 +1067,13 @@ export default function PhotoManager({ initialAlbums, compact = false }: { initi
         </button>
       </div>
 
-      {error && <p style={{ fontSize: 12, color: '#FF453A', marginBottom: 12 }}>{error}</p>}
+      {error && <p style={{ fontSize: 12, color: 'var(--dash-danger)', marginBottom: 12 }}>{error}</p>}
 
       {/* New album form */}
       {showNew && (
         <form onSubmit={handleCreate} style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: compact ? 10 : 16, padding: compact ? 9 : 12, background: 'var(--dash-surface-2)', borderRadius: 10, border: '1px solid var(--dash-border)' }}>
           <input value={newLabel} onChange={(e) => setNewLabel(e.target.value)} placeholder="Nombre del álbum (ej. Retratos)" required autoFocus style={{ ...INPUT, flex: 1 }} />
-          <button type="submit" disabled={isPending || !newLabel.trim()} style={{ padding: '8px 16px', background: '#0071E3', border: 'none', borderRadius: 8, fontSize: 13, color: '#fff', cursor: 'pointer', opacity: isPending ? 0.5 : 1, fontFamily: FONT }}>
+          <button type="submit" disabled={isPending || !newLabel.trim()} style={{ padding: '8px 16px', background: 'var(--dash-accent)', border: 'none', borderRadius: 8, fontSize: 13, color: '#fff', cursor: 'pointer', opacity: isPending ? 0.5 : 1, fontFamily: FONT }}>
             {isPending ? '...' : 'Crear'}
           </button>
           <button type="button" onClick={() => { setShowNew(false); setNewLabel('') }} style={{ width: 32, height: 32, background: 'transparent', border: 'none', color: 'var(--dash-text-tertiary)', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1071,7 +1090,7 @@ export default function PhotoManager({ initialAlbums, compact = false }: { initi
           <div style={{ marginBottom: 16, padding: 14, background: 'var(--dash-surface-2)', borderRadius: 10, border: '1px solid var(--dash-border)', display: 'flex', gap: 8, alignItems: 'center' }}>
             <span style={{ fontSize: 12, color: 'var(--dash-text-tertiary)', flexShrink: 0 }}>Renombrar:</span>
             <input value={renameLabel} onChange={(e) => setRenameLabel(e.target.value)} autoFocus onKeyDown={(e) => { if (e.key === 'Enter') handleSaveRename(album); if (e.key === 'Escape') setRenamingId(null) }} style={{ ...INPUT, flex: 1, padding: '6px 10px', fontSize: 13 }} />
-            <button onClick={() => handleSaveRename(album)} disabled={isPending} style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: '#30D158', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Check size={14} strokeWidth={2.5} /></button>
+            <button onClick={() => handleSaveRename(album)} disabled={isPending} style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: 'var(--dash-success)', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Check size={14} strokeWidth={2.5} /></button>
             <button onClick={() => setRenamingId(null)} style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: 'var(--dash-text-tertiary)', cursor: 'pointer', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={13} strokeWidth={2} /></button>
           </div>
         )
@@ -1127,7 +1146,7 @@ export default function PhotoManager({ initialAlbums, compact = false }: { initi
               <button onClick={() => setCoverAlbumId(null)} style={{ padding: '7px 14px', background: 'var(--dash-surface-3)', border: '1px solid var(--dash-border)', borderRadius: 7, fontSize: 12, color: 'var(--dash-text-secondary)', cursor: 'pointer', fontFamily: FONT }}>
                 Cancelar
               </button>
-              <button onClick={handleSaveCover} disabled={coverPending} style={{ padding: '7px 14px', background: '#0071E3', border: 'none', borderRadius: 7, fontSize: 12, color: '#fff', cursor: 'pointer', opacity: coverPending ? 0.5 : 1, fontFamily: FONT }}>
+              <button onClick={handleSaveCover} disabled={coverPending} style={{ padding: '7px 14px', background: 'var(--dash-accent)', border: 'none', borderRadius: 7, fontSize: 12, color: '#fff', cursor: 'pointer', opacity: coverPending ? 0.5 : 1, fontFamily: FONT }}>
                 {coverPending ? '...' : 'Guardar'}
               </button>
             </div>

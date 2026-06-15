@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+const FONT = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
 
 interface AuditRow {
   id: string
@@ -17,18 +17,18 @@ interface AuditRow {
 function actionColor(action: string): string {
   const family = action.split('.')[0]
   const map: Record<string, string> = {
-    invoice: '#30D158',
-    proposal: '#0071E3',
+    invoice: 'var(--dash-success)',
+    proposal: 'var(--dash-accent)',
     project: '#BF5AF2',
-    client: '#FF9F0A',
-    calendar: '#64D2FF',
-    expense: '#FF453A',
+    client: 'var(--dash-warning)',
+    calendar: 'var(--dash-accent)',
+    expense: 'var(--dash-danger)',
     lead: '#FF6B35',
     team: '#FF2D55',
     deliverable: '#5E5CE6',
     portfolio: '#AC8E68',
   }
-  return map[family] ?? '#8E8E93'
+  return map[family] ?? 'var(--dash-text-tertiary)'
 }
 
 function fmtWhen(iso: string): string {
@@ -96,7 +96,7 @@ export default async function AuditoriaPage() {
                 }}
               >
                 <span style={{ width: 9, height: 9, borderRadius: 9, background: actionColor(r.action), flexShrink: 0 }} />
-                <code style={{ flex: '0 0 150px', fontSize: 12, color: 'var(--dash-text-tertiary)', fontFamily: 'ui-monospace, monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <code style={{ flex: '0 0 150px', fontSize: 12, color: 'var(--dash-text-tertiary)', fontFamily: 'var(--font-geist-mono), ui-monospace, monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {r.action}
                 </code>
                 <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: 'var(--dash-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

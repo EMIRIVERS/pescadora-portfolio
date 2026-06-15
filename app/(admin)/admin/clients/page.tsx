@@ -8,7 +8,7 @@ import { AnimatedEmptyState } from '@/components/admin/AnimatedEmptyState'
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 
-const SF = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+const SF = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -186,14 +186,14 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
       .client-card { background-color: var(--dash-surface-1); border: 1px solid var(--dash-border); transition: background-color 0.15s ease, border-color 0.15s ease; }
       .client-card:hover { background-color: var(--dash-surface-2) !important; border-color: var(--dash-border) !important; }
       .client-email-link { color: var(--dash-text-secondary); transition: color 0.15s ease; }
-      .client-email-link:hover { color: #0071E3 !important; }
+      .client-email-link:hover { color: var(--dash-accent) !important; }
       .client-detail-link { color: var(--dash-text-primary); transition: color 0.15s ease; }
-      .client-detail-link:hover { color: #0071E3 !important; }
+      .client-detail-link:hover { color: var(--dash-accent) !important; }
       .search-input { background-color: var(--dash-surface-2); border: 1px solid var(--dash-border); border-radius: 10px; padding: 10px 16px; color: var(--dash-text-primary); outline: none; width: 100%; font-size: 14px; box-sizing: border-box; }
       .search-input::placeholder { color: var(--dash-text-tertiary); }
-      .search-input:focus { border-color: rgba(0,113,227,0.5); }
-      .search-btn { background-color: #0071E3; color: #ffffff; border: none; border-radius: 8px; padding: 10px 20px; font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: background-color 0.15s ease; }
-      .search-btn:hover { background-color: #0077ED !important; }
+      .search-input:focus { border-color: rgba(var(--dash-accent-rgb),0.5); }
+      .search-btn { background-color: var(--dash-accent); color: #ffffff; border: none; border-radius: 8px; padding: 10px 20px; font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: background-color 0.15s ease; }
+      .search-btn:hover { background-color: var(--dash-accent-hover) !important; }
       .search-clear-link { color: var(--dash-text-secondary); font-size: 13px; text-decoration: none; white-space: nowrap; transition: color 0.15s ease; }
       .search-clear-link:hover { color: var(--dash-text-primary) !important; }
     `}</style>
@@ -238,7 +238,7 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
             {totalClients} cliente{totalClients !== 1 ? 's' : ''}
             {q ? (
               <span style={{ color: 'var(--dash-text-tertiary)' }}>
-                {' · '}busqueda: &ldquo;{q}&rdquo;
+                {' · '}búsqueda: &ldquo;{q}&rdquo;
               </span>
             ) : (
               <span>
@@ -261,7 +261,7 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
             borderRadius: '12px',
           }}
         >
-          <p style={{ fontSize: '13px', color: '#FF453A' }}>
+          <p style={{ fontSize: '13px', color: 'var(--dash-danger)' }}>
             Error al cargar clientes: {clientsError.message}
           </p>
         </div>
@@ -367,7 +367,7 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
             </p>
           ) : (
             <p style={{ fontSize: '14px', color: 'var(--dash-text-tertiary)', margin: 0 }}>
-              No hay clientes todavia. Invita al primer cliente usando el boton de arriba.
+              No hay clientes todavía. Invita al primer cliente usando el botón de arriba.
             </p>
           )}
         </div>
@@ -446,7 +446,7 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
               fontFamily: SF,
             }}
           >
-            Pagina {currentPage} de {totalPages}
+            Página {currentPage} de {totalPages}
           </span>
 
           {currentPage < totalPages ? (

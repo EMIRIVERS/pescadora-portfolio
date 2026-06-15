@@ -12,7 +12,7 @@ const T = {
   border:        'var(--dash-border)',
   textPrimary:   'var(--dash-text-primary)',
   textSecondary: 'var(--dash-text-secondary)',
-  font:          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+  font:          "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
 } as const
 
 // ── Page ──────────────────────────────────────────────────────────────────────

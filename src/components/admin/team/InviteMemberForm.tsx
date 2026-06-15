@@ -2,9 +2,9 @@
 import { useState, useTransition } from 'react'
 import { inviteTeamMember, addTeamMemberManually } from '@/lib/actions/invite-team-member'
 
-const ROLES = ['Fotografo', 'Videografo', 'Editor', 'Director', 'Productor', 'Asistente']
+const ROLES = ['Fotógrafo', 'Videógrafo', 'Editor', 'Director', 'Productor', 'Asistente']
 
-const SF = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+const SF = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
 
 type Tab = 'invite' | 'manual'
 
@@ -12,7 +12,7 @@ type Tab = 'invite' | 'manual'
 
 const inputStyle: React.CSSProperties = {
   backgroundColor: 'var(--dash-surface-3)',
-  border: '1px solid rgba(255,255,255,0.08)',
+  border: '1px solid var(--dash-border)',
   borderRadius: '8px',
   padding: '10px 12px',
   color: 'var(--dash-text-primary)',
@@ -44,7 +44,7 @@ function TabBtn({ active, onClick, children }: TabBtnProps) {
         color: active ? 'var(--dash-text-primary)' : 'var(--dash-text-secondary)',
         backgroundColor: active ? 'var(--dash-surface-2)' : 'transparent',
         border: 'none',
-        borderBottom: active ? '2px solid #0071E3' : '2px solid transparent',
+        borderBottom: active ? '2px solid var(--dash-accent)' : '2px solid transparent',
         padding: '9px 0',
         cursor: 'pointer',
         transition: 'color 0.15s ease, border-color 0.15s ease',
@@ -105,10 +105,10 @@ function InviteTab({ onDone }: { onDone: () => void }) {
         ))}
       </select>
 
-      {error && <p style={{ margin: 0, fontSize: '13px', color: '#FF453A', fontFamily: SF }}>{error}</p>}
+      {error && <p style={{ margin: 0, fontSize: '13px', color: 'var(--dash-danger)', fontFamily: SF }}>{error}</p>}
       {success && (
-        <p style={{ margin: 0, fontSize: '13px', color: '#30D158', fontFamily: SF }}>
-          Invitacion enviada a {submittedEmail}
+        <p style={{ margin: 0, fontSize: '13px', color: 'var(--dash-success)', fontFamily: SF }}>
+          Invitación enviada a {submittedEmail}
         </p>
       )}
 
@@ -124,9 +124,9 @@ function InviteTab({ onDone }: { onDone: () => void }) {
         <button
           type="submit"
           disabled={isPending}
-          style={{ backgroundColor: '#0071E3', color: '#ffffff', borderRadius: '8px', padding: '9px 18px', fontSize: '14px', fontWeight: 500, fontFamily: SF, border: 'none', cursor: isPending ? 'not-allowed' : 'pointer', opacity: isPending ? 0.7 : 1 }}
+          style={{ backgroundColor: 'var(--dash-accent)', color: '#ffffff', borderRadius: '8px', padding: '9px 18px', fontSize: '14px', fontWeight: 500, fontFamily: SF, border: 'none', cursor: isPending ? 'not-allowed' : 'pointer', opacity: isPending ? 0.7 : 1 }}
         >
-          {isPending ? 'Enviando...' : 'Enviar invitacion'}
+          {isPending ? 'Enviando...' : 'Enviar invitación'}
         </button>
       </div>
     </form>
@@ -194,15 +194,15 @@ function ManualTab({ onDone }: { onDone: () => void }) {
         ))}
       </select>
 
-      {error && <p style={{ margin: 0, fontSize: '13px', color: '#FF453A', fontFamily: SF }}>{error}</p>}
+      {error && <p style={{ margin: 0, fontSize: '13px', color: 'var(--dash-danger)', fontFamily: SF }}>{error}</p>}
       {success && (
-        <p style={{ margin: 0, fontSize: '13px', color: '#30D158', fontFamily: SF }}>
+        <p style={{ margin: 0, fontSize: '13px', color: 'var(--dash-success)', fontFamily: SF }}>
           Miembro agregado correctamente.
         </p>
       )}
 
       <p style={{ margin: 0, fontSize: '12px', color: 'var(--dash-text-tertiary)', fontFamily: SF }}>
-        Se creara la cuenta sin enviar email. El usuario debera restablecer su contrasena para acceder.
+        Se creará la cuenta sin enviar email. El usuario deberá restablecer su contraseña para acceder.
       </p>
 
       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
@@ -217,7 +217,7 @@ function ManualTab({ onDone }: { onDone: () => void }) {
         <button
           type="submit"
           disabled={isPending}
-          style={{ backgroundColor: '#0071E3', color: '#ffffff', borderRadius: '8px', padding: '9px 18px', fontSize: '14px', fontWeight: 500, fontFamily: SF, border: 'none', cursor: isPending ? 'not-allowed' : 'pointer', opacity: isPending ? 0.7 : 1 }}
+          style={{ backgroundColor: 'var(--dash-accent)', color: '#ffffff', borderRadius: '8px', padding: '9px 18px', fontSize: '14px', fontWeight: 500, fontFamily: SF, border: 'none', cursor: isPending ? 'not-allowed' : 'pointer', opacity: isPending ? 0.7 : 1 }}
         >
           {isPending ? 'Guardando...' : 'Agregar miembro'}
         </button>
@@ -240,7 +240,7 @@ export default function InviteMemberForm() {
       <button
         onClick={handleOpen}
         style={{
-          backgroundColor: '#0071E3',
+          backgroundColor: 'var(--dash-accent)',
           color: '#ffffff',
           borderRadius: '8px',
           padding: '9px 18px',
@@ -261,7 +261,7 @@ export default function InviteMemberForm() {
     <div
       style={{
         backgroundColor: 'var(--dash-surface-2)',
-        border: '1px solid rgba(255,255,255,0.08)',
+        border: '1px solid var(--dash-border)',
         borderRadius: '12px',
         overflow: 'hidden',
         minWidth: '280px',
@@ -271,8 +271,8 @@ export default function InviteMemberForm() {
       <div
         style={{
           display: 'flex',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
-          backgroundColor: '#141414',
+          borderBottom: '1px solid var(--dash-border)',
+          backgroundColor: 'var(--dash-surface-1)',
         }}
       >
         <TabBtn active={tab === 'invite'} onClick={() => setTab('invite')}>

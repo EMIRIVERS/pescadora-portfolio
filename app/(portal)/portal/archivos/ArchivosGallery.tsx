@@ -1,29 +1,30 @@
 'use client'
 
 import { useCallback, useRef, useState } from 'react'
+import { Upload, Download, Trash2, Search, FileText, FileVideo, File as FileIconLucide } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { ClientUpload } from '@/lib/supabase/types'
 
 // ---------------------------------------------------------------------------
-// Design tokens — XICO cinematic-editorial brand
+// Design tokens — XICO cinematic-editorial brand (--portal-* CSS tokens)
 // ---------------------------------------------------------------------------
 const S = {
-  surface:       'rgba(237,232,224,0.022)',
-  surfaceHover:  'rgba(237,232,224,0.05)',
+  surface:       'var(--portal-surface)',
+  surfaceHover:  'var(--portal-surface-2)',
   thumbBg:       '#0a0a0a',
-  border:        'rgba(237,232,224,0.10)',
-  borderHover:   'rgba(232,52,26,0.45)',
-  borderFocus:   '#e8341a',
-  textPrimary:   '#ede8e0',
-  textSecondary: '#8a857d',
-  textTertiary:  '#6b6560',
-  accent:        '#e8341a',
-  danger:        '#e8341a',
-  success:       '#30D158',
-  font:          'var(--font-geist-sans), sans-serif',
-  sans:          'var(--font-geist-sans), sans-serif',
-  serif:         'var(--font-cormorant), Georgia, serif',
-  mono:          'var(--font-geist-mono), monospace',
+  border:        'var(--portal-border)',
+  borderHover:   'var(--portal-border-hover)',
+  borderFocus:   'var(--portal-accent)',
+  textPrimary:   'var(--portal-text)',
+  textSecondary: 'var(--portal-text-muted)',
+  textTertiary:  'var(--portal-text-dim)',
+  accent:        'var(--portal-accent)',
+  danger:        'var(--portal-accent)',
+  success:       'var(--portal-badge-paid-color)',
+  font:          'var(--portal-sans)',
+  sans:          'var(--portal-sans)',
+  serif:         'var(--portal-serif)',
+  mono:          'var(--portal-mono)',
 } as const
 
 // ---------------------------------------------------------------------------
@@ -50,88 +51,6 @@ function inferMimeCategory(fileName: string): 'image' | 'video' | 'pdf' | 'other
   if (['mp4', 'mov', 'avi', 'mkv', 'webm', 'm4v', 'mxf'].includes(ext)) return 'video'
   if (ext === 'pdf') return 'pdf'
   return 'other'
-}
-
-// ---------------------------------------------------------------------------
-// SVG icons (inline — no icon library)
-// ---------------------------------------------------------------------------
-
-function IconUpload({ size = 32, color = 'currentColor' }: { size?: number; color?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-      <polyline points="17 8 12 3 7 8" />
-      <line x1="12" y1="3" x2="12" y2="15" />
-    </svg>
-  )
-}
-
-function IconDownload({ size = 15 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-      <polyline points="7 10 12 15 17 10" />
-      <line x1="12" y1="15" x2="12" y2="3" />
-    </svg>
-  )
-}
-
-function IconTrash({ size = 15 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <polyline points="3 6 5 6 21 6" />
-      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-      <path d="M10 11v6" />
-      <path d="M14 11v6" />
-      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-    </svg>
-  )
-}
-
-function IconSearch({ size = 16 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="11" cy="11" r="8" />
-      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-    </svg>
-  )
-}
-
-function IconFilePdf({ size = 28 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke="#e8341a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-      <polyline points="14 2 14 8 20 8" />
-      <line x1="8" y1="13" x2="16" y2="13" />
-      <line x1="8" y1="17" x2="12" y2="17" />
-    </svg>
-  )
-}
-
-function IconFileVideo({ size = 28 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke="#8a857d" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-      <polyline points="14 2 14 8 20 8" />
-      <polygon points="10 11 16 14 10 17 10 11" />
-    </svg>
-  )
-}
-
-function IconFileGeneric({ size = 28 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke="#6b6560" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-      <polyline points="14 2 14 8 20 8" />
-    </svg>
-  )
 }
 
 // ---------------------------------------------------------------------------
@@ -190,9 +109,9 @@ function FileIcon({ fileName, fileUrl }: { fileName: string; fileUrl: string }) 
 
   return (
     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      {category === 'pdf'   && <IconFilePdf size={28} />}
-      {category === 'video' && <IconFileVideo size={28} />}
-      {category === 'other' && <IconFileGeneric size={28} />}
+      {category === 'pdf'   && <FileText size={28} color={S.accent} strokeWidth={1.5} aria-hidden="true" />}
+      {category === 'video' && <FileVideo size={28} color={S.textSecondary} strokeWidth={1.5} aria-hidden="true" />}
+      {category === 'other' && <FileIconLucide size={28} color={S.textTertiary} strokeWidth={1.5} aria-hidden="true" />}
     </div>
   )
 }
@@ -298,7 +217,7 @@ function FileCard({
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = S.accent; e.currentTarget.style.color = S.accent }}
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = S.border; e.currentTarget.style.color = S.textSecondary }}
           >
-            <IconDownload size={13} />
+            <Download size={13} strokeWidth={2} aria-hidden="true" />
             Descargar
           </a>
 
@@ -323,7 +242,7 @@ function FileCard({
             onMouseEnter={(e) => { if (!deleting) { e.currentTarget.style.borderColor = S.danger; e.currentTarget.style.color = S.danger } }}
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = S.border; e.currentTarget.style.color = S.textTertiary }}
           >
-            <IconTrash size={13} />
+            <Trash2 size={13} strokeWidth={2} aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -358,7 +277,7 @@ function GalleryUploader({
     setError(null)
 
     const MAX = 200 * 1024 * 1024
-    if (file.size > MAX) { setError('El archivo excede el limite de 200 MB.'); return }
+    if (file.size > MAX) { setError('El archivo excede el límite de 200 MB.'); return }
 
     // Bloquear extensiones ejecutables / XSS desde el bucket público (html/svg/js).
     // Las URLs son servidas desde supabase.co así que un .html con JS quedaría same-origin
@@ -484,7 +403,7 @@ function GalleryUploader({
           </>
         ) : (
           <>
-            <IconUpload size={28} color={dragging ? S.accent : S.textTertiary} />
+            <Upload size={28} color={dragging ? S.accent : S.textTertiary} strokeWidth={1.5} aria-hidden="true" />
             <p style={{ margin: 0, fontFamily: S.sans, fontSize: '0.9rem', color: S.textSecondary, textAlign: 'center' }}>
               Arrastra un archivo o{' '}
               <span style={{ color: S.accent }}>haz clic para seleccionar</span>
@@ -538,7 +457,7 @@ export default function ArchivosGallery({ initialUploads, projects, clientId }: 
   }, [])
 
   const handleDelete = useCallback(async (id: string, fileUrl: string) => {
-    const confirmed = window.confirm('Eliminar este archivo permanentemente?')
+    const confirmed = window.confirm('¿Eliminar este archivo permanentemente?')
     if (!confirmed) return
 
     setDeletingIds((prev) => new Set([...prev, id]))
@@ -607,7 +526,7 @@ export default function ArchivosGallery({ initialUploads, projects, clientId }: 
               position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
               color: S.textTertiary, display: 'flex', alignItems: 'center', pointerEvents: 'none',
             }}>
-              <IconSearch size={15} />
+              <Search size={15} strokeWidth={2} aria-hidden="true" />
             </span>
             <input
               type="text"

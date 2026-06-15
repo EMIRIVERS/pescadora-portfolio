@@ -30,13 +30,13 @@ interface FormErrors {
 const S = {
   surface2:      'var(--dash-surface-2)',
   surface3:      'var(--dash-surface-3)',
-  border:        'rgba(255,255,255,0.10)',
+  border:        'var(--dash-border-strong)',
   textPrimary:   'var(--dash-text-primary)',
   textSecondary: 'var(--dash-text-secondary)',
   textTertiary:  'var(--dash-text-tertiary)',
-  accent:        '#0071E3',
-  accentRed:     '#FF453A',
-  font:          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+  accent:        'var(--dash-accent)',
+  accentRed:     'var(--dash-danger)',
+  font:          "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
 } as const
 
 // ─── Options ──────────────────────────────────────────────────────────────────
@@ -47,7 +47,7 @@ const TYPE_OPTIONS: { value: DeliverableType; label: string }[] = [
 
 const STATUS_OPTIONS: { value: DeliverableStatus; label: string }[] = [
   { value: 'pending',  label: 'Pendiente' },
-  { value: 'review',   label: 'En revision' },
+  { value: 'review',   label: 'En revisión' },
   { value: 'approved', label: 'Aprobado' },
 ]
 
@@ -56,7 +56,7 @@ function validate(values: FormValues): FormErrors {
   const errors: FormErrors = {}
 
   if (!values.title.trim()) {
-    errors.title = 'El titulo es obligatorio.'
+    errors.title = 'El título es obligatorio.'
   }
 
   if (values.url.trim() && !/^https?:\/\/.+/.test(values.url.trim())) {
@@ -148,7 +148,7 @@ export function EditDeliverableForm({ deliverable, onSuccess, onCancel }: Props)
 
   function focusStyle(name: string): React.CSSProperties {
     return focused === name
-      ? { borderColor: S.accent, boxShadow: `0 0 0 3px rgba(0,113,227,0.20)` }
+      ? { borderColor: S.accent, boxShadow: `0 0 0 3px rgba(var(--dash-accent-rgb),0.20)` }
       : {}
   }
 
@@ -174,7 +174,7 @@ export function EditDeliverableForm({ deliverable, onSuccess, onCancel }: Props)
       {/* Title */}
       <div>
         <label htmlFor="ed-title" style={labelStyle}>
-          Titulo <span style={{ color: S.accentRed }}>*</span>
+          Título <span style={{ color: S.accentRed }}>*</span>
         </label>
         <input
           id="ed-title"
@@ -185,7 +185,7 @@ export function EditDeliverableForm({ deliverable, onSuccess, onCancel }: Props)
           onFocus={() => setFocused('title')}
           onBlur={() => setFocused(null)}
           disabled={isPending}
-          placeholder="p. ej. Corte #3 — edicion preliminar"
+          placeholder="p. ej. Corte #3 — edición preliminar"
           style={{
             ...inputStyle,
             ...focusStyle('title'),
@@ -202,7 +202,7 @@ export function EditDeliverableForm({ deliverable, onSuccess, onCancel }: Props)
       {/* Description */}
       <div>
         <label htmlFor="ed-description" style={labelStyle}>
-          Descripcion
+          Descripción
         </label>
         <textarea
           id="ed-description"
@@ -242,7 +242,7 @@ export function EditDeliverableForm({ deliverable, onSuccess, onCancel }: Props)
           style={{
             ...inputStyle,
             ...focusStyle('url'),
-            fontFamily: "'SF Mono', ui-monospace, monospace",
+            fontFamily: "var(--font-geist-mono), ui-monospace, monospace",
             fontSize: 13,
             opacity: isPending ? 0.5 : 1,
           }}
@@ -257,7 +257,7 @@ export function EditDeliverableForm({ deliverable, onSuccess, onCancel }: Props)
       {/* Due date */}
       <div>
         <label htmlFor="ed-due_date" style={labelStyle}>
-          Fecha limite
+          Fecha límite
         </label>
         <input
           id="ed-due_date"
@@ -355,7 +355,7 @@ export function EditDeliverableForm({ deliverable, onSuccess, onCancel }: Props)
           }}
           onMouseEnter={(e) => {
             const b = e.currentTarget as HTMLButtonElement
-            b.style.borderColor = 'rgba(255,255,255,0.20)'
+            b.style.borderColor = 'var(--dash-border-strong)'
             b.style.color = 'var(--dash-text-primary)'
           }}
           onMouseLeave={(e) => {
@@ -387,7 +387,7 @@ export function EditDeliverableForm({ deliverable, onSuccess, onCancel }: Props)
             opacity: isPending ? 0.6 : 1,
           }}
           onMouseEnter={(e) => {
-            if (!isPending) (e.currentTarget as HTMLButtonElement).style.background = '#0077ED'
+            if (!isPending) (e.currentTarget as HTMLButtonElement).style.background = 'var(--dash-accent-hover)'
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLButtonElement).style.background = S.accent

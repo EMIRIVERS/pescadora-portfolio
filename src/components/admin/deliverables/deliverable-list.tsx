@@ -23,14 +23,14 @@ const S = {
   textPrimary: 'var(--dash-text-primary)',
   textSecondary: 'var(--dash-text-secondary)',
   textTertiary: 'var(--dash-text-tertiary)',
-  accent: '#0071E3',
-  accentRed: '#FF453A',
+  accent: 'var(--dash-accent)',
+  accentRed: 'var(--dash-danger)',
 } as const
 
 // ─── Type pills ───────────────────────────────────────────────────────────────
 const TYPE_PILL: Record<DeliverableType, { bg: string; text: string; ring: string }> = {
-  wip:   { bg: 'rgba(255,159,10,0.14)',  text: '#FF9F0A', ring: 'rgba(255,159,10,0.25)' },
-  final: { bg: 'rgba(48,209,88,0.14)',   text: '#30D158', ring: 'rgba(48,209,88,0.25)' },
+  wip:   { bg: 'rgba(255,159,10,0.14)',  text: 'var(--dash-warning)', ring: 'rgba(255,159,10,0.25)' },
+  final: { bg: 'rgba(48,209,88,0.14)',   text: 'var(--dash-success)', ring: 'rgba(48,209,88,0.25)' },
 }
 
 const TYPE_LABELS: Record<DeliverableType, string> = {
@@ -42,12 +42,12 @@ const TYPE_LABELS: Record<DeliverableType, string> = {
 const STATUS_PILL: Record<DeliverableStatus, { bg: string; text: string; ring: string }> = {
   pending:  { bg: 'rgba(72,72,74,0.5)',   text: 'var(--dash-text-secondary)', ring: 'rgba(99,99,102,0.5)' },
   review:   { bg: 'rgba(10,132,255,0.14)', text: '#0A84FF', ring: 'rgba(10,132,255,0.25)' },
-  approved: { bg: 'rgba(48,209,88,0.14)', text: '#30D158', ring: 'rgba(48,209,88,0.25)' },
+  approved: { bg: 'rgba(48,209,88,0.14)', text: 'var(--dash-success)', ring: 'rgba(48,209,88,0.25)' },
 }
 
 const STATUS_LABELS: Record<DeliverableStatus, string> = {
   pending:  'Pendiente',
-  review:   'En revision',
+  review:   'En revisión',
   approved: 'Aprobado',
 }
 
@@ -136,7 +136,7 @@ function MediaPreview({ url }: { url: string }) {
           style={{
             fontSize: 11,
             color: S.textSecondary,
-            fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+            fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
           }}
         >
           {safeHostname(url)}
@@ -159,7 +159,7 @@ function MediaPreview({ url }: { url: string }) {
           fontSize: 12,
           color: S.accent,
           textDecoration: 'none',
-          fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+          fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
         }}
       >
         <ExternalLink size={12} />
@@ -186,7 +186,7 @@ function Pill({ bg, text, ring, label }: { bg: string; text: string; ring: strin
         background: bg,
         color: text,
         boxShadow: `0 0 0 1px ${ring}`,
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+        fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
       }}
     >
       {label}
@@ -207,7 +207,7 @@ function StatusQuickPicker({ deliverable, onStatusChanged }: StatusQuickPickerPr
   const [isPending, start]    = useTransition()
   const [errorMsg, setErrMsg] = useState<string | null>(null)
 
-  const font = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+  const font = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
 
   function handlePick(newStatus: DeliverableStatus) {
     if (newStatus === deliverable.status) {
@@ -400,7 +400,7 @@ function DeliverableRow({
             textTransform: 'uppercase',
             letterSpacing: '0.06em',
             marginBottom: 16,
-            fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+            fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
           }}
         >
           Editar entregable
@@ -472,7 +472,7 @@ function DeliverableRow({
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
-            fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+            fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
           }}
         >
           {deliverable.title}
@@ -561,7 +561,7 @@ function DeliverableRow({
                 color: S.textSecondary,
                 lineHeight: 1.55,
                 margin: 0,
-                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+                fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
               }}
             >
               {deliverable.description}
@@ -576,7 +576,7 @@ function DeliverableRow({
               style={{
                 fontSize: 11,
                 color: S.accent,
-                fontFamily: "'SF Mono', ui-monospace, monospace",
+                fontFamily: "var(--font-geist-mono), ui-monospace, monospace",
                 textDecoration: 'none',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -593,10 +593,10 @@ function DeliverableRow({
                 fontSize: 11,
                 color: S.textTertiary,
                 margin: 0,
-                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+                fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
               }}
             >
-              Fecha limite: {formatDate(deliverable.due_date)}
+              Fecha límite: {formatDate(deliverable.due_date)}
             </p>
           )}
           <p
@@ -604,7 +604,7 @@ function DeliverableRow({
               fontSize: 11,
               color: S.textTertiary,
               margin: 0,
-              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+              fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
             }}
           >
             Agregado {formatDate(deliverable.created_at)}
@@ -653,7 +653,7 @@ export function DeliverableList({ projectId, initialDeliverables }: Props) {
         borderRadius: 16,
         border: `1px solid ${S.border}`,
         overflow: 'hidden',
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+        fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
       }}
     >
       {/* Card header */}
@@ -690,14 +690,14 @@ export function DeliverableList({ projectId, initialDeliverables }: Props) {
               gap: 5,
               padding: '6px 12px',
               borderRadius: 8,
-              background: addHovered ? '#0077ED' : S.accent,
+              background: addHovered ? 'var(--dash-accent-hover)' : S.accent,
               border: 'none',
               cursor: 'pointer',
               color: '#FFFFFF',
               fontSize: 13,
               fontWeight: 500,
               transition: 'background 0.15s ease',
-              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+              fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
             }}
             onMouseEnter={() => setAddHovered(true)}
             onMouseLeave={() => setAddHovered(false)}
@@ -719,10 +719,10 @@ export function DeliverableList({ projectId, initialDeliverables }: Props) {
             }}
           >
             <p style={{ fontSize: 14, color: S.textSecondary, margin: 0 }}>
-              Sin entregables todavia.
+              Sin entregables todavía.
             </p>
             <p style={{ fontSize: 12, color: S.textTertiary, marginTop: 4 }}>
-              Agrega el primer archivo, enlace o exportacion del proyecto.
+              Agrega el primer archivo, enlace o exportación del proyecto.
             </p>
           </div>
         )}

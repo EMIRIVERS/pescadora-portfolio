@@ -43,9 +43,9 @@ function computeScore(lead: Lead): { score: number; items: ScoreItem[] } {
 }
 
 function scoreColor(score: number): string {
-  if (score >= 80) return '#30D158'
-  if (score >= 50) return '#FF9F0A'
-  return '#FF453A'
+  if (score >= 80) return 'var(--dash-success)'
+  if (score >= 50) return 'var(--dash-warning)'
+  return 'var(--dash-danger)'
 }
 
 function scoreLabel(score: number): string {
@@ -65,11 +65,11 @@ export default function LeadScoreBadge({ lead }: Props) {
   return (
     <span
       style={{
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+        fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
         fontSize: 12,
         fontWeight: 600,
         color,
-        background: `${color}26`,
+        background: `color-mix(in srgb, ${color} 15%, transparent)`,
         padding: '4px 10px',
         borderRadius: 20,
         whiteSpace: 'nowrap',
@@ -144,7 +144,7 @@ export function LeadScoreBreakdown({ lead }: Props) {
               style={{
                 fontSize: 11,
                 fontWeight: 600,
-                color: item.met ? '#30D158' : 'var(--dash-text-tertiary)',
+                color: item.met ? 'var(--dash-success)' : 'var(--dash-text-tertiary)',
               }}
             >
               {item.met ? `+${item.points}` : '—'}

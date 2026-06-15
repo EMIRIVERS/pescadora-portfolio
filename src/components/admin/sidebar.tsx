@@ -40,7 +40,7 @@ import ThemeSwitcher, {
 } from '@/components/admin/ThemeSwitcher'
 
 const T = {
-  accentRed: '#FF453A',
+  accentRed: 'var(--dash-danger)',
   font: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
 } as const
 

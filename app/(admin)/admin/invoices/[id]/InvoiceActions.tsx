@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Check, Trash2 } from 'lucide-react'
 import { updateInvoiceStatus, deleteInvoice } from '@/lib/actions/invoices'
 
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+const FONT = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
 
 interface Props {
   id: string
@@ -36,7 +36,7 @@ export default function InvoiceActions({ id, invoiceNumber, status }: Props) {
   }
 
   function handleDelete() {
-    if (!window.confirm(`Eliminar factura ${invoiceNumber}? Esta accion no se puede deshacer.`)) return
+    if (!window.confirm(`¿Eliminar factura ${invoiceNumber}? Esta acción no se puede deshacer.`)) return
     startTransition(async () => {
       const result = await deleteInvoice(id)
       if (result.error) {

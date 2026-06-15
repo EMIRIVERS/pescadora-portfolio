@@ -8,7 +8,7 @@ import { STAFF_ROLES, STAFF_ROLE_LABELS } from '@/lib/auth/permissions'
 import type { StaffRole } from '@/lib/supabase/types'
 import DeleteMemberButton from './DeleteMemberButton'
 
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+const FONT = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
 
 const ROLE_OPTIONS = [
   'admin_staff',
@@ -255,7 +255,7 @@ export default function TeamMemberCard({ member, currentUserId, canManageRoles }
             fontWeight: 500,
             letterSpacing: '0.01em',
             backgroundColor: 'rgba(48,209,88,0.15)',
-            color: '#30D158',
+            color: 'var(--dash-success)',
           }}
         >
           Admin
@@ -395,7 +395,7 @@ export default function TeamMemberCard({ member, currentUserId, canManageRoles }
               ))}
             </select>
           ) : (
-            <span style={{ display: 'inline-block', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, backgroundColor: 'rgba(0,113,227,0.15)', color: '#0071E3', fontFamily: FONT }}>
+            <span style={{ display: 'inline-block', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, backgroundColor: 'rgba(var(--dash-accent-rgb),0.15)', color: 'var(--dash-accent)', fontFamily: FONT }}>
               {staffRole ? STAFF_ROLE_LABELS[staffRole] : 'Sin rol'}
             </span>
           )}

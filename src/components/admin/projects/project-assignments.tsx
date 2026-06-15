@@ -21,7 +21,7 @@ function getInitials(name: string | null): string {
 
 const ROLE_COLORS: Record<string, { bg: string; text: string; ring: string }> = {
   lead: { bg: 'rgba(191,90,242,0.15)', text: '#BF5AF2', ring: 'rgba(191,90,242,0.3)' },
-  editor: { bg: 'rgba(0,113,227,0.15)', text: '#409CFF', ring: 'rgba(0,113,227,0.3)' },
+  editor: { bg: 'rgba(var(--dash-accent-rgb),0.15)', text: '#409CFF', ring: 'rgba(var(--dash-accent-rgb),0.3)' },
   member: { bg: 'rgba(72,72,74,0.4)', text: 'var(--dash-text-secondary)', ring: 'var(--dash-border)' },
 }
 
@@ -31,7 +31,7 @@ function getRoleColor(role: string) {
 
 const selectBase: React.CSSProperties = {
   backgroundColor: 'var(--dash-surface-2)',
-  border: '1px solid rgba(255,255,255,0.1)',
+  border: '1px solid var(--dash-border-strong)',
   borderRadius: '8px',
   padding: '9px 12px',
   color: 'var(--dash-text-primary)',
@@ -120,7 +120,7 @@ export function ProjectAssignments({ projectId }: Props) {
   return (
     <div className="space-y-3">
       {error && (
-        <p style={{ fontSize: '12px', color: '#FF453A', padding: '0 4px' }}>{error}</p>
+        <p style={{ fontSize: '12px', color: 'var(--dash-danger)', padding: '0 4px' }}>{error}</p>
       )}
 
       {assignments.length === 0 && (
@@ -138,7 +138,7 @@ export function ProjectAssignments({ projectId }: Props) {
               className="flex items-center gap-3"
               style={{
                 backgroundColor: 'var(--dash-surface-2)',
-                border: '1px solid rgba(255,255,255,0.08)',
+                border: '1px solid var(--dash-border)',
                 borderRadius: '12px',
                 padding: '12px 16px',
               }}
@@ -214,7 +214,7 @@ export function ProjectAssignments({ projectId }: Props) {
                 }}
                 onMouseOver={(e) => {
                   if (!isPending) {
-                    e.currentTarget.style.color = '#FF453A'
+                    e.currentTarget.style.color = 'var(--dash-danger)'
                     e.currentTarget.style.backgroundColor = 'rgba(255,69,58,0.1)'
                   }
                 }}
@@ -235,7 +235,7 @@ export function ProjectAssignments({ projectId }: Props) {
         <div
           style={{
             backgroundColor: 'var(--dash-surface-2)',
-            border: '1px solid rgba(255,255,255,0.08)',
+            border: '1px solid var(--dash-border)',
             borderRadius: '12px',
             padding: '18px 20px',
           }}
@@ -289,7 +289,7 @@ export function ProjectAssignments({ projectId }: Props) {
                 fontSize: '13px',
                 fontWeight: 500,
                 borderRadius: '8px',
-                backgroundColor: '#0071E3',
+                backgroundColor: 'var(--dash-accent)',
                 border: 'none',
                 color: '#FFFFFF',
                 cursor: !selectedProfileId || isPending ? 'not-allowed' : 'pointer',
@@ -317,7 +317,7 @@ export function ProjectAssignments({ projectId }: Props) {
                 fontWeight: 500,
                 borderRadius: '8px',
                 backgroundColor: 'transparent',
-                border: '1px solid rgba(255,255,255,0.1)',
+                border: '1px solid var(--dash-border-strong)',
                 color: 'var(--dash-text-secondary)',
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
@@ -329,7 +329,7 @@ export function ProjectAssignments({ projectId }: Props) {
 
           {availableStaff.length === 0 && (
             <p style={{ fontSize: '12px', color: 'var(--dash-text-tertiary)' }}>
-              Todo el equipo ya esta asignado a este proyecto.
+              Todo el equipo ya está asignado a este proyecto.
             </p>
           )}
         </div>
@@ -341,7 +341,7 @@ export function ProjectAssignments({ projectId }: Props) {
           style={{
             fontSize: '13px',
             fontWeight: 500,
-            color: '#0071E3',
+            color: 'var(--dash-accent)',
             background: 'none',
             border: 'none',
             cursor: 'pointer',

@@ -8,7 +8,7 @@ import type { ProjectStatus, InvoiceStatus, LeadSource } from '@/lib/supabase/ty
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 
-const SF = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+const SF = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -60,7 +60,7 @@ type Tab = 'projects' | 'invoices' | 'leads'
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const AVATAR_PALETTE = [
-  '#0071E3',
+  'var(--dash-accent)',
   '#30D158',
   '#FF9F0A',
   '#BF5AF2',
@@ -73,7 +73,7 @@ const ACTIVE_STATUSES: ProjectStatus[] = ['pre_production', 'production', 'post_
 
 const INVOICE_STATUS_STYLES: Record<string, { color: string; bg: string; label: string }> = {
   draft:     { color: 'var(--dash-text-secondary)', bg: 'rgba(134,134,139,0.12)', label: 'Borrador' },
-  sent:      { color: '#0071E3', bg: 'rgba(0,113,227,0.12)',   label: 'Enviada' },
+  sent:      { color: 'var(--dash-accent)', bg: 'rgba(var(--dash-accent-rgb),0.12)',   label: 'Enviada' },
   paid:      { color: 'var(--dash-success)', bg: 'rgba(48,209,88,0.12)',   label: 'Pagada' },
   overdue:   { color: 'var(--dash-danger)', bg: 'rgba(255,69,58,0.12)',   label: 'Vencida' },
   cancelled: { color: 'var(--dash-text-tertiary)', bg: 'rgba(72,72,74,0.12)', label: 'Cancelada' },
@@ -173,7 +173,7 @@ function EditableField({ label, value, placeholder, fieldName, onSave, hrefPrefi
     setError(null)
     const trimmed = draft.trim()
     if (fieldName === 'name' && !trimmed) {
-      setError('El nombre no puede estar vacio.')
+      setError('El nombre no puede estar vacío.')
       return
     }
     onSave(fieldName, trimmed)
@@ -221,21 +221,22 @@ function EditableField({ label, value, placeholder, fieldName, onSave, hrefPrefi
                   fontSize: '14px',
                   color: 'var(--dash-text-primary)',
                   backgroundColor: 'var(--dash-surface-3)',
-                  border: error ? '1px solid rgba(255,69,58,0.6)' : '1px solid rgba(0,113,227,0.5)',
+                  border: error ? '1px solid rgba(255,69,58,0.6)' : '1px solid rgba(var(--dash-accent-rgb),0.5)',
                   borderRadius: '8px',
                   padding: '6px 10px',
                   outline: 'none',
-                  boxShadow: error ? 'none' : '0 0 0 3px rgba(0,113,227,0.1)',
+                  boxShadow: error ? 'none' : '0 0 0 3px rgba(var(--dash-accent-rgb),0.1)',
                 }}
               />
               <button
                 type="button"
                 onClick={handleSave}
                 title="Guardar"
+                aria-label="Guardar"
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   width: '28px', height: '28px',
-                  backgroundColor: '#0071E3', border: 'none', borderRadius: '6px',
+                  backgroundColor: 'var(--dash-accent)', border: 'none', borderRadius: '6px',
                   cursor: 'pointer',
                   color: '#fff', flexShrink: 0,
                 }}
@@ -246,6 +247,7 @@ function EditableField({ label, value, placeholder, fieldName, onSave, hrefPrefi
                 type="button"
                 onClick={() => { setDraft(value ?? ''); setEditing(false); setError(null) }}
                 title="Cancelar"
+                aria-label="Cancelar"
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   width: '28px', height: '28px',
@@ -270,7 +272,7 @@ function EditableField({ label, value, placeholder, fieldName, onSave, hrefPrefi
               hrefPrefix ? (
                 <a
                   href={`${hrefPrefix}${displayValue}`}
-                  style={{ fontSize: '14px', color: '#0071E3', textDecoration: 'none' }}
+                  style={{ fontSize: '14px', color: 'var(--dash-accent)', textDecoration: 'none' }}
                 >
                   {displayValue}
                 </a>
@@ -289,6 +291,7 @@ function EditableField({ label, value, placeholder, fieldName, onSave, hrefPrefi
               onClick={() => setEditing(true)}
               className="edit-pencil"
               title={`Editar ${label.toLowerCase()}`}
+              aria-label={`Editar ${label.toLowerCase()}`}
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 width: '22px', height: '22px',
@@ -379,7 +382,7 @@ export default function ClientDetailClient({ client, projects, invoices, leads, 
         .cd2-project-row { background-color: var(--dash-surface-1); border: 1px solid var(--dash-border); transition: background-color 0.15s, border-color 0.15s; cursor: pointer; }
         .cd2-project-row:hover { background-color: var(--dash-surface-2) !important; }
         .cd2-project-link { color: var(--dash-text-primary); text-decoration: none; }
-        .cd2-project-link:hover { color: #0071E3 !important; }
+        .cd2-project-link:hover { color: var(--dash-accent) !important; }
         .editable-row:hover .edit-pencil { opacity: 1 !important; }
         .tab-btn { background: transparent; border: none; cursor: pointer; transition: color 0.15s, border-color 0.15s; }
       `}</style>
@@ -459,8 +462,8 @@ export default function ClientDetailClient({ client, projects, invoices, leads, 
                 width: '64px',
                 height: '64px',
                 borderRadius: '50%',
-                backgroundColor: `${color}22`,
-                border: `2px solid ${color}55`,
+                backgroundColor: `color-mix(in srgb, ${color} 13%, transparent)`,
+                border: `2px solid color-mix(in srgb, ${color} 33%, transparent)`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -511,7 +514,7 @@ export default function ClientDetailClient({ client, projects, invoices, leads, 
                   <span style={{ margin: '0 6px', color: 'var(--dash-text-tertiary)' }}>·</span>
                 )}
                 {localClient.email && (
-                  <a href={`mailto:${localClient.email}`} style={{ color: '#0071E3', textDecoration: 'none' }}>
+                  <a href={`mailto:${localClient.email}`} style={{ color: 'var(--dash-accent)', textDecoration: 'none' }}>
                     {localClient.email}
                   </a>
                 )}
@@ -586,7 +589,7 @@ export default function ClientDetailClient({ client, projects, invoices, leads, 
                 marginBottom: '16px',
               }}
             >
-              Informacion de contacto
+              Información de contacto
             </h2>
             <div
               style={{
@@ -622,9 +625,9 @@ export default function ClientDetailClient({ client, projects, invoices, leads, 
                 hrefPrefix="mailto:"
               />
               <EditableField
-                label="Telefono"
+                label="Teléfono"
                 value={localClient.phone}
-                placeholder="Sin telefono"
+                placeholder="Sin teléfono"
                 fieldName="phone"
                 onSave={handleSave}
                 hrefPrefix="tel:"
@@ -673,7 +676,7 @@ export default function ClientDetailClient({ client, projects, invoices, leads, 
                     fontWeight: activeTab === tab.id ? 600 : 400,
                     color: activeTab === tab.id ? 'var(--dash-text-primary)' : 'var(--dash-text-secondary)',
                     padding: '8px 16px',
-                    borderBottom: activeTab === tab.id ? '2px solid #0071E3' : '2px solid transparent',
+                    borderBottom: activeTab === tab.id ? '2px solid var(--dash-accent)' : '2px solid transparent',
                     marginBottom: '-1px',
                   }}
                 >
@@ -684,8 +687,8 @@ export default function ClientDetailClient({ client, projects, invoices, leads, 
                         marginLeft: '6px',
                         fontSize: '11px',
                         fontWeight: 500,
-                        color: activeTab === tab.id ? '#0071E3' : 'var(--dash-text-tertiary)',
-                        backgroundColor: activeTab === tab.id ? 'rgba(0,113,227,0.1)' : 'rgba(134,134,139,0.12)',
+                        color: activeTab === tab.id ? 'var(--dash-accent)' : 'var(--dash-text-tertiary)',
+                        backgroundColor: activeTab === tab.id ? 'rgba(var(--dash-accent-rgb),0.1)' : 'rgba(134,134,139,0.12)',
                         borderRadius: '20px',
                         padding: '1px 7px',
                         display: 'inline-block',
@@ -702,7 +705,7 @@ export default function ClientDetailClient({ client, projects, invoices, leads, 
             {activeTab === 'projects' && (
               <div>
                 {projects.length === 0 ? (
-                  <EmptyState label="Este cliente no tiene proyectos todavia." />
+                  <EmptyState label="Este cliente no tiene proyectos todavía." />
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {projects.map((project) => {
@@ -780,7 +783,7 @@ export default function ClientDetailClient({ client, projects, invoices, leads, 
             {activeTab === 'invoices' && (
               <div>
                 {invoices.length === 0 ? (
-                  <EmptyState label="Este cliente no tiene facturas todavia." />
+                  <EmptyState label="Este cliente no tiene facturas todavía." />
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {invoices.map((inv) => {

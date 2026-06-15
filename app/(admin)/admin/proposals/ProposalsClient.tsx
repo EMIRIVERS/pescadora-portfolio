@@ -11,11 +11,11 @@ import type { Proposal, ProposalStatus } from '@/lib/actions/proposals'
 import { createInvoiceFromProposal } from '@/lib/actions/invoices'
 import QuoteBuilder from '@/components/admin/billing/QuoteBuilder'
 
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+const FONT = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
 
 const STATUS_STYLES: Record<ProposalStatus, { color: string; bg: string; label: string }> = {
   draft:    { color: 'var(--dash-text-secondary)', bg: 'rgba(134,134,139,0.12)', label: 'Borrador' },
-  sent:     { color: '#0071E3', bg: 'rgba(0,113,227,0.12)',   label: 'Enviada' },
+  sent:     { color: 'var(--dash-accent)', bg: 'rgba(var(--dash-accent-rgb),0.12)',   label: 'Enviada' },
   accepted: { color: 'var(--dash-success)', bg: 'rgba(48,209,88,0.12)',   label: 'Aceptada' },
   rejected: { color: 'var(--dash-danger)', bg: 'rgba(255,69,58,0.12)',   label: 'Rechazada' },
 }
@@ -139,7 +139,7 @@ export default function ProposalsClient({ initialProposals, clients }: Props) {
         <button
           type="button"
           onClick={openNew}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', backgroundColor: '#0071E3', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 500, color: '#fff', cursor: 'pointer', fontFamily: FONT }}
+          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', backgroundColor: 'var(--dash-accent)', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 500, color: '#fff', cursor: 'pointer', fontFamily: FONT }}
         >
           <Plus size={14} strokeWidth={2} /> Nueva cotización
         </button>
@@ -157,7 +157,7 @@ export default function ProposalsClient({ initialProposals, clients }: Props) {
           <button
             type="button"
             onClick={openNew}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 20px', backgroundColor: '#0071E3', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 500, color: '#fff', cursor: 'pointer', fontFamily: FONT }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 20px', backgroundColor: 'var(--dash-accent)', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 500, color: '#fff', cursor: 'pointer', fontFamily: FONT }}
           >
             <Plus size={14} strokeWidth={2} /> Nueva cotización
           </button>
@@ -166,7 +166,7 @@ export default function ProposalsClient({ initialProposals, clients }: Props) {
         <div style={{ backgroundColor: 'var(--dash-surface-1)', border: '1px solid var(--dash-border)', borderRadius: 16, overflowX: 'auto' }}>
           <table style={{ width: '100%', minWidth: 720, borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <tr style={{ borderBottom: '1px solid var(--dash-border)' }}>
                 {['Título', 'Cliente', 'Total', 'Estado', 'Válida hasta', 'Creada', ''].map((h) => (
                   <th key={h} style={thStyle}>{h}</th>
                 ))}
@@ -212,7 +212,8 @@ export default function ProposalsClient({ initialProposals, clients }: Props) {
                         value={proposal.status}
                         onChange={(e) => handleStatusChange(proposal.id, e.target.value as ProposalStatus)}
                         disabled={isPending}
-                        style={{ padding: '3px 10px', borderRadius: 20, border: `1px solid ${s.color}44`, backgroundColor: s.bg, color: s.color, fontSize: 11, fontWeight: 500, cursor: 'pointer', fontFamily: FONT, outline: 'none', appearance: 'none' }}
+                        aria-label={`Cambiar estado de la cotización ${proposal.title}`}
+                        style={{ padding: '3px 10px', borderRadius: 20, border: `1px solid ${s.color}44`, backgroundColor: s.bg, color: s.color, fontSize: 11, fontWeight: 500, cursor: 'pointer', fontFamily: FONT, appearance: 'none' }}
                       >
                         {(Object.entries(STATUS_STYLES) as [ProposalStatus, (typeof STATUS_STYLES)[ProposalStatus]][]).map(([v, st]) => (
                           <option key={v} value={v} style={{ backgroundColor: 'var(--dash-surface-2)', color: 'var(--dash-text-primary)' }}>
@@ -251,6 +252,7 @@ export default function ProposalsClient({ initialProposals, clients }: Props) {
                           type="button"
                           onClick={() => openEdit(proposal)}
                           title="Editar cotización"
+                          aria-label={`Editar cotización ${proposal.title}`}
                           style={{ border: 'none', background: 'transparent', color: 'var(--dash-text-tertiary)', cursor: 'pointer', padding: 4, borderRadius: 6, display: 'inline-flex' }}
                         >
                           <Pencil size={13} strokeWidth={1.5} />
@@ -260,6 +262,7 @@ export default function ProposalsClient({ initialProposals, clients }: Props) {
                           onClick={() => handleDeleteClick(proposal.id)}
                           disabled={isPending}
                           title={isConfirming ? 'Confirmar eliminación' : 'Eliminar cotización'}
+                          aria-label={isConfirming ? `Confirmar eliminación de la cotización ${proposal.title}` : `Eliminar cotización ${proposal.title}`}
                           style={{ border: isConfirming ? '1px solid rgba(255,69,58,0.4)' : 'none', background: isConfirming ? 'rgba(255,69,58,0.12)' : 'transparent', color: isConfirming ? 'var(--dash-danger)' : 'var(--dash-text-tertiary)', cursor: isPending ? 'not-allowed' : 'pointer', padding: isConfirming ? '3px 8px' : 4, borderRadius: 6, display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontFamily: FONT, transition: 'all 0.15s' }}
                         >
                           <Trash2 size={13} strokeWidth={1.5} />

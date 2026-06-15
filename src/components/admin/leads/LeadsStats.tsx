@@ -11,11 +11,11 @@ interface Props {
 }
 
 const STATS = [
-  { key: 'new',       label: 'Nuevo',      color: '#0071E3' },
+  { key: 'new',       label: 'Nuevo',      color: 'var(--dash-accent)' },
   { key: 'contacted', label: 'Contactado', color: '#BF5AF2' },
-  { key: 'qualified', label: 'Calificado', color: '#FF9F0A' },
-  { key: 'proposal',  label: 'Propuesta',  color: '#FF453A' },
-  { key: 'won',       label: 'Ganado',     color: '#30D158' },
+  { key: 'qualified', label: 'Calificado', color: 'var(--dash-warning)' },
+  { key: 'proposal',  label: 'Propuesta',  color: 'var(--dash-danger)' },
+  { key: 'won',       label: 'Ganado',     color: 'var(--dash-success)' },
   { key: 'lost',      label: 'Perdido',    color: 'var(--dash-text-tertiary)' },
 ] as const
 
@@ -50,7 +50,7 @@ export default function LeadsStats({ counts, total }: Props) {
                 border: '1px solid var(--dash-border)',
                 borderRadius: 12,
                 padding: '16px 20px',
-                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+                fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
               }}
             >
               <p
@@ -103,7 +103,7 @@ export default function LeadsStats({ counts, total }: Props) {
           borderRadius: 12,
           padding: '10px 16px',
           marginBottom: '1.5rem',
-          fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+          fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
         }}
       >
         <span
@@ -115,13 +115,13 @@ export default function LeadsStats({ counts, total }: Props) {
             color: 'var(--dash-text-secondary)',
           }}
         >
-          Tasa de conversion
+          Tasa de conversión
         </span>
         <span
           style={{
             fontSize: 16,
             fontWeight: 700,
-            color: conversionRate >= 50 ? '#30D158' : '#FF453A',
+            color: conversionRate >= 50 ? 'var(--dash-success)' : 'var(--dash-danger)',
             fontVariantNumeric: 'tabular-nums',
           }}
         >

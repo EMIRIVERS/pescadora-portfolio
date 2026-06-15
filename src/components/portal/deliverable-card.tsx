@@ -12,14 +12,14 @@ import { PORTAL } from '@/components/portal/ui'
 // ---------------------------------------------------------------------------
 
 const TYPE_BADGE: Record<DeliverableType, { label: string; color: string }> = {
-  wip: { label: 'WIP', color: '#f5b942' },
-  final: { label: 'Final', color: '#4cd97a' },
+  wip: { label: 'WIP', color: 'var(--portal-badge-sent-color)' },
+  final: { label: 'Final', color: 'var(--portal-badge-paid-color)' },
 }
 
 const STATUS_BADGE: Record<DeliverableStatus, { label: string; color: string }> = {
   pending: { label: 'Pendiente', color: PORTAL.muted },
   review: { label: 'En revisión', color: '#5ac8fa' },
-  approved: { label: 'Aprobado', color: '#4cd97a' },
+  approved: { label: 'Aprobado', color: 'var(--portal-badge-paid-color)' },
 }
 
 // ---------------------------------------------------------------------------

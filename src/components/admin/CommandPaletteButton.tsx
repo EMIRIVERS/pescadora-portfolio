@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react'
 import { Search } from 'lucide-react'
 
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+const FONT = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
 
 export default function CommandPaletteButton() {
   const [hovered, setHovered] = useState(false)
@@ -18,7 +18,7 @@ export default function CommandPaletteButton() {
       onClick={open}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      aria-label="Abrir busqueda global (Cmd+K)"
+      aria-label="Abrir búsqueda global (Cmd+K)"
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -26,8 +26,8 @@ export default function CommandPaletteButton() {
         padding: '5px 12px 5px 9px',
         borderRadius: '8px',
         border: `1px solid ${hovered ? 'var(--dash-border-strong)' : 'var(--dash-border)'}`,
-        background: hovered ? 'var(--dash-border)' : 'rgba(255,255,255,0.03)',
-        color: hovered ? '#aeaeb2' : 'var(--dash-text-secondary)',
+        background: hovered ? 'var(--dash-border)' : 'var(--dash-surface-2)',
+        color: hovered ? 'var(--dash-text-primary)' : 'var(--dash-text-secondary)',
         fontFamily: FONT,
         fontSize: '13px',
         cursor: 'pointer',
@@ -46,7 +46,7 @@ export default function CommandPaletteButton() {
           fontSize: '11px',
           color: 'var(--dash-text-tertiary)',
           background: 'var(--dash-border)',
-          border: '1px solid rgba(255,255,255,0.08)',
+          border: '1px solid var(--dash-border)',
           borderRadius: '5px',
           padding: '1px 5px',
           fontFamily: FONT,

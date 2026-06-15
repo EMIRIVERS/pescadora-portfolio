@@ -285,7 +285,7 @@ export default async function ActividadPage({ searchParams }: PageProps) {
           background-color: var(--dash-bg);
           min-height: 100vh;
           padding: 2.5rem 2rem;
-          font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+          font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
           color: var(--dash-text-primary);
           box-sizing: border-box;
           max-width: 860px;
@@ -301,10 +301,15 @@ export default async function ActividadPage({ searchParams }: PageProps) {
         }
         .act-item-row:hover .act-card {
           background: var(--dash-surface-2);
-          border-color: rgba(255,255,255,0.12);
+          border-color: var(--dash-border-strong);
         }
         .act-item-row:hover .act-title {
           color: var(--dash-text-primary);
+        }
+        .act-item-row:focus-visible {
+          outline: 2px solid var(--dash-accent);
+          outline-offset: 2px;
+          border-radius: 12px;
         }
         .act-card {
           flex: 1;
@@ -360,7 +365,7 @@ export default async function ActividadPage({ searchParams }: PageProps) {
           margin-top: 4px;
         }
         .act-lead-link {
-          color: #64D2FF;
+          color: var(--dash-accent);
           text-decoration: none;
           font-size: 12px;
           font-weight: 500;
@@ -406,7 +411,7 @@ export default async function ActividadPage({ searchParams }: PageProps) {
               margin: 0,
             }}
           >
-            Ultimas acciones en el sistema
+            Últimas acciones en el sistema
           </p>
         </div>
 
@@ -457,7 +462,7 @@ export default async function ActividadPage({ searchParams }: PageProps) {
           )}
 
           <span style={{ fontSize: '12px', color: 'var(--dash-text-tertiary)' }}>
-            Pagina {currentPage}
+            Página {currentPage}
           </span>
 
           {hasNextPage ? (

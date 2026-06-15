@@ -1,24 +1,14 @@
 import { notFound, redirect } from 'next/navigation'
 import { resolvePortalClient, portalLink } from '@/lib/portal/preview'
-import type { Deliverable, Project, ProjectStatus } from '@/lib/supabase/types'
+import type { Deliverable, Project } from '@/lib/supabase/types'
 import ProjectTimeline from '@/components/portal/project-timeline'
 import DeliverableCard from '@/components/portal/deliverable-card'
 import ClientUploader from '@/components/portal/ClientUploader'
-import { PortalShell, BackLink, SectionLabel, StatusTag, EmptyState, PORTAL } from '@/components/portal/ui'
+import { PortalShell, BackLink, SectionLabel, StatusTag, EmptyState, PROJECT_STATUS_CONFIG, PORTAL } from '@/components/portal/ui'
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-const STATUS_CONFIG: Record<
-  ProjectStatus,
-  { color: string; label: string }
-> = {
-  pre_production: { color: '#f5a623', label: 'Pre-producción' },
-  production: { color: '#5ac8fa', label: 'Producción' },
-  post_production: { color: '#bf5af2', label: 'Post-producción' },
-  delivered: { color: '#30d158', label: 'Entregado' },
-}
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return '—'
@@ -86,12 +76,12 @@ export default async function ProjectPage({ params, searchParams }: PageProps) {
     }
   }
 
-  const statusCfg = STATUS_CONFIG[project.status]
+  const statusCfg = PROJECT_STATUS_CONFIG[project.status]
   const hasDates = Boolean(project.start_date || project.end_date)
 
   return (
     <PortalShell maxWidth={1000}>
-      <BackLink href={portalLink('/portal', ctx)} label="Mis proyectos" />
+      <BackLink href={portalLink('/portal', ctx)} />
 
       {/* ── Masthead ── */}
       <header style={{ marginBottom: 'clamp(2.5rem, 5vw, 3.5rem)' }}>

@@ -154,7 +154,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
       value: typedProject.client ? (
         <Link
           href={`/admin/clients/${typedProject.client.id}`}
-          style={{ color: '#0071E3', textDecoration: 'none', fontWeight: 500 }}
+          style={{ color: 'var(--dash-accent)', textDecoration: 'none', fontWeight: 500 }}
         >
           {typedProject.client.name}
         </Link>
@@ -200,7 +200,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
       style={{
         backgroundColor: 'var(--dash-surface-1)',
         color: 'var(--dash-text-primary)',
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+        fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
       }}
     >
       {/* Top bar */}
@@ -226,7 +226,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
             style={{
               fontSize: '14px',
               fontWeight: 500,
-              backgroundColor: '#0071E3',
+              backgroundColor: 'var(--dash-accent)',
               color: '#FFFFFF',
               borderRadius: '8px',
               padding: '7px 14px',
@@ -322,7 +322,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                         width: '7px',
                         height: '7px',
                         borderRadius: '50%',
-                        backgroundColor: '#0071E3',
+                        backgroundColor: 'var(--dash-accent)',
                         flexShrink: 0,
                       }}
                     />
@@ -350,10 +350,10 @@ export default async function ProjectDetailPage({ params }: PageProps) {
               </span>
               <span>
                 <span style={{ color: 'var(--dash-text-secondary)', fontWeight: 500 }}>{deliverableStatusCounts.review}</span>
-                {' '}en revision
+                {' '}en revisión
               </span>
               <span>
-                <span style={{ color: '#30D158', fontWeight: 500 }}>{deliverableStatusCounts.approved}</span>
+                <span style={{ color: 'var(--dash-success)', fontWeight: 500 }}>{deliverableStatusCounts.approved}</span>
                 {' '}aprobados
               </span>
             </div>
@@ -395,7 +395,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
             <button
               type="submit"
               style={{
-                backgroundColor: '#0071E3',
+                backgroundColor: 'var(--dash-accent)',
                 color: '#FFFFFF',
                 borderRadius: '8px',
                 padding: '8px 16px',
@@ -481,7 +481,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
             <Link
               href={`/admin/kanban?project=${id}`}
               className="transition-colors"
-              style={{ fontSize: '13px', color: '#0071E3', textDecoration: 'underline', textUnderlineOffset: '3px' }}
+              style={{ fontSize: '13px', color: 'var(--dash-accent)', textDecoration: 'underline', textUnderlineOffset: '3px' }}
             >
               Ver tablero
             </Link>

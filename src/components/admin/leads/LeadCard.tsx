@@ -32,7 +32,7 @@ const SOURCE_LABELS: Record<string, string> = {
   instagram: 'IG',
   whatsapp:  'WA',
   email:     'Email',
-  phone:     'Telefono',
+  phone:     'Teléfono',
   manual:    'Manual',
   other:     'Otro',
 }
@@ -152,7 +152,7 @@ export default function LeadCard({ lead, onClick, accentColor = 'var(--dash-text
           transition: 'background 0.15s',
           borderLeft: `3px solid ${leftBorderColor}`,
           display: 'block',
-          fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+          fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
           position: 'relative',
         }}
         onMouseEnter={(e) => {

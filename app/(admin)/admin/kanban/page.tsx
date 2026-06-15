@@ -82,7 +82,7 @@ export default async function KanbanPage({ searchParams }: PageProps) {
       className="min-h-screen"
       style={{
         backgroundColor: 'var(--dash-surface-1)',
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+        fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
       }}
     >
       {/* Top bar */}

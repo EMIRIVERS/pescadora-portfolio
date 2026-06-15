@@ -197,11 +197,11 @@ const WA_TEMPLATE_INTERCAMBIO =
 
 const CONTROL_STYLE: React.CSSProperties = {
   background: 'var(--dash-surface-2)',
-  border: '1px solid rgba(255,255,255,0.1)',
+  border: '1px solid var(--dash-border)',
   borderRadius: '8px',
   color: 'var(--dash-text-primary)',
   fontSize: '13px',
-  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+  fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
   padding: '7px 12px',
   outline: 'none',
   transition: 'border-color 0.15s',
@@ -235,14 +235,14 @@ function FilterChip({ label, onRemove }: FilterChipProps) {
         display: 'inline-flex',
         alignItems: 'center',
         gap: '4px',
-        background: 'rgba(0,113,227,0.15)',
-        color: '#0071E3',
-        border: '1px solid rgba(0,113,227,0.3)',
+        background: 'rgba(var(--dash-accent-rgb),0.15)',
+        color: 'var(--dash-accent)',
+        border: '1px solid rgba(var(--dash-accent-rgb),0.3)',
         borderRadius: '6px',
         fontSize: '11px',
         fontWeight: 500,
         padding: '2px 8px 2px 8px',
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+        fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
         letterSpacing: '-0.01em',
       }}
     >
@@ -254,7 +254,7 @@ function FilterChip({ label, onRemove }: FilterChipProps) {
           background: 'transparent',
           border: 'none',
           cursor: 'pointer',
-          color: '#0071E3',
+          color: 'var(--dash-accent)',
           padding: '0 0 0 2px',
           lineHeight: 1,
           fontSize: '13px',
@@ -311,7 +311,7 @@ function WABulkModal({ selectedLeads, onClose }: WABulkModalProps) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+        fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
       }}
     >
       <div
@@ -366,13 +366,13 @@ function WABulkModal({ selectedLeads, onClose }: WABulkModalProps) {
                 flex: 1,
                 padding: '10px',
                 borderRadius: '10px',
-                border: `1px solid ${template === t ? 'var(--dash-accent, #0071E3)' : 'var(--dash-border)'}`,
-                background: template === t ? 'rgba(0,113,227,0.12)' : 'var(--dash-surface-2)',
-                color: template === t ? 'var(--dash-accent, #0071E3)' : 'var(--dash-text-secondary)',
+                border: `1px solid ${template === t ? 'var(--dash-accent)' : 'var(--dash-border)'}`,
+                background: template === t ? 'rgba(var(--dash-accent-rgb),0.12)' : 'var(--dash-surface-2)',
+                color: template === t ? 'var(--dash-accent)' : 'var(--dash-text-secondary)',
                 fontSize: '13px',
                 fontWeight: 600,
                 cursor: 'pointer',
-                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+                fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
                 transition: 'all 0.15s',
                 textTransform: 'capitalize',
               }}
@@ -414,7 +414,7 @@ function WABulkModal({ selectedLeads, onClose }: WABulkModalProps) {
               fontSize: '13px',
               fontWeight: 600,
               cursor: 'pointer',
-              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+              fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
               transition: 'background 0.15s',
             }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#1da851'; }}
@@ -434,7 +434,7 @@ function WABulkModal({ selectedLeads, onClose }: WABulkModalProps) {
               fontSize: '13px',
               fontWeight: 600,
               cursor: 'pointer',
-              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+              fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
               transition: 'all 0.15s',
             }}
           >
@@ -497,7 +497,7 @@ function DroppableColumn({ col, colLeads, onCardClick, onColumnAdd, selectionMod
         flexDirection: 'column',
         minHeight: '200px',
         overflow: 'hidden',
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+        fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
         outline: isOver ? `1px solid ${col.color}4D` : '1px solid transparent',
         transition: 'outline 0.15s, background 0.15s',
       } as React.CSSProperties}
@@ -593,7 +593,7 @@ function DroppableColumn({ col, colLeads, onCardClick, onColumnAdd, selectionMod
               padding: '24px 0',
             }}
           >
-            — vacio —
+            — vacío —
           </div>
         )}
 
@@ -622,7 +622,7 @@ function DroppableColumn({ col, colLeads, onCardClick, onColumnAdd, selectionMod
             borderRadius: '8px',
             color: 'var(--dash-text-tertiary)',
             fontSize: '12px',
-            fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+            fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
             padding: '6px',
             cursor: 'pointer',
             transition: 'border-color 0.15s, color 0.15s',
@@ -694,8 +694,8 @@ function DraggableLeadCard({ lead, accentColor, onClick, isSelected, selectionMo
             width: '18px',
             height: '18px',
             borderRadius: '4px',
-            border: `2px solid ${isSelected ? 'var(--dash-accent, #0071E3)' : 'rgba(255,255,255,0.4)'}`,
-            background: isSelected ? 'var(--dash-accent, #0071E3)' : 'rgba(0,0,0,0.4)',
+            border: `2px solid ${isSelected ? 'var(--dash-accent)' : 'rgba(255,255,255,0.4)'}`,
+            background: isSelected ? 'var(--dash-accent)' : 'rgba(0,0,0,0.4)',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -996,7 +996,7 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
           alignItems: 'center',
           justifyContent: 'space-between',
           marginBottom: '16px',
-          fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+          fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
         }}
       >
         <div>
@@ -1022,13 +1022,13 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
               alignItems: 'center',
               gap: '5px',
               padding: '6px 12px',
-              border: `1px solid ${selectionMode ? 'var(--dash-accent, #0071E3)' : 'var(--dash-border)'}`,
+              border: `1px solid ${selectionMode ? 'var(--dash-accent)' : 'var(--dash-border)'}`,
               borderRadius: '8px',
-              background: selectionMode ? 'rgba(0,113,227,0.12)' : 'var(--dash-surface-2)',
-              color: selectionMode ? 'var(--dash-accent, #0071E3)' : 'var(--dash-text-secondary)',
+              background: selectionMode ? 'rgba(var(--dash-accent-rgb),0.12)' : 'var(--dash-surface-2)',
+              color: selectionMode ? 'var(--dash-accent)' : 'var(--dash-text-secondary)',
               fontSize: '12px',
               fontWeight: 500,
-              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+              fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
               cursor: 'pointer',
               transition: 'all 0.15s',
               flexShrink: 0,
@@ -1070,7 +1070,7 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
                   color: view === v.id ? '#fff' : 'var(--dash-text-secondary)',
                   fontSize: '12px',
                   fontWeight: 500,
-                  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+                  fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
                   cursor: 'pointer',
                   position: 'relative',
                   zIndex: 1,
@@ -1083,7 +1083,7 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
                     style={{
                       position: 'absolute',
                       inset: 0,
-                      background: 'var(--dash-accent, #0071E3)',
+                      background: 'var(--dash-accent)',
                       borderRadius: '6px',
                       zIndex: -1,
                     }}
@@ -1105,23 +1105,23 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              background: '#0071E3',
+              background: 'var(--dash-accent)',
               color: '#fff',
               border: 'none',
               borderRadius: '8px',
               padding: '8px 16px',
               fontSize: '13px',
               fontWeight: 600,
-              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+              fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
               cursor: 'pointer',
               letterSpacing: '-0.01em',
               transition: 'background 0.15s',
             }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background = '#0062C4';
+              (e.currentTarget as HTMLButtonElement).style.background = 'var(--dash-accent-hover)';
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background = '#0071E3';
+              (e.currentTarget as HTMLButtonElement).style.background = 'var(--dash-accent)';
             }}
           >
             <span style={{ fontSize: '16px', lineHeight: 1 }}>+</span>
@@ -1139,7 +1139,7 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
           background: 'var(--dash-bg)',
           paddingBottom: '12px',
           marginBottom: '12px',
-          fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+          fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
         }}
       >
         {/* Row 1: search + selects + counter */}
@@ -1182,7 +1182,7 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
                 paddingLeft: '32px',
                 boxSizing: 'border-box',
               }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(0,113,227,0.5)'; }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(var(--dash-accent-rgb),0.5)'; }}
               onBlur={(e)  => { e.currentTarget.style.borderColor = 'var(--dash-border)'; }}
             />
           </div>
@@ -1302,7 +1302,7 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
                 fontSize: '11px',
                 cursor: 'pointer',
                 padding: '2px 4px',
-                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+                fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
                 transition: 'color 0.15s',
               }}
               onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--dash-text-secondary)'; }}
@@ -1335,13 +1335,13 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
                 style={{
                   padding: '3px 10px',
                   borderRadius: '20px',
-                  border: `1px solid ${isActive ? 'var(--dash-accent, #0071E3)' : 'var(--dash-border)'}`,
-                  background: isActive ? 'var(--dash-accent, #0071E3)' : 'var(--dash-surface-2)',
+                  border: `1px solid ${isActive ? 'var(--dash-accent)' : 'var(--dash-border)'}`,
+                  background: isActive ? 'var(--dash-accent)' : 'var(--dash-surface-2)',
                   color: isActive ? '#fff' : 'var(--dash-text-secondary)',
                   fontSize: '11px',
                   fontWeight: 500,
                   cursor: 'pointer',
-                  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+                  fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
                   transition: 'all 0.15s',
                   whiteSpace: 'nowrap',
                 }}
@@ -1427,14 +1427,14 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
                   width: '100%',
                   borderCollapse: 'separate',
                   borderSpacing: '0 4px',
-                  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+                  fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
                   fontSize: '13px',
                 }}
               >
                 <thead>
                   <tr>
                     {selectionMode && <th style={{ width: '36px', padding: '6px 8px', borderBottom: '1px solid var(--dash-border)' }} />}
-                    {['Nombre / Empresa', 'Tipo', 'Telefono', 'Estado', 'Origen', 'Budget', 'Creado'].map((h) => (
+                    {['Nombre / Empresa', 'Tipo', 'Teléfono', 'Estado', 'Origen', 'Budget', 'Creado'].map((h) => (
                       <th
                         key={h}
                         style={{
@@ -1463,7 +1463,7 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
                       <tr
                         key={lead.id}
                         onClick={() => selectionMode ? toggleSelectId(lead.id) : handleCardClick(lead)}
-                        style={{ cursor: 'pointer', outline: isSelected ? '1px solid var(--dash-accent, #0071E3)' : undefined, borderRadius: '8px' }}
+                        style={{ cursor: 'pointer', outline: isSelected ? '1px solid var(--dash-accent)' : undefined, borderRadius: '8px' }}
                         onMouseEnter={(e) => {
                           (e.currentTarget as HTMLTableRowElement).style.opacity = '0.8';
                         }}
@@ -1482,8 +1482,8 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
                                 width: '16px',
                                 height: '16px',
                                 borderRadius: '4px',
-                                border: `2px solid ${isSelected ? 'var(--dash-accent, #0071E3)' : 'rgba(255,255,255,0.3)'}`,
-                                background: isSelected ? 'var(--dash-accent, #0071E3)' : 'transparent',
+                                border: `2px solid ${isSelected ? 'var(--dash-accent)' : 'rgba(255,255,255,0.3)'}`,
+                                background: isSelected ? 'var(--dash-accent)' : 'transparent',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -1646,11 +1646,11 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
                     style={{
                       background: 'var(--dash-surface-1)',
                       borderRadius: '14px',
-                      border: `1px solid ${isSelected ? 'var(--dash-accent, #0071E3)' : 'var(--dash-border)'}`,
+                      border: `1px solid ${isSelected ? 'var(--dash-accent)' : 'var(--dash-border)'}`,
                       borderTop: `3px solid ${col?.color ?? 'var(--dash-border)'}`,
                       padding: '16px',
                       cursor: 'pointer',
-                      fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+                      fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '8px',
@@ -1669,8 +1669,8 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
                           width: '18px',
                           height: '18px',
                           borderRadius: '4px',
-                          border: `2px solid ${isSelected ? 'var(--dash-accent, #0071E3)' : 'rgba(255,255,255,0.5)'}`,
-                          background: isSelected ? 'var(--dash-accent, #0071E3)' : 'rgba(0,0,0,0.5)',
+                          border: `2px solid ${isSelected ? 'var(--dash-accent)' : 'rgba(255,255,255,0.5)'}`,
+                          background: isSelected ? 'var(--dash-accent)' : 'rgba(0,0,0,0.5)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -1782,7 +1782,7 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
                 );
               })}
               {filteredLeads.length === 0 && (
-                <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '48px 0', color: 'var(--dash-text-tertiary)', fontSize: '14px', fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif" }}>
+                <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '48px 0', color: 'var(--dash-text-tertiary)', fontSize: '14px', fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif" }}>
                   Sin leads que mostrar
                 </div>
               )}
@@ -1808,7 +1808,7 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
             alignItems: 'center',
             gap: '12px',
             boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-            fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+            fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
             whiteSpace: 'nowrap',
           }}
         >
@@ -1826,7 +1826,7 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
               fontSize: '13px',
               fontWeight: 600,
               cursor: 'pointer',
-              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+              fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
               transition: 'background 0.15s',
             }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#1da851'; }}
@@ -1845,7 +1845,7 @@ export default function LeadsPipeline({ leads }: LeadsPipelineProps) {
               fontSize: '13px',
               fontWeight: 500,
               cursor: 'pointer',
-              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+              fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
             }}
           >
             Deseleccionar todo

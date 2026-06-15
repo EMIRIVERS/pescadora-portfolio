@@ -12,7 +12,7 @@ interface Props {
   currentProfileId: string | null
 }
 
-const SF = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+const SF = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
 
 // ── Modal ─────────────────────────────────────────────────────────────────────
 
@@ -53,7 +53,7 @@ function LinkModal({ clientId, onClose, onSuccess }: ModalProps) {
     const trimmed = email.trim()
     if (!trimmed) { setError('El email es obligatorio.'); return }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-      setError('Introduce un email valido.')
+      setError('Introduce un email válido.')
       return
     }
     setError(null)
@@ -91,7 +91,7 @@ function LinkModal({ clientId, onClose, onSuccess }: ModalProps) {
           width: '100%',
           maxWidth: '440px',
           backgroundColor: 'var(--dash-surface-2)',
-          border: '1px solid rgba(255,255,255,0.08)',
+          border: '1px solid var(--dash-border)',
           borderRadius: '20px',
           boxShadow: '0 32px 80px rgba(0,0,0,0.6), 0 8px 24px rgba(0,0,0,0.4)',
           overflow: 'hidden',
@@ -104,7 +104,7 @@ function LinkModal({ clientId, onClose, onSuccess }: ModalProps) {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '20px 24px',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
+            borderBottom: '1px solid var(--dash-border)',
           }}
         >
           <h2
@@ -176,7 +176,7 @@ function LinkModal({ clientId, onClose, onSuccess }: ModalProps) {
                   fontFamily: SF,
                   fontSize: '14px',
                   fontWeight: 500,
-                  color: '#0071E3',
+                  color: 'var(--dash-accent)',
                   backgroundColor: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
@@ -201,7 +201,7 @@ function LinkModal({ clientId, onClose, onSuccess }: ModalProps) {
                     padding: '12px 14px',
                     fontFamily: SF,
                     fontSize: '13px',
-                    color: '#FF453A',
+                    color: 'var(--dash-danger)',
                   }}
                 >
                   {error}
@@ -219,7 +219,7 @@ function LinkModal({ clientId, onClose, onSuccess }: ModalProps) {
                     letterSpacing: '0.01em',
                   }}
                 >
-                  Email de la cuenta <span style={{ color: '#FF453A' }}>*</span>
+                  Email de la cuenta <span style={{ color: 'var(--dash-danger)' }}>*</span>
                 </label>
                 <input
                   id="link-email"
@@ -237,17 +237,17 @@ function LinkModal({ clientId, onClose, onSuccess }: ModalProps) {
                     color: 'var(--dash-text-primary)',
                     backgroundColor: 'var(--dash-surface-3)',
                     border: focused
-                      ? '1px solid rgba(0,113,227,0.7)'
+                      ? '1px solid rgba(var(--dash-accent-rgb),0.7)'
                       : error
                       ? '1px solid rgba(255,69,58,0.6)'
-                      : '1px solid rgba(255,255,255,0.08)',
+                      : '1px solid var(--dash-border)',
                     borderRadius: '10px',
                     padding: '10px 14px',
                     outline: 'none',
                     width: '100%',
                     transition: 'border-color 0.15s ease',
                     opacity: isPending ? 0.5 : 1,
-                    boxShadow: focused ? '0 0 0 3px rgba(0,113,227,0.12)' : 'none',
+                    boxShadow: focused ? '0 0 0 3px rgba(var(--dash-accent-rgb),0.12)' : 'none',
                     boxSizing: 'border-box',
                   }}
                 />
@@ -291,7 +291,7 @@ function LinkModal({ clientId, onClose, onSuccess }: ModalProps) {
                     fontSize: '15px',
                     fontWeight: 500,
                     color: '#ffffff',
-                    backgroundColor: isPending ? '#0058b3' : '#0071E3',
+                    backgroundColor: isPending ? '#0058b3' : 'var(--dash-accent)',
                     border: 'none',
                     borderRadius: '8px',
                     padding: '9px 20px',
@@ -344,7 +344,7 @@ export function LinkClientButton({ clientId, clientName, currentProfileId }: Pro
             fontFamily: SF,
             fontSize: '13px',
             fontWeight: 500,
-            color: '#FF453A',
+            color: 'var(--dash-danger)',
             backgroundColor: 'rgba(255,69,58,0.08)',
             border: '1px solid rgba(255,69,58,0.2)',
             borderRadius: '8px',
@@ -360,7 +360,7 @@ export function LinkClientButton({ clientId, clientName, currentProfileId }: Pro
           {isPendingUnlink ? 'Quitando acceso...' : 'Quitar acceso'}
         </button>
         {unlinkError && (
-          <p style={{ fontFamily: SF, fontSize: '12px', color: '#FF453A' }}>{unlinkError}</p>
+          <p style={{ fontFamily: SF, fontSize: '12px', color: 'var(--dash-danger)' }}>{unlinkError}</p>
         )}
       </div>
     )
@@ -378,9 +378,9 @@ export function LinkClientButton({ clientId, clientName, currentProfileId }: Pro
           fontFamily: SF,
           fontSize: '13px',
           fontWeight: 500,
-          color: '#0071E3',
-          backgroundColor: 'rgba(0,113,227,0.08)',
-          border: '1px solid rgba(0,113,227,0.2)',
+          color: 'var(--dash-accent)',
+          backgroundColor: 'rgba(var(--dash-accent-rgb),0.08)',
+          border: '1px solid rgba(var(--dash-accent-rgb),0.2)',
           borderRadius: '8px',
           padding: '7px 14px',
           cursor: 'pointer',

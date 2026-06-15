@@ -72,13 +72,13 @@ function newDeliverableTemplate(
               <p style="margin:0 0 16px;font-size:11px;font-weight:600;letter-spacing:0.15em;color:#555555;text-transform:uppercase;">Nuevo entregable disponible</p>
               <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#cccccc;">Hola <strong style="color:#ffffff;">${escapeHtml(clientName)}</strong>,</p>
               <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#cccccc;">Hay un nuevo entregable listo para revisar en tu proyecto <strong style="color:#ffffff;">${escapeHtml(projectTitle)}</strong>.</p>
-              <div style="background-color:#0a0a0a;border:1px solid #222222;border-left:3px solid #0071E3;border-radius:0 8px 8px 0;padding:16px 20px;margin:0 0 24px;">
+              <div style="background-color:#0a0a0a;border:1px solid #222222;border-left:3px solid #e8341a;border-radius:0 8px 8px 0;padding:16px 20px;margin:0 0 24px;">
                 <p style="margin:0;font-size:15px;line-height:1.6;color:#cccccc;"><strong style="color:#ffffff;">${escapeHtml(deliverableTitle)}</strong></p>
               </div>
               <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#cccccc;">Ingresa a tu portal para revisar, aprobar o solicitar cambios.</p>
               <table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0;">
                 <tr>
-                  <td style="border-radius:8px;background-color:#0071E3;">
+                  <td style="border-radius:8px;background-color:#e8341a;">
                     <a href="${portalUrl}" style="display:inline-block;padding:14px 28px;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;letter-spacing:0.02em;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">Ver mi portal</a>
                   </td>
                 </tr>
@@ -203,7 +203,7 @@ export async function updateDeliverable(
   const db = createServiceClient()
 
   if (!input.title.trim()) {
-    return { error: 'El titulo es obligatorio.' }
+    return { error: 'El título es obligatorio.' }
   }
 
   const { data, error } = await db
@@ -300,7 +300,7 @@ export async function addRevision(
     .single()
 
   if (insertError || !revision) {
-    return { error: insertError?.message ?? 'No se pudo agregar la revision.' }
+    return { error: insertError?.message ?? 'No se pudo agregar la revisión.' }
   }
 
   await logAudit({

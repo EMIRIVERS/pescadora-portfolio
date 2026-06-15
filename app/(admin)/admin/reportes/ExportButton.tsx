@@ -31,25 +31,25 @@ export default function ExportButton({ period, from, to }: ExportButtonProps) {
         gap: '6px',
         padding: '7px 14px',
         borderRadius: '8px',
-        border: '1px solid rgba(255,255,255,0.12)',
+        border: '1px solid var(--dash-border)',
         background: 'transparent',
         color: 'var(--dash-text-secondary)',
         fontSize: '12px',
         fontWeight: 500,
         cursor: 'pointer',
-        fontFamily: '-apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+        fontFamily: 'var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
         transition: 'border-color 0.15s, color 0.15s',
         flexShrink: 0,
         lineHeight: 1,
       }}
       onMouseEnter={(e) => {
         const btn = e.currentTarget
-        btn.style.borderColor = 'rgba(255,255,255,0.28)'
+        btn.style.borderColor = 'var(--dash-border-strong)'
         btn.style.color = 'var(--dash-text-primary)'
       }}
       onMouseLeave={(e) => {
         const btn = e.currentTarget
-        btn.style.borderColor = 'rgba(255,255,255,0.12)'
+        btn.style.borderColor = 'var(--dash-border)'
         btn.style.color = 'var(--dash-text-secondary)'
       }}
       type="button"

@@ -73,7 +73,7 @@ const CATEGORIES = [
 
 // ─── shared style constants ────────────────────────────────────────────────
 
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+const FONT = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
 
 const INPUT_STYLE: React.CSSProperties = {
   width: '100%',
@@ -258,7 +258,7 @@ function SortableRow({
     backgroundColor: isDragging
       ? 'var(--dash-surface-3)'
       : isChecked
-        ? 'rgba(0,113,227,0.06)'
+        ? 'rgba(var(--dash-accent-rgb),0.06)'
         : hovered
           ? 'var(--dash-surface-2)'
           : 'transparent',
@@ -281,7 +281,7 @@ function SortableRow({
           type="checkbox"
           checked={isChecked}
           onChange={(e) => onCheck(video.id, e.target.checked)}
-          style={{ accentColor: '#0071E3', width: 14, height: 14, cursor: 'pointer' }}
+          style={{ accentColor: 'var(--dash-accent)', width: 14, height: 14, cursor: 'pointer' }}
           aria-label={`Seleccionar ${video.title}`}
         />
       </td>
@@ -315,7 +315,7 @@ function SortableRow({
           <span
             style={{
               fontSize: 10,
-              fontFamily: 'ui-monospace, SFMono-Regular, monospace',
+              fontFamily: 'var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace',
               color: 'var(--dash-text-tertiary)',
               minWidth: 22,
               textAlign: 'right',
@@ -418,7 +418,7 @@ function SortableRow({
         <span
           style={{
             fontSize: 12,
-            fontFamily: 'ui-monospace, SFMono-Regular, monospace',
+            fontFamily: 'var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace',
             color: 'var(--dash-text-tertiary)',
           }}
         >
@@ -499,8 +499,8 @@ function SortableRow({
                 transition: 'background 0.15s, color 0.15s',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(0,113,227,0.15)'
-                e.currentTarget.style.color = '#0A84FF'
+                e.currentTarget.style.background = 'rgba(var(--dash-accent-rgb),0.15)'
+                e.currentTarget.style.color = 'var(--dash-accent)'
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = 'transparent'
@@ -724,7 +724,7 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
   // ── delete ────────────────────────────────────────────────────────────────
 
   function handleDelete(video: PortfolioVideo) {
-    if (!window.confirm(`Eliminar "${video.title}"? Esta accion no se puede deshacer.`)) return
+    if (!window.confirm(`Eliminar "${video.title}"? Esta acción no se puede deshacer.`)) return
     setDeletingId(video.id)
     startTransition(async () => {
       try {
@@ -1000,7 +1000,7 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
             alignItems: 'center',
             gap: 8,
             padding: '8px 16px',
-            backgroundColor: '#0071E3',
+            backgroundColor: 'var(--dash-accent)',
             border: 'none',
             borderRadius: 8,
             fontSize: 14,
@@ -1010,8 +1010,8 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
             cursor: 'pointer',
             transition: 'background-color 0.15s',
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#0077ED' }}
-          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#0071E3' }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--dash-accent-hover)' }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'var(--dash-accent)' }}
         >
           <Plus size={14} strokeWidth={2} />
           Agregar video
@@ -1035,7 +1035,7 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
                 fontSize: 13,
                 fontFamily: FONT,
                 fontWeight: active ? 500 : 400,
-                backgroundColor: active ? '#0071E3' : 'var(--dash-surface-2)',
+                backgroundColor: active ? 'var(--dash-accent)' : 'var(--dash-surface-2)',
                 color: active ? '#FFFFFF' : 'var(--dash-text-secondary)',
                 cursor: 'pointer',
                 transition: 'background-color 0.15s, color 0.15s',
@@ -1156,7 +1156,7 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
             {/* Row 1: Titulo + Vimeo ID / URL imagen */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
-                <label htmlFor="title" style={LABEL_STYLE}>{isPhoto ? 'Título de la foto *' : 'Titulo del video *'}</label>
+                <label htmlFor="title" style={LABEL_STYLE}>{isPhoto ? 'Título de la foto *' : 'Título del video *'}</label>
                 <input
                   id="title"
                   name="title"
@@ -1165,7 +1165,7 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
                   defaultValue={editingVideo?.title ?? ''}
                   placeholder={isPhoto ? 'Nombre de la foto' : 'Nombre del video'}
                   style={INPUT_STYLE}
-                  onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--dash-accent)' }}
                   onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--dash-border)' }}
                 />
               </div>
@@ -1186,7 +1186,7 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
                     }}
                     placeholder={isPhoto ? 'https://...' : '123456789'}
                     style={INPUT_STYLE}
-                    onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--dash-accent)' }}
                     onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--dash-border)' }}
                   />
                   {!isPhoto && formVimeoId && (
@@ -1309,7 +1309,7 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
                     onChange={(e) => setFormCoverUrl(e.target.value)}
                     placeholder="O pega una URL de imagen / GIF..."
                     style={{ ...INPUT_STYLE }}
-                    onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--dash-accent)' }}
                     onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--dash-border)' }}
                   />
                   {formCoverUrl && (
@@ -1328,14 +1328,14 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
             {/* Row 2: Categoria + Cliente + Ano */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
               <div>
-                <label htmlFor="category" style={LABEL_STYLE}>Categoria</label>
+                <label htmlFor="category" style={LABEL_STYLE}>Categoría</label>
                 <select
                   id="category"
                   name="category"
                   value={formCategory}
                   onChange={(e) => setFormCategory(e.target.value)}
                   style={{ ...INPUT_STYLE, appearance: 'none' }}
-                  onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--dash-accent)' }}
                   onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--dash-border)' }}
                 >
                   {resolvedCategories.map((c) => (
@@ -1354,12 +1354,12 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
                   defaultValue={editingVideo?.client_name ?? ''}
                   placeholder="Nombre del cliente"
                   style={INPUT_STYLE}
-                  onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--dash-accent)' }}
                   onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--dash-border)' }}
                 />
               </div>
               <div>
-                <label htmlFor="year" style={LABEL_STYLE}>Ano</label>
+                <label htmlFor="year" style={LABEL_STYLE}>Año</label>
                 <input
                   id="year"
                   name="year"
@@ -1367,7 +1367,7 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
                   defaultValue={editingVideo?.year ?? ''}
                   placeholder="2024"
                   style={INPUT_STYLE}
-                  onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--dash-accent)' }}
                   onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--dash-border)' }}
                 />
               </div>
@@ -1384,7 +1384,7 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
                   defaultValue={editingVideo?.role ?? ''}
                   placeholder="Director, editor..."
                   style={INPUT_STYLE}
-                  onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--dash-accent)' }}
                   onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--dash-border)' }}
                 />
               </div>
@@ -1397,7 +1397,7 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
                   defaultValue={editingVideo?.sort_order ?? 0}
                   placeholder="0"
                   style={INPUT_STYLE}
-                  onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--dash-accent)' }}
                   onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--dash-border)' }}
                 />
               </div>
@@ -1405,15 +1405,15 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
 
             {/* Descripcion */}
             <div>
-              <label htmlFor="description" style={LABEL_STYLE}>Descripcion</label>
+              <label htmlFor="description" style={LABEL_STYLE}>Descripción</label>
               <textarea
                 id="description"
                 name="description"
                 rows={3}
                 defaultValue={editingVideo?.description ?? ''}
-                placeholder="Descripcion del video..."
+                placeholder="Descripción del video..."
                 style={{ ...INPUT_STYLE, resize: 'vertical', lineHeight: 1.5 }}
-                onFocus={(e) => { e.currentTarget.style.borderColor = '#0071E3' }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--dash-accent)' }}
                 onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--dash-border)' }}
               />
             </div>
@@ -1425,13 +1425,13 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
                 name="is_visible"
                 type="checkbox"
                 defaultChecked={editingVideo ? editingVideo.is_visible : true}
-                style={{ accentColor: '#0071E3', width: 14, height: 14 }}
+                style={{ accentColor: 'var(--dash-accent)', width: 14, height: 14 }}
               />
               <label
                 htmlFor="is_visible"
                 style={{ fontSize: 13, fontFamily: FONT, color: 'var(--dash-text-secondary)', cursor: 'pointer' }}
               >
-                Visible en el portfolio publico
+                Visible en el portfolio público
               </label>
             </div>
 
@@ -1442,7 +1442,7 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
                 disabled={isPending}
                 style={{
                   padding: '9px 20px',
-                  backgroundColor: '#0071E3',
+                  backgroundColor: 'var(--dash-accent)',
                   border: 'none',
                   borderRadius: 8,
                   fontSize: 14,
@@ -1453,8 +1453,8 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
                   opacity: isPending ? 0.5 : 1,
                   transition: 'background-color 0.15s, opacity 0.15s',
                 }}
-                onMouseEnter={(e) => { if (!isPending) e.currentTarget.style.backgroundColor = '#0077ED' }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#0071E3' }}
+                onMouseEnter={(e) => { if (!isPending) e.currentTarget.style.backgroundColor = 'var(--dash-accent-hover)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'var(--dash-accent)' }}
               >
                 {isPending
                   ? 'Guardando...'
@@ -1502,10 +1502,10 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
           }}
         >
           <p style={{ margin: 0, fontSize: 14, fontFamily: FONT, color: 'var(--dash-text-tertiary)' }}>
-            No hay videos todavia
+            No hay videos todavía
           </p>
           <p style={{ margin: '6px 0 0', fontSize: 12, fontFamily: FONT, color: 'var(--dash-text-tertiary)' }}>
-            Usa el boton &quot;Agregar video&quot; para empezar
+            Usa el botón &quot;Agregar video&quot; para empezar
           </p>
         </div>
       ) : (
@@ -1538,7 +1538,7 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
                           if (el) el.indeterminate = someFilteredChecked
                         }}
                         onChange={(e) => handleCheckAll(e.target.checked)}
-                        style={{ accentColor: '#0071E3', width: 14, height: 14, cursor: 'pointer' }}
+                        style={{ accentColor: 'var(--dash-accent)', width: 14, height: 14, cursor: 'pointer' }}
                         aria-label="Seleccionar todos"
                       />
                     </th>
@@ -1573,7 +1573,7 @@ export default function VideoManager({ initialVideos = [], initialCategories }: 
                         width: 130,
                       }}
                     >
-                      Categoria
+                      Categoría
                     </th>
                     {/* Vimeo ID */}
                     <th

@@ -10,9 +10,9 @@ type StatusOption = 'all' | 'pre_production' | 'production' | 'post_production' 
 
 const STATUS_PILLS: { value: StatusOption; label: string; color: string }[] = [
   { value: 'all',            label: 'Todos',          color: '' },
-  { value: 'pre_production', label: 'Pre-produccion', color: '#FF9F0A' },
-  { value: 'production',     label: 'Produccion',     color: '#0071E3' },
-  { value: 'post_production',label: 'Post-produccion',color: '#BF5AF2' },
+  { value: 'pre_production', label: 'Pre-producción', color: '#FF9F0A' },
+  { value: 'production',     label: 'Producción',     color: 'var(--dash-accent)' },
+  { value: 'post_production',label: 'Post-producción',color: '#BF5AF2' },
   { value: 'delivered',      label: 'Entregado',      color: '#30D158' },
 ]
 
@@ -79,7 +79,7 @@ export function ProjectsFilterBar({
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
-      style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif" }}
+      style={{ fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif" }}
     >
       {/* Search input */}
       <div className="relative flex-1 min-w-[200px] max-w-sm">
@@ -89,13 +89,13 @@ export function ProjectsFilterBar({
         />
         <input
           type="text"
-          placeholder="Buscar por titulo..."
+          placeholder="Buscar por título..."
           defaultValue={currentQ}
           onChange={(e) => handleSearch(e.target.value)}
           style={{
             width: '100%',
             background: 'var(--dash-surface-2)',
-            border: '1px solid rgba(255,255,255,0.08)',
+            border: '1px solid var(--dash-border)',
             color: 'var(--dash-text-primary)',
             fontSize: '13px',
             borderRadius: '10px',
@@ -106,7 +106,7 @@ export function ProjectsFilterBar({
             outline: 'none',
           }}
           onFocus={(e) => {
-            e.currentTarget.style.borderColor = 'rgba(0,113,227,0.5)'
+            e.currentTarget.style.borderColor = 'rgba(var(--dash-accent-rgb),0.5)'
           }}
           onBlur={(e) => {
             e.currentTarget.style.borderColor = 'var(--dash-border)'
@@ -156,7 +156,7 @@ export function ProjectsFilterBar({
           onChange={(e) => handleClient(e.target.value)}
           style={{
             background: 'var(--dash-surface-2)',
-            border: '1px solid rgba(255,255,255,0.08)',
+            border: '1px solid var(--dash-border)',
             color: 'var(--dash-text-secondary)',
             fontSize: '12px',
             fontWeight: 500,
@@ -190,7 +190,7 @@ export function ProjectsFilterBar({
             fontWeight: 500,
             color: 'var(--dash-text-secondary)',
             background: 'transparent',
-            border: '1px solid rgba(255,255,255,0.08)',
+            border: '1px solid var(--dash-border)',
             borderRadius: '20px',
             padding: '6px 14px',
             cursor: 'pointer',
@@ -199,7 +199,7 @@ export function ProjectsFilterBar({
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.color = 'var(--dash-text-primary)'
-            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)'
+            e.currentTarget.style.borderColor = 'var(--dash-border-strong)'
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.color = 'var(--dash-text-secondary)'

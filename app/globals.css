@@ -1,5 +1,6 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600&family=Space+Mono:wght@400;700&display=swap');
+/* Fraunces + Space Mono ahora se cargan vía next/font en app/layout.tsx
+   (--font-fraunces / --font-space-mono) para evitar el @import render-blocking. */
 
 /* ─── Keyframes ────────────────────────────────────────────────────────────── */
 
@@ -227,15 +228,17 @@ div:hover > .video-title {
   --dash-text-primary: #F5F5F7;
   --dash-text-secondary: #86868B;
   --dash-text-tertiary: #48484A;
-  --dash-accent: #0071E3;
-  --dash-accent-hover: #0077ED;
+  /* Acento de marca XICO (rojo) — antes era azul Apple #0071E3 */
+  --dash-accent: #e8341a;
+  --dash-accent-hover: #ff3a1f;
+  --dash-accent-rgb: 232,52,26;
   --dash-success: #30D158;
   --dash-warning: #FF9F0A;
   --dash-danger: #FF453A;
   --dash-info: #64D2FF;
-  /* Tipografía cinematográfica del panel */
-  --dash-font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
-  --dash-font-mono: 'Space Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  /* Tipografía cinematográfica del panel (cargadas vía next/font) */
+  --dash-font-display: var(--font-fraunces), Georgia, 'Times New Roman', serif;
+  --dash-font-mono: var(--font-space-mono), ui-monospace, 'SF Mono', Menlo, monospace;
 
   /* Shadow system — dark mode (multi-layer for depth) */
   --dash-shadow-xs: 0 1px 2px rgba(0,0,0,0.45);
@@ -254,7 +257,7 @@ div:hover > .video-title {
   --dash-surface-3: #2C2C2E; --dash-border: rgba(255,255,255,0.08);
   --dash-border-strong: rgba(255,255,255,0.14);
   --dash-text-primary: #F5F5F7; --dash-text-secondary: #86868B; --dash-text-tertiary: #48484A;
-  --dash-accent: #0071E3; --dash-accent-hover: #0077ED;
+  --dash-accent: #e8341a; --dash-accent-hover: #ff3a1f; --dash-accent-rgb: 232,52,26;
   --dash-success: #30D158; --dash-warning: #FF9F0A; --dash-danger: #FF453A;
 }
 [data-theme="midnight"] {
@@ -356,7 +359,7 @@ div:hover > .video-title {
   --dash-bg: #F0F6FF; --dash-surface-1: #FFFFFF; --dash-surface-2: #E8F0FD; --dash-surface-3: #D4E6FF;
   --dash-text-primary: #0D1117; --dash-text-secondary: #4A5568; --dash-text-tertiary: #9BA3AF;
   --dash-border: rgba(0,113,227,0.12); --dash-border-strong: rgba(0,113,227,0.22);
-  --dash-accent: #0062C9; --dash-accent-hover: #0071E3;
+  --dash-accent: #c42012; --dash-accent-hover: #e8341a; --dash-accent-rgb: 196,32,18;
 }
 [data-mode="light"][data-theme="midnight"] {
   --dash-bg: #F3F2FF; --dash-surface-1: #FFFFFF; --dash-surface-2: #EAEAFF; --dash-surface-3: #D8D6FF;
@@ -1076,4 +1079,17 @@ a.portal-card:hover .portal-card-title,
 .portal-tab:hover { color: var(--portal-text); border-color: rgba(237,232,224,0.28); }
 .portal-tab--active {
   color: #050505; background: var(--portal-text); border-color: var(--portal-text);
+}
+
+/* Foco de teclado visible en todo el portal (acento rojo de marca) */
+.portal-page a:focus-visible,
+.portal-page button:focus-visible,
+.portal-page input:focus-visible,
+.portal-page textarea:focus-visible,
+.portal-page select:focus-visible,
+.portal-backlink:focus-visible,
+.portal-tab:focus-visible {
+  outline: 2px solid var(--portal-accent);
+  outline-offset: 2px;
+  border-radius: 3px;
 }

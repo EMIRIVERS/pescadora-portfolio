@@ -25,8 +25,8 @@ const T = {
   textPrimary: 'var(--dash-text-primary)',
   textSecondary: 'var(--dash-text-secondary)',
   textTertiary: 'var(--dash-text-tertiary)',
-  accent: '#0071E3',
-  font: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+  accent: 'var(--dash-accent)',
+  font: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
 } as const
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -196,7 +196,7 @@ export default function CommandPalette() {
           kind: 'lead',
           label: l.name as string,
           sublabel: sub || null,
-          href: '/admin/leads',
+          href: `/admin/leads?lead=${l.id as string}`,
         })
       }
 
@@ -374,7 +374,7 @@ export default function CommandPalette() {
                       margin: 0,
                     }}
                   >
-                    Accesos rapidos
+                    Accesos rápidos
                   </p>
                   {QUICK_LINKS.map((link, idx) => (
                     <QuickLinkRow
@@ -455,7 +455,7 @@ function QuickLinkRow({
         textAlign: 'left',
         color: active ? 'var(--dash-text-primary)' : 'var(--dash-text-secondary)',
         fontSize: '14px',
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+        fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
         transition: 'background 0.1s ease, color 0.1s ease',
       }}
     >
@@ -563,7 +563,7 @@ function ResultRow({
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
-            fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+            fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
           }}
         >
           {result.label}
@@ -578,7 +578,7 @@ function ResultRow({
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
               marginTop: '1px',
-              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+              fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
             }}
           >
             {result.sublabel}

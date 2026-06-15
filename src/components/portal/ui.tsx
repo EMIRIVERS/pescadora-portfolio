@@ -1,5 +1,6 @@
 import type { ReactNode, CSSProperties } from 'react'
 import Link from 'next/link'
+import type { ProjectStatus } from '@/lib/supabase/types'
 
 /**
  * Shared cinematic-editorial UI primitives for the client portal.
@@ -21,6 +22,16 @@ export const PORTAL = {
   mono: 'var(--portal-mono)',
   sans: 'var(--portal-sans)',
 } as const
+
+// ── Project status config (shared across dashboard + project detail) ─────────
+// Unified state palette: amber → --portal-badge-sent-color, green →
+// --portal-badge-paid-color. Production/post-production keep distinct phase hues.
+export const PROJECT_STATUS_CONFIG: Record<ProjectStatus, { color: string; label: string }> = {
+  pre_production: { color: 'var(--portal-badge-sent-color)', label: 'Pre-producción' },
+  production: { color: '#5ac8fa', label: 'Producción' },
+  post_production: { color: '#bf5af2', label: 'Post-producción' },
+  delivered: { color: 'var(--portal-badge-paid-color)', label: 'Entregado' },
+}
 
 // ── Page shell ──────────────────────────────────────────────────────────────
 export function PortalShell({ maxWidth = 1080, children }: { maxWidth?: number; children: ReactNode }) {

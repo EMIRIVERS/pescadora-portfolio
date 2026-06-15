@@ -1,6 +1,6 @@
 import { SkeletonCard } from '@/components/admin/ui/Skeleton'
 
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+const FONT = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
 
 const SHIMMER_KEYFRAME = `
 @keyframes skeleton-shimmer {

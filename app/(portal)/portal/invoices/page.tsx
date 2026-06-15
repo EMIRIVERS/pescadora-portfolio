@@ -83,22 +83,6 @@ export default async function PortalInvoicesPage({ searchParams }: PortalInvoice
   const { supabase, clientId, clientName } = ctx
   const client = { id: clientId, name: clientName }
 
-  if (!client) {
-    return (
-      <PortalShell maxWidth={760}>
-        <BackLink href={portalLink('/portal', ctx)} />
-        <Masthead
-          title="Facturas"
-          lead="Aquí vivirá el detalle de cada factura emitida para tus producciones."
-        />
-        <EmptyState
-          title="Sin facturas asignadas."
-          body="Cuando emitamos una factura a tu nombre, aparecerá en este espacio con su importe y vencimiento."
-        />
-      </PortalShell>
-    )
-  }
-
   // Fetch invoices for this client — invoices table is not in the generated types yet
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: invoiceRows } = await (supabase as any)

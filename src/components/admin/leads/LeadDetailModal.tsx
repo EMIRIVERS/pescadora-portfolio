@@ -95,11 +95,11 @@ const T = {
 // ---------------------------------------------------------------------------
 
 const STATUS_COLORS: Record<Lead['status'], string> = {
-  new:       '#3b82f6',
+  new:       'var(--dash-accent)',
   contacted: '#a855f7',
-  qualified: '#f59e0b',
+  qualified: 'var(--dash-warning)',
   proposal:  '#f97316',
-  won:       '#30D158',
+  won:       'var(--dash-success)',
   lost:      '#6b7280',
 }
 
@@ -714,7 +714,7 @@ export default function LeadDetailModal({
                   fontSize: 11,
                   fontWeight: 600,
                   color: diasSinContacto.color,
-                  background: `${diasSinContacto.color}22`,
+                  background: `color-mix(in srgb, ${diasSinContacto.color} 13%, transparent)`,
                   borderRadius: 10,
                   padding: '3px 9px',
                 }}>
@@ -747,7 +747,7 @@ export default function LeadDetailModal({
                         padding: '7px 4px',
                         borderRadius: 8,
                         border: active ? `1px solid ${color}` : `1px solid transparent`,
-                        background: active ? `${color}28` : T.surf2,
+                        background: active ? `color-mix(in srgb, ${color} 16%, transparent)` : T.surf2,
                         color: active ? color : T.text3,
                         fontFamily: T.font,
                         fontSize: 11,
@@ -967,7 +967,7 @@ export default function LeadDetailModal({
                       borderRadius: 8,
                       border: `1px solid ${T.border}`,
                       background: waCopied ? 'rgba(48,209,88,0.12)' : 'transparent',
-                      color: waCopied ? '#30D158' : T.text2,
+                      color: waCopied ? 'var(--dash-success)' : T.text2,
                       fontFamily: T.font, fontSize: 12, fontWeight: 600,
                       cursor: 'pointer', transition: 'all 0.15s',
                     }}
@@ -985,7 +985,7 @@ export default function LeadDetailModal({
                       borderRadius: 8,
                       border: `1px solid ${T.border}`,
                       background: waMessageSaved ? 'rgba(48,209,88,0.12)' : 'transparent',
-                      color: waMessageSaved ? '#30D158' : T.text2,
+                      color: waMessageSaved ? 'var(--dash-success)' : T.text2,
                       fontFamily: T.font, fontSize: 12, fontWeight: 600,
                       cursor: waMessageSaving ? 'not-allowed' : 'pointer',
                       opacity: waMessageSaving ? 0.6 : 1,

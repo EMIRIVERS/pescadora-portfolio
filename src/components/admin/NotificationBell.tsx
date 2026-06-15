@@ -17,16 +17,16 @@ interface Notification {
 }
 
 const TYPE_COLOR: Record<string, string> = {
-  info: '#0071E3',
-  success: '#30D158',
-  warning: '#FF9F0A',
-  error: '#FF453A',
+  info: 'var(--dash-accent)',
+  success: 'var(--dash-success)',
+  warning: 'var(--dash-warning)',
+  error: 'var(--dash-danger)',
 }
 
 const ENTITY_HREF: Record<string, (id: string) => string> = {
   project: (id) => `/admin/projects/${id}`,
   client: (id) => `/admin/clients/${id}`,
-  lead: (id) => `/admin/leads`,
+  lead: (id) => `/admin/leads?lead=${id}`,
   invoice: (id) => `/admin/invoices`,
 }
 
@@ -42,7 +42,7 @@ function relativeTime(iso: string): string {
   return `hace ${d} días`
 }
 
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+const FONT = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
 
 export default function NotificationBell() {
   const [open, setOpen] = useState(false)
@@ -130,8 +130,8 @@ export default function NotificationBell() {
             width: 8,
             height: 8,
             borderRadius: '50%',
-            backgroundColor: '#FF453A',
-            border: '1.5px solid #111111',
+            backgroundColor: 'var(--dash-danger)',
+            border: '1.5px solid var(--dash-surface-1)',
           }} />
         )}
       </button>
@@ -144,7 +144,7 @@ export default function NotificationBell() {
           right: 0,
           width: 320,
           backgroundColor: 'var(--dash-surface-2)',
-          border: '1px solid rgba(255,255,255,0.1)',
+          border: '1px solid var(--dash-border)',
           borderRadius: 16,
           boxShadow: '0 16px 48px rgba(0,0,0,0.6)',
           zIndex: 1000,
@@ -157,13 +157,13 @@ export default function NotificationBell() {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '14px 16px 12px',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
+            borderBottom: '1px solid var(--dash-border)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--dash-text-primary)' }}>Notificaciones</span>
               {unread > 0 && (
                 <span style={{
-                  backgroundColor: '#FF453A',
+                  backgroundColor: 'var(--dash-danger)',
                   color: '#fff',
                   fontSize: 10,
                   fontWeight: 700,
@@ -184,7 +184,7 @@ export default function NotificationBell() {
                   gap: 4,
                   border: 'none',
                   background: 'transparent',
-                  color: '#0071E3',
+                  color: 'var(--dash-accent)',
                   fontSize: 12,
                   cursor: 'pointer',
                   padding: 0,
@@ -212,20 +212,20 @@ export default function NotificationBell() {
                     display: 'flex',
                     gap: 10,
                     padding: '12px 16px',
-                    borderBottom: '1px solid rgba(255,255,255,0.04)',
+                    borderBottom: '1px solid var(--dash-border)',
                     cursor: n.entity_type ? 'pointer' : 'default',
-                    backgroundColor: n.is_read ? 'transparent' : 'rgba(0,113,227,0.05)',
+                    backgroundColor: n.is_read ? 'transparent' : 'rgba(var(--dash-accent-rgb),0.05)',
                     transition: 'background 0.12s',
                   }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.backgroundColor = 'rgba(255,255,255,0.04)' }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.backgroundColor = n.is_read ? 'transparent' : 'rgba(0,113,227,0.05)' }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.backgroundColor = 'var(--dash-surface-3)' }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.backgroundColor = n.is_read ? 'transparent' : 'rgba(var(--dash-accent-rgb),0.05)' }}
                 >
                   {/* Dot */}
                   <div style={{
                     width: 8,
                     height: 8,
                     borderRadius: '50%',
-                    backgroundColor: n.is_read ? '#3A3A3C' : (TYPE_COLOR[n.type] ?? '#0071E3'),
+                    backgroundColor: n.is_read ? 'var(--dash-text-tertiary)' : (TYPE_COLOR[n.type] ?? 'var(--dash-accent)'),
                     flexShrink: 0,
                     marginTop: 5,
                   }} />
@@ -238,7 +238,7 @@ export default function NotificationBell() {
                         {n.body}
                       </p>
                     )}
-                    <p style={{ margin: '4px 0 0', fontSize: 11, color: '#3A3A3C' }}>
+                    <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--dash-text-tertiary)' }}>
                       {relativeTime(n.created_at)}
                     </p>
                   </div>

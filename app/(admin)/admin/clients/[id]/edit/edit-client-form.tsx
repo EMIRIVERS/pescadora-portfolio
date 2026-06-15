@@ -29,7 +29,7 @@ const fieldLabel: React.CSSProperties = {
 const inputBase: React.CSSProperties = {
   width: '100%',
   backgroundColor: 'var(--dash-surface-2)',
-  border: '1px solid rgba(255,255,255,0.1)',
+  border: '1px solid var(--dash-border-strong)',
   borderRadius: '8px',
   padding: '10px 14px',
   color: 'var(--dash-text-primary)',
@@ -92,7 +92,7 @@ export function EditClientForm({ id, initialName, initialEmail, initialCompany, 
   }
 
   function handleDelete() {
-    if (!confirm('Eliminar este cliente? Esta accion no se puede deshacer.')) return
+    if (!confirm('¿Eliminar este cliente? Esta acción no se puede deshacer.')) return
     startDeleteTransition(async () => {
       const result = await deleteClient(id)
       if (result.error) {
@@ -189,7 +189,7 @@ export function EditClientForm({ id, initialName, initialEmail, initialCompany, 
       {/* Phone */}
       <div>
         <label htmlFor="phone" style={fieldLabel}>
-          Telefono
+          Teléfono
         </label>
         <input
           id="phone"
@@ -275,7 +275,7 @@ export function EditClientForm({ id, initialName, initialEmail, initialCompany, 
               fontWeight: 500,
               borderRadius: '8px',
               backgroundColor: 'transparent',
-              border: '1px solid rgba(255,255,255,0.12)',
+              border: '1px solid var(--dash-border-strong)',
               color: 'var(--dash-text-secondary)',
               cursor: isBusy ? 'not-allowed' : 'pointer',
               opacity: isBusy ? 0.45 : 1,

@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import { Pencil, Check, X } from 'lucide-react'
 import { saveInternalNotes } from '@/lib/actions/projects'
 
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+const FONT = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
 
 interface Props {
   projectId: string
@@ -54,7 +54,7 @@ export function InternalNotesEditor({ projectId, initialNotes }: Props) {
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 5,
               padding: '5px 12px', background: 'var(--dash-surface-2)',
-              border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8,
+              border: '1px solid var(--dash-border)', borderRadius: 8,
               fontSize: 12, color: 'var(--dash-text-secondary)', cursor: 'pointer', fontFamily: FONT,
             }}
           >
@@ -68,7 +68,7 @@ export function InternalNotesEditor({ projectId, initialNotes }: Props) {
         <div
           style={{
             backgroundColor: 'var(--dash-surface-2)',
-            border: '1px solid rgba(0,113,227,0.4)',
+            border: '1px solid rgba(var(--dash-accent-rgb),0.4)',
             borderRadius: 16,
             overflow: 'hidden',
           }}
@@ -97,8 +97,8 @@ export function InternalNotesEditor({ projectId, initialNotes }: Props) {
             style={{
               display: 'flex', alignItems: 'center', gap: 8,
               padding: '10px 16px',
-              borderTop: '1px solid rgba(255,255,255,0.06)',
-              background: 'rgba(255,255,255,0.02)',
+              borderTop: '1px solid var(--dash-border)',
+              background: 'var(--dash-surface-2)',
             }}
           >
             <button
@@ -106,7 +106,7 @@ export function InternalNotesEditor({ projectId, initialNotes }: Props) {
               disabled={isPending}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 5,
-                padding: '6px 14px', background: '#0071E3', border: 'none',
+                padding: '6px 14px', background: 'var(--dash-accent)', border: 'none',
                 borderRadius: 8, fontSize: 12, color: '#fff', cursor: 'pointer',
                 opacity: isPending ? 0.5 : 1, fontFamily: FONT,
               }}
@@ -125,18 +125,18 @@ export function InternalNotesEditor({ projectId, initialNotes }: Props) {
               <X size={11} strokeWidth={2} />
               Cancelar
             </button>
-            {error && <span style={{ fontSize: 12, color: '#FF453A', fontFamily: FONT }}>{error}</span>}
+            {error && <span style={{ fontSize: 12, color: 'var(--dash-danger)', fontFamily: FONT }}>{error}</span>}
           </div>
         </div>
       ) : (
         <div
           style={{
             backgroundColor: 'var(--dash-surface-2)',
-            border: '1px solid rgba(255,255,255,0.08)',
+            border: '1px solid var(--dash-border)',
             borderRadius: 16,
             padding: '20px 24px',
             fontSize: 14,
-            color: notes ? 'var(--dash-text-secondary)' : '#3A3A3C',
+            color: notes ? 'var(--dash-text-secondary)' : 'var(--dash-text-tertiary)',
             lineHeight: 1.6,
             whiteSpace: 'pre-wrap',
             fontFamily: FONT,

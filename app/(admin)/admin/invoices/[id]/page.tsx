@@ -6,7 +6,10 @@ import InvoiceActions from './InvoiceActions'
 import type { QuoteLine, FiscalData } from '@/lib/billing/catalog'
 import type { TaxBreakdown } from '@/lib/billing/tax'
 
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+const FONT = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
+
+/** Acento de marca XICO (rojo). Literal para que sea estable en impresión/PDF. */
+const XICO_RED = '#e8341a'
 
 interface InvoiceRow {
   id: string
@@ -154,13 +157,29 @@ export default async function InvoiceDetailPage({
         <div
           className="invoice-print-content"
           style={{
+            position: 'relative',
             backgroundColor: '#ffffff',
             color: '#1a1a1a',
             borderRadius: 16,
             padding: '48px 56px',
-            boxShadow: '0 4px 40px rgba(0,0,0,0.4)',
+            boxShadow: 'var(--dash-shadow-lg)',
+            overflow: 'hidden',
           }}
         >
+          {/* Filete de marca XICO — acento rojo en el borde superior del documento (print-safe) */}
+          <div
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 4,
+              backgroundColor: XICO_RED,
+              WebkitPrintColorAdjust: 'exact',
+              printColorAdjust: 'exact',
+            }}
+          />
           {/* Header */}
           <div
             style={{
@@ -184,13 +203,13 @@ export default async function InvoiceDetailPage({
                   fontFamily: FONT,
                 }}
               >
-                XICO FILMS
+                <span style={{ color: XICO_RED, WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}>XICO</span> FILMS
               </p>
               <p style={{ margin: '4px 0 0', fontSize: 13, color: '#555', fontFamily: FONT }}>
-                Produccion audiovisual
+                Producción audiovisual
               </p>
               <p style={{ margin: '2px 0 0', fontSize: 13, color: '#555', fontFamily: FONT }}>
-                Mexico
+                México
               </p>
             </div>
 
@@ -298,6 +317,55 @@ export default async function InvoiceDetailPage({
                   Proyecto: {inv.projects.title}
                 </p>
               )}
+
+              {/* Datos fiscales (CFDI) — solo si están presentes */}
+              {inv.fiscal_data && (
+                <div style={{ marginTop: 16, paddingTop: 12, borderTop: '1px solid #e5e5e5' }}>
+                  <p
+                    style={{
+                      margin: '0 0 8px',
+                      fontSize: 10,
+                      fontWeight: 600,
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase' as const,
+                      color: '#888',
+                      fontFamily: FONT,
+                    }}
+                  >
+                    Datos fiscales
+                  </p>
+                  {inv.fiscal_data.razonSocial && (
+                    <p style={{ margin: '0 0 2px', fontSize: 13, color: '#1a1a1a', fontFamily: FONT }}>
+                      {inv.fiscal_data.razonSocial}
+                    </p>
+                  )}
+                  {inv.fiscal_data.rfc && (
+                    <p style={{ margin: '0 0 2px', fontSize: 13, color: '#555', fontFamily: FONT }}>
+                      RFC: {inv.fiscal_data.rfc}
+                    </p>
+                  )}
+                  {inv.fiscal_data.regimenFiscal && (
+                    <p style={{ margin: '0 0 2px', fontSize: 13, color: '#555', fontFamily: FONT }}>
+                      Régimen fiscal: {inv.fiscal_data.regimenFiscal}
+                    </p>
+                  )}
+                  {inv.fiscal_data.usoCfdi && (
+                    <p style={{ margin: '0 0 2px', fontSize: 13, color: '#555', fontFamily: FONT }}>
+                      Uso de CFDI: {inv.fiscal_data.usoCfdi}
+                    </p>
+                  )}
+                  {inv.fiscal_data.codigoPostal && (
+                    <p style={{ margin: '0 0 2px', fontSize: 13, color: '#555', fontFamily: FONT }}>
+                      Código postal: {inv.fiscal_data.codigoPostal}
+                    </p>
+                  )}
+                  {inv.fiscal_data.emailFacturacion && (
+                    <p style={{ margin: '0 0 2px', fontSize: 13, color: '#555', fontFamily: FONT }}>
+                      {inv.fiscal_data.emailFacturacion}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Dates */}
@@ -314,7 +382,7 @@ export default async function InvoiceDetailPage({
                     fontFamily: FONT,
                   }}
                 >
-                  Fecha de emision
+                  Fecha de emisión
                 </p>
                 <p style={{ margin: 0, fontSize: 14, color: '#1a1a1a', fontFamily: FONT }}>
                   {fmtDate(inv.issue_date)}
@@ -359,7 +427,7 @@ export default async function InvoiceDetailPage({
                   color: '#ffffff',
                 }}
               >
-                {['Descripcion', 'Cantidad', 'Precio unitario', 'Total'].map((h, i) => (
+                {['Descripción', 'Cantidad', 'Precio unitario', 'Total'].map((h, i) => (
                   <th
                     key={h}
                     style={{
@@ -399,8 +467,8 @@ export default async function InvoiceDetailPage({
                 <tr style={{ borderBottom: '1px solid #e5e5e5' }}>
                   <td style={{ padding: '16px', fontSize: 14, color: '#1a1a1a', fontFamily: FONT }}>
                     {inv.projects
-                      ? `Servicios de produccion — ${inv.projects.title}`
-                      : 'Servicios de produccion audiovisual'}
+                      ? `Servicios de producción — ${inv.projects.title}`
+                      : 'Servicios de producción audiovisual'}
                   </td>
                   <td style={{ padding: '16px', fontSize: 14, color: '#1a1a1a', textAlign: 'right', fontFamily: FONT }}>1</td>
                   <td style={{ padding: '16px', fontSize: 14, color: '#1a1a1a', textAlign: 'right', fontFamily: FONT }}>
@@ -445,7 +513,7 @@ export default async function InvoiceDetailPage({
                   <span>- {fmt(totals.retIva, inv.currency)}</span>
                 </div>
               )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', backgroundColor: '#1a1a1a', color: '#ffffff', fontFamily: FONT, marginTop: 4 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', backgroundColor: '#1a1a1a', color: '#ffffff', fontFamily: FONT, marginTop: 4, borderLeft: `4px solid ${XICO_RED}`, WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}>
                 <span style={{ fontSize: 14, fontWeight: 700 }}>TOTAL</span>
                 <span style={{ fontSize: 16, fontWeight: 700 }}>
                   {fmt(totals.total, inv.currency)} {inv.currency}
@@ -505,7 +573,7 @@ export default async function InvoiceDetailPage({
               Gracias por confiar en nosotros.
             </p>
             <p style={{ margin: 0, fontSize: 12, color: '#888', fontFamily: FONT }}>
-              Terminos de pago: 30 dias neto a partir de la fecha de emision.
+              Términos de pago: 30 días neto a partir de la fecha de emisión.
               Para consultas sobre esta factura contacte a hola@xicofilms.com
             </p>
           </div>

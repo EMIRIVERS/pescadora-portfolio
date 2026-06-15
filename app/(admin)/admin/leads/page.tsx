@@ -47,7 +47,7 @@ export default async function AdminLeadsPage() {
       style={{
         minHeight: '100vh',
         backgroundColor: 'var(--dash-bg)',
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+        fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
       }}
     >
       <div
@@ -103,7 +103,7 @@ export default async function AdminLeadsPage() {
               alignItems: 'center',
               gap: '8px',
               padding: '10px 20px',
-              backgroundColor: '#0071E3',
+              backgroundColor: 'var(--dash-accent)',
               color: '#FFFFFF',
               fontSize: '14px',
               fontWeight: 500,
@@ -123,15 +123,15 @@ export default async function AdminLeadsPage() {
             style={{
               marginBottom: '24px',
               padding: '16px 20px',
-              backgroundColor: '#1C0A0A',
-              border: '1px solid rgba(255, 69, 58, 0.25)',
+              backgroundColor: 'rgba(var(--dash-accent-rgb), 0.08)',
+              border: '1px solid var(--dash-border)',
               borderRadius: '12px',
             }}
           >
             <p
               style={{
                 fontSize: '13px',
-                color: 'rgba(255, 69, 58, 0.85)',
+                color: 'var(--dash-danger)',
                 margin: 0,
               }}
             >
@@ -157,12 +157,12 @@ export default async function AdminLeadsPage() {
             <p
               style={{
                 fontSize: '13px',
-                color: 'rgba(255, 159, 10, 0.85)',
+                color: 'var(--dash-warning)',
                 margin: 0,
               }}
             >
-              Mostrando los {leads.length} leads mas recientes de {totalCount}. Los
-              leads mas antiguos no aparecen en el tablero.
+              Mostrando los {leads.length} leads más recientes de {totalCount}. Los
+              leads más antiguos no aparecen en el tablero.
             </p>
           </div>
         )}
@@ -174,7 +174,7 @@ export default async function AdminLeadsPage() {
               padding: '80px 20px',
               textAlign: 'center',
               background: 'var(--dash-surface-1)',
-              border: '1px solid rgba(255,255,255,0.06)',
+              border: '1px solid var(--dash-border)',
               borderRadius: '16px',
               marginBottom: '32px',
             }}
@@ -192,14 +192,14 @@ export default async function AdminLeadsPage() {
               <path
                 d="M14 18h52l-20 24v18l-12-8V42L14 18z"
                 fill="var(--dash-surface-3)"
-                stroke="#3A3A3C"
+                stroke="var(--dash-text-tertiary)"
                 strokeWidth="1.5"
                 strokeLinejoin="round"
               />
               {/* Funnel top line (filter) */}
-              <line x1="14" y1="18" x2="66" y2="18" stroke="#3A3A3C" strokeWidth="1.5" strokeLinecap="round" />
+              <line x1="14" y1="18" x2="66" y2="18" stroke="var(--dash-text-tertiary)" strokeWidth="1.5" strokeLinecap="round" />
               {/* Spout drip */}
-              <circle cx="40" cy="70" r="3" fill="#3A3A3C" />
+              <circle cx="40" cy="70" r="3" fill="var(--dash-text-tertiary)" />
             </svg>
             <h3
               style={{
@@ -208,10 +208,10 @@ export default async function AdminLeadsPage() {
                 color: 'var(--dash-text-primary)',
                 margin: '0 0 8px',
                 letterSpacing: '-0.02em',
-                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+                fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
               }}
             >
-              Pipeline vacio
+              Pipeline vacío
             </h3>
             <p
               style={{
@@ -219,7 +219,7 @@ export default async function AdminLeadsPage() {
                 color: 'var(--dash-text-secondary)',
                 margin: '0 0 24px',
                 lineHeight: 1.5,
-                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+                fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
               }}
             >
               Registra tu primer prospecto para empezar a hacer seguimiento.
@@ -231,14 +231,14 @@ export default async function AdminLeadsPage() {
                 alignItems: 'center',
                 gap: '8px',
                 padding: '10px 20px',
-                backgroundColor: '#0071E3',
+                backgroundColor: 'var(--dash-accent)',
                 color: '#FFFFFF',
                 fontSize: '14px',
                 fontWeight: 500,
                 letterSpacing: '-0.01em',
                 borderRadius: '980px',
                 textDecoration: 'none',
-                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+                fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
               }}
             >
               + Nuevo lead

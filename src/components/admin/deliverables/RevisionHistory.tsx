@@ -15,10 +15,10 @@ const S = {
   textPrimary:   'var(--dash-text-primary)',
   textSecondary: 'var(--dash-text-secondary)',
   textTertiary:  'var(--dash-text-tertiary)',
-  accent:        '#0071E3',
-  accentRed:     '#FF453A',
-  font:          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
-  mono:          "'SF Mono', ui-monospace, monospace",
+  accent:        'var(--dash-accent)',
+  accentRed:     'var(--dash-danger)',
+  font:          "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
+  mono:          "var(--font-geist-mono), ui-monospace, monospace",
 } as const
 
 // ─── Shared input style ────────────────────────────────────────────────────────
@@ -122,7 +122,7 @@ export function RevisionHistory({ deliverableId, currentUrl }: RevisionHistoryPr
       })
 
       if (result.error || !result.data) {
-        setError(result.error ?? 'No se pudo guardar la revision.')
+        setError(result.error ?? 'No se pudo guardar la revisión.')
         return
       }
 
@@ -135,7 +135,7 @@ export function RevisionHistory({ deliverableId, currentUrl }: RevisionHistoryPr
 
   function focusRing(name: string): React.CSSProperties {
     return focused === name
-      ? { borderColor: S.accent, boxShadow: `0 0 0 3px rgba(0,113,227,0.18)` }
+      ? { borderColor: S.accent, boxShadow: `0 0 0 3px rgba(var(--dash-accent-rgb),0.18)` }
       : {}
   }
 
@@ -191,7 +191,7 @@ export function RevisionHistory({ deliverableId, currentUrl }: RevisionHistoryPr
             onMouseEnter={(e) => {
               const b = e.currentTarget as HTMLButtonElement
               b.style.color = S.textPrimary
-              b.style.borderColor = 'rgba(255,255,255,0.18)'
+              b.style.borderColor = 'var(--dash-border-strong)'
             }}
             onMouseLeave={(e) => {
               const b = e.currentTarget as HTMLButtonElement
@@ -200,7 +200,7 @@ export function RevisionHistory({ deliverableId, currentUrl }: RevisionHistoryPr
             }}
           >
             <Plus size={11} strokeWidth={2.5} />
-            Nueva revision
+            Nueva revisión
           </button>
         )}
       </div>
@@ -348,11 +348,12 @@ export function RevisionHistory({ deliverableId, currentUrl }: RevisionHistoryPr
                 fontFamily: S.font,
               }}
             >
-              Nueva revision — v{revisions.length + 1}
+              Nueva revisión — v{revisions.length + 1}
             </span>
             <button
               type="button"
               onClick={handleCancel}
+              aria-label="Cerrar"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -417,7 +418,7 @@ export function RevisionHistory({ deliverableId, currentUrl }: RevisionHistoryPr
               onFocus={() => setFocused('notes')}
               onBlur={() => setFocused(null)}
               disabled={isPending}
-              placeholder="Cambios incluidos en esta revision..."
+              placeholder="Cambios incluidos en esta revisión..."
               style={{
                 ...inputStyle,
                 ...focusRing('notes'),

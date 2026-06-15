@@ -24,7 +24,7 @@ export default async function EditClientPage({ params }: Props) {
         padding: '40px 32px',
         minHeight: '100%',
         backgroundColor: 'var(--dash-bg)',
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+        fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
       }}
     >
       {/* Header */}
@@ -58,7 +58,7 @@ export default async function EditClientPage({ params }: Props) {
         style={{
           maxWidth: '560px',
           backgroundColor: 'var(--dash-surface-1)',
-          border: '1px solid rgba(255,255,255,0.08)',
+          border: '1px solid var(--dash-border)',
           borderRadius: '16px',
           padding: '28px',
         }}

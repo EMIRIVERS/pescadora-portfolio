@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Upload, File as FileIcon, Download } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { ClientUpload } from '@/lib/supabase/types'
 
@@ -252,22 +253,13 @@ export default function ClientUploader({ projectId, clientId }: Props) {
           </>
         ) : (
           <>
-            <svg
-              width="30"
-              height="30"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke={dragging ? S.accent : S.dim}
-              strokeWidth="1.25"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+            <Upload
+              size={30}
+              color={dragging ? S.accent : S.dim}
+              strokeWidth={1.25}
               aria-hidden="true"
-              style={{ transition: 'stroke 0.3s ease' }}
-            >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="17 8 12 3 7 8" />
-              <line x1="12" y1="3" x2="12" y2="15" />
-            </svg>
+              style={{ transition: 'color 0.3s ease' }}
+            />
             <p
               style={{
                 margin: 0,
@@ -397,21 +389,13 @@ function FileRow({ upload }: { upload: ClientUpload }) {
       }}
     >
       {/* File icon */}
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke={S.dim}
-        strokeWidth="1.25"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+      <FileIcon
+        size={20}
+        color={S.dim}
+        strokeWidth={1.25}
         aria-hidden="true"
         style={{ flexShrink: 0 }}
-      >
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-        <polyline points="14 2 14 8 20 8" />
-      </svg>
+      />
 
       {/* Info */}
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -466,21 +450,7 @@ function FileRow({ upload }: { upload: ClientUpload }) {
           transition:     'color 0.25s ease',
         }}
       >
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.75"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <polyline points="7 10 12 15 17 10" />
-          <line x1="12" y1="15" x2="12" y2="3" />
-        </svg>
+        <Download size={16} strokeWidth={1.75} aria-hidden="true" />
       </a>
     </div>
   )

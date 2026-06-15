@@ -26,8 +26,8 @@ const T = {
   textPrimary:   'var(--dash-text-primary)',
   textSecondary: 'var(--dash-text-secondary)',
   textTertiary:  'var(--dash-text-tertiary)',
-  accent:        '#0071E3',
-  font:          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+  accent:        'var(--dash-accent)',
+  font:          "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
 } as const
 
 // ── Status pill ───────────────────────────────────────────────────────────────
@@ -342,7 +342,7 @@ export function ProjectsTable({ rows, pageSize = 15 }: ProjectsTableProps) {
           borderBottom: `1px solid ${T.borderHeader}`,
         }}
       >
-        {['Proyecto', 'Cliente', 'Presupuesto', 'Estado', 'Inicio', 'Entrega', 'Dias rest.', ''].map(
+        {['Proyecto', 'Cliente', 'Presupuesto', 'Estado', 'Inicio', 'Entrega', 'Días rest.', ''].map(
           (col) => (
             <span
               key={col}
@@ -408,7 +408,7 @@ export function ProjectsTable({ rows, pageSize = 15 }: ProjectsTableProps) {
               fontFamily: T.font,
             }}
           >
-            Pagina {page} de {totalPages}
+            Página {page} de {totalPages}
           </span>
 
           <button

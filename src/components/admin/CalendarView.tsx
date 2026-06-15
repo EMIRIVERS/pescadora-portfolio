@@ -65,7 +65,7 @@ const T = {
   accent:        'var(--dash-accent)',
   orange:        'var(--dash-warning)',
   green:         'var(--dash-success)',
-  font:          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+  font:          "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
 } as const
 
 const DAY_LABELS = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa', 'Do']
@@ -79,7 +79,7 @@ const MONTH_NAMES_ES = [
 // A set of visually distinct colors for per-project hashing.
 
 const PROJECT_PALETTE: readonly string[] = [
-  '#0071E3', // blue
+  'var(--dash-accent)', // brand accent
   '#30D158', // green
   '#FF9F0A', // amber
   '#FF453A', // red
@@ -124,12 +124,12 @@ function formatDate(iso: string | null): string {
 
 function statusLabel(status: string): string {
   const map: Record<string, string> = {
-    pre_production: 'Pre-produccion',
-    production:     'Produccion',
-    post_production:'Post-produccion',
+    pre_production: 'Pre-producción',
+    production:     'Producción',
+    post_production:'Post-producción',
     delivered:      'Entregado',
     pending:        'Pendiente',
-    review:         'En revision',
+    review:         'En revisión',
     approved:       'Aprobado',
     low:            'Baja',
     medium:         'Media',
@@ -545,7 +545,7 @@ function DayCell({ day, inMonth, isToday, events }: DayCellProps) {
         ))}
         {overflow > 0 && (
           <span style={{ fontSize: '10px', color: T.textTertiary }}>
-            +{overflow} mas
+            +{overflow} más
           </span>
         )}
       </div>

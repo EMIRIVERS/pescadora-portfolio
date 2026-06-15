@@ -15,7 +15,11 @@ export default function GlobalError({
 
   return (
     <html>
-      <body style={{ margin: 0, background: '#050505', color: '#ede8e0', fontFamily: "-apple-system, BlinkMacSystemFont, system-ui, sans-serif", display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+      <body style={{ margin: 0, background: '#050505', color: '#ede8e0', fontFamily: "var(--font-geist-sans), -apple-system, system-ui, sans-serif", display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+        <style>{`
+          .err-btn:hover { background: #ff3d1f; }
+          .err-btn:focus-visible { outline: 2px solid #e8341a; outline-offset: 3px; }
+        `}</style>
         <div style={{ textAlign: 'center', maxWidth: 480, padding: '2rem' }}>
           <p style={{ fontSize: '0.65rem', letterSpacing: '0.3em', textTransform: 'uppercase', color: '#6b6560', marginBottom: '1.5rem' }}>Error</p>
           <h1 style={{ fontSize: 'clamp(2rem, 6vw, 3.5rem)', fontWeight: 700, letterSpacing: '-0.03em', margin: '0 0 1rem' }}>Algo salió mal</h1>
@@ -24,16 +28,18 @@ export default function GlobalError({
           </p>
           <button
             onClick={reset}
+            className="err-btn"
             style={{
               padding: '10px 24px',
               background: '#e8341a',
               border: 'none',
-              borderRadius: 8,
+              borderRadius: 2,
               color: '#fff',
               fontSize: '0.8rem',
               fontWeight: 600,
               letterSpacing: '0.05em',
               cursor: 'pointer',
+              transition: 'background 0.2s',
             }}
           >
             Intentar de nuevo

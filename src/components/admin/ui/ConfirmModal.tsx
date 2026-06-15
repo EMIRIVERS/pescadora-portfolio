@@ -75,7 +75,7 @@ export function ConfirmModal({
 
   if (!isOpen) return null
 
-  const confirmColor = danger ? '#FF453A' : '#0071E3'
+  const confirmColor = danger ? 'var(--dash-danger)' : 'var(--dash-accent)'
 
   return (
     <>
@@ -119,14 +119,14 @@ export function ConfirmModal({
           style={{
             background:   'var(--dash-surface-2)',
             borderRadius: '16px',
-            border:       '1px solid rgba(255,255,255,0.10)',
+            border:       '1px solid var(--dash-border)',
             maxWidth:     '400px',
             width:        '100%',
             padding:      '28px 28px 24px',
             boxShadow:    '0 24px 64px rgba(0,0,0,0.7)',
             animation:    'modal-panel-in 0.22s cubic-bezier(0,0,0.2,1) forwards',
             fontFamily:
-              "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+              "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
           }}
         >
           {/* Title */}
@@ -174,7 +174,7 @@ export function ConfirmModal({
               style={{
                 padding:      '9px 18px',
                 borderRadius: '10px',
-                border:       '1px solid rgba(255,255,255,0.12)',
+                border:       '1px solid var(--dash-border-strong)',
                 background:   'var(--dash-border)',
                 color:        'var(--dash-text-primary)',
                 fontSize:     '14px',
@@ -184,7 +184,7 @@ export function ConfirmModal({
               }}
               onMouseEnter={(e) =>
                 ((e.currentTarget as HTMLButtonElement).style.background =
-                  'rgba(255,255,255,0.10)')
+                  'var(--dash-surface-3)')
               }
               onMouseLeave={(e) =>
                 ((e.currentTarget as HTMLButtonElement).style.background =

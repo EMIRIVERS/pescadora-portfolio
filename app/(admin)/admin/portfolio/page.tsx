@@ -17,7 +17,7 @@ interface PortfolioVideo {
   updated_at: string
 }
 
-const FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif"
+const FONT = "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
 
 const STAT_CATEGORIES = [
   { key: 'videoclips',   label: 'Videoclips' },
@@ -27,6 +27,7 @@ const STAT_CATEGORIES = [
 ] as const
 
 const CATEGORY_ACCENT: Record<string, string> = {
+  total:        'var(--dash-accent)',
   videoclips:   '#BF5AF2',
   corporativos: '#0A84FF',
   restaurantes: '#FF9F0A',
@@ -50,7 +51,7 @@ function StatCard({ label, count, categoryKey, sub }: StatCardProps) {
       style={{
         flex: '1 1 120px',
         backgroundColor: 'var(--dash-surface-2)',
-        border: `1px solid ${categoryKey === 'fotografia' ? 'rgba(232,52,26,0.2)' : 'rgba(255,255,255,0.08)'}`,
+        border: `1px solid ${categoryKey === 'fotografia' ? 'rgba(232,52,26,0.2)' : 'var(--dash-border)'}`,
         borderRadius: 12,
         padding: '16px 20px',
         display: 'flex',

@@ -67,7 +67,7 @@ export default function MyProfileModal({ currentUser }: Props) {
           padding: '9px 16px',
           fontSize: '14px',
           fontWeight: 500,
-          border: '1px solid rgba(255,255,255,0.08)',
+          border: '1px solid var(--dash-border)',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
@@ -124,13 +124,13 @@ export default function MyProfileModal({ currentUser }: Props) {
           <div
             style={{
               backgroundColor: 'var(--dash-surface-2)',
-              border: '1px solid rgba(255,255,255,0.10)',
+              border: '1px solid var(--dash-border)',
               borderRadius: '20px',
               padding: '32px',
               width: '100%',
               maxWidth: '400px',
               fontFamily:
-                "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+                "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
             }}
           >
             <div
@@ -154,6 +154,7 @@ export default function MyProfileModal({ currentUser }: Props) {
               </h2>
               <button
                 onClick={handleClose}
+                aria-label="Cerrar"
                 style={{
                   background: 'none',
                   border: 'none',
@@ -187,7 +188,7 @@ export default function MyProfileModal({ currentUser }: Props) {
                   style={{
                     width: '100%',
                     backgroundColor: 'var(--dash-surface-3)',
-                    border: '1px solid rgba(255,255,255,0.08)',
+                    border: '1px solid var(--dash-border)',
                     borderRadius: '8px',
                     padding: '10px 12px',
                     color: 'var(--dash-text-primary)',
@@ -212,7 +213,7 @@ export default function MyProfileModal({ currentUser }: Props) {
                   style={{
                     width: '100%',
                     backgroundColor: 'var(--dash-surface-1)',
-                    border: '1px solid rgba(255,255,255,0.05)',
+                    border: '1px solid var(--dash-border)',
                     borderRadius: '8px',
                     padding: '10px 12px',
                     color: 'var(--dash-text-tertiary)',
@@ -238,7 +239,7 @@ export default function MyProfileModal({ currentUser }: Props) {
                   style={{
                     width: '100%',
                     backgroundColor: 'var(--dash-surface-1)',
-                    border: '1px solid rgba(255,255,255,0.05)',
+                    border: '1px solid var(--dash-border)',
                     borderRadius: '8px',
                     padding: '10px 12px',
                     color: 'var(--dash-text-tertiary)',
@@ -268,7 +269,7 @@ export default function MyProfileModal({ currentUser }: Props) {
                   style={{
                     width: '100%',
                     backgroundColor: 'var(--dash-surface-3)',
-                    border: '1px solid rgba(255,255,255,0.08)',
+                    border: '1px solid var(--dash-border)',
                     borderRadius: '8px',
                     padding: '10px 12px',
                     color: 'var(--dash-text-primary)',
@@ -295,10 +296,10 @@ export default function MyProfileModal({ currentUser }: Props) {
               )}
 
               {error && (
-                <p style={{ margin: 0, fontSize: '13px', color: '#FF453A' }}>{error}</p>
+                <p style={{ margin: 0, fontSize: '13px', color: 'var(--dash-danger)' }}>{error}</p>
               )}
               {success && (
-                <p style={{ margin: 0, fontSize: '13px', color: '#30D158' }}>
+                <p style={{ margin: 0, fontSize: '13px', color: 'var(--dash-success)' }}>
                   Perfil actualizado correctamente
                 </p>
               )}
@@ -324,7 +325,7 @@ export default function MyProfileModal({ currentUser }: Props) {
                   type="submit"
                   disabled={isPending}
                   style={{
-                    backgroundColor: '#0071E3',
+                    backgroundColor: 'var(--dash-accent)',
                     color: '#ffffff',
                     borderRadius: '8px',
                     padding: '9px 20px',

@@ -20,15 +20,15 @@ interface TriggerItem {
 const TRIGGERS: TriggerItem[] = [
   {
     event: 'Nuevo lead captado',
-    actions: ['Email de bienvenida al lead', 'Notificacion al admin'],
+    actions: ['Email de bienvenida al lead', 'Notificación al admin'],
   },
   {
     event: 'Lead calificado',
-    actions: ['Notificacion al lead'],
+    actions: ['Notificación al lead'],
   },
   {
     event: 'Propuesta enviada',
-    actions: ['Notificacion al lead'],
+    actions: ['Notificación al lead'],
   },
   {
     event: 'Lead convertido a cliente',
@@ -40,10 +40,10 @@ const TRIGGERS: TriggerItem[] = [
   },
   {
     event: 'Nuevo cliente creado',
-    actions: ['Notificacion al admin'],
+    actions: ['Notificación al admin'],
   },
   {
-    event: 'Deadline proximo (< 7 dias)',
+    event: 'Deadline próximo (< 7 días)',
     actions: ['Recordatorio diario al equipo (cron 9am)'],
   },
 ]
@@ -76,7 +76,7 @@ export default async function AutomatizacionesPage() {
         : 'inactive'
 
   const statusColor =
-    systemStatus === 'active' ? '#30D158' : systemStatus === 'partial' ? '#FF9F0A' : '#FF453A'
+    systemStatus === 'active' ? 'var(--dash-success)' : systemStatus === 'partial' ? 'var(--dash-warning)' : 'var(--dash-danger)'
   const statusLabel =
     systemStatus === 'active' ? 'Operativo' : systemStatus === 'partial' ? 'Parcial' : 'Inactivo'
   const statusBg =
@@ -101,11 +101,11 @@ export default async function AutomatizacionesPage() {
   return (
     <>
       <style>{`
-        .auto-trigger-card:hover { border-color: rgba(255,255,255,0.12) !important; }
-        .auto-env-chip { font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace; }
-        .auto-form-link:hover { color: #409CFF !important; }
-        .auto-table-row:hover td { background: rgba(255,255,255,0.02); }
-        .auto-test-input:focus { border-color: rgba(0,113,227,0.5) !important; }
+        .auto-trigger-card:hover { border-color: var(--dash-border-strong) !important; }
+        .auto-env-chip { font-family: var(--font-geist-mono), ui-monospace, monospace; }
+        .auto-form-link:hover { color: var(--dash-accent) !important; }
+        .auto-table-row:hover td { background: var(--dash-surface-2); }
+        .auto-test-input:focus { border-color: rgba(var(--dash-accent-rgb),0.5) !important; }
       `}</style>
 
       <div
@@ -113,7 +113,7 @@ export default async function AutomatizacionesPage() {
           minHeight: '100vh',
           backgroundColor: 'var(--dash-bg)',
           color: 'var(--dash-text-primary)',
-          fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+          fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
           padding: '40px 32px',
           maxWidth: '960px',
           margin: '0 auto',
@@ -140,7 +140,7 @@ export default async function AutomatizacionesPage() {
               margin: '8px 0 0',
             }}
           >
-            Pipeline de emails y seguimiento automatico
+            Pipeline de emails y seguimiento automático
           </p>
         </div>
 
@@ -194,8 +194,8 @@ export default async function AutomatizacionesPage() {
                 {systemStatus === 'active'
                   ? 'Todos los servicios activos'
                   : systemStatus === 'partial'
-                    ? 'Configuracion incompleta'
-                    : 'Accion requerida'}
+                    ? 'Configuración incompleta'
+                    : 'Acción requerida'}
               </span>
             </div>
 
@@ -218,7 +218,7 @@ export default async function AutomatizacionesPage() {
                     width: '7px',
                     height: '7px',
                     borderRadius: '50%',
-                    backgroundColor: apiKeyConfigured ? '#30D158' : '#FF453A',
+                    backgroundColor: apiKeyConfigured ? 'var(--dash-success)' : 'var(--dash-danger)',
                     flexShrink: 0,
                   }}
                 />
@@ -228,8 +228,8 @@ export default async function AutomatizacionesPage() {
                 <span
                   style={{
                     fontSize: '11px',
-                    color: apiKeyConfigured ? '#30D158' : '#FF453A',
-                    fontFamily: "'SF Mono', SFMono-Regular, ui-monospace, monospace",
+                    color: apiKeyConfigured ? 'var(--dash-success)' : 'var(--dash-danger)',
+                    fontFamily: "var(--font-geist-mono), ui-monospace, monospace",
                   }}
                 >
                   {apiKeyConfigured ? 'RESEND_API_KEY configurada' : 'RESEND_API_KEY faltante'}
@@ -243,7 +243,7 @@ export default async function AutomatizacionesPage() {
                     width: '7px',
                     height: '7px',
                     borderRadius: '50%',
-                    backgroundColor: cronSecretConfigured ? '#30D158' : '#FF453A',
+                    backgroundColor: cronSecretConfigured ? 'var(--dash-success)' : 'var(--dash-danger)',
                     flexShrink: 0,
                   }}
                 />
@@ -253,8 +253,8 @@ export default async function AutomatizacionesPage() {
                 <span
                   style={{
                     fontSize: '11px',
-                    color: cronSecretConfigured ? '#30D158' : '#FF453A',
-                    fontFamily: "'SF Mono', SFMono-Regular, ui-monospace, monospace",
+                    color: cronSecretConfigured ? 'var(--dash-success)' : 'var(--dash-danger)',
+                    fontFamily: "var(--font-geist-mono), ui-monospace, monospace",
                   }}
                 >
                   {cronSecretConfigured ? 'CRON_SECRET configurada' : 'CRON_SECRET faltante'}
@@ -286,7 +286,7 @@ export default async function AutomatizacionesPage() {
                       className="auto-env-chip"
                       style={{
                         fontSize: '12px',
-                        color: '#FF9F0A',
+                        color: 'var(--dash-warning)',
                         backgroundColor: 'rgba(255,159,10,0.08)',
                         borderRadius: '4px',
                         padding: '3px 8px',
@@ -321,10 +321,10 @@ export default async function AutomatizacionesPage() {
                 margin: '0 0 8px',
               }}
             >
-              Probar configuracion de email
+              Probar configuración de email
             </h2>
             <p style={{ fontSize: '14px', color: 'var(--dash-text-secondary)', margin: '0 0 16px' }}>
-              Envia un email de prueba para verificar que Resend esta configurado correctamente.
+              Envia un email de prueba para verificar que Resend está configurado correctamente.
             </p>
 
             {!apiKeyConfigured ? (
@@ -336,7 +336,7 @@ export default async function AutomatizacionesPage() {
                   padding: '12px 16px',
                 }}
               >
-                <p style={{ fontSize: '13px', color: '#FF9F0A', margin: 0 }}>
+                <p style={{ fontSize: '13px', color: 'var(--dash-warning)', margin: 0 }}>
                   Configura RESEND_API_KEY en Vercel primero
                 </p>
               </div>
@@ -393,7 +393,7 @@ export default async function AutomatizacionesPage() {
                             padding: '2px 6px',
                           }}
                         >
-                          Proximamente
+                          Próximamente
                         </span>
                       )}
                     </div>
@@ -419,7 +419,7 @@ export default async function AutomatizacionesPage() {
                       width: '8px',
                       height: '8px',
                       borderRadius: '50%',
-                      backgroundColor: t.soon ? '#636366' : '#30D158',
+                      backgroundColor: t.soon ? 'var(--dash-text-tertiary)' : 'var(--dash-success)',
                       flexShrink: 0,
                       marginTop: '4px',
                     }}
@@ -448,15 +448,15 @@ export default async function AutomatizacionesPage() {
                 margin: '0 0 16px',
               }}
             >
-              Formulario de cotizacion publica
+              Formulario de cotización pública
             </h2>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
               <div>
                 <p style={{ fontSize: '14px', fontWeight: 500, color: 'var(--dash-text-primary)', margin: '0 0 4px' }}>
                   Formulario en /cotiza
                 </p>
-                <p style={{ fontSize: '12px', color: '#30D158', margin: 0 }}>
-                  Activo — Los leads llegan automaticamente al pipeline
+                <p style={{ fontSize: '12px', color: 'var(--dash-success)', margin: 0 }}>
+                  Activo — Los leads llegan automáticamente al pipeline
                 </p>
               </div>
               <a
@@ -466,7 +466,7 @@ export default async function AutomatizacionesPage() {
                 className="auto-form-link"
                 style={{
                   fontSize: '13px',
-                  color: '#0071E3',
+                  color: 'var(--dash-accent)',
                   textDecoration: 'none',
                   flexShrink: 0,
                   transition: 'color 0.15s ease',
@@ -489,7 +489,7 @@ export default async function AutomatizacionesPage() {
                 margin: '0 0 12px',
               }}
             >
-              Ultimos emails enviados
+              Últimos emails enviados
             </h2>
 
             {emailLogs.length === 0 ? (
@@ -503,7 +503,7 @@ export default async function AutomatizacionesPage() {
                 }}
               >
                 <p style={{ fontSize: '14px', color: 'var(--dash-text-tertiary)', margin: 0 }}>
-                  Los emails enviados apareceran aqui
+                  Los emails enviados aparecerán aquí
                 </p>
               </div>
             ) : (
@@ -520,7 +520,7 @@ export default async function AutomatizacionesPage() {
                     <tr
                       style={{
                         borderBottom: '1px solid var(--dash-border)',
-                        backgroundColor: 'rgba(255,255,255,0.02)',
+                        backgroundColor: 'var(--dash-surface-2)',
                       }}
                     >
                       {['Destinatario', 'Asunto', 'Template', 'Enviado'].map((col) => (
@@ -559,10 +559,10 @@ export default async function AutomatizacionesPage() {
                         <td style={{ padding: '10px 16px' }}>
                           <code
                             style={{
-                              fontFamily: "'SF Mono', SFMono-Regular, ui-monospace, monospace",
+                              fontFamily: "var(--font-geist-mono), ui-monospace, monospace",
                               fontSize: '11px',
-                              color: '#0071E3',
-                              backgroundColor: 'rgba(0,113,227,0.1)',
+                              color: 'var(--dash-accent)',
+                              backgroundColor: 'rgba(var(--dash-accent-rgb),0.1)',
                               borderRadius: '4px',
                               padding: '2px 6px',
                             }}
@@ -608,20 +608,20 @@ export default async function AutomatizacionesPage() {
                   width: '8px',
                   height: '8px',
                   borderRadius: '50%',
-                  backgroundColor: cronSecretConfigured ? '#30D158' : '#FF453A',
+                  backgroundColor: cronSecretConfigured ? 'var(--dash-success)' : 'var(--dash-danger)',
                   flexShrink: 0,
                   marginTop: '5px',
                 }}
               />
               <div>
                 <p style={{ fontSize: '14px', fontWeight: 500, color: 'var(--dash-text-primary)', margin: '0 0 4px' }}>
-                  Recordatorios automaticos: todos los dias a las 9:00 AM
+                  Recordatorios automáticos: todos los días a las 9:00 AM
                 </p>
                 <p style={{ fontSize: '12px', color: 'var(--dash-text-tertiary)', margin: 0 }}>
                   Endpoint:{' '}
                   <code
                     style={{
-                      fontFamily: "'SF Mono', SFMono-Regular, ui-monospace, monospace",
+                      fontFamily: "var(--font-geist-mono), ui-monospace, monospace",
                       fontSize: '12px',
                       color: 'var(--dash-text-secondary)',
                     }}
