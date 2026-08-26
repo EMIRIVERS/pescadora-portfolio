@@ -25,6 +25,16 @@ rename migration files.
 
 No test framework is configured.
 
+## Current state (jul-2026)
+
+Paused since mid-June with **uncommitted work** (~22 files, 14–18 jun): complete new modules for
+business expenses (`app/(admin)/admin/gastos/`), equipment/inventory (`inventario/`), PDF
+generation (`src/lib/pdf/`), invoice/proposal APIs, and migration
+`20260618000000_business_expenses_equipment.sql` (likely **not applied** — check for
+schema/code drift before building on it). June also added RBAC by `staff_role`
+(`src/lib/auth/permissions.ts`), audit log (`src/lib/audit.ts`), and CFDI billing schema.
+`docs/PRODUCTION_READINESS.md` tracks item-by-item status (DONE / PLAN READY / BLOCKED-ON-USER).
+
 ## Architecture: one Next.js app, three surfaces
 
 App Router with route groups, each a distinct product surface gated by `proxy.ts`:
@@ -59,7 +69,7 @@ for authz is not enough — server actions must independently verify via `requir
 
 ## Data model
 
-~24 tables across 12 SQL migrations in `supabase/migrations/` (timestamped, additive). Core
+~24 tables across 22 SQL migrations in `supabase/migrations/` (timestamped, additive). Core
 entities: `profiles`, `clients`, `projects`, `project_deliverables`, `task_boards`/`tasks`/
 `task_activity_log`, `leads`, expenses, invoices, proposals, and portfolio
 videos/photos/albums/categories. Enums (`project_status`, `deliverable_status`, etc.) live in
