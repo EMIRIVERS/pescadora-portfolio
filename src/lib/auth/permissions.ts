@@ -22,6 +22,7 @@ export type Resource =
   | 'tasks'
   | 'clients'
   | 'expenses'
+  | 'equipment'
   | 'reports'
   | 'automations'
 
@@ -68,6 +69,7 @@ const MATRIX: Record<Resource, Record<StaffRole, string>> = {
   tasks:       { owner: 'VCUDX', producer: 'VCUDX', finance: 'V',     editor: 'VCUD', assistant: 'VCU' },
   clients:     { owner: 'VCUDX', producer: 'VCUD',  finance: 'VU',    editor: 'V',    assistant: 'V'   },
   expenses:    { owner: 'VCUDX', producer: 'VCU',   finance: 'VCUDX', editor: '',     assistant: ''    },
+  equipment:   { owner: 'VCUDX', producer: 'VCUD',  finance: 'V',     editor: 'VU',   assistant: 'V'   },
   reports:     { owner: 'V',     producer: 'V',     finance: 'V',     editor: 'V',    assistant: ''    },
   automations: { owner: 'VCUDX', producer: 'VU',    finance: '',      editor: '',     assistant: ''    },
 }
@@ -106,7 +108,9 @@ export const NAV_RESOURCE: Record<string, Resource> = {
   '/admin/leads': 'leads',
   '/admin/clients': 'clients',
   '/admin/invoices': 'invoices',
+  '/admin/gastos': 'expenses',
   '/admin/proposals': 'proposals',
+  '/admin/inventario': 'equipment',
   '/admin/team': 'team',
   '/admin/automatizaciones': 'automations',
   '/admin/reportes': 'reports',

@@ -24,6 +24,18 @@ export type BillingClientType = 'DIRECTO' | 'EMPRESA'
 export type CalendarEventTypeEnum = 'grabacion' | 'entrega' | 'cobro' | 'reunion' | 'otro'
 export type CalendarEventStatusEnum = 'pendiente' | 'hecho'
 export type NotificationType = 'info' | 'success' | 'warning' | 'error'
+export type BusinessExpenseStatus = 'pending' | 'paid'
+export type EquipmentCategory =
+  | 'camaras'
+  | 'lentes'
+  | 'iluminacion'
+  | 'audio'
+  | 'soportes'
+  | 'energia'
+  | 'drones'
+  | 'accesorios'
+  | 'otros'
+export type EquipmentStatus = 'available' | 'in_use' | 'maintenance' | 'retired'
 
 export interface Database {
   public: {
@@ -1338,6 +1350,126 @@ export interface Database {
           },
         ]
       }
+      business_expenses: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          label: string
+          amount: number
+          currency: string
+          category: string | null
+          vendor: string | null
+          payment_method: string | null
+          status: 'pending' | 'paid'
+          date: string
+          project_id: string | null
+          receipt_url: string | null
+          notes: string | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          label: string
+          amount: number
+          currency?: string
+          category?: string | null
+          vendor?: string | null
+          payment_method?: string | null
+          status?: 'pending' | 'paid'
+          date?: string
+          project_id?: string | null
+          receipt_url?: string | null
+          notes?: string | null
+        }
+        Update: {
+          id?: string
+          updated_at?: string
+          label?: string
+          amount?: number
+          currency?: string
+          category?: string | null
+          vendor?: string | null
+          payment_method?: string | null
+          status?: 'pending' | 'paid'
+          date?: string
+          project_id?: string | null
+          receipt_url?: string | null
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'business_expenses_project_id_fkey'
+            columns: ['project_id']
+            isOneToOne: false
+            referencedRelation: 'projects'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      production_equipment: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          name: string
+          brand: string | null
+          model: string | null
+          category: EquipmentCategory
+          status: EquipmentStatus
+          condition: string | null
+          serial_number: string | null
+          quantity: number
+          purchase_date: string | null
+          purchase_cost: number | null
+          currency: string
+          location: string | null
+          image_url: string | null
+          specs: Json
+          notes: string | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          name: string
+          brand?: string | null
+          model?: string | null
+          category?: EquipmentCategory
+          status?: EquipmentStatus
+          condition?: string | null
+          serial_number?: string | null
+          quantity?: number
+          purchase_date?: string | null
+          purchase_cost?: number | null
+          currency?: string
+          location?: string | null
+          image_url?: string | null
+          specs?: Json
+          notes?: string | null
+        }
+        Update: {
+          id?: string
+          updated_at?: string
+          name?: string
+          brand?: string | null
+          model?: string | null
+          category?: EquipmentCategory
+          status?: EquipmentStatus
+          condition?: string | null
+          serial_number?: string | null
+          quantity?: number
+          purchase_date?: string | null
+          purchase_cost?: number | null
+          currency?: string
+          location?: string | null
+          image_url?: string | null
+          specs?: Json
+          notes?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1419,6 +1551,8 @@ export type Lead = Tables<'leads'>
 export type LeadActivity = Tables<'lead_activities'>
 export type ClientUpload = Tables<'client_uploads'>
 export type ProjectExpense = Tables<'project_expenses'>
+export type BusinessExpense = Tables<'business_expenses'>
+export type ProductionEquipment = Tables<'production_equipment'>
 export type DeliverableRevision = Tables<'deliverable_revisions'>
 export type TaskCategory = Tables<'task_categories'>
 
