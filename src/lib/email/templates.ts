@@ -317,3 +317,72 @@ export function deadlineReminderTemplate(
   `
   return baseWrapper(body)
 }
+
+// ---------------------------------------------------------------------------
+// 7. Invoice delivery — sent to the client with the invoice PDF attached
+// ---------------------------------------------------------------------------
+
+export interface InvoiceEmailData {
+  clientName: string | null
+  invoiceNumber: string
+  amount: string
+  dueDate: string | null
+}
+
+export function invoiceEmailTemplate(data: InvoiceEmailData): string {
+  const portalUrl = `${SITE_URL}/portal/invoices`
+  const greeting = data.clientName
+    ? `Hola <strong style="color:#ffffff;">${esc(data.clientName)}</strong>,`
+    : 'Hola,'
+  const dueLine = data.dueDate
+    ? bodyText(`Fecha de vencimiento: <strong style="color:#ffffff;">${esc(data.dueDate)}</strong>.`)
+    : ''
+
+  const body = `
+    ${sectionTitle('Tu factura está lista')}
+    ${bodyText(greeting)}
+    ${bodyText(`Adjuntamos la factura <strong style="color:#ffffff;">${esc(data.invoiceNumber)}</strong> por un total de <strong style="color:#ffffff;">${esc(data.amount)}</strong>.`)}
+    ${dueLine}
+    ${bodyText('Encontrarás el PDF adjunto a este correo. También puedes consultarla en cualquier momento desde tu portal de cliente.')}
+    ${ctaButton('Ver mis facturas', portalUrl)}
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+      ${divider()}
+    </table>
+    <p style="margin:0;font-size:15px;line-height:1.6;color:#cccccc;">El equipo de <strong style="color:#ffffff;">XICO Films</strong></p>
+  `
+  return baseWrapper(body)
+}
+
+// ---------------------------------------------------------------------------
+// 8. Proposal delivery — sent to the prospect/client with the quote PDF attached
+// ---------------------------------------------------------------------------
+
+export interface ProposalEmailData {
+  recipientName: string | null
+  title: string
+  total: string
+  validUntil: string | null
+}
+
+export function proposalEmailTemplate(data: ProposalEmailData): string {
+  const greeting = data.recipientName
+    ? `Hola <strong style="color:#ffffff;">${esc(data.recipientName)}</strong>,`
+    : 'Hola,'
+  const validLine = data.validUntil
+    ? bodyText(`Esta cotización es válida hasta el <strong style="color:#ffffff;">${esc(data.validUntil)}</strong>.`)
+    : ''
+
+  const body = `
+    ${sectionTitle('Tu cotización')}
+    ${bodyText(greeting)}
+    ${bodyText(`Hemos preparado la cotización <strong style="color:#ffffff;">${esc(data.title)}</strong> por un total de <strong style="color:#ffffff;">${esc(data.total)}</strong>.`)}
+    ${validLine}
+    ${bodyText('Encontrarás el detalle completo en el PDF adjunto. Si tienes cualquier duda o quieres ajustar algo, responde directamente a este correo.')}
+    ${bodyText('Gracias por considerarnos para tu proyecto.')}
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+      ${divider()}
+    </table>
+    <p style="margin:0;font-size:15px;line-height:1.6;color:#cccccc;">El equipo de <strong style="color:#ffffff;">XICO Films</strong></p>
+  `
+  return baseWrapper(body)
+}

@@ -4,6 +4,9 @@ const nextConfig: NextConfig = {
   // Don't advertise the framework.
   poweredByHeader: false,
   transpilePackages: ['simplex-noise'],
+  // @react-pdf/renderer no debe empaquetarse (usa fontkit y APIs de Node);
+  // se resuelve en runtime desde node_modules en las rutas API de PDF.
+  serverExternalPackages: ['@react-pdf/renderer'],
   turbopack: {
     rules: {
       '*.glsl': {

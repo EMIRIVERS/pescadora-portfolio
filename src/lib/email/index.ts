@@ -1,10 +1,17 @@
 export const EMAIL_FROM = process.env.EMAIL_FROM ?? 'XICO Films <noreply@xicofilms.com>'
 export const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? 'hola@xicofilms.com'
 
+/** Adjunto de correo. `content` es el archivo codificado en base64. */
+export interface EmailAttachment {
+  filename: string
+  content: string
+}
+
 export interface SendEmailOptions {
   to: string
   subject: string
   html: string
+  attachments?: EmailAttachment[]
 }
 
 export async function sendEmail(options: SendEmailOptions): Promise<void> {
@@ -25,6 +32,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
         to: options.to,
         subject: options.subject,
         html: options.html,
+        ...(options.attachments?.length ? { attachments: options.attachments } : {}),
       }),
     })
     if (!res.ok) {

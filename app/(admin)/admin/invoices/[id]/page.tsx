@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { Download } from 'lucide-react'
 import { createServiceClient } from '@/lib/supabase/server'
 import PrintButton from './PrintButton'
 import InvoiceActions from './InvoiceActions'
@@ -150,6 +151,26 @@ export default async function InvoiceDetailPage({
             &larr; Volver a facturas
           </Link>
           <InvoiceActions id={inv.id} invoiceNumber={inv.invoice_number} status={inv.status} />
+          <a
+            href={`/api/invoices/${inv.id}/pdf?download=1`}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '8px 16px',
+              backgroundColor: 'var(--dash-surface-2)',
+              border: '1px solid var(--dash-border)',
+              borderRadius: 8,
+              fontSize: 13,
+              fontWeight: 500,
+              color: 'var(--dash-text-secondary)',
+              textDecoration: 'none',
+              fontFamily: FONT,
+            }}
+          >
+            <Download size={14} strokeWidth={1.5} />
+            Descargar PDF
+          </a>
           <PrintButton />
         </div>
 

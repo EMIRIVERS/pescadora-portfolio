@@ -2,10 +2,11 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Trash2, Pencil, FileText } from 'lucide-react'
+import { Plus, Trash2, Pencil, FileText, Download, Mail } from 'lucide-react'
 import {
   updateProposalStatus,
   deleteProposal,
+  sendProposalEmail,
 } from '@/lib/actions/proposals'
 import type { Proposal, ProposalStatus } from '@/lib/actions/proposals'
 import { createInvoiceFromProposal } from '@/lib/actions/invoices'
@@ -84,6 +85,18 @@ export default function ProposalsClient({ initialProposals, clients }: Props) {
       } else {
         router.push('/admin/invoices')
       }
+    })
+  }
+
+  function handleSendEmail(id: string) {
+    startTransition(async () => {
+      const result = await sendProposalEmail(id)
+      if (result.error) {
+        window.alert(result.error)
+        return
+      }
+      window.alert(`Cotización enviada a ${result.sentTo}`)
+      setProposals((prev) => prev.map((p) => (p.id === id && p.status === 'draft' ? { ...p, status: 'sent' } : p)))
     })
   }
 
@@ -248,6 +261,26 @@ export default function ProposalsClient({ initialProposals, clients }: Props) {
                             Generar factura
                           </button>
                         )}
+                        <a
+                          href={`/api/proposals/${proposal.id}/pdf`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Ver / descargar PDF de la cotización"
+                          aria-label={`Ver PDF de la cotización ${proposal.title}`}
+                          style={{ border: 'none', background: 'transparent', color: 'var(--dash-text-tertiary)', cursor: 'pointer', padding: 4, borderRadius: 6, display: 'inline-flex' }}
+                        >
+                          <Download size={13} strokeWidth={1.5} />
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => handleSendEmail(proposal.id)}
+                          disabled={isPending}
+                          title="Enviar cotización por email (PDF adjunto)"
+                          aria-label={`Enviar por email la cotización ${proposal.title}`}
+                          style={{ border: 'none', background: 'transparent', color: 'var(--dash-text-tertiary)', cursor: isPending ? 'not-allowed' : 'pointer', padding: 4, borderRadius: 6, display: 'inline-flex' }}
+                        >
+                          <Mail size={13} strokeWidth={1.5} />
+                        </button>
                         <button
                           type="button"
                           onClick={() => openEdit(proposal)}

@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { Download } from 'lucide-react'
 import { resolvePortalClient, portalLink } from '@/lib/portal/preview'
 import {
   PortalShell,
@@ -237,6 +238,29 @@ export default async function PortalInvoicesPage({ searchParams }: PortalInvoice
                         </span>
                       </span>
                     )}
+                  </div>
+
+                  {/* Descargar PDF */}
+                  <div style={{ marginTop: '1.2rem' }}>
+                    <a
+                      href={`/api/invoices/${invoice.id}/pdf?download=1`}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.45rem',
+                        fontFamily: PORTAL.mono,
+                        fontSize: '0.62rem',
+                        letterSpacing: '0.14em',
+                        textTransform: 'uppercase',
+                        color: PORTAL.muted,
+                        textDecoration: 'none',
+                        borderBottom: `1px solid ${PORTAL.border}`,
+                        paddingBottom: '0.2rem',
+                      }}
+                    >
+                      <Download size={13} strokeWidth={1.5} />
+                      Descargar PDF
+                    </a>
                   </div>
                 </article>
               )

@@ -5,6 +5,10 @@ import { logAudit } from '@/lib/audit'
 import { notify } from '@/lib/notify'
 import type { QuoteLine, ClientType, FiscalData } from '@/lib/billing/catalog'
 import { sumLineItems, calcTaxBreakdown, type TaxBreakdown } from '@/lib/billing/tax'
+import { formatMoney } from '@/lib/billing/format'
+import { sendEmail } from '@/lib/email'
+import { proposalEmailTemplate } from '@/lib/email/templates'
+import { renderBillingPdf, proposalToPdfData, billingFilename, type ProposalPdfRow } from '@/lib/pdf/render'
 import type { Json } from '@/lib/supabase/types'
 
 export type ProposalStatus = 'draft' | 'sent' | 'accepted' | 'rejected'
@@ -189,6 +193,69 @@ export async function updateProposalStatus(
   }
   revalidatePath('/admin/proposals')
   return {}
+}
+
+// ─── Enviar cotización por email (PDF adjunto) ────────────────────────────────
+
+function fmtLongDate(iso: string | null): string | null {
+  if (!iso) return null
+  return new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+export async function sendProposalEmail(id: string): Promise<{ error?: string; sentTo?: string }> {
+  const auth = await requireAdmin()
+  if ('error' in auth) return { error: auth.error }
+  const db = createServiceClient()
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (db as any)
+    .from('proposals')
+    .select('id, title, currency, status, created_at, valid_until, notes, items, subtotal, tax, total, fiscal_data, clients(name, email, company), leads(name, email)')
+    .eq('id', id)
+    .single()
+  if (error || !data) return { error: 'No se encontró la cotización.' }
+
+  // El destinatario puede venir de un cliente o de un lead.
+  const lead = (data.leads ?? null) as { name: string | null; email: string | null } | null
+  const client = (data.clients ?? null) as { name: string; email: string | null; company: string | null } | null
+  const to = client?.email ?? lead?.email ?? data.fiscal_data?.emailFacturacion ?? null
+  if (!to) return { error: 'El destinatario de esta cotización no tiene email (ni cliente ni lead).' }
+
+  const row = data as ProposalPdfRow
+  // Si no hay cliente vinculado pero sí un lead, mostramos al lead como receptor del PDF.
+  if (!row.clients && lead) {
+    row.clients = { name: lead.name ?? 'Prospecto', email: lead.email, company: null }
+  }
+
+  const pdfData = proposalToPdfData(row)
+  const pdf = await renderBillingPdf(pdfData)
+
+  await sendEmail({
+    to,
+    subject: `Cotización: ${row.title ?? pdfData.reference} — XICO Films`,
+    html: proposalEmailTemplate({
+      recipientName: client?.name ?? lead?.name ?? null,
+      title: row.title ?? pdfData.reference,
+      total: formatMoney(Number(row.total ?? 0), row.currency ?? 'MXN'),
+      validUntil: fmtLongDate(row.valid_until),
+    }),
+    attachments: [{ filename: billingFilename(pdfData), content: pdf.toString('base64') }],
+  })
+
+  // Enviarla la marca como "enviada" si seguía en borrador.
+  if (row.status === 'draft') {
+    await db.from('proposals').update({ status: 'sent', updated_at: new Date().toISOString() }).eq('id', id)
+  }
+
+  await logAudit({
+    action: 'proposal.email',
+    actorId: auth.userId,
+    entityType: 'proposal',
+    entityId: id,
+    summary: `Cotización ${pdfData.reference} enviada por email a ${to}`,
+  })
+  revalidatePath('/admin/proposals')
+  return { sentTo: to }
 }
 
 // ─── Delete ───────────────────────────────────────────────────────────────────

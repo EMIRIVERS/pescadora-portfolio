@@ -5,7 +5,16 @@ import { logAudit } from '@/lib/audit'
 import { notify } from '@/lib/notify'
 import type { QuoteLine, ClientType, FiscalData } from '@/lib/billing/catalog'
 import { sumLineItems, calcTaxBreakdown } from '@/lib/billing/tax'
+import { formatMoney } from '@/lib/billing/format'
+import { sendEmail } from '@/lib/email'
+import { invoiceEmailTemplate } from '@/lib/email/templates'
+import { renderBillingPdf, invoiceToPdfData, billingFilename, type InvoicePdfRow } from '@/lib/pdf/render'
 import type { Json } from '@/lib/supabase/types'
+
+function fmtLongDate(iso: string | null): string | null {
+  if (!iso) return null
+  return new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
+}
 
 export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled'
 
@@ -174,6 +183,57 @@ export async function deleteInvoice(id: string): Promise<{ error?: string }> {
   })
   revalidatePath('/admin/invoices')
   return {}
+}
+
+// ─── Enviar factura por email (PDF adjunto) ───────────────────────────────────
+
+export async function sendInvoiceEmail(id: string): Promise<{ error?: string; sentTo?: string }> {
+  const auth = await requireRole('invoices', 'special')
+  if ('error' in auth) return { error: auth.error }
+  const db = createServiceClient()
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (db as any)
+    .from('invoices')
+    .select('invoice_number, amount, currency, status, issue_date, due_date, notes, items, subtotal, tax, fiscal_data, clients(name, email, company), projects(title)')
+    .eq('id', id)
+    .single()
+  if (error || !data) return { error: 'No se encontró la factura.' }
+
+  const row = data as InvoicePdfRow
+  const to = row.clients?.email ?? row.fiscal_data?.emailFacturacion ?? null
+  if (!to) return { error: 'El cliente de esta factura no tiene email registrado.' }
+
+  const pdfData = invoiceToPdfData(row)
+  const pdf = await renderBillingPdf(pdfData)
+
+  await sendEmail({
+    to,
+    subject: `Factura ${row.invoice_number} — XICO Films`,
+    html: invoiceEmailTemplate({
+      clientName: row.clients?.name ?? null,
+      invoiceNumber: row.invoice_number,
+      amount: formatMoney(Number(row.amount), row.currency ?? 'MXN'),
+      dueDate: fmtLongDate(row.due_date),
+    }),
+    attachments: [{ filename: billingFilename(pdfData), content: pdf.toString('base64') }],
+  })
+
+  // Enviarla la saca de borrador para que sea visible en el portal del cliente.
+  if (row.status === 'draft') {
+    await db.from('invoices').update({ status: 'sent', updated_at: new Date().toISOString() }).eq('id', id)
+  }
+
+  await logAudit({
+    action: 'invoice.email',
+    actorId: auth.userId,
+    entityType: 'invoice',
+    entityId: id,
+    summary: `Factura ${row.invoice_number} enviada por email a ${to}`,
+  })
+  revalidatePath('/admin/invoices')
+  revalidatePath(`/admin/invoices/${id}`)
+  return { sentTo: to }
 }
 
 // ─── Generar factura desde una cotización aceptada ────────────────────────────
